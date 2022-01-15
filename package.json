@@ -1,0 +1,45 @@
+{
+  "name": "squad-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot assistant for squads",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "npm run db:migrate && node app.js",
+    "debug": "npm run db:migrate && nodemon --legacy-watch app.js",
+    "test": "mocha --recursive",
+    "test:watch": "npm run test -- --watch --parallel",
+    "test:watch:debug": "nodemon --exec 'npm run test'",
+    "db:reset": "npm run umzug db:migrate:undo:all && npm run db:migrate",
+    "db:migrate": "npm run umzug db:migrate",
+    "umzug": "node ./umzug/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vitaly-rudenko/squad-bot.git"
+  },
+  "author": "Vitaly Rudenko",
+  "license": "GPL-3.0-only",
+  "bugs": {
+    "url": "https://github.com/vitaly-rudenko/squad-bot/issues"
+  },
+  "homepage": "https://github.com/vitaly-rudenko/squad-bot#readme",
+  "devDependencies": {
+    "@vitalyrudenko/templater": "^1.0.0-pre.4",
+    "chai": "^4.3.4",
+    "common-tags": "^1.8.2",
+    "deep-equal-in-any-order": "^1.1.15",
+    "dotenv": "^12.0.3",
+    "got": "^12.0.1",
+    "markdown-escapes": "^2.0.1",
+    "mocha": "^9.1.4",
+    "nodemon": "^2.0.15",
+    "pg": "^8.7.1",
+    "umzug": "^3.0.0"
+  },
+  "dependencies": {
+    "express": "^4.17.2",
+    "googleapis": "^92.0.0",
+    "telegraf": "^4.6.0"
+  }
+}
