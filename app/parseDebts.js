@@ -1,4 +1,4 @@
-const DEBT_REGEX = /(?<name>.+):\s*(((?<paid>[\d\.]+)|\?)\s*\/\s*)?((?<amount>[\d\.]+)|\?)/
+const DEBT_REGEX = /(?<name>.+):\s*(((?<paid>[\d\.]+)|\?)\s*\/\s*)?((?<amount>[\d\.]+)|\?)(\s*(?<comment>.+))?/
 
 export function parseDebts(source) {
   return source
@@ -22,8 +22,14 @@ export function parseDebts(source) {
         ? match.groups.name.slice(1).trim()
         : match.groups.name.trim()
 
+
+      const comment = match.groups.comment !== undefined
+        ? match.groups.comment.trim()
+        : null
+
       return {
         type: debt.startsWith('*') ? 'external' : 'member',
+        comment,
         name,
         amount,
         paid,
