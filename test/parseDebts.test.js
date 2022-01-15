@@ -6,17 +6,37 @@ import { parseDebts } from '../app/parseDebts.js'
 chai.use(deepEqualInAnyOrder)
 
 describe('parseDebts()', () => {
-  it('should parse debts', () => {
+  it('should parse simple debts', () => {
     expect(parseDebts(stripIndent`
       Mikhail: 10 / 50
-      Vitaly: 50.5 / 50.5 (🎉)
-      John Doe: 0 / 25.67
+       Vitaly: 50.5/50.5
+      John Doe:0/25.67
+    `)).to.deep.equalInAnyOrder([
+      { name: 'Mikhail',  amount: 50,    paid: 10,   type: 'member' },
+      { name: 'Vitaly',   amount: 50.5,  paid: 50.5, type: 'member' },
+      { name: 'John Doe', amount: 25.67, paid: 0,    type: 'member' },
+    ])
+  })
+
+  it('should parse external debts', () => {
+    expect(parseDebts(stripIndent`
+      *Some person:15/? (what?)
+      * Anonymous: ? / 0.5
+    `)).to.deep.equalInAnyOrder([
+      { name: 'Some person', amount: null, paid: 15, type: 'external' },
+      { name: 'Anonymous',   amount: 0.5,  paid: 0,  type: 'external' },
+    ])
+  })
+
+  it('should parse special cases', () => {
+    expect(parseDebts(stripIndent`
+      Nikita   :50 (no payment yet!)
+         * Mikhail:?
       Lorem Ipsum: ? (some additional comment)
     `)).to.deep.equalInAnyOrder([
-      { name: 'Mikhail',     amount: 50,    paid: 10 },
-      { name: 'Vitaly',      amount: 50.5,  paid: 50.5 },
-      { name: 'John Doe',    amount: 25.67, paid: 0 },
-      { name: 'Lorem Ipsum', amount: null,  paid: 0 },
+      { name: 'Nikita',      amount: 50,   paid: 0, type: 'member' },
+      { name: 'Mikhail',     amount: null, paid: 0, type: 'external' },
+      { name: 'Lorem Ipsum', amount: null, paid: 0, type: 'member' },
     ])
   })
 

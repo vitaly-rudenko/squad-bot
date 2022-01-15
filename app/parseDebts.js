@@ -1,26 +1,32 @@
-const DEBT_REGEX = /(?<name>.+):\s+((?<paid>[\d\.]+)\s+\/\s+(?<amount>[\d\.]+)|\?)/
+const DEBT_REGEX = /(?<name>.+):\s*(((?<paid>[\d\.]+)|\?)\s*\/\s*)?((?<amount>[\d\.]+)|\?)/
 
 export function parseDebts(source) {
   return source
     .split('\n')
-    .map((rawDebt) => {
-      const match = rawDebt.match(DEBT_REGEX)
+    .map(i => i.trim())
+    .map((debt) => {
+      const match = debt.match(DEBT_REGEX)
       if (!match) {
-        throw new Error(`Could not parse a debt record: ${rawDebt}`)
+        throw new Error(`Could not parse a debt record: ${debt}`)
       }
 
-      if (match.groups.amount === undefined) {
-        return {
-          name: match.groups.name,
-          amount: null,
-          paid: 0,
-        }
-      }
+      const amount = match.groups.amount !== undefined
+        ? Number(match.groups.amount)
+        : null
+
+      const paid = match.groups.paid !== undefined
+        ? Number(match.groups.paid)
+        : 0
+
+      const name = match.groups.name.startsWith('*')
+        ? match.groups.name.slice(1).trim()
+        : match.groups.name.trim()
 
       return {
-        name: match.groups.name,
-        amount: Number(match.groups.amount),
-        paid: Number(match.groups.paid),
+        type: debt.startsWith('*') ? 'external' : 'member',
+        name,
+        amount,
+        paid,
       }
     })
 }
