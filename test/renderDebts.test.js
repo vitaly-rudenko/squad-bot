@@ -20,8 +20,8 @@ describe('renderDebts()', () => {
       *Some person: 15 / ? (what?)
       *Anonymous: 0 / 0.5
       Nikita: 0 / 50 - no payment yet!
-      *Mikhail: 0 / ?
-      Lorem Ipsum: 0 / ? 🎉
+      *Mikhail: ?
+      Lorem Ipsum: ? 🎉
     `)
   })
 })
