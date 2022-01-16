@@ -7,11 +7,8 @@ import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
 
 import { google } from 'googleapis'
-import { renderMoney } from './app/renderMoney.js'
-import { renderDebts } from './app/renderDebts.js'
-import { renderReceiptStatus } from './app/renderReceiptStatus.js'
-import { getReceiptStatus } from './app/getReceiptStatus.js'
 import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues.js'
+import { parseReceiptsFromSheetValues } from './app/parseReceiptsFromSheetValues.js'
 
 (async () => {
   const credentials = JSON.parse(process.env.GOOGLE_API_CREDENTIALS)
@@ -29,6 +26,8 @@ import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues
     range: 'Debts',
     valueRenderOption: 'UNFORMATTED_VALUE',
   })
+
+  console.log('Receipts:', parseReceiptsFromSheetValues(res.data.values))
 
   const receipt = {
     date: new Date(),
@@ -51,6 +50,8 @@ import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues
       values: [renderReceiptIntoSheetValues(res.data.values, receipt)]
     }
   })
+
+  console.log('Added a new receipt!')
 
   return
 
