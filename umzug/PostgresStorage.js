@@ -1,25 +1,26 @@
+
 export class PostgresStorage {
   constructor(client, tableName) {
     this.client = client
     this.tableName = tableName
   }
 
-  async logMigration(migrationName) {
+  async logMigration(migration) {
     await this.init()
 
     await this.client.query(`
       INSERT INTO ${this.tableName}(name)
-      VALUES ('${migrationName}')
+      VALUES ('${migration.name}')
       ON CONFLICT DO NOTHING;
     `)
   }
 
-  async unlogMigration(migrationName) {
+  async unlogMigration(migration) {
     await this.init()
 
     await this.client.query(`
       DELETE FROM ${this.tableName}
-      WHERE name = '${migrationName}';
+      WHERE name = '${migration.name}';
     `)
   }
 
