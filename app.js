@@ -6,7 +6,54 @@ import express from 'express'
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
 
+import { google } from 'googleapis'
+import { renderMoney } from './app/renderMoney.js'
+import { renderDebts } from './app/renderDebts.js'
+import { renderReceiptStatus } from './app/renderReceiptStatus.js'
+import { getReceiptStatus } from './app/getReceiptStatus.js'
+import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues.js'
+
 (async () => {
+  const credentials = JSON.parse(process.env.GOOGLE_API_CREDENTIALS)
+
+  const auth = new google.auth.JWT(
+    credentials.client_email,
+    null,
+    credentials.private_key,
+    ['https://www.googleapis.com/auth/spreadsheets']
+  )
+
+  const sheets = google.sheets({ version: 'v4', auth })
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: '<spreadsheet_id>',
+    range: 'Debts',
+    valueRenderOption: 'UNFORMATTED_VALUE',
+  })
+
+  const receipt = {
+    date: new Date(),
+    payer: 'Jon Snow',
+    description: 'Some description',
+    receiptUrl: 'http://example.com/receipt.jpg',
+    amount: 123.45,
+    debts: [
+      { name: 'Vitaly', amount: 100, paid: 25, type: 'member', comment: 'hello world' },
+      { name: 'Nikita', amount: null, paid: 0, type: 'member', comment: null },
+      { name: 'Mikhail', amount: null, paid: 5.75, type: 'member', comment: null },
+    ]
+  }
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: '<spreadsheet_id>',
+    range: 'Debts',
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [renderReceiptIntoSheetValues(res.data.values, receipt)]
+    }
+  })
+
+  return
+
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
   const debugChatId = process.env.DEBUG_CHAT_ID
