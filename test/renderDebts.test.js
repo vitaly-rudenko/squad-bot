@@ -15,10 +15,10 @@ describe('renderDebts()', () => {
       { name: 'Lorem Ipsum', amount: null,  paid: 0,    type: 'member',   comment: '🎉' },
     ])).to.equal(stripIndent`
       Mikhail: 10 / 50
-      Vitaly: 50.5 / 50.5
+      Vitaly: 50.50 / 50.50
       John Doe: 0 / 25.67 ?
       *Some person: 15 / ? (what?)
-      *Anonymous: 0 / 0.5
+      *Anonymous: 0 / 0.50
       Nikita: 0 / 50 - no payment yet!
       *Mikhail: ?
       Lorem Ipsum: ? 🎉

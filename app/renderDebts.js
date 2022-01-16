@@ -1,3 +1,5 @@
+import { renderMoney } from './renderMoney.js'
+
 export function renderDebts(debts) {
   return debts
     .map(debt => renderDebt(debt))
@@ -18,10 +20,3 @@ function renderDebt(debt) {
   return `${name}: ${paid} / ${amount}${comment}`
 }
 
-function renderMoney(money) {
-  return money.toFixed(2).endsWith('00')
-    ? money.toFixed(0)
-    : money.toFixed(2).endsWith('0')
-      ? money.toFixed(1)
-      : money.toFixed(2)
-}
