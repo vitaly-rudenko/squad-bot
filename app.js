@@ -25,7 +25,7 @@ import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues
 
   const sheets = google.sheets({ version: 'v4', auth })
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: '<spreadsheet_id>',
+    spreadsheetId: process.env.SPREADSHEET_ID,
     range: 'Debts',
     valueRenderOption: 'UNFORMATTED_VALUE',
   })
@@ -44,7 +44,7 @@ import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues
   }
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: '<spreadsheet_id>',
+    spreadsheetId: process.env.SPREADSHEET_ID,
     range: 'Debts',
     valueInputOption: 'RAW',
     requestBody: {

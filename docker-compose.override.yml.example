@@ -3,6 +3,8 @@ services:
   bot:
     environment:
       TELEGRAM_BOT_TOKEN: "<your telegram bot token>"
+      GOOGLE_API_CREDENTIALS: "<stringified credentials JSON file>"
+      SPREADSHEET_ID: "<spreadsheet id>"
       DEBUG_CHAT_ID: "-123456789"
     command: |
       ./wait-for-it.sh postgres:5432 -t 120 --
