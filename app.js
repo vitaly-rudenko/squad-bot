@@ -2,18 +2,30 @@ import './env.js'
 
 import { Telegraf } from 'telegraf'
 import express from 'express'
-import ejs from 'ejs'
 
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
 
 import { PostgresStorage } from './app/PostgresStorage.js'
+import { registerCommand } from './app/flows/register.js'
+import { usersCommand } from './app/flows/users.js'
 
 (async () => {
+  const storage = new PostgresStorage(process.env.DATABASE_URL)
+  await storage.connect()
+
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
+
+  bot.telegram.setMyCommands(
+    ['register', 'users', 'version']
+      .map(command => ({
+        command: `/${command}`,
+        description: command[0].toUpperCase() + command.slice(1),
+      }))
+)
 
   process.on('unhandledRejection', async (error) => {
     await logError(error)
@@ -39,21 +51,20 @@ import { PostgresStorage } from './app/PostgresStorage.js'
   })
 
   bot.command('version', versionCommand())
+  bot.command('register', registerCommand({ storage }))
+  bot.command('users', usersCommand({ storage }))
 
   bot.catch((error) => logError(error))
 
-  // await bot.telegram.deleteWebhook()
+  await bot.telegram.deleteWebhook()
 
   const domain = process.env.DOMAIN
   const port = Number(process.env.PORT) || 3001
   const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-  // await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+  await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
 
   const handledUpdates = new Cache(60_000)
-
-  const storage = new PostgresStorage(process.env.DATABASE_URL)
-  await storage.connect()
 
   async function storeReceipt({ id = undefined, payerId, amount, description, debts }) {
     if (id) {

@@ -34,4 +34,4 @@ services:
     image: efrecon/localtunnel
     restart: always
     command:
-      --local-host backend --print-requests --port 1234 --subdomain squadbot-staging
+      --local-host bot --print-requests --port 1234 --subdomain squadbot-staging
