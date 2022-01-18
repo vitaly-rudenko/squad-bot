@@ -83,4 +83,34 @@ export class PostgresStorage {
       username: row['username'],
     }))
   }
+
+  async aggregateIngoingDebts(payerId) {
+    const response = await this._client.query(`
+      SELECT SUM(debts.amount) as amount, debtor_id
+      FROM debts
+      JOIN receipts ON debts.receipt_id = receipts.id
+      WHERE payer_id = $1
+      GROUP BY debtor_id;
+    `, [payerId])
+
+    return response.rows.map(row => ({
+      userId: row['debtor_id'],
+      amount: row['amount'],
+    }))
+  }
+
+  async aggregateOutgoingDebts(debtorId) {
+    const response = await this._client.query(`
+      SELECT SUM(debts.amount) as amount, payer_id
+      FROM debts
+      JOIN receipts ON debts.receipt_id = receipts.id
+      WHERE debtor_id = $1
+      GROUP BY payer_id;
+    `, [debtorId])
+
+    return response.rows.map(row => ({
+      userId: row['payer_id'],
+      amount: row['amount'],
+    }))
+  }
 }

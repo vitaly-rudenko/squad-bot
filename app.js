@@ -6,54 +6,9 @@ import express from 'express'
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
 
-import { google } from 'googleapis'
-import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues.js'
-import { parseReceiptsFromSheetValues } from './app/parseReceiptsFromSheetValues.js'
 import { PostgresStorage } from './app/PostgresStorage.js'
 
 (async () => {
-  const credentials = JSON.parse(process.env.GOOGLE_API_CREDENTIALS)
-
-  const auth = new google.auth.JWT(
-    credentials.client_email,
-    null,
-    credentials.private_key,
-    ['https://www.googleapis.com/auth/spreadsheets']
-  )
-
-  const sheets = google.sheets({ version: 'v4', auth })
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: process.env.SPREADSHEET_ID,
-    range: 'Debts',
-    valueRenderOption: 'UNFORMATTED_VALUE',
-  })
-
-  console.log('Receipts:', parseReceiptsFromSheetValues(res.data.values))
-
-  const receipt = {
-    date: new Date(),
-    payer: 'Jon Snow',
-    description: 'Some description',
-    receiptUrl: 'http://example.com/receipt.jpg',
-    amount: 123.45,
-    debts: [
-      { name: 'Vitaly', amount: 100, paid: 25, type: 'member', comment: 'hello world' },
-      { name: 'Nikita', amount: null, paid: 0, type: 'member', comment: null },
-      { name: 'Mikhail', amount: null, paid: 5.75, type: 'member', comment: null },
-    ]
-  }
-
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: process.env.SPREADSHEET_ID,
-    range: 'Debts',
-    valueInputOption: 'RAW',
-    requestBody: {
-      values: [renderReceiptIntoSheetValues(res.data.values, receipt)]
-    }
-  })
-
-  console.log('Added a new receipt!')
-
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
   const debugChatId = process.env.DEBUG_CHAT_ID
@@ -99,7 +54,7 @@ import { PostgresStorage } from './app/PostgresStorage.js'
   const storage = new PostgresStorage(process.env.DATABASE_URL)
   await storage.connect()
 
-  async function storeReceipt({ id, payerId, amount, description, debts }) {
+  async function storeReceipt({ id = undefined, payerId, amount, description, debts }) {
     if (id) {
       await storage.deleteReceiptById(id)
     }
@@ -127,6 +82,35 @@ import { PostgresStorage } from './app/PostgresStorage.js'
   const app = express()
   app.use(express.json())
 
+  app.post('/fill-data', async (req, res) => {
+    await storeReceipt({
+      payerId: '1',
+      amount: 600,
+      description: 'hello world',
+      debts: [{
+        debtorId: '2',
+        amount: 200,
+      }, {
+        debtorId: '3',
+        amount: 400,
+      }]
+    })
+
+    await storage.createPayment({
+      fromUserId: '2',
+      toUserId: '1',
+      amount: 200,
+    })
+
+    await storage.createPayment({
+      fromUserId: '3',
+      toUserId: '1',
+      amount: 200,
+    })
+
+    res.sendStatus(200)
+  })
+
   app.get('/users', async (req, res) => {
     const users = await storage.findUsers()
     res.json(users)
@@ -151,6 +135,18 @@ import { PostgresStorage } from './app/PostgresStorage.js'
   app.get('/payments', async (req, res) => {
     const payments = await storage.findPayments()
     res.json(payments)
+  })
+
+  app.get('/my-debts/:userId', async (req, res) => {
+    const userId = req.params.userId
+
+    const ingoingDebts = await storage.aggregateIngoingDebts(userId)
+    const outgoingDebts = await storage.aggregateOutgoingDebts(userId)
+
+    res.json({
+      ingoingDebts,
+      outgoingDebts,
+    })
   })
 
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
