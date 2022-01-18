@@ -97,7 +97,7 @@ export class PostgresStorage {
       FROM debts
       LEFT JOIN receipts ON debts.receipt_id = receipts.id
       LEFT join payments on debts.debtor_id = payments.from_user_id and receipts.payer_id = payments.to_user_id 
-      WHERE payer_id = $1
+      WHERE payer_id = $1 AND debtor_id != payer_id
       GROUP BY debtor_id, payments.from_user_id
       having SUM(debts.amount) - SUM(COALESCE(payments.amount, 0)) > 0;
     `, [payerId])
@@ -114,7 +114,7 @@ export class PostgresStorage {
       FROM debts
       LEFT JOIN receipts ON debts.receipt_id = receipts.id
       LEFT join payments on debts.debtor_id = payments.from_user_id and receipts.payer_id = payments.to_user_id 
-      WHERE debtor_id = $1
+      WHERE debtor_id = $1 AND debtor_id != payer_id
       GROUP BY payer_id, payments.to_user_id
       having SUM(debts.amount) - SUM(COALESCE(payments.amount, 0)) > 0;
     `, [debtorId])

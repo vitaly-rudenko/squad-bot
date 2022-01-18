@@ -1,4 +1,4 @@
-import { stripIndent } from 'common-tags'
+import { renderMoney } from '../renderMoney.js'
 
 export function debtsCommand({ storage }) {
   return async (context) => {
@@ -17,18 +17,18 @@ export function debtsCommand({ storage }) {
 Тебе должны:
 ${
   ingoingDebts
-    .map(debt => `- ${getUserName(debt.userId)}: ${debt.amount} грн`)
+    .map(debt => `- ${getUserName(debt.userId)}: ${renderMoney(debt.amount)} грн`)
     .join('\n')
-}` : ''
+}` : 'Тебе никто ничего не должен 🙂'
 
 const outgoingDebtsFormatted = outgoingDebts.length > 0 ? `
 Ты должен:
 ${
   outgoingDebts
-    .map(debt => `- ${getUserName(debt.userId)}: ${debt.amount} грн`)
+    .map(debt => `- ${getUserName(debt.userId)}: ${renderMoney(debt.amount)} грн`)
     .join('\n')
-}` : ''
+}` : 'Ты никому ничего не должен 🙂'
 
-    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted].filter(Boolean).join('\n\n') || 'Долгов нет!')
+    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted].filter(Boolean).join('\n'))
   }
 }
