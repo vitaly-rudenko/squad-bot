@@ -7,6 +7,8 @@ import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
 
 import { PostgresStorage } from './app/PostgresStorage.js'
+import { registerCommand } from './app/flows/register.js'
+import { usersCommand } from './app/flows/users.js'
 
 (async () => {
   const storage = new PostgresStorage(process.env.DATABASE_URL)
@@ -41,6 +43,8 @@ import { PostgresStorage } from './app/PostgresStorage.js'
   })
 
   bot.command('version', versionCommand())
+  bot.command('register', registerCommand({ storage }))
+  bot.command('users', usersCommand({ storage }))
 
   bot.catch((error) => logError(error))
 
