@@ -3,9 +3,9 @@ module.exports = {
   async up({ context: db }) {
     await db.query(`
       CREATE TABLE debts (
-        id serial PRIMARY KEY,
-        debtor_id INTEGER,
-        receipt INTEGER,
+        id SERIAL PRIMARY KEY,
+        receipt_id VARCHAR,
+        debtor_id VARCHAR,
         amount INTEGER
       );
     `)

@@ -3,10 +3,10 @@ module.exports = {
   async up({ context: db }) {
     await db.query(`
       CREATE TABLE payments (
-        id serial PRIMARY KEY,
-        date TIMESTAMPTZ,
-        from_user_id INTEGER,
-        to_user_id INTEGER,
+        id SERIAL PRIMARY KEY,
+        created_at TIMESTAMPTZ,
+        from_user_id VARCHAR,
+        to_user_id VARCHAR,
         amount INTEGER
       );
     `)

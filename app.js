@@ -9,6 +9,7 @@ import { versionCommand } from './app/flows/version.js'
 import { google } from 'googleapis'
 import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues.js'
 import { parseReceiptsFromSheetValues } from './app/parseReceiptsFromSheetValues.js'
+import { PostgresStorage } from './app/PostgresStorage.js'
 
 (async () => {
   const credentials = JSON.parse(process.env.GOOGLE_API_CREDENTIALS)
@@ -53,8 +54,6 @@ import { parseReceiptsFromSheetValues } from './app/parseReceiptsFromSheetValues
 
   console.log('Added a new receipt!')
 
-  return
-
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
   const debugChatId = process.env.DEBUG_CHAT_ID
@@ -97,8 +96,63 @@ import { parseReceiptsFromSheetValues } from './app/parseReceiptsFromSheetValues
 
   const handledUpdates = new Cache(60_000)
 
+  const storage = new PostgresStorage(process.env.DATABASE_URL)
+  await storage.connect()
+
+  async function storeReceipt({ id, payerId, amount, description, debts }) {
+    if (id) {
+      await storage.deleteReceiptById(id)
+    }
+
+    id = await storage.createReceipt({
+      id,
+      payerId,
+      amount,
+      description,
+    })
+
+    for (const debt of debts) {
+      const { debtorId, amount } = debt
+
+      await storage.createDebt({
+        receiptId: id,
+        amount,
+        debtorId,
+      })
+    }
+
+    return id
+  }
+
   const app = express()
   app.use(express.json())
+
+  app.get('/users', async (req, res) => {
+    const users = await storage.findUsers()
+    res.json(users)
+  })
+
+  app.post('/receipts', async (req, res) => {
+    const id = await storeReceipt(req.body)
+    res.json({ id })
+  })
+
+  app.post('/payments', async (req, res) => {
+    const { fromUserId, toUserId, amount } = req.body
+    const id = await storage.createPayment({ fromUserId, toUserId, amount })
+    res.json({ id })
+  })
+
+  app.delete('/payments/:paymentId', async (req, res) => {
+    await storage.deletePaymentById(req.params.paymentId)
+    res.sendStatus(200)
+  })
+
+  app.get('/payments', async (req, res) => {
+    const payments = await storage.findPayments()
+    res.json(payments)
+  })
+
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
     if (!updateId) {
