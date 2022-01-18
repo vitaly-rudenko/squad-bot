@@ -53,43 +53,21 @@
 
         <div class="form_input">
             <label>Сумма, грн</label>
-            <input id="" type="number" placeholder="0.00">
+            <input id="receipts_amount_input" type="number" placeholder="0.00">
         </div>
 
         <div class="form_input">
             <label>Описание</label>
-            <input id="" type="text" placeholder="Мак">
+            <input id="receipts_description_input" type="text" placeholder="Мак">
         </div>
 
         <h3>За кого платишь</h3>
 
-        <div class="debtor">
-            <input type="checkbox" id="user1" name="user1" value="Валентин">
-            <label for="user1">Валентин</label>
-            <input class="debt_amount" id="" type="number" placeholder="0.00">
-        </div>
-
-        <div class="debtor">
-            <input type="checkbox" id="user2" name="user2" value="Виталик">
-            <label for="user2">Виталик</label>
-            <input class="debt_amount" id="" type="number" placeholder="0.00">
-        </div>
-
-        <div class="debtor">
-            <input type="checkbox" id="user3" name="user3" value="Миша">
-            <label for="user3">Миша</label>
-            <input class="debt_amount" id="" type="number" placeholder="0.00">
-        </div>
-
-        <div class="debtor">
-            <input type="checkbox" id="user4" name="user4" value="Никита">
-            <label for="user4">Никита</label>
-            <input class="debt_amount" id="" type="number" placeholder="0.00">
-        </div>
+        <div id="receipt_debtors_container"></div>
 
         <p id="error_message">Остаток: 530 грн</p>
 
-        <button id="" class="" style="background:  rgb(226 152 17);">Оплатить счет</button>
+        <button id="add_receipt_button" class="" style="background:  rgb(226 152 17);">Оплатить счет</button>
     </div>
 
     <script src="/static/js/main.js"></script>
