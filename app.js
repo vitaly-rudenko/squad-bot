@@ -82,7 +82,9 @@ import { PostgresStorage } from './app/PostgresStorage.js'
 
   const app = express()
   app.use(express.json())
-  app.set('view engine', 'ejs')
+  app.use("/static", express.static(__dirname + "/public"))
+  app.engine("html", require("ejs").renderFile)
+  app.set("view engine", "html")
 
   app.get('/', async (req, res) => {
     res.render('index')
