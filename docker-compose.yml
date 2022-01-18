@@ -13,8 +13,6 @@ services:
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@postgres:5432/squadbot"
       TELEGRAM_BOT_TOKEN: "<your telegram bot token>"
       DEBUG_CHAT_ID: "-123456789"
-      GOOGLE_API_CREDENTIALS: "<stringified credentials JSON file>"
-      SPREADSHEET_ID: "<spreadsheet id>"
       DOMAIN: "https://squadbot-staging.loca.lt"
       PORT: "1234"
     volumes:
