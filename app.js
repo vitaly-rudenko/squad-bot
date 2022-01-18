@@ -7,11 +7,8 @@ import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
 
 import { google } from 'googleapis'
-import { renderMoney } from './app/renderMoney.js'
-import { renderDebts } from './app/renderDebts.js'
-import { renderReceiptStatus } from './app/renderReceiptStatus.js'
-import { getReceiptStatus } from './app/getReceiptStatus.js'
 import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues.js'
+import { parseReceiptsFromSheetValues } from './app/parseReceiptsFromSheetValues.js'
 
 (async () => {
   const credentials = JSON.parse(process.env.GOOGLE_API_CREDENTIALS)
@@ -25,10 +22,12 @@ import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues
 
   const sheets = google.sheets({ version: 'v4', auth })
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: '<spreadsheet_id>',
+    spreadsheetId: process.env.SPREADSHEET_ID,
     range: 'Debts',
     valueRenderOption: 'UNFORMATTED_VALUE',
   })
+
+  console.log('Receipts:', parseReceiptsFromSheetValues(res.data.values))
 
   const receipt = {
     date: new Date(),
@@ -44,13 +43,15 @@ import { renderReceiptIntoSheetValues } from './app/renderReceiptIntoSheetValues
   }
 
   await sheets.spreadsheets.values.append({
-    spreadsheetId: '<spreadsheet_id>',
+    spreadsheetId: process.env.SPREADSHEET_ID,
     range: 'Debts',
     valueInputOption: 'RAW',
     requestBody: {
       values: [renderReceiptIntoSheetValues(res.data.values, receipt)]
     }
   })
+
+  console.log('Added a new receipt!')
 
   return
 
