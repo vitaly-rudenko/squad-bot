@@ -2,6 +2,7 @@ import './env.js'
 
 import { Telegraf } from 'telegraf'
 import express from 'express'
+import ejs from 'ejs'
 
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
@@ -93,8 +94,8 @@ import { usersCommand } from './app/flows/users.js'
 
   const app = express()
   app.use(express.json())
-  app.use("/static", express.static(__dirname + "/public"))
-  app.engine("html", require("ejs").renderFile)
+  app.use("/static", express.static("./public"))
+  app.engine("html", ejs.renderFile)
   app.set("view engine", "html")
 
   app.get('/', async (req, res) => {

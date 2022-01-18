@@ -8,6 +8,7 @@ let users = []
 
 savePaymentButton.addEventListener('click', savePayment)
 
+init()
 async function init() {
     users = await getUsers()
     renderUsersSelect(paymentsFromUserSelect)
@@ -31,7 +32,7 @@ function renderUsersSelect(selectElement) {
     for (let i = 0; i < users.length; i++) {
         selectHtml += `<option ${i == 0 ? 'selected': ''} value="${users[i].id}">${users[i].name}</option>`
     }
-    selectElement.innerHtml = selectHtml
+    selectElement.innerHTML = selectHtml
 }
 
 function savePayment() {
@@ -41,7 +42,7 @@ function savePayment() {
     const payment = {
         fromUserId: paymentsFromUserSelect.value,
 		toUserId: paymentsToUserSelect.value,
-		amount: sum
+		amount: Number(amount),
 	}
 
     fetch('/payments', {
