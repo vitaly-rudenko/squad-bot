@@ -2,6 +2,7 @@ import './env.js'
 
 import { Telegraf } from 'telegraf'
 import express from 'express'
+import ejs from 'ejs'
 
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
@@ -81,6 +82,11 @@ import { PostgresStorage } from './app/PostgresStorage.js'
 
   const app = express()
   app.use(express.json())
+  app.set('view engine', 'ejs')
+
+  app.get('/', async (req, res) => {
+    res.render('index')
+  })
 
   app.post('/users', async (req, res) => {
     const { id, username, name } = req.body
