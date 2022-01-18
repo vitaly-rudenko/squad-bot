@@ -11,6 +11,7 @@ import { PostgresStorage } from './app/PostgresStorage.js'
 import { registerCommand } from './app/flows/register.js'
 import { usersCommand } from './app/flows/users.js'
 import { debtsCommand } from './app/flows/debts.js'
+import { receiptCommand } from './app/flows/receipt.js'
 
 (async () => {
   const storage = new PostgresStorage(process.env.DATABASE_URL)
@@ -22,7 +23,7 @@ import { debtsCommand } from './app/flows/debts.js'
   const bot = new Telegraf(telegramBotToken)
 
   bot.telegram.setMyCommands(
-    ['register', 'users', 'debts', 'version']
+    ['receipt', 'debts', 'register', 'users', 'version']
       .map(command => ({
         command: `/${command}`,
         description: command[0].toUpperCase() + command.slice(1),
@@ -56,6 +57,7 @@ import { debtsCommand } from './app/flows/debts.js'
   bot.command('register', registerCommand({ storage }))
   bot.command('users', usersCommand({ storage }))
   bot.command('debts', debtsCommand({ storage }))
+  bot.command('receipt', receiptCommand())
 
   bot.catch((error) => logError(error))
 
