@@ -9,9 +9,9 @@ export function registerCommand({ storage }) {
         username: username || null,
       })
 
-      await context.reply('Registered! 🎉')
+      await context.reply('Зарегистрирован! 🎉')
     } catch (error) {
-      await context.reply('Already registered ❌')
+      await context.reply('Ты уже зарегистрирован ❌')
     }
   }
 }

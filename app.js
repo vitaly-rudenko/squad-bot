@@ -10,6 +10,7 @@ import { versionCommand } from './app/flows/version.js'
 import { PostgresStorage } from './app/PostgresStorage.js'
 import { registerCommand } from './app/flows/register.js'
 import { usersCommand } from './app/flows/users.js'
+import { debtsCommand } from './app/flows/debts.js'
 
 (async () => {
   const storage = new PostgresStorage(process.env.DATABASE_URL)
@@ -21,7 +22,7 @@ import { usersCommand } from './app/flows/users.js'
   const bot = new Telegraf(telegramBotToken)
 
   bot.telegram.setMyCommands(
-    ['register', 'users', 'version']
+    ['register', 'users', 'debts', 'version']
       .map(command => ({
         command: `/${command}`,
         description: command[0].toUpperCase() + command.slice(1),
@@ -46,7 +47,7 @@ import { usersCommand } from './app/flows/users.js'
   }
 
   bot.use(async (context, next) => {
-    if (context.chat.type === 'group') {
+    if (context.chat.type === 'group' || context.chat.type === 'supergroup') {
       await next()
     }
   })
@@ -54,6 +55,7 @@ import { usersCommand } from './app/flows/users.js'
   bot.command('version', versionCommand())
   bot.command('register', registerCommand({ storage }))
   bot.command('users', usersCommand({ storage }))
+  bot.command('debts', debtsCommand({ storage }))
 
   bot.catch((error) => logError(error))
 
@@ -126,6 +128,13 @@ import { usersCommand } from './app/flows/users.js'
 
   app.delete('/payments/:paymentId', async (req, res) => {
     await storage.deletePaymentById(req.params.paymentId)
+    res.sendStatus(200)
+  })
+
+  // TODO: app.get('/receipts', async (req, res) => {})
+
+  app.delete('/receipts/:receiptId', async (req, res) => {
+    await storage.deleteReceiptById(req.params.receiptId)
     res.sendStatus(200)
   })
 
