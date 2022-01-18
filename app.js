@@ -45,7 +45,7 @@ import { usersCommand } from './app/flows/users.js'
   }
 
   bot.use(async (context, next) => {
-    if (context.chat.type === 'group') {
+    if (context.chat.type === 'group' || context.chat.type === 'supergroup') {
       await next()
     }
   })
