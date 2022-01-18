@@ -2,7 +2,6 @@ import './env.js'
 
 import { Telegraf } from 'telegraf'
 import express from 'express'
-import ejs from 'ejs'
 
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
@@ -10,6 +9,9 @@ import { versionCommand } from './app/flows/version.js'
 import { PostgresStorage } from './app/PostgresStorage.js'
 
 (async () => {
+  const storage = new PostgresStorage(process.env.DATABASE_URL)
+  await storage.connect()
+
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
   const debugChatId = process.env.DEBUG_CHAT_ID
@@ -51,9 +53,6 @@ import { PostgresStorage } from './app/PostgresStorage.js'
   await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
 
   const handledUpdates = new Cache(60_000)
-
-  const storage = new PostgresStorage(process.env.DATABASE_URL)
-  await storage.connect()
 
   async function storeReceipt({ id = undefined, payerId, amount, description, debts }) {
     if (id) {
