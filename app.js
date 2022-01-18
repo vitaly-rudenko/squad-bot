@@ -19,6 +19,14 @@ import { usersCommand } from './app/flows/users.js'
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
 
+  bot.telegram.setMyCommands(
+    ['register', 'users', 'version']
+      .map(command => ({
+        command: `/${command}`,
+        description: command[0].toUpperCase() + command.slice(1),
+      }))
+)
+
   process.on('unhandledRejection', async (error) => {
     await logError(error)
   })
