@@ -126,6 +126,13 @@ import { usersCommand } from './app/flows/users.js'
     res.sendStatus(200)
   })
 
+  // TODO: app.get('/receipts', async (req, res) => {})
+
+  app.delete('/receipts/:receiptId', async (req, res) => {
+    await storage.deleteReceiptById(req.params.receiptId)
+    res.sendStatus(200)
+  })
+
   app.get('/payments', async (req, res) => {
     const payments = await storage.findPayments()
     res.json(payments)
