@@ -4,9 +4,9 @@ module.exports = {
     await db.query(`
       CREATE TABLE debts (
         id serial PRIMARY KEY,
-        debtor integer,
-        receipt integer,
-        amount integer
+        debtor_id INTEGER,
+        receipt INTEGER,
+        amount INTEGER
       );
     `)
   },

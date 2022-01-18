@@ -3,8 +3,8 @@ module.exports = {
   async up({ context: db }) {
     await db.query(`
       CREATE TABLE users (
-        id serial PRIMARY KEY,
-        telegram_chat_id integer,
+        id VARCHAR PRIMARY KEY,
+        username VARCHAR,
         name VARCHAR
       );
     `)

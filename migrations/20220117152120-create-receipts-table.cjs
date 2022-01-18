@@ -4,10 +4,10 @@ module.exports = {
     await db.query(`
       CREATE TABLE receipts (
         id serial PRIMARY KEY,
-        date datetime,
-        payer integer,
-        amount integer,
-        description text
+        date TIMESTAMPTZ,
+        payer_id INTEGER,
+        amount INTEGER,
+        description TEXT
       );
     `)
   },
