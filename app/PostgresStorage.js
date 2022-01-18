@@ -86,11 +86,13 @@ export class PostgresStorage {
 
   async aggregateIngoingDebts(payerId) {
     const response = await this._client.query(`
-      SELECT SUM(debts.amount) as amount, debtor_id
+      SELECT SUM(debts.amount) - SUM(payments.amount) as amount, debtor_id
       FROM debts
       JOIN receipts ON debts.receipt_id = receipts.id
+      join payments on debts.debtor_id = payments.from_user_id and receipts.payer_id = payments.to_user_id 
       WHERE payer_id = $1
-      GROUP BY debtor_id;
+      GROUP BY debtor_id, payments.from_user_id
+      having SUM(debts.amount) - SUM(payments.amount) > 0;
     `, [payerId])
 
     return response.rows.map(row => ({
@@ -101,11 +103,13 @@ export class PostgresStorage {
 
   async aggregateOutgoingDebts(debtorId) {
     const response = await this._client.query(`
-      SELECT SUM(debts.amount) as amount, payer_id
+      SELECT SUM(debts.amount) - SUM(payments.amount) as amount, payer_id
       FROM debts
       JOIN receipts ON debts.receipt_id = receipts.id
+      join payments on debts.debtor_id = payments.from_user_id and receipts.payer_id = payments.to_user_id 
       WHERE debtor_id = $1
-      GROUP BY payer_id;
+      GROUP BY payer_id, payments.to_user_id
+      having SUM(debts.amount) - SUM(payments.amount) > 0;
     `, [debtorId])
 
     return response.rows.map(row => ({
