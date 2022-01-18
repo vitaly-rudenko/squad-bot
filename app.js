@@ -42,13 +42,13 @@ import { PostgresStorage } from './app/PostgresStorage.js'
 
   bot.catch((error) => logError(error))
 
-  // await bot.telegram.deleteWebhook()
+  await bot.telegram.deleteWebhook()
 
   const domain = process.env.DOMAIN
   const port = Number(process.env.PORT) || 3001
   const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-  // await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+  await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
 
   const handledUpdates = new Cache(60_000)
 
