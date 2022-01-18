@@ -41,13 +41,13 @@ import { PostgresStorage } from './app/PostgresStorage.js'
 
   bot.catch((error) => logError(error))
 
-  await bot.telegram.deleteWebhook()
+  // await bot.telegram.deleteWebhook()
 
   const domain = process.env.DOMAIN
   const port = Number(process.env.PORT) || 3001
   const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-  await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+  // await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
 
   const handledUpdates = new Cache(60_000)
 
@@ -82,32 +82,9 @@ import { PostgresStorage } from './app/PostgresStorage.js'
   const app = express()
   app.use(express.json())
 
-  app.post('/fill-data', async (req, res) => {
-    await storeReceipt({
-      payerId: '1',
-      amount: 600,
-      description: 'hello world',
-      debts: [{
-        debtorId: '2',
-        amount: 200,
-      }, {
-        debtorId: '3',
-        amount: 400,
-      }]
-    })
-
-    await storage.createPayment({
-      fromUserId: '2',
-      toUserId: '1',
-      amount: 200,
-    })
-
-    await storage.createPayment({
-      fromUserId: '3',
-      toUserId: '1',
-      amount: 200,
-    })
-
+  app.post('/users', async (req, res) => {
+    const { id, username, name } = req.body
+    await storage.createUser({ id, username, name })
     res.sendStatus(200)
   })
 

@@ -46,6 +46,13 @@ export class PostgresStorage {
     `, [debtorId, receiptId, amount])
   }
 
+  async createUser({ id, username, name }) {
+    await this._client.query(`
+      INSERT INTO users (id, username, name)
+      VALUES ($1, $2, $3);
+    `, [id, username, name])
+  }
+
   async createPayment({ fromUserId, toUserId, amount }) {
     const response = await this._client.query(`
       INSERT INTO payments (created_at, from_user_id, to_user_id, amount)
