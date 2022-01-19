@@ -70,20 +70,27 @@ body {
     outline: none;
 }
 
-.debtor {
-    margin-bottom: 12px;
+.container button.disabled {
+    opacity: 0.7;
 }
 
-.debtor label {
-    width: 200px;
-    display: inline-block;
+.debtor {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.debtor>div {
+    display: flex;
+    align-items: center;
 }
 
 .debtor .debt_amount {
     border-radius: 5px;
     border: 1px solid grey;
     padding: 6px;
-    width: calc(100% - 230px);
+    width: 40%;
 }
 
 #error_message {
@@ -103,4 +110,172 @@ body {
     border: 2px solid rgb(226 152 17);
     height: 37px;
     margin: -10px 0 12px 0;
+}
+
+
+#fullscreen_animation_container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    pointer-events: none;
+    z-index: 1001;
+}
+#fullscreen_animation_container.active {
+    display: block;
+}
+#fullscreen_animation_container.active .animation1 {
+    animation: animation1 3s linear;
+    position: absolute;
+    left: -100vw;
+    width: 120px;
+}
+#fullscreen_animation_container.active .animation2 {
+    animation: animation2 5s linear;
+    position: absolute;
+    left: -100vw;
+    width: 40px;
+}
+#fullscreen_animation_container.active .animation3 {
+    animation: animation3 6s linear;
+    position: absolute;
+    left: -100vw;
+    width: 40px;
+}
+#fullscreen_animation_container.active .animation4 {
+    animation: animation4 3s linear 2s;
+    position: absolute;
+    left: -100vw;
+    width: 40px;
+}
+#fullscreen_animation_container.active .animation5 {
+    animation: animation5 4s linear 1s;
+    position: absolute;
+    left: -100vw;
+    width: 40px;
+}
+#fullscreen_animation_container.active .animation6 {
+    text-shadow: 0 0 5px #03f616, 0 0 5px #13c929, 0 0 1px #fff, 0 0 20px #26b61c, 0 0 10px #000000, 0 0 20px #000000, 0 0 55px #000000, 0 0 75px #10ff00, 0px 0px 12px rgb(206 89 55 / 0%);
+    color: #FFFFFF;
+    font-size: 42px;
+    font-weight: 900;
+    animation: animation6 5s linear;
+    position: absolute;
+    left: -100vw;
+}
+#fullscreen_animation_container.active .animation7 {
+    text-shadow: 0 0 5px #ff5722, 0 0 5px #ff5722, 0 0 1px #fff, 0 0 10px #ffa082, 0 0 0px #0c0c0c, 0 0 1px #858181, 0 0 15px #686868, 0 0 21px #ff7600, 0px 0px 12px rgb(220 68 24 / 40%);
+    color: #FFFFFF;
+    font-size: 24px;
+    font-weight: 900;
+    animation: animation7 5s linear;
+    position: absolute;
+    left: -60vw;
+    width: 300px;
+}
+#fullscreen_animation_container.active .animation10 {
+    animation: animation10 4s linear 1s;
+    position: absolute;
+    width: 80px;
+    bottom: 14px;
+    left: -100vw;
+}
+
+@keyframes animation1 {
+    from {
+        left: 35vw;
+        top: 102vh;
+        transform:rotate(0deg); 
+    }
+    to {
+        left: 35vw;
+        top: -20vh;
+        transform:rotate(360deg); 
+    }
+}
+
+@keyframes animation2 {
+    from {
+        left: 105vw;
+        top: 202vh;
+        transform: scale(1);
+    }
+    to {
+        left: 0vw;
+        top: -60vh;
+        transform: scale(3);
+    }
+}
+@keyframes animation3 {
+    from {
+        left: 40vw;
+        top: 102vh;
+        transform:rotate(0deg); 
+    }
+    to {
+        left: -30vw;
+        top: -60vh;
+        transform:rotate(1220deg); 
+    }
+}
+@keyframes animation4 {
+    from {
+        left: 8vw;
+        top: 152vh;
+        transform:rotate(0deg); 
+    }
+    to {
+        left: 130vw;
+        top: -20vh;
+        transform:rotate(1000deg); 
+    }
+}
+@keyframes animation5 {
+    from {
+        left: -60vw;
+        top: 140vh;
+        transform:rotate(0deg); 
+    }
+    to {
+        left: 130vw;
+        top: 30vh;
+        transform:rotate(3000deg); 
+    }
+}
+/* успешно */
+@keyframes animation6 {
+    from {
+        left: -20vw;
+        top: 120vh;
+        transform:rotate(-70deg); 
+    }
+    to {
+        left: 120vw;
+        top: -20vh;
+        transform:rotate(70deg); 
+    }
+}
+/* платеж добавлен */
+@keyframes animation7 {
+    from {
+        left: 140vw;
+        top: 140vh;
+        transform:rotate(50deg); 
+    }
+    to {
+        left: -20vw;
+        top: -20vh;
+        transform:rotate(-50deg); 
+    }
+}
+/* women with bunny ears */
+@keyframes animation10 {
+    from {
+        left: -10vw;
+    }
+    to {
+        left: 110vw;
+    }
 }

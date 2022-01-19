@@ -10,6 +10,7 @@ const receiptDebtorsContainer = document.getElementById("receipt_debtors_contain
 const addReceiptButton = document.getElementById("add_receipt_button")
 const divideMoneyButton = document.getElementById('divide_money_button')
 const errorMessage = document.getElementById('error_message')
+const fullscreenAnimationContainer = document.getElementById('fullscreen_animation_container')
 
 let users = []
 
@@ -49,9 +50,9 @@ function renderUsersSelect(selectElement) {
 function renderDebtors() {
     let debtorsHtml = ``
     for (let i = 0; i < users.length; i++) {
-        debtorsHtml += `<div class="debtor">
+        debtorsHtml += `<div class="debtor"><div>
         <input class="debtor_checkbox" type="checkbox" checked id="debtor${i}" name="debtor${i}" value="${users[i].id}">
-        <label for="debtor${i}">${users[i].name}</label>
+        <label for="debtor${i}">${users[i].name}</label></div>
         <input class="debt_amount" type="number" placeholder="0.00" oninput="calculateReceiptRemainBalance()">
     </div>`
     }
@@ -62,6 +63,10 @@ function savePayment() {
     const amount = paymentsAmountInput.value
     if(!amount) return
     if(paymentsFromUserSelect.value == paymentsToUserSelect.value) return
+
+    savePaymentButton.disabled = true
+	savePaymentButton.innerHTML = "Обработка..."
+    savePaymentButton.classList.add('disabled')
 
     const payment = {
         fromUserId: paymentsFromUserSelect.value,
@@ -81,6 +86,11 @@ function savePayment() {
     })
     .then((data) => {
 		console.log('add new payment: ', data)
+        playSuccessAnimation()
+        savePaymentButton.disabled = false
+	    savePaymentButton.innerHTML = "Добавить перевод"
+        savePaymentButton.classList.remove('disabled')
+        paymentsAmountInput.value = null
     })
     .catch(e => console.error(e))
 }
@@ -89,6 +99,10 @@ function savePayment() {
 function saveReceipt() {
     const amount = receiptsAmountInput.value
     if(!amount) return
+
+    addReceiptButton.disabled = true
+	addReceiptButton.innerHTML = "Обработка..."
+    addReceiptButton.classList.add('disabled')
 
     let debts = []
 
@@ -123,6 +137,12 @@ function saveReceipt() {
     })
     .then((data) => {
 		console.log('add new receipt: ', data)
+        playSuccessAnimation()
+        addReceiptButton.disabled = false
+	    addReceiptButton.innerHTML = "Оплатить счет"
+        addReceiptButton.classList.remove('disabled')
+        receiptsAmountInput.value = null
+        receiptsDescriptionInput.value = null
     })
     .catch(e => console.error(e))
 }
@@ -140,12 +160,13 @@ function divideMoneyAmongUsers() {
     const debtorAmount = (amount / debtors.length).toFixed(2)
     console.log(debtorAmount)
     for (let i = 0; i < debtors.length; i++) {
-        debtors[i].parentElement.querySelector(".debt_amount").value = debtorAmount
+        debtors[i].parentElement.parentElement.querySelector(".debt_amount").value = debtorAmount
     }
     calculateReceiptRemainBalance()
 }
 
 function calculateReceiptRemainBalance() {
+
     const amount = receiptsAmountInput.value
     if(!amount) {
         errorMessage.innerHTML = 'Остаток: 0 грн'
@@ -155,13 +176,18 @@ function calculateReceiptRemainBalance() {
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor input:checked")
     let debtorsSum = 0
     for (let i = 0; i < debtors.length; i++) {
-        debtorsSum += Number(debtors[i].parentElement.querySelector(".debt_amount").value)
+        debtorsSum += Number(debtors[i].parentElement.parentElement.querySelector(".debt_amount").value)
     }
     if(debtorsSum != amount) {
-        errorMessage.innerHTML = `Остаток: ${amount - debtorsSum} грн`
+        errorMessage.innerHTML = `Остаток: ${(amount - debtorsSum).toFixed(2)} грн`
         errorMessage.classList.add('red_color')
     } else {
         errorMessage.innerHTML = 'Остаток: 0 грн'
         errorMessage.classList.remove('red_color')
     }
+}
+
+function playSuccessAnimation() {
+    fullscreenAnimationContainer.classList.add('active')
+    setTimeout(() => fullscreenAnimationContainer.classList.remove('active'), 6000);
 }
