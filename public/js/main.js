@@ -61,7 +61,7 @@ function savePayment() {
     const payment = {
         fromUserId: paymentsFromUserSelect.value,
 		toUserId: paymentsToUserSelect.value,
-		amount: Number(amount),
+		amount: moneyToCoins(amount),
 	}
 
     fetch('/payments', {
@@ -93,7 +93,7 @@ function saveReceipt() {
         if(debtorCheckbox.checked) {
             debts.push({
                 debtorId: debtorCheckbox.value,
-                amount: Number(debtors[i].querySelector(".debt_amount").value)
+                amount: moneyToCoins(debtors[i].querySelector(".debt_amount").value)
             })
         }
         
@@ -101,7 +101,7 @@ function saveReceipt() {
 
     const receipt = {
         payerId: receiptsPayerSelect.value,
-        amount,
+        amount: moneyToCoins(amount),
         description: receiptsDescriptionInput.value,
         debts
 	}
@@ -121,3 +121,10 @@ function saveReceipt() {
     })
     .catch(e => console.error(e))
 }
+
+
+function moneyToCoins(money) {
+    money = Number(money) * 100
+    return money.toFixed()
+  }
+  
