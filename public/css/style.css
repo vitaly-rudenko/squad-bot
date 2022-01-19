@@ -89,5 +89,18 @@ body {
 #error_message {
     font-weight: 700;
     font-size: 15px;
+    color: #12a30f;
+}
+
+#error_message.red_color {
     color: red;
+}
+
+#divide_money_button {
+    background: none;
+    font-size: 15px;
+    color: rgb(226 152 17);
+    border: 2px solid rgb(226 152 17);
+    height: 37px;
+    margin: -10px 0 12px 0;
 }

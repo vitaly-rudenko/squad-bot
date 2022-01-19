@@ -8,11 +8,15 @@ const receiptsAmountInput = document.getElementById("receipts_amount_input")
 const receiptsDescriptionInput = document.getElementById("receipts_description_input")
 const receiptDebtorsContainer = document.getElementById("receipt_debtors_container")
 const addReceiptButton = document.getElementById("add_receipt_button")
+const divideMoneyButton = document.getElementById('divide_money_button')
+const errorMessage = document.getElementById('error_message')
 
 let users = []
 
 savePaymentButton.addEventListener('click', savePayment)
 addReceiptButton.addEventListener('click', saveReceipt)
+divideMoneyButton.addEventListener('click', divideMoneyAmongUsers)
+receiptsAmountInput.addEventListener('input', calculateReceiptRemainBalance)
 
 init()
 async function init() {
@@ -48,7 +52,7 @@ function renderDebtors() {
         debtorsHtml += `<div class="debtor">
         <input class="debtor_checkbox" type="checkbox" checked id="debtor${i}" name="debtor${i}" value="${users[i].id}">
         <label for="debtor${i}">${users[i].name}</label>
-        <input class="debt_amount" type="number" placeholder="0.00">
+        <input class="debt_amount" type="number" placeholder="0.00" oninput="calculateReceiptRemainBalance()">
     </div>`
     }
     receiptDebtorsContainer.innerHTML = debtorsHtml
@@ -57,6 +61,7 @@ function renderDebtors() {
 function savePayment() {
     const amount = paymentsAmountInput.value
     if(!amount) return
+    if(paymentsFromUserSelect.value == paymentsToUserSelect.value) return
 
     const payment = {
         fromUserId: paymentsFromUserSelect.value,
@@ -126,5 +131,37 @@ function saveReceipt() {
 function moneyToCoins(money) {
     money = Number(money) * 100
     return money.toFixed()
-  }
-  
+}
+
+function divideMoneyAmongUsers() {
+    const amount = receiptsAmountInput.value
+    if(!amount) return
+    const debtors = receiptDebtorsContainer.querySelectorAll(".debtor input:checked")
+    const debtorAmount = (amount / debtors.length).toFixed(2)
+    console.log(debtorAmount)
+    for (let i = 0; i < debtors.length; i++) {
+        debtors[i].parentElement.querySelector(".debt_amount").value = debtorAmount
+    }
+    calculateReceiptRemainBalance()
+}
+
+function calculateReceiptRemainBalance() {
+    const amount = receiptsAmountInput.value
+    if(!amount) {
+        errorMessage.innerHTML = 'Остаток: 0 грн'
+        errorMessage.classList.remove('red_color')
+        return
+    } 
+    const debtors = receiptDebtorsContainer.querySelectorAll(".debtor input:checked")
+    let debtorsSum = 0
+    for (let i = 0; i < debtors.length; i++) {
+        debtorsSum += Number(debtors[i].parentElement.querySelector(".debt_amount").value)
+    }
+    if(debtorsSum != amount) {
+        errorMessage.innerHTML = `Остаток: ${amount - debtorsSum} грн`
+        errorMessage.classList.add('red_color')
+    } else {
+        errorMessage.innerHTML = 'Остаток: 0 грн'
+        errorMessage.classList.remove('red_color')
+    }
+}
