@@ -189,7 +189,7 @@ export class PostgresStorage {
     const response = await this._client.query(`
       SELECT *
       FROM users
-      WHERE username = $1;
+      WHERE username ilike $1;
     `, [username])
 
     if (response.rowCount === 0) {
