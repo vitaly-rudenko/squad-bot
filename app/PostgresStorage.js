@@ -39,11 +39,25 @@ export class PostgresStorage {
     `, [paymentId])
   }
 
+  async deleteCardById(cardId) {
+    await this._client.query(`
+      DELETE FROM cards
+      WHERE id = $1;
+    `, [cardId])
+  }
+
   async createDebt({ debtorId, receiptId, amount }) {
     await this._client.query(`
       INSERT INTO debts (debtor_id, receipt_id, amount)
       VALUES ($1, $2, $3);
     `, [debtorId, receiptId, amount])
+  }
+
+  async createCard({ userId, bank, number }) {
+    await this._client.query(`
+      INSERT INTO cards (user_id, bank, number)
+      VALUES ($1, $2, $3);
+    `, [userId, bank, number])
   }
 
   async createUser({ id, username, name }) {
@@ -100,6 +114,38 @@ export class PostgresStorage {
     }))
   }
 
+  async getCardById(cardId) {
+    const response = await this._client.query(`
+      SELECT *
+      FROM cards
+      WHERE id = $1;
+    `, [cardId])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return this.deserializeCard(response.rows[0])
+  }
+
+  async findCardsByUserId(userId) {
+    const response = await this._client.query(`
+      SELECT *
+      FROM cards
+      WHERE user_id = $1;
+    `, [userId])
+
+    return response.rows.map(this.deserializeCard)
+  }
+
+  deserializeCard(row) {
+    return {
+      id: row['id'],
+      bank: row['bank'],
+      number: row['number'],
+    }
+  }
+
   async findPayments({ fromUserId = undefined, toUserId = undefined } = {}) {
     const conditions = []
     const variables = []
@@ -136,11 +182,43 @@ export class PostgresStorage {
       FROM users;
     `, [])
 
-    return response.rows.map(row => ({
+    return response.rows.map(this.deserializeUser)
+  }
+
+  async findUserByUsername(username) {
+    const response = await this._client.query(`
+      SELECT *
+      FROM users
+      WHERE username = $1;
+    `, [username])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return this.deserializeUser(response.rows[0])
+  }
+
+  async findUserById(userId) {
+    const response = await this._client.query(`
+      SELECT *
+      FROM users
+      WHERE id = $1;
+    `, [userId])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return this.deserializeUser(response.rows[0])
+  }
+
+  deserializeUser(row) {
+    return {
       id: row['id'],
       name: row['name'],
       username: row['username'],
-    }))
+    }
   }
 
   async aggregateIngoingDebts(payerId) {
