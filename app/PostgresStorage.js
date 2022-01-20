@@ -63,11 +63,63 @@ export class PostgresStorage {
     return response.rows[0]['id']
   }
 
-  async findPayments() {
+  async findReceipts() {
     const response = await this._client.query(`
       SELECT *
-      FROM payments;
+      FROM receipts
+      ORDER BY created_at DESC;
     `, [])
+
+    const receipts = []
+
+    for (const row of response.rows) {
+      receipts.push({
+        id: row['id'],
+        createdAt: new Date(row['created_at']),
+        payerId: row['payer_id'],
+        amount: row['amount'],
+        description: row['description'],
+        debts: await this.findDebtsByReceiptId(row['id'])
+      })
+    }
+
+    return receipts
+  }
+
+  async findDebtsByReceiptId(receiptId) {
+    const response = await this._client.query(`
+      SELECT debts.*
+      FROM debts
+      JOIN receipts ON receipts.id = debts.receipt_id
+      WHERE debts.receipt_id = $1;
+    `, [receiptId])
+
+    return response.rows.map(row => ({
+      debtorId: row['debtor_id'],
+      amount: row['amount'],
+    }))
+  }
+
+  async findPayments({ fromUserId = undefined, toUserId = undefined } = {}) {
+    const conditions = []
+    const variables = []
+
+    if (fromUserId) {
+      variables.push(fromUserId)
+      conditions.push(`from_user_id = $${variables.length}`)
+    }
+
+    if (toUserId) {
+      variables.push(toUserId)
+      conditions.push(`to_user_id = $${variables.length}`)
+    }
+
+    const response = await this._client.query(`
+      SELECT *
+      FROM payments
+      ${conditions.length === 0 ? '' : ('WHERE ' + conditions.join(' AND '))}
+      ORDER BY created_at DESC;
+    `, variables)
 
     return response.rows.map(row => ({
       id: row['id'],

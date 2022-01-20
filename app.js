@@ -133,7 +133,10 @@ import { receiptCommand } from './app/flows/receipt.js'
     res.sendStatus(200)
   })
 
-  // TODO: app.get('/receipts', async (req, res) => {})
+  app.get('/receipts', async (req, res) => {
+    const receipts = await storage.findReceipts()
+    res.json(receipts)
+  })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
     await storage.deleteReceiptById(req.params.receiptId)
@@ -141,7 +144,9 @@ import { receiptCommand } from './app/flows/receipt.js'
   })
 
   app.get('/payments', async (req, res) => {
-    const payments = await storage.findPayments()
+    const fromUserId = req.query['from_user_id']
+    const toUserId = req.query['to_user_id']
+    const payments = await storage.findPayments({ fromUserId, toUserId })
     res.json(payments)
   })
 
