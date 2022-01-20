@@ -53,10 +53,38 @@ import { receiptCommand } from './app/flows/receipt.js'
     }
   })
 
+  async function getDebtsByUserId(userId) {
+    const ingoingDebts = await storage.aggregateIngoingDebts(userId)
+    const outgoingDebts = await storage.aggregateOutgoingDebts(userId)
+
+    return {
+      ingoingDebts: ingoingDebts
+        .map(debt => {
+          const outgoingDebt = outgoingDebts.find(d => d.userId === debt.userId)
+
+          return {
+            userId: debt.userId,
+            amount: debt.amount - (outgoingDebt?.amount ?? 0),
+          }
+        })
+        .filter(debt => debt.amount > 0),
+      outgoingDebts: outgoingDebts
+        .map(debt => {
+          const ingoingDebt = ingoingDebts.find(d => d.userId === debt.userId)
+
+          return {
+            userId: debt.userId,
+            amount: debt.amount - (ingoingDebt?.amount ?? 0),
+          }
+        })
+        .filter(debt => debt.amount > 0),
+    }
+  }
+
   bot.command('version', versionCommand())
   bot.command('register', registerCommand({ storage }))
   bot.command('users', usersCommand({ storage }))
-  bot.command('debts', debtsCommand({ storage }))
+  bot.command('debts', debtsCommand({ storage, getDebtsByUserId }))
   bot.command('receipt', receiptCommand())
 
   bot.catch((error) => logError(error))
@@ -108,8 +136,13 @@ import { receiptCommand } from './app/flows/receipt.js'
 
   app.post('/users', async (req, res) => {
     const { id, username, name } = req.body
-    await storage.createUser({ id, username, name })
-    res.sendStatus(200)
+
+    try {
+      await storage.createUser({ id, username, name })
+      res.sendStatus(200)
+    } catch (error) {
+      res.sendStatus(409)
+    }
   })
 
   app.get('/users', async (req, res) => {
@@ -150,16 +183,9 @@ import { receiptCommand } from './app/flows/receipt.js'
     res.json(payments)
   })
 
-  app.get('/my-debts/:userId', async (req, res) => {
-    const userId = req.params.userId
-
-    const ingoingDebts = await storage.aggregateIngoingDebts(userId)
-    const outgoingDebts = await storage.aggregateOutgoingDebts(userId)
-
-    res.json({
-      ingoingDebts,
-      outgoingDebts,
-    })
+  app.get('/debts/:userId', async (req, res) => {
+    const debts = await getDebtsByUserId(req.params.userId)
+    res.json(debts)
   })
 
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
