@@ -124,7 +124,11 @@ export function cardsGet({ storage, userSessionManager }) {
     const cards = await storage.findCardsByUserId(user.id)
 
     if (cards.length === 0) {
-      await context.reply('У тебя нет карт. Добавить карту можно с помощью /addcard')
+      await context.reply(
+        username
+          ? 'У пользователя еще нет карт.'
+          : 'У тебя нет карт. Добавить карту можно с помощью /addcard'
+      )
       return
     }
 
