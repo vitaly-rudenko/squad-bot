@@ -1,10 +1,10 @@
 export function startCommand({ storage }) {
   return async (context) => {
-    const { id, first_name: name, username } = context.from
+    const { first_name: name, username } = context.from
 
     try {
       await storage.createUser({
-        id: String(id),
+        id: context.state.userId,
         name,
         username: username || null,
       })
