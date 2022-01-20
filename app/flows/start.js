@@ -1,4 +1,4 @@
-export function registerCommand({ storage }) {
+export function startCommand({ storage }) {
   return async (context) => {
     const { id, first_name: name, username } = context.from
 

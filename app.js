@@ -8,7 +8,7 @@ import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
 
 import { PostgresStorage } from './app/PostgresStorage.js'
-import { registerCommand } from './app/flows/register.js'
+import { startCommand } from './app/flows/start.js'
 import { usersCommand } from './app/flows/users.js'
 import { debtsCommand } from './app/flows/debts.js'
 import { receiptCommand } from './app/flows/receipt.js'
@@ -23,7 +23,7 @@ import { receiptCommand } from './app/flows/receipt.js'
   const bot = new Telegraf(telegramBotToken)
 
   bot.telegram.setMyCommands(
-    ['receipt', 'debts', 'register', 'users', 'version']
+    ['receipt', 'debts', 'start', 'register', 'users', 'version']
       .map(command => ({
         command: `/${command}`,
         description: command[0].toUpperCase() + command.slice(1),
@@ -46,12 +46,6 @@ import { receiptCommand } from './app/flows/receipt.js'
       console.warn('Could not post log to debug chat:', error)
     }
   }
-
-  bot.use(async (context, next) => {
-    if (context.chat.type === 'group' || context.chat.type === 'supergroup') {
-      await next()
-    }
-  })
 
   async function getDebtsByUserId(userId) {
     const ingoingDebts = await storage.aggregateIngoingDebts(userId)
@@ -82,7 +76,8 @@ import { receiptCommand } from './app/flows/receipt.js'
   }
 
   bot.command('version', versionCommand())
-  bot.command('register', registerCommand({ storage }))
+  bot.command('register', startCommand({ storage }))
+  bot.command('start', startCommand({ storage }))
   bot.command('users', usersCommand({ storage }))
   bot.command('debts', debtsCommand({ storage, getDebtsByUserId }))
   bot.command('receipt', receiptCommand())
