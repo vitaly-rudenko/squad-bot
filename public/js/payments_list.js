@@ -25,7 +25,7 @@ function showPayments() {
     let paymentsHtml = ``
     for (let i = 0; i < payments.length; i++) {
         paymentsHtml += `<div class="payment_list_item" onclick="toggleActiveItem(this)">
-        <img src="../public/img/payment_arrow.png">
+        <img src="/static/img/payment_arrow.png">
         <div class="main">
             <div>
                 <div class="from_user">${getUserNameById(payments[i].fromUserId)}</div>
