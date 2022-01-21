@@ -12,6 +12,11 @@ import { startCommand } from './app/flows/start.js'
 import { usersCommand } from './app/flows/users.js'
 import { debtsCommand } from './app/flows/debts.js'
 import { receiptCommand } from './app/flows/receipt.js'
+import { withUserId } from './app/withUserId.js'
+import { withPhaseFactory } from './app/withPhaseFactory.js'
+import { UserSessionManager } from './app/utils/UserSessionManager.js'
+import { phases } from './app/phases.js'
+import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction } from './app/flows/cards.js'
 
 (async () => {
   const storage = new PostgresStorage(process.env.DATABASE_URL)
@@ -23,7 +28,7 @@ import { receiptCommand } from './app/flows/receipt.js'
   const bot = new Telegraf(telegramBotToken)
 
   bot.telegram.setMyCommands(
-    ['receipt', 'debts', 'start', 'register', 'users', 'version']
+    ['receipt', 'debts', 'start', 'addcard', 'deletecard', 'cards', 'register', 'users', 'version']
       .map(command => ({
         command: `/${command}`,
         description: command[0].toUpperCase() + command.slice(1),
@@ -75,12 +80,35 @@ import { receiptCommand } from './app/flows/receipt.js'
     }
   }
 
+  const userSessionManager = new UserSessionManager()
+  const withPhase = withPhaseFactory(userSessionManager)
+
+  bot.use(withUserId())
+
   bot.command('version', versionCommand())
-  bot.command('register', startCommand({ storage }))
   bot.command('start', startCommand({ storage }))
+  bot.command('register', startCommand({ storage }))
   bot.command('users', usersCommand({ storage }))
   bot.command('debts', debtsCommand({ storage, getDebtsByUserId }))
   bot.command('receipt', receiptCommand())
+
+  bot.command('addcard', cardsAddCommand({ userSessionManager }))
+  bot.action(/cards:add:bank:(.+)/, withPhase(phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
+
+  bot.command('deletecard', cardsDeleteCommand({ storage, userSessionManager }))
+  bot.action(/cards:delete:id:(.+)/, withPhase(phases.deleteCard.id, cardsDeleteIdAction({ storage, userSessionManager })))
+
+  bot.command('cards', cardsGet({ storage, userSessionManager }))
+  bot.action(/cards:get:id:(.+)/, withPhase(phases.getCard.id, cardsGetIdAction({ storage, userSessionManager })))
+
+  bot.on('message',
+    async (context, next) => {
+      if ('text' in context.message && context.message.text.startsWith('/')) return;
+      await next();
+    },
+    // Cards
+    withPhase(phases.addCard.number, cardsAddNumberMessage({ storage, userSessionManager }))
+  )
 
   bot.catch((error) => logError(error))
 

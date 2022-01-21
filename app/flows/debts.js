@@ -2,11 +2,9 @@ import { renderMoney } from '../renderMoney.js'
 
 export function debtsCommand({ storage, getDebtsByUserId }) {
   return async (context) => {
-    const userId = String(context.from.id)
-
     const users = await storage.findUsers()
 
-    const { ingoingDebts, outgoingDebts } = await getDebtsByUserId(userId)
+    const { ingoingDebts, outgoingDebts } = await getDebtsByUserId(context.state.userId)
 
     function getUserName(id) {
       const user = users.find(u => u.id === id)
