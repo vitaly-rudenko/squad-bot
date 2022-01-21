@@ -76,6 +76,7 @@ function deleteReceiptById(receiptId) {
         method: 'DELETE'
     })
     .then((data) => {
+        console.log(data)
 		if(data == "OK") {
             console.log('receipt deleted')
             getReceipts().then((response) => {
