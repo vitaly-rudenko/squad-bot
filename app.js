@@ -154,7 +154,19 @@ import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDelete
   app.set("view engine", "html")
 
   app.get('/', async (req, res) => {
-    res.render('index')
+    res.render('receipt')
+  })
+  
+  app.get('/paymentview', async (req, res) => {
+    res.render('payment')
+  })
+  
+  app.get('/paymentslist', async (req, res) => {
+    res.render('payments_list')
+  })
+  
+  app.get('/receiptslist', async (req, res) => {
+    res.render('receipts_list')
   })
 
   app.post('/users', async (req, res) => {
