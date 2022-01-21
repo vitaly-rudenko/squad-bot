@@ -34,7 +34,7 @@ import { paymentsGetCommand } from './app/flows/payments.js'
     { command: 'payments', description: 'Добавить/посмотреть платежи' },
     { command: 'cards', description: 'Посмотреть банковские карты пользователя' },
     { command: 'addcard', description: 'Добавить банковскую карту' },
-    { command: 'deletecard', description: 'Удалдить банковскую карту' },
+    { command: 'deletecard', description: 'Удалить банковскую карту' },
     { command: 'start', description: 'Зарегистрироваться' },
     { command: 'register', description: 'Зарегистрироваться' },
     { command: 'users', description: 'Список пользователей' },
