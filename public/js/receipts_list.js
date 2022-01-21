@@ -78,10 +78,8 @@ function deleteReceiptById(receiptId) {
     .then((response) => {
 		if(response.statusText == "OK") {
             console.log('receipt deleted')
-            getReceipts().then((response1) => {
-                return response1.json()
-            }).then((data1) => {
-               receipts = data1
+            getReceipts().then((data) => {
+               receipts = data
                showReceipts()
             })
             
