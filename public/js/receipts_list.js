@@ -45,6 +45,6 @@ function showReceipts() {
 }
 
 function getUserNameById(userId) {
-    const user = users.find(u => u.id = userId)
+    const user = users.find(u => u.id == userId)
     return user.name
 }

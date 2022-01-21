@@ -42,5 +42,5 @@ function renderDate(myDate) {
     const year = myDate.getFullYear()
     const month = myDate.getMonth() + 1
     //19.02.2021
-    return `${day < 10 ? '0' + day : day} ${month < 10 ? '0' + month : month} ${year}`
+    return `${day < 10 ? '0' + day : day}.${month < 10 ? '0' + month : month}.${year}`
 }
