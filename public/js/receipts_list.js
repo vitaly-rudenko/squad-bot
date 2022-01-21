@@ -69,7 +69,6 @@ function showReceipts() {
 
 function deleteReceiptById(receiptId) {
     event.stopPropagation()
-    contextMenu.classList.remove("active")
 
     fetch(`/receipts/${receiptId}`, {
         method: 'DELETE',
