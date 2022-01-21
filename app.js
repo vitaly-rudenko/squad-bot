@@ -27,13 +27,18 @@ import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDelete
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
 
-  bot.telegram.setMyCommands(
-    ['receipt', 'debts', 'start', 'addcard', 'deletecard', 'cards', 'register', 'users', 'version']
-      .map(command => ({
-        command: `/${command}`,
-        description: command[0].toUpperCase() + command.slice(1),
-      }))
-)
+  bot.telegram.setMyCommands([
+    { command: 'debts', description: 'Посчитать долги' },
+    { command: 'receipts', description: 'Добавить/посмотреть чеки' },
+    { command: 'payments', description: 'Добавить/посмотреть платежи' },
+    { command: 'cards', description: 'Посмотреть банковские карты пользователя' },
+    { command: 'addcard', description: 'Добавить банковскую карту' },
+    { command: 'deletecard', description: 'Удалдить банковскую карту' },
+    { command: 'start', description: 'Зарегистрироваться' },
+    { command: 'register', description: 'Зарегистрироваться' },
+    { command: 'users', description: 'Список пользователей' },
+    { command: 'version', description: 'Версия' },
+  ])
 
   process.on('unhandledRejection', async (error) => {
     await logError(error)
