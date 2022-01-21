@@ -117,6 +117,12 @@ export function cardsGetUserIdAction({ storage, userSessionManager }) {
 
     const userId = context.match[1]
     const user = await storage.findUserById(userId)
+
+    if (!user) {
+      await context.reply('Пользователь еще не зарегистрирован.')
+      return
+    }
+
     const myself = context.state.userId === userId
     
     const cards = await storage.findCardsByUserId(userId)
@@ -125,7 +131,7 @@ export function cardsGetUserIdAction({ storage, userSessionManager }) {
       await context.reply(
         myself
           ? 'У тебя нет карт. Добавить карту можно с помощью /addcard'
-          : 'У пользователя еще нет карт.'
+          : `У пользователя ${user.name} еще нет карт.`
       )
       return
     }
