@@ -92,47 +92,45 @@ export function cardsDeleteIdAction({ storage, userSessionManager }) {
   }
 }
 
-const GET_CARDS_REGEX = /\/cards( (?<username>.+))?/s
-
 export function cardsGet({ storage, userSessionManager }) {
-  return async (context, next) => {
-    console.log(context.message.text)
-    if (!GET_CARDS_REGEX.test(context.message.text)) {
-      await next()
-      return
-    }
+  return async (context) => {
+    const users = await storage.findUsers()
 
-    const match = context.message.text.match(GET_CARDS_REGEX)
-    let { username } = match.groups
+    await context.reply('Выбери пользователя', {
+      reply_markup: Markup.inlineKeyboard(
+        users.map(user => Markup.button.callback(
+          `${user.name} (@${user.username})`,
+          `cards:get:user-id:${user.id}`
+        )),
+        { columns: 2 }
+      ).reply_markup
+    })
 
-    let user
-    if (username) {
-      if (username.startsWith('@')) {
-        username = username.slice(1)
-      }
+    userSessionManager.setPhase(context.state.userId, phases.getCard.userId)
+  }
+}
 
-      user = await storage.findUserByUsername(username)
-    } else {
-      user = await storage.findUserById(context.state.userId)
-    }
+export function cardsGetUserIdAction({ storage, userSessionManager }) {
+  return async (context) => {
+    await context.answerCbQuery()
+    await context.deleteMessage()
 
-    if (!user) {
-      await context.reply('Не могу найти этого пользователя')
-      return
-    }
-
-    const cards = await storage.findCardsByUserId(user.id)
+    const userId = context.match[1]
+    const user = await storage.findUserById(userId)
+    const myself = context.state.userId === userId
+    
+    const cards = await storage.findCardsByUserId(userId)
 
     if (cards.length === 0) {
       await context.reply(
-        username
-          ? 'У пользователя еще нет карт.'
-          : 'У тебя нет карт. Добавить карту можно с помощью /addcard'
+        myself
+          ? 'У тебя нет карт. Добавить карту можно с помощью /addcard'
+          : 'У пользователя еще нет карт.'
       )
       return
     }
 
-    await context.reply(`Выбери карту пользователя ${user.name}`, {
+    await context.reply(myself ? 'Выбери свою карту' : `Выбери карту пользователя ${user.name}`, {
       reply_markup: Markup.inlineKeyboard(
         cards.map(card => Markup.button.callback(
           `${card.number} (${card.bank})`,

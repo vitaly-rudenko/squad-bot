@@ -7,6 +7,7 @@ export const phases = organizeValues({
     id: '',
   },
   getCard: {
+    userId: '',
     id: '',
   }
 })

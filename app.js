@@ -11,12 +11,13 @@ import { PostgresStorage } from './app/PostgresStorage.js'
 import { startCommand } from './app/flows/start.js'
 import { usersCommand } from './app/flows/users.js'
 import { debtsCommand } from './app/flows/debts.js'
-import { receiptCommand } from './app/flows/receipt.js'
+import { receiptsGetCommand } from './app/flows/receipts.js'
 import { withUserId } from './app/withUserId.js'
 import { withPhaseFactory } from './app/withPhaseFactory.js'
 import { UserSessionManager } from './app/utils/UserSessionManager.js'
 import { phases } from './app/phases.js'
-import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction } from './app/flows/cards.js'
+import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/flows/cards.js'
+import { paymentsGetCommand } from './app/flows/payments.js'
 
 (async () => {
   const storage = new PostgresStorage(process.env.DATABASE_URL)
@@ -105,6 +106,7 @@ import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDelete
   bot.action(/cards:delete:id:(.+)/, withPhase(phases.deleteCard.id, cardsDeleteIdAction({ storage, userSessionManager })))
 
   bot.command('cards', cardsGet({ storage, userSessionManager }))
+  bot.action(/cards:get:user-id:(.+)/, withPhase(phases.getCard.userId, cardsGetUserIdAction({ storage, userSessionManager })))
   bot.action(/cards:get:id:(.+)/, withPhase(phases.getCard.id, cardsGetIdAction({ storage, userSessionManager })))
 
   bot.on('message',
