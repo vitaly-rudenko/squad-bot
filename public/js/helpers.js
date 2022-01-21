@@ -18,6 +18,14 @@ function moneyToCoins(money) {
     return money.toFixed()
 }
 
+function renderMoney(money) {
+    money = money / 100
+
+    return money.toFixed(2).endsWith('00')
+      ? money.toFixed(0)
+      : money.toFixed(2)
+}
+
 async function getUsers() {
     const response = await fetch('/users', {
         method: 'GET',
@@ -27,4 +35,12 @@ async function getUsers() {
     })
     const usersData = await response.json()
     return usersData
+}
+
+function renderDate(myDate) {
+    const day = myDate.getDate()
+    const year = myDate.getFullYear()
+    const month = myDate.getMonth() + 1
+    //19.02.2021
+    return `${day < 10 ? '0' + day : day} ${month < 10 ? '0' + month : month} ${year}`
 }

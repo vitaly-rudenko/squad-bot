@@ -116,6 +116,51 @@ a {
     margin: -10px 0 12px 0;
 }
 
+.grey_background {
+    background: #e8e8e8;
+}
+
+/* receipts list */
+
+.receipt_list_item {
+    padding: 15px;
+    background: #fff;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    flex-direction: column;
+    border: none;
+    width: 100%;
+    box-sizing: border-box;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-gap: 0.6vw;
+    box-shadow: 0px 2px 11px -5px #999999;
+}
+
+.receipt_list_item .payer, .receipt_list_item .debtor, .receipt_list_item .comment_item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+.receipt_list_item .payer {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #e0830f;
+}
+.receipt_list_item .comment_item {
+    color: grey;
+    margin-top: 14px;
+    margin-bottom: 0;
+    align-items: flex-end;
+    font-size: 13px;
+}
+.receipt_list_item .comment_item > div:nth-child(1) {
+    padding-right: 12px;
+}
+
+/* animations */
 
 #fullscreen_animation_container {
     position: fixed;
