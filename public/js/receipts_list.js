@@ -46,5 +46,6 @@ function showReceipts() {
 
 function getUserNameById(userId) {
     const user = users.find(u => u.id == userId)
-    return user.name
+    if(user) return user.name
+    else return `Хз кто это`
 }
