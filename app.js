@@ -95,7 +95,8 @@ import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDelete
   bot.command('register', startCommand({ storage }))
   bot.command('users', usersCommand({ storage }))
   bot.command('debts', debtsCommand({ storage, getDebtsByUserId }))
-  bot.command('receipt', receiptCommand())
+  bot.command('receipts', receiptsGetCommand())
+  bot.command('payments', paymentsGetCommand())
 
   bot.command('addcard', cardsAddCommand({ userSessionManager }))
   bot.action(/cards:add:bank:(.+)/, withPhase(phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
