@@ -26,7 +26,7 @@ function showReceipts() {
     for (let i = 0; i < receipts.length; i++) {
         receiptsHtml += `<div class="receipt_list_item" onclick="toggleActiveItem(this)">
         <div class="payer">
-            <div>${getUserNameById(receipts[i].payerId)})</div>
+            <div>${getUserNameById(receipts[i].payerId)}</div>
             <div>${renderMoney(receipts[i].amount)} грн</div>
         </div>`
 
@@ -70,14 +70,10 @@ function showReceipts() {
 function deleteReceiptById(receiptId) {
     event.stopPropagation()
 
+    if (!confirm("Удалить чек?")) return
+
     fetch(`/receipts/${receiptId}`, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then((response) => {
-        return response.json();
+        method: 'DELETE'
     })
     .then((data) => {
 		if(data == "OK") {
