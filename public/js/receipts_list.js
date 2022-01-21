@@ -75,14 +75,13 @@ function deleteReceiptById(receiptId) {
     fetch(`/receipts/${receiptId}`, {
         method: 'DELETE'
     })
-    .then((data) => {
-        console.log(data)
-		if(data == "OK") {
+    .then((response) => {
+		if(response.statusText == "OK") {
             console.log('receipt deleted')
-            getReceipts().then((response) => {
-                return response.json();
-            }).then((data) => {
-               receipts = data
+            getReceipts().then((response1) => {
+                return response1.json()
+            }).then((data1) => {
+               receipts = data1
                showReceipts()
             })
             
