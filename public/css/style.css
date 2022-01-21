@@ -8,6 +8,10 @@ body {
     padding: 0;
 }
 
+a {
+    text-decoration: none;
+}
+
 .container {
     width: 100%;
     max-width: 500px;
@@ -112,6 +116,126 @@ body {
     margin: -10px 0 12px 0;
 }
 
+.grey_background {
+    background: #e8e8e8;
+}
+
+/* receipts list */
+
+.receipt_list_item {
+    padding: 15px;
+    background: #fff;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    flex-direction: column;
+    border: none;
+    width: 100%;
+    box-sizing: border-box;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-gap: 0.6vw;
+    box-shadow: 0px 2px 11px -5px #999999;
+}
+
+.receipt_list_item .payer, .receipt_list_item .debtor, .receipt_list_item .comment_item, .receipt_list_item .action_buttons, .payment_list_item .action_buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+.receipt_list_item .payer {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #098709;
+}
+.receipt_list_item .comment_item {
+    color: grey;
+    margin-top: 14px;
+    margin-bottom: 0;
+    align-items: flex-end;
+    font-size: 13px;
+}
+
+.receipt_list_item.active .action_buttons_container, .payment_list_item.active .action_buttons_container {
+    max-height: 100px;
+    transition: max-height 0.5s linear;
+}
+.receipt_list_item .action_buttons_container, .payment_list_item .action_buttons_container {
+    max-height: 0px;
+    transition: max-height 0.5s linear;
+    overflow: hidden;
+}
+
+.receipt_list_item .comment_item > div:nth-child(1) {
+    padding-right: 12px;
+}
+
+.receipt_list_item .action_buttons, .payment_list_item .action_buttons {
+    align-items: center;
+    font-size: 14px;
+    padding-top: 23px;
+}
+.receipt_list_item .action_buttons > div, .payment_list_item .action_buttons > div {
+    display: flex;
+    align-items: center;
+}
+.receipt_list_item .action_buttons > div:hover {
+    cursor: pointer;
+}
+.receipt_list_item .action_buttons > div svg, .payment_list_item .action_buttons > div svg {
+    margin-right: 5px;
+}
+.yellow_color {
+    color: #e0830f;
+}
+.red_color {
+    color: #d20d0d;
+}
+
+
+
+/* payments list */
+
+.payment_list_item {
+    padding: 15px;
+    background: #fff;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    border: none;
+    width: 100%;
+    box-shadow: 0px 2px 11px -5px #999999;
+    position: relative;
+}
+.payment_list_item .main {
+    display: flex;
+    justify-content: space-between;
+    padding-left: 24px;
+}
+.payment_list_item .main > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.payment_list_item .amount {
+    text-align: right;
+    font-size: 17px;
+}
+.payment_list_item .date {
+    text-align: right;
+    color: #9a9a9a;
+    font-size: 14px;
+}
+.payment_list_item > img {
+    position: absolute;
+    left: 9px;
+    transform: rotate(-40deg);
+    top: 22px;
+    width: 27px;
+    opacity: 0.7;
+}
+
+/* animations */
 
 #fullscreen_animation_container {
     position: fixed;
