@@ -7,13 +7,13 @@ services:
       dockerfile: docker/Dockerfile
     depends_on:
       - postgres
-      - localtunnel
+      - serveo
     environment:
       USE_NATIVE_ENV: "true"
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@postgres:5432/squadbot"
       TELEGRAM_BOT_TOKEN: "<your telegram bot token>"
       DEBUG_CHAT_ID: "-123456789"
-      DOMAIN: "https://squadbot-staging.loca.lt"
+      DOMAIN: "https://squadbot.vitaly-rudenko.com"
       PORT: "1234"
     volumes:
       - .:/squadbot
@@ -29,9 +29,17 @@ services:
       POSTGRES_USER: "squadbot"
       POSTGRES_PASSWORD: "p4ssw0rd"
 
-  localtunnel:
-    container_name: localtunnel
-    image: efrecon/localtunnel
-    restart: always
-    command:
-      --local-host bot --print-requests --port 1234 --subdomain squadbot-staging
+  serveo:
+    container_name: serveo
+    image: taichunmin/serveo:latest
+    tty: true
+    stdin_open: true
+    command: >
+      autossh -M 0
+      -o ServerAliveInterval=60
+      -o ServerAliveCountMax=3
+      -o ExitOnForwardFailure=yes
+      -o StrictHostKeyChecking=no
+      -R squadbot.vitaly-rudenko.com:80:bot:1234
+      -p 2222
+      squadbot.vitaly-rudenko.com
