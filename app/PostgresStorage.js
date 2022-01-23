@@ -223,13 +223,25 @@ export class PostgresStorage {
 
   async aggregateIngoingDebts(payerId) {
     const response = await this._client.query(`
-      SELECT SUM(debts.amount) - SUM(COALESCE(payments.amount, 0)) as amount, debtor_id
-      FROM debts
-      LEFT JOIN receipts ON debts.receipt_id = receipts.id
-      LEFT join payments on debts.debtor_id = payments.from_user_id and receipts.payer_id = payments.to_user_id 
-      WHERE payer_id = $1 AND debtor_id != payer_id
-      GROUP BY debtor_id, payments.from_user_id
-      having SUM(debts.amount) - SUM(COALESCE(payments.amount, 0)) > 0;
+      SELECT
+        (SUM(d.amount) - COALESCE((
+          SELECT SUM(p.amount)
+          FROM payments p
+          WHERE d.debtor_id = p.from_user_id AND r.payer_id = p.to_user_id 
+        ), 0)) AS amount,
+        d.debtor_id
+      FROM debts d
+      LEFT JOIN receipts r ON d.receipt_id = r.id
+      WHERE r.payer_id = $1
+        AND d.debtor_id != r.payer_id
+      GROUP BY d.debtor_id, r.payer_id
+      HAVING (
+        SUM(d.amount) - COALESCE((
+          SELECT SUM(p.amount)
+          FROM payments p
+          WHERE d.debtor_id = p.from_user_id AND r.payer_id = p.to_user_id 
+        ), 0)
+      ) > 0;
     `, [payerId])
 
     return response.rows.map(row => ({
@@ -240,13 +252,25 @@ export class PostgresStorage {
 
   async aggregateOutgoingDebts(debtorId) {
     const response = await this._client.query(`
-      SELECT SUM(debts.amount) - SUM(COALESCE(payments.amount, 0)) as amount, payer_id
-      FROM debts
-      LEFT JOIN receipts ON debts.receipt_id = receipts.id
-      LEFT join payments on debts.debtor_id = payments.from_user_id and receipts.payer_id = payments.to_user_id 
-      WHERE debtor_id = $1 AND debtor_id != payer_id
-      GROUP BY payer_id, payments.to_user_id
-      having SUM(debts.amount) - SUM(COALESCE(payments.amount, 0)) > 0;
+      SELECT
+        (SUM(d.amount) - COALESCE((
+          SELECT SUM(p.amount)
+          FROM payments p
+          WHERE d.debtor_id = p.from_user_id AND r.payer_id = p.to_user_id 
+        ), 0)) AS amount,
+        r.payer_id
+      FROM debts d
+      LEFT JOIN receipts r ON d.receipt_id = r.id
+      WHERE d.debtor_id = $1
+        AND d.debtor_id != r.payer_id
+      GROUP BY d.debtor_id, r.payer_id
+      HAVING (
+        SUM(d.amount) - COALESCE((
+          SELECT SUM(p.amount)
+          FROM payments p
+          WHERE d.debtor_id = p.from_user_id AND r.payer_id = p.to_user_id 
+        ), 0)
+      ) > 0;
     `, [debtorId])
 
     return response.rows.map(row => ({

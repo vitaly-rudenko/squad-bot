@@ -1,7 +1,7 @@
 version: '3.7'
 services:
-  bot:
-    container_name: bot
+  squadbot:
+    container_name: squadbot
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -13,10 +13,12 @@ services:
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@postgres:5432/squadbot"
       TELEGRAM_BOT_TOKEN: "<your telegram bot token>"
       DEBUG_CHAT_ID: "-123456789"
-      DOMAIN: "https://squadbot.vitaly-rudenko.com"
+      DOMAIN: "<webhook domain>"
       PORT: "1234"
     volumes:
       - .:/squadbot
+    ports:
+      - 3001:1234
     command: |
       ./wait-for-it.sh postgres:5432 -t 120 --
       npm start
@@ -40,6 +42,6 @@ services:
       -o ServerAliveCountMax=3
       -o ExitOnForwardFailure=yes
       -o StrictHostKeyChecking=no
-      -R squadbot.vitaly-rudenko.com:80:bot:1234
+      -R squadbot.vitaly-rudenko.com:80:squadbot:1234
       -p 2222
-      squadbot.vitaly-rudenko.com
+      vitaly-rudenko.com
