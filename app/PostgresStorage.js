@@ -221,61 +221,61 @@ export class PostgresStorage {
     }
   }
 
-  async aggregateIngoingDebts(payerId) {
+  async getIngoingDebts(payerId) {
     const response = await this._client.query(`
-      SELECT
-        (SUM(d.amount) - COALESCE((
-          SELECT SUM(p.amount)
-          FROM payments p
-          WHERE d.debtor_id = p.from_user_id AND r.payer_id = p.to_user_id 
-        ), 0)) AS amount,
-        d.debtor_id
+      SELECT SUM(d.amount) AS amount, d.debtor_id
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
-      WHERE r.payer_id = $1
-        AND d.debtor_id != r.payer_id
-      GROUP BY d.debtor_id, r.payer_id
-      HAVING (
-        SUM(d.amount) - COALESCE((
-          SELECT SUM(p.amount)
-          FROM payments p
-          WHERE d.debtor_id = p.from_user_id AND r.payer_id = p.to_user_id 
-        ), 0)
-      ) > 0;
+      WHERE r.payer_id = $1 AND d.debtor_id != r.payer_id
+      GROUP BY d.debtor_id, r.payer_id;
     `, [payerId])
 
     return response.rows.map(row => ({
       userId: row['debtor_id'],
-      amount: row['amount'],
+      amount: Number(row['amount']),
     }))
   }
 
-  async aggregateOutgoingDebts(debtorId) {
+  async getOutgoingDebts(debtorId) {
     const response = await this._client.query(`
-      SELECT
-        (SUM(d.amount) - COALESCE((
-          SELECT SUM(p.amount)
-          FROM payments p
-          WHERE d.debtor_id = p.from_user_id AND r.payer_id = p.to_user_id 
-        ), 0)) AS amount,
-        r.payer_id
+      SELECT SUM(d.amount) AS amount, r.payer_id
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
-      WHERE d.debtor_id = $1
-        AND d.debtor_id != r.payer_id
-      GROUP BY d.debtor_id, r.payer_id
-      HAVING (
-        SUM(d.amount) - COALESCE((
-          SELECT SUM(p.amount)
-          FROM payments p
-          WHERE d.debtor_id = p.from_user_id AND r.payer_id = p.to_user_id 
-        ), 0)
-      ) > 0;
+      WHERE d.debtor_id = $1 AND d.debtor_id != r.payer_id
+      GROUP BY d.debtor_id, r.payer_id;
     `, [debtorId])
 
     return response.rows.map(row => ({
       userId: row['payer_id'],
-      amount: row['amount'],
+      amount: Number(row['amount']),
+    }))
+  }
+
+  async getIngoingPayments(toUserId) {
+    const response = await this._client.query(`
+      SELECT SUM(p.amount) AS amount, p.from_user_id
+      FROM payments p
+      WHERE p.to_user_id = $1
+      GROUP BY p.from_user_id;
+    `, [toUserId])
+
+    return response.rows.map(row => ({
+      userId: row['from_user_id'],
+      amount: Number(row['amount']),
+    }))
+  }
+
+  async getOutgoingPayments(fromUserId) {
+    const response = await this._client.query(`
+      SELECT SUM(p.amount) AS amount, p.to_user_id
+      FROM payments p
+      WHERE p.from_user_id = $1
+      GROUP BY p.to_user_id;
+    `, [fromUserId])
+
+    return response.rows.map(row => ({
+      userId: row['to_user_id'],
+      amount: Number(row['amount']),
     }))
   }
 }
