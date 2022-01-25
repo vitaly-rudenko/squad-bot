@@ -41,7 +41,7 @@ async function createUser(index = null) {
 async function createUsers(count) {
   const users = []
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 1; i <= count; i++) {
     users.push(await createUser(i))
   }
 
@@ -285,18 +285,31 @@ describe('[debts]', () => {
         outgoingDebts: [],
       })
 
-      // expect(await getDebts(user2.id)).to.deep.equalInAnyOrder({
-      //   ingoingDebts: [],
-      //   outgoingDebts: [],
-      // })
+      expect(await getDebts(user2.id)).to.deep.equalInAnyOrder({
+        ingoingDebts: [{
+          userId: user3.id,
+          amount: 3,
+        }],
+        outgoingDebts: [],
+      })
 
-      // expect(await getDebts(user3.id)).to.deep.equalInAnyOrder({
-      //   ingoingDebts: [],
-      //   outgoingDebts: [{
-      //     userId: user1.id,
-      //     amount: 2,
-      //   }],
-      // })
+      expect(await getDebts(user3.id)).to.deep.equalInAnyOrder({
+        ingoingDebts: [],
+        outgoingDebts: [{
+          userId: user1.id,
+          amount: 2,
+        }, {
+          userId: user2.id,
+          amount: 3,
+        }],
+      })
+
+      await createPayment(user3.id, user2.id, 3) // return overpayment
+      await createPayment(user3.id, user1.id, 2) // return remaining debt
+
+      expect(await getDebts(user1.id)).to.deep.equalInAnyOrder(NO_DEBTS)
+      expect(await getDebts(user2.id)).to.deep.equalInAnyOrder(NO_DEBTS)
+      expect(await getDebts(user3.id)).to.deep.equalInAnyOrder(NO_DEBTS)
     })
   })
 })
