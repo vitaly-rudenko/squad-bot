@@ -59,30 +59,41 @@ import { paymentsGetCommand } from './app/flows/payments.js'
   }
 
   async function getDebtsByUserId(userId) {
-    const ingoingDebts = await storage.aggregateIngoingDebts(userId)
-    const outgoingDebts = await storage.aggregateOutgoingDebts(userId)
+    const ingoingDebts = await storage.getIngoingDebts(userId)
+    const outgoingDebts = await storage.getOutgoingDebts(userId)
+    const ingoingPayments = await storage.getIngoingPayments(userId)
+    const outgoingPayments = await storage.getOutgoingPayments(userId)
+
+    const debtMap = {}
+    const addPayment = (fromUserId, toUserId, amount) => {
+      const debtUserId = fromUserId === userId ? toUserId : fromUserId
+
+      if (!debtMap[debtUserId]) {
+        debtMap[debtUserId] = 0
+      }
+
+      if (fromUserId === userId) {
+        debtMap[debtUserId] -= amount
+      } else {
+        debtMap[debtUserId] += amount
+      }
+    }
+
+    for (const debt of ingoingDebts)
+      addPayment(userId, debt.userId, debt.amount)
+    for (const debt of outgoingDebts)
+      addPayment(debt.userId, userId, debt.amount)
+    for (const payment of ingoingPayments)
+      addPayment(payment.userId, userId, payment.amount)
+    for (const payment of outgoingPayments)
+      addPayment(userId, payment.userId, payment.amount)
+
+    const debts = Object.entries(debtMap)
+      .map(([userId, amount]) => ({ userId, amount }))
 
     return {
-      ingoingDebts: ingoingDebts
-        .map(debt => {
-          const outgoingDebt = outgoingDebts.find(d => d.userId === debt.userId)
-
-          return {
-            userId: debt.userId,
-            amount: debt.amount - (outgoingDebt?.amount ?? 0),
-          }
-        })
-        .filter(debt => debt.amount > 0),
-      outgoingDebts: outgoingDebts
-        .map(debt => {
-          const ingoingDebt = ingoingDebts.find(d => d.userId === debt.userId)
-
-          return {
-            userId: debt.userId,
-            amount: debt.amount - (ingoingDebt?.amount ?? 0),
-          }
-        })
-        .filter(debt => debt.amount > 0),
+      ingoingDebts: debts.filter(d => d.amount < 0).map(({ userId, amount }) => ({ userId, amount: -amount })),
+      outgoingDebts: debts.filter(d => d.amount > 0),
     }
   }
 

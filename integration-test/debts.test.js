@@ -312,4 +312,22 @@ describe('[debts]', () => {
       expect(await getDebts(user3.id)).to.deep.equalInAnyOrder(NO_DEBTS)
     })
   })
+
+  describe('[extra payments]', () => {
+    it('should add debts for extra payments (1)', async () => {
+      const [user1, user2] = await createUsers(2)
+
+      await createPayment(user1.id, user2.id, 10)
+
+      expect(await getDebts(user1.id)).to.deep.equalInAnyOrder({
+        ingoingDebts: [{ userId: user2.id, amount: 10 }],
+        outgoingDebts: [],
+      })
+
+      expect(await getDebts(user2.id)).to.deep.equalInAnyOrder({
+        ingoingDebts: [],
+        outgoingDebts: [{ userId: user1.id, amount: 10 }],
+      })
+    })
+  })
 })
