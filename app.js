@@ -3,6 +3,8 @@ import './env.js'
 import { Telegraf } from 'telegraf'
 import express from 'express'
 import ejs from 'ejs'
+import jwt from 'jsonwebtoken'
+import dotenv from 'dotenv'
 
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
@@ -18,6 +20,11 @@ import { UserSessionManager } from './app/utils/UserSessionManager.js'
 import { phases } from './app/phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/flows/cards.js'
 import { paymentsGetCommand } from './app/flows/payments.js'
+
+if (process.env.USE_NATIVE_ENV !== 'true') {
+  console.log('Using .env file')
+  dotenv.config()
+}
 
 (async () => {
   const storage = new PostgresStorage(process.env.DATABASE_URL)
@@ -221,7 +228,16 @@ import { paymentsGetCommand } from './app/flows/payments.js'
   })
 
   app.get('/receipts', async (req, res) => {
-    const receipts = await storage.findReceipts()
+    const token = req.query.token
+
+    let receipts = []
+    if (token) {
+      const { userId } = jwt.verify(token, process.env.TOKEN_SECRET)
+      receipts = await storage.findReceiptsByParticipantUserId(userId)
+    } else { // @deprecated
+      receipts = await storage.findReceipts()
+    }
+
     res.json(receipts)
   })
 

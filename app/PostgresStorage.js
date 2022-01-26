@@ -77,6 +77,32 @@ export class PostgresStorage {
     return response.rows[0]['id']
   }
 
+  async findReceiptsByParticipantUserId(userId) {
+    const response = await this._client.query(`
+      SELECT DISTINCT r.id, r.*
+      FROM receipts r
+      LEFT JOIN debts d ON d.receipt_id = r.id
+      WHERE payer_id = $1 OR debtor_id = $1
+      ORDER BY created_at DESC;
+    `, [userId])
+
+    const receipts = []
+
+    for (const row of response.rows) {
+      receipts.push({
+        id: row['id'],
+        createdAt: new Date(row['created_at']),
+        payerId: row['payer_id'],
+        amount: row['amount'],
+        description: row['description'],
+        debts: await this.findDebtsByReceiptId(row['id'])
+      })
+    }
+
+    return receipts
+  }
+
+  // @deprecated
   async findReceipts() {
     const response = await this._client.query(`
       SELECT *
