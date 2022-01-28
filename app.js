@@ -216,13 +216,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     res.json(users)
   })
 
-  // @deprecated
-  app.post('/receipts', async (req, res) => {
-    const id = await storeReceipt(req.body)
-    res.json({ id })
-  })
-
-  app.post('/v2/receipts', upload.single('photo'), async (req, res) => {
+  app.post('/receipts', upload.single('photo'), async (req, res) => {
     if (req.file && req.file.size > 10_000_000) { // 10 mb
       res.sendStatus(413)
       return

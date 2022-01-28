@@ -69,7 +69,7 @@ function saveReceipt() {
         body.set('photo', photo, photo.name)
     }
 
-    fetch('/v2/receipts', {
+    fetch('/receipts', {
         method: 'POST',
         body,
     })
