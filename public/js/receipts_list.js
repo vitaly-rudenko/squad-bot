@@ -40,7 +40,7 @@ function showReceipts() {
             <div>${receipts[i].description || ''}</div>
             <div>${renderDate(new Date(receipts[i].createdAt))}</div>
         </div>
-        ${receipts[i].hasPhoto ? `<div class="comment_item"><div>+ фотография чека</div></div>` : ''}
+        ${receipts[i].hasPhoto ? `<div class="comment_item"><div>+ фото чека</div></div>` : ''}
         <div class="action_buttons_container">
                     <div class="action_buttons">
                         <div class="yellow_color">
