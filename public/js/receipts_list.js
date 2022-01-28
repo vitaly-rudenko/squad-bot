@@ -37,9 +37,10 @@ function showReceipts() {
             </div>`
         }
         receiptsHtml += `<div class="comment_item">
-            <div>${receipts[i].description}</div>
+            <div>${receipts[i].description || ''}</div>
             <div>${renderDate(new Date(receipts[i].createdAt))}</div>
         </div>
+        ${receipts[i].hasPhoto ? `<div class="comment_item"><div>+ фотография чека</div></div>` : ''}
         <div class="action_buttons_container">
                     <div class="action_buttons">
                         <div class="yellow_color">
@@ -51,6 +52,9 @@ function showReceipts() {
                             </svg>
                             <div>Редактировать</div>
                         </div>
+                        ${receipts[i].hasPhoto ? `<div class="yellow_color">
+                            <div onclick="openReceiptPhoto('${receipts[i].id}')">Открыть фото чека</div>
+                        </div>` : ''}
                         <div class="red_color">
                             <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
                                 width="18" height="18"
@@ -88,6 +92,9 @@ function deleteReceiptById(receiptId) {
     .catch(e => console.error(e))
 }
 
+function openReceiptPhoto(receiptId) {
+    window.open(`/receipts/${receiptId}/photo`, '_blank')
+}
 
 function getUserNameById(userId) {
     const user = users.find(u => u.id == userId)
