@@ -116,7 +116,7 @@ export class PostgresStorage {
   async findReceipts() {
     const response = await this._client.query(`
       SELECT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
-      FROM receipts
+      FROM receipts r
       ORDER BY created_at DESC;
     `, [])
 
