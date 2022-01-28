@@ -14,10 +14,10 @@
     <div id="nav_container" class="nav_container"></div>
 
     <div class="container">
-        <h1>Оплатить счет</h1>
+        <h1>Добавить чек</h1>
 
         <div class="form_input">
-            <label>Кто платит</label>
+            <label>* Кто платит</label>
             <select id="receipts_payer_select">
                 <option selected value="Валентин">Валентин</option>
                 <option value="Виталик">Виталик</option>
@@ -26,7 +26,12 @@
         </div>
 
         <div class="form_input">
-            <label>Сумма, грн</label>
+            <label for="receipts_photo_input">Загрузить фотографию чека</label>
+            <input type="file" id="receipts_photo_input" name="receipts_photo_input" accept=".jpg, .jpeg, .png">
+        </div>
+
+        <div class="form_input">
+            <label>* Сумма, грн</label>
             <input id="receipts_amount_input" type="number" placeholder="0.00">
         </div>
 
@@ -35,7 +40,7 @@
             <input id="receipts_description_input" type="text" placeholder="Мак">
         </div>
 
-        <h3>За кого платишь</h3>
+        <h3>* За кого платишь</h3>
         <button id="divide_money_button">Распределить поровну</button>
 
         <div id="receipt_debtors_container"></div>

@@ -5,6 +5,7 @@ import express from 'express'
 import ejs from 'ejs'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
+import multer from 'multer'
 
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
@@ -27,6 +28,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 }
 
 (async () => {
+  const upload = multer()
+
   const storage = new PostgresStorage(process.env.DATABASE_URL)
   await storage.connect()
 
@@ -148,7 +151,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const handledUpdates = new Cache(60_000)
 
-  async function storeReceipt({ id = undefined, payerId, amount, description, debts }) {
+  async function storeReceipt({ id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
     if (id) {
       await storage.deleteReceiptById(id)
     }
@@ -158,6 +161,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       payerId,
       amount,
       description,
+      photo,
+      mime,
     })
 
     for (const debt of debts) {
@@ -211,8 +216,32 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     res.json(users)
   })
 
-  app.post('/receipts', async (req, res) => {
-    const id = await storeReceipt(req.body)
+  app.post('/receipts', upload.single('photo'), async (req, res) => {
+    if (req.file && req.file.size > 10_000_000) { // 10 mb
+      res.sendStatus(413)
+      return
+    }
+
+    const payerId = req.body.payer_id
+    const photo = req.file?.buffer ?? null
+    const mime = req.file?.mimetype ?? null
+    const description = req.body.description ?? null
+    const amount = Number(req.body.amount)
+    const debts = Object.entries(JSON.parse(req.body.debts))
+      .map(([debtorId, amount]) => ({
+        debtorId,
+        amount: Number(amount),
+      }))
+
+    const id = await storeReceipt({
+      payerId,
+      photo,
+      mime,
+      description,
+      amount,
+      debts,
+    })
+
     res.json({ id })
   })
 
@@ -239,6 +268,18 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     res.json(receipts)
+  })
+
+  app.get('/receipts/:receiptId/photo', async (req, res) => {
+    const receiptId = req.params.receiptId
+
+    const { photo, mime } = await storage.getReceiptPhoto(receiptId)
+
+    if (photo) {
+      res.contentType(mime).send(photo).end()
+    } else {
+      res.sendStatus(404)
+    }
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {

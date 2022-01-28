@@ -10,12 +10,12 @@ export class PostgresStorage {
     await this._client.connect()
   }
 
-  async createReceipt({ id = uuid(), payerId, amount, description }) {
+  async createReceipt({ id = uuid(), payerId, amount, description = null, photo = null, mime = null }) {
     const response = await this._client.query(`
-      INSERT INTO receipts (id, created_at, payer_id, amount, description)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id;
-    `, [id, new Date().toISOString(), payerId, amount, description])
+    `, [id, new Date().toISOString(), payerId, amount, description, photo, mime])
 
     return response.rows[0]['id']
   }
@@ -77,9 +77,26 @@ export class PostgresStorage {
     return response.rows[0]['id']
   }
 
+  async getReceiptPhoto(receiptId) {
+    const response = await this._client.query(`
+      SELECT r.photo, r.mime
+      FROM receipts r
+      WHERE r.id = $1;
+    `, [receiptId])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return {
+      photo: response.rows[0]['photo'],
+      mime: response.rows[0]['mime'],
+    }
+  }
+
   async findReceiptsByParticipantUserId(userId) {
     const response = await this._client.query(`
-      SELECT DISTINCT r.id, r.*
+      SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
       FROM receipts r
       LEFT JOIN debts d ON d.receipt_id = r.id
       WHERE payer_id = $1 OR debtor_id = $1
@@ -89,14 +106,7 @@ export class PostgresStorage {
     const receipts = []
 
     for (const row of response.rows) {
-      receipts.push({
-        id: row['id'],
-        createdAt: new Date(row['created_at']),
-        payerId: row['payer_id'],
-        amount: row['amount'],
-        description: row['description'],
-        debts: await this.findDebtsByReceiptId(row['id'])
-      })
+      receipts.push(await this.deserializeReceipt(row))
     }
 
     return receipts
@@ -105,25 +115,30 @@ export class PostgresStorage {
   // @deprecated
   async findReceipts() {
     const response = await this._client.query(`
-      SELECT *
-      FROM receipts
+      SELECT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
+      FROM receipts r
       ORDER BY created_at DESC;
     `, [])
 
     const receipts = []
 
     for (const row of response.rows) {
-      receipts.push({
-        id: row['id'],
-        createdAt: new Date(row['created_at']),
-        payerId: row['payer_id'],
-        amount: row['amount'],
-        description: row['description'],
-        debts: await this.findDebtsByReceiptId(row['id'])
-      })
+      receipts.push(await this.deserializeReceipt(row))
     }
 
     return receipts
+  }
+
+  async deserializeReceipt(row) {
+    return {
+      id: row['id'],
+      createdAt: new Date(row['created_at']),
+      payerId: row['payer_id'],
+      amount: row['amount'],
+      description: row['description'],
+      hasPhoto: row['has_photo'],
+      debts: await this.findDebtsByReceiptId(row['id'])
+    }
   }
 
   async findDebtsByReceiptId(receiptId) {
