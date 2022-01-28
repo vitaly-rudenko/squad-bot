@@ -1,5 +1,6 @@
 const receiptsPayerSelect = document.getElementById("receipts_payer_select")
 const receiptsAmountInput = document.getElementById("receipts_amount_input")
+const receiptsPhotoInput = document.getElementById("receipts_photo_input")
 const receiptsDescriptionInput = document.getElementById("receipts_description_input")
 const receiptDebtorsContainer = document.getElementById("receipt_debtors_container")
 const addReceiptButton = document.getElementById("add_receipt_button")
@@ -32,40 +33,45 @@ function renderDebtors() {
 }
 
 function saveReceipt() {
-    const amount = receiptsAmountInput.value
-    if(!amount) return
+    const rawAmount = receiptsAmountInput.value
+    if(!rawAmount) return
 
     addReceiptButton.disabled = true
 	addReceiptButton.innerHTML = "Обработка..."
     addReceiptButton.classList.add('disabled')
 
-    let debts = []
+    const debts = {}
 
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor")
     for (let i = 0; i < debtors.length; i++) {
         const debtorCheckbox = debtors[i].querySelector(".debtor_checkbox")
         if(debtorCheckbox.checked) {
-            debts.push({
-                debtorId: debtorCheckbox.value,
-                amount: moneyToCoins(debtors[i].querySelector(".debt_amount").value)
-            })
+            debts[debtorCheckbox.value] = moneyToCoins(debtors[i].querySelector(".debt_amount").value)
         }
-        
     }
 
-    const receipt = {
-        payerId: receiptsPayerSelect.value,
-        amount: moneyToCoins(amount),
-        description: receiptsDescriptionInput.value,
-        debts
-	}
+    const photo = receiptsPhotoInput.files[0]
 
-    fetch('/receipts', {
+    const payerId = receiptsPayerSelect.value
+    const amount = moneyToCoins(rawAmount)
+    const description = receiptsDescriptionInput.value
+
+    const body = new FormData()
+    body.set('payer_id', payerId)
+    body.set('amount', amount)
+    body.set('debts', JSON.stringify(debts))
+
+    if (description) {
+        body.set('description', description)
+    }
+
+    if (photo) {
+        body.set('photo', photo, photo.name)
+    }
+
+    fetch('/v2/receipts', {
         method: 'POST',
-        body: JSON.stringify(receipt),
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        body,
     })
     .then((response) => {
         return response.json();
@@ -78,6 +84,7 @@ function saveReceipt() {
         addReceiptButton.classList.remove('disabled')
         receiptsAmountInput.value = null
         receiptsDescriptionInput.value = null
+        receiptsPhotoInput.value = ''
     })
     .catch(e => console.error(e))
 }
