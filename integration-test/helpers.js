@@ -63,7 +63,7 @@ export async function createReceipt(payerId, debts, { photo = null, mime = null,
     body.set('photo', photoFile, 'photo.jpg')
   }
 
-  const response = await fetch('http://localhost:3001/v2/receipts', {
+  const response = await fetch('http://localhost:3001/receipts', {
     method: 'POST',
     body,
   })
