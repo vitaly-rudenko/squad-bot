@@ -77,6 +77,23 @@ export class PostgresStorage {
     return response.rows[0]['id']
   }
 
+  async getReceiptPhoto(receiptId) {
+    const response = await this._client.query(`
+      SELECT r.photo, r.mime
+      FROM receipts r
+      WHERE r.id = $1;
+    `, [receiptId])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return {
+      photo: response.rows[0]['photo'],
+      mime: response.rows[0]['mime'],
+    }
+  }
+
   async findReceiptsByParticipantUserId(userId) {
     const response = await this._client.query(`
       SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo

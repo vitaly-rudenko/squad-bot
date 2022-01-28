@@ -1,17 +1,45 @@
 import chai, { expect } from 'chai'
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
-import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual } from './helpers.js'
+import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getReceiptPhoto } from './helpers.js'
 
 chai.use(deepEqualInAnyOrder)
 
+const receiptPhotoBuffer = fs.readFileSync(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), './receipt.png')
+)
+
 describe('[receipts]', () => {
   describe('POST /receipts', () => {
-    it('should upload receipt photo', async () => {
+    it('should upload & return receipt photo', async () => {
       const [user] = await createUsers(1)
 
       await createReceipt(user.id, {
         [user.id]: 1,
-      }, { photo: Buffer.from('hello world'), mime: 'image/jpeg' })
+      }, { photo: receiptPhotoBuffer, mime: 'image/png' })
+
+      const [receipt] = await getReceipts(user.id)
+
+      const { photo, mime } = await getReceiptPhoto(receipt.id)
+
+      expect(mime).to.equal('image/png')
+      expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
+    })
+
+    it('should return 404 when there is no receipt photo', async () => {
+      const [user] = await createUsers(1)
+
+      await createReceipt(user.id, {
+        [user.id]: 1,
+      })
+
+      const [receipt] = await getReceipts(user.id)
+
+      const response = await getReceiptPhoto(receipt.id)
+
+      expect(response.status).to.equal(404)
     })
   })
 

@@ -91,6 +91,19 @@ export async function getReceipts(userId) {
   return await response.json()
 }
 
+export async function getReceiptPhoto(receiptId) {
+  const response = await fetch(`http://localhost:3001/receipts/${receiptId}/photo`)
+
+  if (response.status !== 200) {
+    return response
+  }
+
+  return {
+    mime: response.headers.get('Content-Type'),
+    photo: await response.arrayBuffer(),
+  }
+}
+
 export function expectReceiptsToEqual(receipts1, receipts2) {
   expect(receipts1).to.have.lengthOf(receipts2.length)
 

@@ -217,6 +217,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   app.post('/receipts', upload.single('photo'), async (req, res) => {
+    if (req.file && req.file.size > 10_000_000) { // 10 mb
+      res.sendStatus(413)
+      return
+    }
+
     const payerId = req.body.payer_id
     const photo = req.file?.buffer ?? null
     const mime = req.file?.mimetype ?? null
@@ -262,7 +267,15 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {
-    
+    const receiptId = req.params.receiptId
+
+    const { photo, mime } = await storage.getReceiptPhoto(receiptId)
+
+    if (photo) {
+      res.contentType(mime).send(photo).end()
+    } else {
+      res.sendStatus(404)
+    }
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
