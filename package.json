@@ -41,6 +41,7 @@
     "express": "^4.17.2",
     "googleapis": "^92.0.0",
     "jsonwebtoken": "^8.5.1",
+    "multer": "^1.4.4",
     "pg": "^8.7.1",
     "telegraf": "^4.6.0",
     "umzug": "^3.0.0"
