@@ -47,21 +47,12 @@ export async function createUsers(count = 1) {
   return users
 }
 
-export async function createReceipt(payerId, debtsMap, { photo = null, mime = null, description = null } = {}) {
-  const debts = Object.entries(debtsMap).map(([debtorId, amount]) => ({ debtorId, amount }))
-
-  const receipt = {
-    payerId,
-    photo,
-    mime,
-    description,
-    amount: debts.reduce((acc, curr) => acc + curr.amount, 0),
-    debts,
-  }
+export async function createReceipt(payerId, debts, { photo = null, mime = null, description = null } = {}) {
+  const amount = Object.values(debts).reduce((a, b) => a + b, 0)
 
   const body = new FormData()
   body.set('payer_id', payerId)
-  body.set('amount', debts.reduce((acc, curr) => acc + curr.amount, 0))
+  body.set('amount', amount)
   body.set('debts', JSON.stringify(debts))
 
   if (description) {
@@ -72,14 +63,14 @@ export async function createReceipt(payerId, debtsMap, { photo = null, mime = nu
     body.set('photo', photoFile, 'photo.jpg')
   }
 
-  const response = await fetch('http://localhost:3001/receipts', {
+  const response = await fetch('http://localhost:3001/v2/receipts', {
     method: 'POST',
     body,
   })
 
   validateResponse(response)
 
-  return receipt
+  return await response.json()
 }
 
 export async function getReceipts(userId) {

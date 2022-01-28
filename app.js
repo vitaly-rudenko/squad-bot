@@ -216,7 +216,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     res.json(users)
   })
 
-  app.post('/receipts', upload.single('photo'), async (req, res) => {
+  // @deprecated
+  app.post('/receipts', async (req, res) => {
+    const id = await storeReceipt(req.body)
+    res.json({ id })
+  })
+
+  app.post('/v2/receipts', upload.single('photo'), async (req, res) => {
     if (req.file && req.file.size > 10_000_000) { // 10 mb
       res.sendStatus(413)
       return
@@ -227,7 +233,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const mime = req.file?.mimetype ?? null
     const description = req.body.description ?? null
     const amount = Number(req.body.amount)
-    const debts = JSON.parse(req.body.debts)
+    const debts = Object.entries(JSON.parse(req.body.debts))
+      .map(([debtorId, amount]) => ({
+        debtorId,
+        amount: Number(amount),
+      }))
 
     const id = await storeReceipt({
       payerId,
