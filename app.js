@@ -283,11 +283,10 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {
     const receiptId = req.params.receiptId
+    const receiptPhoto = await storage.getReceiptPhoto(receiptId)
 
-    const { photo, mime } = await storage.getReceiptPhoto(receiptId)
-
-    if (photo) {
-      res.contentType(mime).send(photo).end()
+    if (receiptPhoto) {
+      res.contentType(receiptPhoto.mime).send(receiptPhoto.photo).end()
     } else {
       res.sendStatus(404)
     }

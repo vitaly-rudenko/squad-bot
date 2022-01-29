@@ -98,7 +98,7 @@ export class PostgresStorage {
       WHERE r.id = $1;
     `, [receiptId])
 
-    if (response.rowCount === 0) {
+    if (response.rowCount === 0 || !response.rows[0]['photo'] || !response.rows[0]['mime']) {
       return null
     }
 
