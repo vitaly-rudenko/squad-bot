@@ -10,7 +10,9 @@ export class PostgresStorage {
     await this._client.connect()
   }
 
-  async createReceipt({ id = uuid(), payerId, amount, description = null, photo = null, mime = null }) {
+  async createReceipt({ id, payerId, amount, description = null, photo = null, mime = null }) {
+    if (!id) id = uuid()
+
     const response = await this._client.query(`
       INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
