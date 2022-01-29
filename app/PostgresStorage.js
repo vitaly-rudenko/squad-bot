@@ -10,7 +10,9 @@ export class PostgresStorage {
     await this._client.connect()
   }
 
-  async createReceipt({ id = uuid(), payerId, amount, description = null, photo = null, mime = null }) {
+  async createReceipt({ id, payerId, amount, description = null, photo = null, mime = null }) {
+    if (!id) id = uuid()
+
     const response = await this._client.query(`
       INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -77,6 +79,20 @@ export class PostgresStorage {
     return response.rows[0]['id']
   }
 
+  async findReceiptById(receiptId) {
+    const response = await this._client.query(`
+      SELECT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
+      FROM receipts r
+      WHERE r.id = $1;
+    `, [receiptId])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return await this.deserializeReceipt(response.rows[0])
+  }
+
   async getReceiptPhoto(receiptId) {
     const response = await this._client.query(`
       SELECT r.photo, r.mime
@@ -84,7 +100,7 @@ export class PostgresStorage {
       WHERE r.id = $1;
     `, [receiptId])
 
-    if (response.rowCount === 0) {
+    if (response.rowCount === 0 || !response.rows[0]['photo'] || !response.rows[0]['mime']) {
       return null
     }
 

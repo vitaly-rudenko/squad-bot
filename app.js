@@ -147,7 +147,16 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const port = Number(process.env.PORT) || 3001
   const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-  await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+  console.log('Setting webhook to', webhookUrl)
+  while (true) {
+    try {
+      await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+      break;
+    } catch (error) {
+      console.log('Could not set webhook, retrying...')
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+  }
 
   const handledUpdates = new Cache(60_000)
 
@@ -222,9 +231,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       return
     }
 
+    let id = req.body.id ?? null
+
     const payerId = req.body.payer_id
-    const photo = req.file?.buffer ?? null
-    const mime = req.file?.mimetype ?? null
+    let photo = req.file?.buffer ?? null
+    let mime = req.file?.mimetype ?? null
     const description = req.body.description ?? null
     const amount = Number(req.body.amount)
     const debts = Object.entries(JSON.parse(req.body.debts))
@@ -233,7 +244,16 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
         amount: Number(amount),
       }))
 
-    const id = await storeReceipt({
+    if (id && req.body.leave_photo === 'true' && (!photo || !mime)) {
+      const receiptPhoto = await storage.getReceiptPhoto(id)
+      if (receiptPhoto) {
+        photo = receiptPhoto.photo
+        mime = receiptPhoto.mime
+      }
+    }
+
+    id = await storeReceipt({
+      id,
       payerId,
       photo,
       mime,
@@ -270,13 +290,23 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     res.json(receipts)
   })
 
+  app.get('/receipts/:receiptId', async (req, res) => {
+    const receiptId = req.params.receiptId
+    const receipt = await storage.findReceiptById(receiptId)
+
+    if (!receipt) {
+      return res.sendStatus(404)
+    }
+
+    res.json(receipt)
+  })
+
   app.get('/receipts/:receiptId/photo', async (req, res) => {
     const receiptId = req.params.receiptId
+    const receiptPhoto = await storage.getReceiptPhoto(receiptId)
 
-    const { photo, mime } = await storage.getReceiptPhoto(receiptId)
-
-    if (photo) {
-      res.contentType(mime).send(photo).end()
+    if (receiptPhoto) {
+      res.contentType(receiptPhoto.mime).send(receiptPhoto.photo).end()
     } else {
       res.sendStatus(404)
     }

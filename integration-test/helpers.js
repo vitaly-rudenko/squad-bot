@@ -47,18 +47,25 @@ export async function createUsers(count = 1) {
   return users
 }
 
-export async function createReceipt(payerId, debts, { photo = null, mime = null, description = null } = {}) {
+export async function createReceipt(payerId, debts, { leavePhoto = false, photo = null, mime = null, description = null, receiptId = null } = {}) {
   const amount = Object.values(debts).reduce((a, b) => a + b, 0)
 
   const body = new FormData()
   body.set('payer_id', payerId)
   body.set('amount', amount)
   body.set('debts', JSON.stringify(debts))
+  
+  if (receiptId) {
+    body.set('id', receiptId)
+  }
 
   if (description) {
     body.set('description', description)
   }
-  if (photo) {
+
+  if (leavePhoto) {
+    body.set('leave_photo', 'true')
+  } else if (photo) {
     const photoFile = new File([photo], 'photo.jpg', { type: mime })
     body.set('photo', photoFile, 'photo.jpg')
   }
@@ -70,12 +77,20 @@ export async function createReceipt(payerId, debts, { photo = null, mime = null,
 
   validateResponse(response)
 
-  return await response.json()
+  return (await response.json()).id
 }
 
 export async function getReceipts(userId) {
   const token = createToken(userId)
   const response = await fetch(`http://localhost:3001/receipts?token=${token}`)
+
+  validateResponse(response)
+
+  return await response.json()
+}
+
+export async function getReceipt(receiptId) {
+  const response = await fetch(`http://localhost:3001/receipts/${receiptId}`)
 
   validateResponse(response)
 

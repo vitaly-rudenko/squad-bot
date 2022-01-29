@@ -1,6 +1,8 @@
 const receiptsPayerSelect = document.getElementById("receipts_payer_select")
 const receiptsAmountInput = document.getElementById("receipts_amount_input")
 const receiptsPhotoInput = document.getElementById("receipts_photo_input")
+const receiptsAddPhotoButton = document.getElementById("receipts_add_photo_button")
+const receiptsDeletePhotoButton = document.getElementById("receipts_delete_photo_button")
 const receiptsDescriptionInput = document.getElementById("receipts_description_input")
 const receiptDebtorsContainer = document.getElementById("receipt_debtors_container")
 const addReceiptButton = document.getElementById("add_receipt_button")
@@ -8,16 +10,72 @@ const divideMoneyButton = document.getElementById('divide_money_button')
 const errorMessage = document.getElementById('error_message')
 
 let users = []
+let receiptId = null
+let hasPhoto = false
 
 addReceiptButton.addEventListener('click', saveReceipt)
 divideMoneyButton.addEventListener('click', divideMoneyAmongUsers)
 receiptsAmountInput.addEventListener('input', calculateReceiptRemainBalance)
+receiptsPhotoInput.addEventListener('change', photoChange)
+receiptsAddPhotoButton.addEventListener('click', addPhoto)
+receiptsDeletePhotoButton.addEventListener('click', deletePhoto)
 
 init()
 async function init() {
     users = await getUsers()
     renderUsersSelect(receiptsPayerSelect)
     renderDebtors()
+
+    const query = new URLSearchParams(location.search)
+
+    if (query.has('success')) {
+        playSuccessAnimation()
+    }
+
+    if (query.has('receipt_id')) {
+        try {
+            const queryReceiptId = query.get('receipt_id')
+            const receipt = await (await fetch(`/receipts/${queryReceiptId}`)).json()
+            receiptId = queryReceiptId
+
+            console.log('Editing receipt:', receipt)
+
+            hasPhoto = receipt.hasPhoto
+            receiptsPayerSelect.value = receipt.payerId
+            receiptsAmountInput.value = Number(receipt.amount / 100).toFixed(2)
+            receiptsDescriptionInput.value = receipt.description
+            setDebts(receipt.debts)
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
+    refreshPhoto()
+}
+
+function photoChange() {
+    hasPhoto = Boolean(receiptsPhotoInput.value)
+    refreshPhoto()
+}
+
+function addPhoto() {
+    receiptsPhotoInput.click()
+}
+
+function deletePhoto() {
+    receiptsPhotoInput.value = ''
+    hasPhoto = false
+    refreshPhoto()
+}
+
+function refreshPhoto() {
+    if (hasPhoto) {
+        receiptsAddPhotoButton.classList.add('hidden')
+        receiptsDeletePhotoButton.classList.remove('hidden')
+    } else {
+        receiptsAddPhotoButton.classList.remove('hidden')
+        receiptsDeletePhotoButton.classList.add('hidden')
+    }
 }
 
 function renderDebtors() {
@@ -61,12 +119,18 @@ function saveReceipt() {
     body.set('amount', amount)
     body.set('debts', JSON.stringify(debts))
 
+    if (receiptId) {
+        body.set('id', receiptId)
+    }
+
     if (description) {
         body.set('description', description)
     }
 
     if (photo) {
         body.set('photo', photo, photo.name)
+    } else if (hasPhoto) {
+        body.set('leave_photo', 'true')
     }
 
     fetch('/receipts', {
@@ -77,26 +141,49 @@ function saveReceipt() {
         return response.json();
     })
     .then((data) => {
-		console.log('add new receipt: ', data)
-        playSuccessAnimation()
-        addReceiptButton.disabled = false
-	    addReceiptButton.innerHTML = "Оплатить счет"
-        addReceiptButton.classList.remove('disabled')
-        receiptsAmountInput.value = null
-        receiptsDescriptionInput.value = null
-        receiptsPhotoInput.value = ''
+        if (!data.id) {
+            console.log('response:', data)
+            throw new Error('Response does not contain receipt ID!')
+        }
+
+        localStorage.setItem('success', 'true')
+        window.history.replaceState(null, null, window.location.pathname + '?success')
+        location.reload()
     })
     .catch(e => console.error(e))
 }
 
 function divideMoneyAmongUsers() {
-    const amount = receiptsAmountInput.value
+    let amount = receiptsAmountInput.value
     if(!amount) return
-    const debtors = receiptDebtorsContainer.querySelectorAll(".debtor input:checked")
-    const debtorAmount = (amount / debtors.length).toFixed(2)
-    console.log(debtorAmount)
+    amount = Math.floor(amount * 100)
+
+    const debtors = getCheckedDebtorIds()
+    const debtorAmount = amount / debtors.length
+    setDebts(debtors.map(debtorId => ({ debtorId, amount: debtorAmount })))
+}
+
+function getCheckedDebtorIds() {
+    const debtors = receiptDebtorsContainer.querySelectorAll(".debtor")
+    return [...debtors]
+        .filter(debtor => debtor.querySelector(".debtor_checkbox").checked)
+        .map(debtor => debtor.querySelector(".debtor_checkbox").value)
+}
+
+function setDebts(debts) {
+    const debtors = receiptDebtorsContainer.querySelectorAll(".debtor")
     for (let i = 0; i < debtors.length; i++) {
-        debtors[i].parentElement.parentElement.querySelector(".debt_amount").value = debtorAmount
+        const debtorCheckbox = debtors[i].querySelector(".debtor_checkbox")
+        const debtorId = debtorCheckbox.value
+        const debt = debts.find(d => d.debtorId === debtorId)
+        
+        if (debt) {
+            debtorCheckbox.checked = true
+            debtors[i].querySelector(".debt_amount").value = Number(debt.amount / 100).toFixed(2)
+        } else {
+            debtorCheckbox.checked = false
+            debtors[i].querySelector(".debt_amount").value = ''
+        }
     }
     calculateReceiptRemainBalance()
 }
