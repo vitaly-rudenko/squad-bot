@@ -147,7 +147,16 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const port = Number(process.env.PORT) || 3001
   const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-  await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+  console.log('Setting webhook to', webhookUrl)
+  while (true) {
+    try {
+      await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+      break;
+    } catch (error) {
+      console.log('Could not set webhook, retrying...')
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+  }
 
   const handledUpdates = new Cache(60_000)
 
