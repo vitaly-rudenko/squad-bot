@@ -270,6 +270,17 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     res.json(receipts)
   })
 
+  app.get('/receipts/:receiptId', async (req, res) => {
+    const receiptId = req.params.receiptId
+    const receipt = await storage.findReceiptById(receiptId)
+
+    if (!receipt) {
+      return res.sendStatus(404)
+    }
+
+    res.json(receipt)
+  })
+
   app.get('/receipts/:receiptId/photo', async (req, res) => {
     const receiptId = req.params.receiptId
 
