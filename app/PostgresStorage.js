@@ -10,27 +10,35 @@ export class PostgresStorage {
     await this._client.connect()
   }
 
-  async createReceipt({ id, payerId, amount, description = null, photo = null, mime = null }) {
-    if (!id) id = uuid()
-
+  async createReceipt({ payerId, amount, description = null, photo = null, mime = null }) {
     const response = await this._client.query(`
       INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id;
-    `, [id, new Date().toISOString(), payerId, amount, description, photo, mime])
+    `, [uuid(), new Date().toISOString(), payerId, amount, description, photo, mime])
 
     return response.rows[0]['id']
   }
 
-  async deleteReceiptById(receiptId) {
+  async updateReceipt({ id, payerId, amount, description = null, photo = null, mime = null }) {
     await this._client.query(`
-      DELETE FROM debts
-      WHERE receipt_id = $1;
-    `, [receiptId])
+      UPDATE receipts
+      SET payer_id = $2, amount = $3, description = $4, photo = $5, mime = $6
+      WHERE id = $1
+    `, [id, payerId, amount, description, photo, mime])
+  }
 
+  async deleteReceiptById(receiptId) {
     await this._client.query(`
       DELETE FROM receipts
       WHERE id = $1;
+    `, [receiptId])
+  }
+
+  async deleteDebtsByReceiptId(receiptId) {
+    await this._client.query(`
+      DELETE FROM debts
+      WHERE receipt_id = $1;
     `, [receiptId])
   }
 

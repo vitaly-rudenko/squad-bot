@@ -162,17 +162,25 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   async function storeReceipt({ id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
     if (id) {
-      await storage.deleteReceiptById(id)
-    }
+      await storage.updateReceipt({
+        id,
+        payerId,
+        amount,
+        description,
+        photo,
+        mime,
+      })
 
-    id = await storage.createReceipt({
-      id,
-      payerId,
-      amount,
-      description,
-      photo,
-      mime,
-    })
+      await storage.deleteDebtsByReceiptId(id)
+    } else {
+      id = await storage.createReceipt({
+        payerId,
+        amount,
+        description,
+        photo,
+        mime,
+      })
+    }
 
     for (const debt of debts) {
       const { debtorId, amount } = debt
@@ -313,6 +321,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
+    await storage.deleteDebtsByReceiptId(req.params.receiptId)
     await storage.deleteReceiptById(req.params.receiptId)
     res.sendStatus(200)
   })

@@ -41,6 +41,31 @@ describe('[receipts]', () => {
       expect(response.status).to.equal(404)
     })
 
+    it('should keep original date of receipt when updated', async () => {
+      const [user1] = await createUsers(1)
+
+      const receiptId = await createReceipt(user1.id, { [user1.id]: 10 })
+
+      const originalReceipt = await getReceipt(receiptId)
+
+      const updatedReceiptId = await createReceipt(user1.id, { [user1.id]: 20 }, { description: 'hello world', receiptId })
+
+      const receipt = await getReceipt(receiptId)
+
+      expect(updatedReceiptId).to.equal(originalReceipt.id)
+      expect(receipt.createdAt).to.equal(originalReceipt.createdAt)
+      expectReceiptToShallowEqual(receipt, {
+        payerId: user1.id,
+        amount: 20,
+        description: 'hello world',
+        hasPhoto: false,
+        debts: [{
+          debtorId: user1.id,
+          amount: 20,
+        }]
+      })
+    })
+
     it('should update the receipt (leave photo)', async () => {
       const [user1, user2, user3] = await createUsers(3)
 
