@@ -12,6 +12,14 @@ a {
     text-decoration: none;
 }
 
+.hidden { 
+    display: none;
+}
+
+button {
+    cursor: pointer;
+}
+
 .container {
     width: 100%;
     max-width: 500px;
@@ -107,13 +115,13 @@ a {
     color: red;
 }
 
-#divide_money_button {
+#divide_money_button, #receipts_delete_photo_button {
     background: none;
     font-size: 15px;
     color: rgb(226 152 17);
     border: 2px solid rgb(226 152 17);
     height: 37px;
-    margin: -10px 0 12px 0;
+    margin: 0px 0 12px 0;
 }
 
 .grey_background {

@@ -231,9 +231,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       return
     }
 
+    let id = req.body.id ?? null
+
     const payerId = req.body.payer_id
-    const photo = req.file?.buffer ?? null
-    const mime = req.file?.mimetype ?? null
+    let photo = req.file?.buffer ?? null
+    let mime = req.file?.mimetype ?? null
     const description = req.body.description ?? null
     const amount = Number(req.body.amount)
     const debts = Object.entries(JSON.parse(req.body.debts))
@@ -242,7 +244,16 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
         amount: Number(amount),
       }))
 
-    const id = await storeReceipt({
+    if (id && req.body.leave_photo === 'true' && (!photo || !mime)) {
+      const receiptPhoto = await storage.getReceiptPhoto(id)
+      if (receiptPhoto) {
+        photo = receiptPhoto.photo
+        mime = receiptPhoto.mime
+      }
+    }
+
+    id = await storeReceipt({
+      id,
       payerId,
       photo,
       mime,
