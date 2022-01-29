@@ -148,7 +148,12 @@ function saveReceipt() {
 
         localStorage.setItem('success', 'true')
         window.history.replaceState(null, null, window.location.pathname + '?success')
-        location.reload()
+
+        if (receiptId) {
+            window.open('/receiptslist', '_self')
+        } else {
+            location.reload()
+        }
     })
     .catch(e => console.error(e))
 }
