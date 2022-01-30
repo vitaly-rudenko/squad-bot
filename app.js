@@ -21,6 +21,7 @@ import { UserSessionManager } from './app/utils/UserSessionManager.js'
 import { phases } from './app/phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/flows/cards.js'
 import { paymentsGetCommand } from './app/flows/payments.js'
+import { renderMoney } from './app/renderMoney.js'
 import { withUserFactory } from './app/withUserFactory.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
@@ -145,26 +146,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.catch((error) => logError(error))
 
-  await bot.telegram.deleteWebhook()
-
-  const domain = process.env.DOMAIN
-  const port = Number(process.env.PORT) || 3001
-  const webhookUrl = `${domain}/bot${telegramBotToken}`
-
-  console.log('Setting webhook to', webhookUrl)
-  while (true) {
-    try {
-      await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
-      break;
-    } catch (error) {
-      console.log('Could not set webhook, retrying...')
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
-  }
-
-  const handledUpdates = new Cache(60_000)
-
   async function storeReceipt({ id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
+    const isNew = !Boolean(id)
     if (id) {
       await storage.updateReceipt({
         id,
@@ -196,7 +179,48 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       })
     }
 
+    const payer = await storage.findUserById(payerId)
+    const userIds = debts.map(d => d.debtorId)
+    const users = await storage.findUsersByIds(userIds)
+    const notificationDescription = description ? `"${description}"` : 'без описания'
+
+    for (const user of users) {
+      if (user.id === payerId || !user.isComplete) continue;
+      const debt = debts.find(d => d.debtorId === user.id)
+
+      try {
+        await sendNotification(user.id, `
+👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+💵 Твой долг в этом чеке: ${renderMoney(debt.amount)} грн.
+💸 Проверить долги: /debts
+🧾 Посмотреть чеки: /receipts
+        `)
+      } catch (error) {
+        logError(error)
+      }
+    }
+
     return id
+  }
+
+  async function storePayment({ fromUserId, toUserId, amount }) {
+    const id = await storage.createPayment({ fromUserId, toUserId, amount })
+
+    const sender = await storage.findUserById(fromUserId)
+    const receiver = await storage.findUserById(toUserId)
+    if (receiver.isComplete) {
+      await sendNotification(receiver.id, `
+👤➡️👤 Пользователь ${sender.name} (@${sender.username}) отправил тебе платеж на сумму ${renderMoney(amount)} грн.
+💸 Проверить долги: /debts
+🧾 Посмотреть платежи: /payments
+      `)
+    }
+
+    return id
+  }
+
+  async function sendNotification(userId, message) {
+    await bot.telegram.sendMessage(userId, message.trim())
   }
 
   const app = express()
@@ -279,7 +303,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   app.post('/payments', async (req, res) => {
     const { fromUserId, toUserId, amount } = req.body
-    const id = await storage.createPayment({ fromUserId, toUserId, amount })
+    const id = await storePayment({ fromUserId, toUserId, amount })
     res.json({ id })
   })
 
@@ -342,6 +366,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     res.json(debts)
   })
 
+  const handledBotUpdates = new Cache(60_000)
+
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
     if (!updateId) {
@@ -350,13 +376,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       return
     }
 
-    if (handledUpdates.has(updateId)) {
+    if (handledBotUpdates.has(updateId)) {
       console.log('Update is already handled:', req.body)
       res.sendStatus(200)
       return
     }
 
-    handledUpdates.set(updateId)
+    handledBotUpdates.set(updateId)
     console.log('Update received:', req.body)
 
     try {
@@ -366,7 +392,25 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
   })
 
+  const port = Number(process.env.PORT) || 3001
+
   await new Promise(resolve => app.listen(port, () => resolve()))
+
+  await bot.telegram.deleteWebhook()
+
+  const domain = process.env.DOMAIN
+  const webhookUrl = `${domain}/bot${telegramBotToken}`
+
+  console.log('Setting webhook to', webhookUrl)
+  while (true) {
+    try {
+      await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+      break;
+    } catch (error) {
+      console.log('Could not set webhook, retrying...')
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+  }
 
   console.log(
     `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
