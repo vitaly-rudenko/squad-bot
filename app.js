@@ -11,7 +11,7 @@ import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/flows/version.js'
 
 import { PostgresStorage } from './app/PostgresStorage.js'
-import { startCommand } from './app/flows/start.js'
+import { registerCommand, startCommand } from './app/flows/start.js'
 import { usersCommand } from './app/flows/users.js'
 import { debtsCommand } from './app/flows/debts.js'
 import { receiptsGetCommand } from './app/flows/receipts.js'
@@ -21,6 +21,7 @@ import { UserSessionManager } from './app/utils/UserSessionManager.js'
 import { phases } from './app/phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/flows/cards.js'
 import { paymentsGetCommand } from './app/flows/payments.js'
+import { withUserFactory } from './app/withUserFactory.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -109,28 +110,31 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const userSessionManager = new UserSessionManager()
   const withPhase = withPhaseFactory(userSessionManager)
+  const withUser = withUserFactory(storage)
 
   bot.use(withUserId())
 
   bot.command('version', versionCommand())
   bot.command('start', startCommand({ storage }))
-  bot.command('register', startCommand({ storage }))
-  bot.command('users', usersCommand({ storage }))
-  bot.command('debts', debtsCommand({ storage, getDebtsByUserId }))
-  bot.command('receipts', receiptsGetCommand())
-  bot.command('payments', paymentsGetCommand())
+  bot.command('register', registerCommand({ storage }))
 
-  bot.command('addcard', cardsAddCommand({ userSessionManager }))
-  bot.action(/cards:add:bank:(.+)/, withPhase(phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
+  bot.command('users', withUser(), usersCommand({ storage }))
+  bot.command('debts', withUser(), debtsCommand({ storage, getDebtsByUserId }))
+  bot.command('receipts', withUser(), receiptsGetCommand())
+  bot.command('payments', withUser(), paymentsGetCommand())
 
-  bot.command('deletecard', cardsDeleteCommand({ storage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withPhase(phases.deleteCard.id, cardsDeleteIdAction({ storage, userSessionManager })))
+  bot.command('addcard', withUser(), cardsAddCommand({ userSessionManager }))
+  bot.action(/cards:add:bank:(.+)/, withUser(), withPhase(phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
 
-  bot.command('cards', cardsGet({ storage, userSessionManager }))
-  bot.action(/cards:get:user-id:(.+)/, withPhase(phases.getCard.userId, cardsGetUserIdAction({ storage, userSessionManager })))
-  bot.action(/cards:get:id:(.+)/, withPhase(phases.getCard.id, cardsGetIdAction({ storage, userSessionManager })))
+  bot.command('deletecard', withUser(), cardsDeleteCommand({ storage, userSessionManager }))
+  bot.action(/cards:delete:id:(.+)/, withUser(), withPhase(phases.deleteCard.id, cardsDeleteIdAction({ storage, userSessionManager })))
+
+  bot.command('cards', withUser(), cardsGet({ storage, userSessionManager }))
+  bot.action(/cards:get:user-id:(.+)/, withUser(), withPhase(phases.getCard.userId, cardsGetUserIdAction({ storage, userSessionManager })))
+  bot.action(/cards:get:id:(.+)/, withUser(), withPhase(phases.getCard.id, cardsGetIdAction({ storage, userSessionManager })))
 
   bot.on('message',
+    withUser({ ignore: true }),
     async (context, next) => {
       if ('text' in context.message && context.message.text.startsWith('/')) return;
       await next();
