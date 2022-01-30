@@ -19,7 +19,7 @@ ${
     .join('\n')
 }` : 'Тебе никто ничего не должен 🙁'
 
-const outgoingDebtsFormatted = outgoingDebts.length > 0 ? `\
+    const outgoingDebtsFormatted = outgoingDebts.length > 0 ? `\
 🙁 Ты должен:
 ${
   outgoingDebts
@@ -27,6 +27,8 @@ ${
     .join('\n')
 }` : 'Ты никому ничего не должен 🙂'
 
-    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted].filter(Boolean).join('\n\n'))
+    const isIncomplete = !context.state.user.isComplete && '❗️ Чтобы получать уведомления о платежах и новых чеках, выполни команду /start в ЛС бота.'
+
+    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted, isIncomplete].filter(Boolean).join('\n\n'))
   }
 }
