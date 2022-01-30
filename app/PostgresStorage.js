@@ -249,6 +249,11 @@ export class PostgresStorage {
     }))
   }
 
+  async findUsersByIds(userIds) {
+    // TODO: refactor
+    return (await this.findUsers()).filter(u => userIds.includes(u.id))
+  }
+
   async findUsers() {
     const response = await this._client.query(`
       SELECT *
@@ -291,6 +296,7 @@ export class PostgresStorage {
       id: row['id'],
       name: row['name'],
       username: row['username'],
+      isComplete: row['is_complete'],
     }
   }
 
