@@ -6,7 +6,7 @@ export function usersCommand({ storage }) {
 👥 Пользователи:
 ${
   users
-    .map(user => `- ${user.name} (ник: ${user.username}, id: ${user.id})`)
+    .map(user => `- ${user.name} (ник: ${user.username}, id: ${user.id}${user.isComplete ? '' : ', без уведомлений'})`)
     .join('\n') || '- Никто не зарегистрирован :('
 }
     `)
