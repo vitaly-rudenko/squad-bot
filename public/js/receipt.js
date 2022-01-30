@@ -8,6 +8,7 @@ const receiptDebtorsContainer = document.getElementById("receipt_debtors_contain
 const addReceiptButton = document.getElementById("add_receipt_button")
 const divideMoneyButton = document.getElementById('divide_money_button')
 const errorMessage = document.getElementById('error_message')
+const pageTitle = document.getElementById('page_title')
 
 let users = []
 let receiptId = null
@@ -45,6 +46,9 @@ async function init() {
             receiptsAmountInput.value = Number(receipt.amount / 100).toFixed(2)
             receiptsDescriptionInput.value = receipt.description
             setDebts(receipt.debts)
+
+            pageTitle.innerText = 'Редактировать чек'
+            addReceiptButton.innerText = 'Сохранить чек'
         } catch (error) {
             console.error(error)
         }

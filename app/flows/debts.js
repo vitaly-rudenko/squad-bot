@@ -11,22 +11,24 @@ export function debtsCommand({ storage, getDebtsByUserId }) {
       return user ? user.name : `??? (${id})`
     }
 
-    const ingoingDebtsFormatted = ingoingDebts.length > 0 ? `
-Тебе должны:
+    const ingoingDebtsFormatted = ingoingDebts.length > 0 ? `\
+🙂 Тебе должны:
 ${
   ingoingDebts
     .map(debt => `- ${getUserName(debt.userId)}: ${renderMoney(debt.amount)} грн`)
     .join('\n')
-}` : 'Тебе никто ничего не должен 🙂'
+}` : 'Тебе никто ничего не должен 🙁'
 
-const outgoingDebtsFormatted = outgoingDebts.length > 0 ? `
-Ты должен:
+    const outgoingDebtsFormatted = outgoingDebts.length > 0 ? `\
+🙁 Ты должен:
 ${
   outgoingDebts
     .map(debt => `- ${getUserName(debt.userId)}: ${renderMoney(debt.amount)} грн`)
     .join('\n')
 }` : 'Ты никому ничего не должен 🙂'
 
-    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted].filter(Boolean).join('\n'))
+    const isIncomplete = !context.state.user.isComplete && '❗️ Чтобы получать уведомления о платежах и новых чеках, выполни команду /start в ЛС бота.'
+
+    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted, isIncomplete].filter(Boolean).join('\n\n'))
   }
 }

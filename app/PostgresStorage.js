@@ -77,6 +77,14 @@ export class PostgresStorage {
     `, [id, username, name])
   }
 
+  async makeUserComplete(userId) {
+    await this._client.query(`
+      UPDATE users
+      SET is_complete = TRUE
+      where id = $1
+    `, [userId])
+  }
+
   async createPayment({ fromUserId, toUserId, amount }) {
     const response = await this._client.query(`
       INSERT INTO payments (created_at, from_user_id, to_user_id, amount)
@@ -241,6 +249,11 @@ export class PostgresStorage {
     }))
   }
 
+  async findUsersByIds(userIds) {
+    // TODO: refactor
+    return (await this.findUsers()).filter(u => userIds.includes(u.id))
+  }
+
   async findUsers() {
     const response = await this._client.query(`
       SELECT *
@@ -283,6 +296,7 @@ export class PostgresStorage {
       id: row['id'],
       name: row['name'],
       username: row['username'],
+      isComplete: row['is_complete'],
     }
   }
 
