@@ -104,8 +104,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       .map(([userId, amount]) => ({ userId, amount }))
 
     return {
-      ingoingDebts: debts.filter(d => d.amount < 0).map(({ userId, amount }) => ({ userId, amount: -amount })),
-      outgoingDebts: debts.filter(d => d.amount > 0),
+      ingoingDebts: debts
+        .filter(d => d.amount < 0)
+        .map(debt => ({ ...debt, amount: -debt.amount })),
+      outgoingDebts: debts
+        .filter(d => d.amount > 0),
     }
   }
 
@@ -277,7 +280,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const debts = Object.entries(JSON.parse(req.body.debts))
       .map(([debtorId, amount]) => ({
         debtorId,
-        amount: Number(amount),
+        amount: amount !== null ? Number(amount) : null,
       }))
 
     if (id && req.body.leave_photo === 'true' && (!photo || !mime)) {
