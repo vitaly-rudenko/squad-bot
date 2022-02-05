@@ -303,6 +303,7 @@ export class PostgresStorage {
   async getIngoingDebts(payerId) {
     const response = await this._client.query(`
       SELECT SUM(d.amount) AS amount, d.debtor_id
+        , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
       WHERE r.payer_id = $1 AND d.debtor_id != r.payer_id
@@ -312,12 +313,14 @@ export class PostgresStorage {
     return response.rows.map(row => ({
       userId: row['debtor_id'],
       amount: Number(row['amount']),
+      uncertainReceiptIds: row['uncertain_receipt_ids'],
     }))
   }
 
   async getOutgoingDebts(debtorId) {
     const response = await this._client.query(`
       SELECT SUM(d.amount) AS amount, r.payer_id
+        , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
       WHERE d.debtor_id = $1 AND d.debtor_id != r.payer_id
@@ -327,6 +330,7 @@ export class PostgresStorage {
     return response.rows.map(row => ({
       userId: row['payer_id'],
       amount: Number(row['amount']),
+      uncertainReceiptIds: row['uncertain_receipt_ids'],
     }))
   }
 

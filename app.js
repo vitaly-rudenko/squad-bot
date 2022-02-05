@@ -76,7 +76,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const ingoingPayments = await storage.getIngoingPayments(userId)
     const outgoingPayments = await storage.getOutgoingPayments(userId)
 
+    const unfinishedReceiptIds = [...new Set([
+      ...ingoingDebts.flatMap(d => d.uncertainReceiptIds),
+      ...outgoingDebts.flatMap(d => d.uncertainReceiptIds),
+    ])]
+
     const debtMap = {}
+    const uncertainMap = {}
     const addPayment = (fromUserId, toUserId, amount) => {
       const debtUserId = fromUserId === userId ? toUserId : fromUserId
 
@@ -91,10 +97,20 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       }
     }
 
-    for (const debt of ingoingDebts)
+    for (const debt of ingoingDebts) {
       addPayment(userId, debt.userId, debt.amount)
-    for (const debt of outgoingDebts)
+      if (debt.uncertainReceiptIds.length > 0) {
+        uncertainMap[debt.userId + '_' + userId] = true
+      }
+    }
+
+    for (const debt of outgoingDebts) {
       addPayment(debt.userId, userId, debt.amount)
+      if (debt.uncertainReceiptIds.length > 0) {
+        uncertainMap[userId + '_' + debt.userId] = true
+      }
+    }
+
     for (const payment of ingoingPayments)
       addPayment(payment.userId, userId, payment.amount)
     for (const payment of outgoingPayments)
@@ -105,10 +121,14 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
     return {
       ingoingDebts: debts
-        .filter(d => d.amount < 0)
-        .map(debt => ({ ...debt, amount: -debt.amount })),
+        .map(debt => ({ ...debt, ...uncertainMap[debt.userId + '_' + userId] && { isUncertain: true } }))
+        .filter(debt => debt.amount < 0 || debt.isUncertain)
+        .map(debt => ({ ...debt, amount: Math.max(0, -debt.amount) })),
       outgoingDebts: debts
-        .filter(d => d.amount > 0),
+        .map(debt => ({ ...debt, ...uncertainMap[userId + '_' + debt.userId] && { isUncertain: true } }))
+        .filter(debt => debt.amount > 0 || debt.isUncertain)
+        .map(debt => ({ ...debt, amount: Math.max(0, debt.amount) })),
+      ...unfinishedReceiptIds.length > 0 && { unfinishedReceipts: unfinishedReceiptIds },
     }
   }
 
