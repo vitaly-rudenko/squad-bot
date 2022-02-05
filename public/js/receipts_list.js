@@ -33,7 +33,9 @@ function showReceipts() {
         for (let j = 0; j < receipts[i].debts.length; j++) {
             receiptsHtml += `<div class="debtor">
                 <div>${getUserNameById(receipts[i].debts[j].debtorId)}</div>
-                <div>${renderMoney(receipts[i].debts[j].amount)} грн</div>
+                <div>${receipts[i].debts[j].amount
+                    ? (renderMoney(receipts[i].debts[j].amount) + ' грн')
+                    : 'не заполнено'}</div>
             </div>`
         }
         receiptsHtml += `<div class="comment_item">

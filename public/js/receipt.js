@@ -88,10 +88,23 @@ function renderDebtors() {
         debtorsHtml += `<div class="debtor"><div>
         <input class="debtor_checkbox" type="checkbox" checked id="debtor${i}" name="debtor${i}" value="${users[i].id}">
         <label for="debtor${i}">${users[i].name}</label></div>
-        <input class="debt_amount" type="number" placeholder="0.00" oninput="calculateReceiptRemainBalance()">
+        <input class="debt_amount" type="number" placeholder="" oninput="calculateReceiptRemainBalance()">
     </div>`
     }
     receiptDebtorsContainer.innerHTML = debtorsHtml
+
+    const debtors = document.querySelectorAll('.debtor input[type="number"]')
+    for (const debtor of debtors) {
+        debtor.placeholder = '0.00 (заполнить позже)'
+
+        debtor.addEventListener('focus', () => {
+            debtor.placeholder = '0.00'
+        })
+
+        debtor.addEventListener('blur', () => {
+            debtor.placeholder = '0.00 (заполнить позже)'
+        })
+    }
 }
 
 function saveReceipt() {
@@ -108,7 +121,8 @@ function saveReceipt() {
     for (let i = 0; i < debtors.length; i++) {
         const debtorCheckbox = debtors[i].querySelector(".debtor_checkbox")
         if(debtorCheckbox.checked) {
-            debts[debtorCheckbox.value] = moneyToCoins(debtors[i].querySelector(".debt_amount").value)
+            const value = debtors[i].querySelector(".debt_amount").value
+            debts[debtorCheckbox.value] = value ? moneyToCoins(value) : null
         }
     }
 
@@ -188,7 +202,9 @@ function setDebts(debts) {
         
         if (debt) {
             debtorCheckbox.checked = true
-            debtors[i].querySelector(".debt_amount").value = Number(debt.amount / 100).toFixed(2)
+            if (debt.amount) {
+                debtors[i].querySelector(".debt_amount").value = Number(debt.amount / 100).toFixed(2)
+            }
         } else {
             debtorCheckbox.checked = false
             debtors[i].querySelector(".debt_amount").value = ''

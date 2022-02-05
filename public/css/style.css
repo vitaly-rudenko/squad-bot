@@ -87,10 +87,19 @@ button {
 }
 
 .debtor {
-    margin-bottom: 12px;
+    margin-bottom: 6px;
+    padding: 6px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+}
+
+.debtor label {
+    padding: 6px;
+    cursor: pointer;
 }
 
 .debtor>div {

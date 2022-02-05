@@ -144,6 +144,25 @@ export class PostgresStorage {
     return receipts
   }
 
+  async findReceiptsByIds(receiptIds) {
+    if (receiptIds.length === 0) return []
+
+    const response = await this._client.query(`
+      SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
+      FROM receipts r
+      WHERE id IN (${receiptIds.map((_, i) => `$${i + 1}`)})
+      ORDER BY created_at DESC;
+    `, [...receiptIds])
+
+    const receipts = []
+
+    for (const row of response.rows) {
+      receipts.push(await this.deserializeReceipt(row))
+    }
+
+    return receipts
+  }
+
   // @deprecated
   async findReceipts() {
     const response = await this._client.query(`
@@ -303,6 +322,7 @@ export class PostgresStorage {
   async getIngoingDebts(payerId) {
     const response = await this._client.query(`
       SELECT SUM(d.amount) AS amount, d.debtor_id
+        , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
       WHERE r.payer_id = $1 AND d.debtor_id != r.payer_id
@@ -312,12 +332,14 @@ export class PostgresStorage {
     return response.rows.map(row => ({
       userId: row['debtor_id'],
       amount: Number(row['amount']),
+      uncertainReceiptIds: row['uncertain_receipt_ids'],
     }))
   }
 
   async getOutgoingDebts(debtorId) {
     const response = await this._client.query(`
       SELECT SUM(d.amount) AS amount, r.payer_id
+        , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
       WHERE d.debtor_id = $1 AND d.debtor_id != r.payer_id
@@ -327,6 +349,7 @@ export class PostgresStorage {
     return response.rows.map(row => ({
       userId: row['payer_id'],
       amount: Number(row['amount']),
+      uncertainReceiptIds: row['uncertain_receipt_ids'],
     }))
   }
 

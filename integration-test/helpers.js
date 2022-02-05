@@ -47,8 +47,17 @@ export async function createUsers(count = 1) {
   return users
 }
 
-export async function createReceipt(payerId, debts, { leavePhoto = false, photo = null, mime = null, description = null, receiptId = null } = {}) {
-  const amount = Object.values(debts).reduce((a, b) => a + b, 0)
+export async function createReceipt(payerId, debts, {
+  leavePhoto = false,
+  photo = null,
+  mime = null,
+  description = null,
+  receiptId = null,
+  amount = null,
+} = {}) {
+  if (!amount) {
+    amount = Object.values(debts).reduce((a, b) => a + b, 0)
+  }
 
   const body = new FormData()
   body.set('payer_id', payerId)

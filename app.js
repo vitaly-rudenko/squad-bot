@@ -76,7 +76,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const ingoingPayments = await storage.getIngoingPayments(userId)
     const outgoingPayments = await storage.getOutgoingPayments(userId)
 
+    const unfinishedReceiptIds = [...new Set([
+      ...ingoingDebts.flatMap(d => d.uncertainReceiptIds),
+      ...outgoingDebts.flatMap(d => d.uncertainReceiptIds),
+    ])]
+
     const debtMap = {}
+    const uncertainMap = {}
     const addPayment = (fromUserId, toUserId, amount) => {
       const debtUserId = fromUserId === userId ? toUserId : fromUserId
 
@@ -91,10 +97,20 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       }
     }
 
-    for (const debt of ingoingDebts)
+    for (const debt of ingoingDebts) {
       addPayment(userId, debt.userId, debt.amount)
-    for (const debt of outgoingDebts)
+      if (debt.uncertainReceiptIds.length > 0) {
+        uncertainMap[debt.userId + '_' + userId] = true
+      }
+    }
+
+    for (const debt of outgoingDebts) {
       addPayment(debt.userId, userId, debt.amount)
+      if (debt.uncertainReceiptIds.length > 0) {
+        uncertainMap[userId + '_' + debt.userId] = true
+      }
+    }
+
     for (const payment of ingoingPayments)
       addPayment(payment.userId, userId, payment.amount)
     for (const payment of outgoingPayments)
@@ -104,8 +120,15 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       .map(([userId, amount]) => ({ userId, amount }))
 
     return {
-      ingoingDebts: debts.filter(d => d.amount < 0).map(({ userId, amount }) => ({ userId, amount: -amount })),
-      outgoingDebts: debts.filter(d => d.amount > 0),
+      ingoingDebts: debts
+        .map(debt => ({ ...debt, ...uncertainMap[debt.userId + '_' + userId] && { isUncertain: true } }))
+        .filter(debt => debt.amount < 0 || debt.isUncertain)
+        .map(debt => ({ ...debt, amount: Math.max(0, -debt.amount) })),
+      outgoingDebts: debts
+        .map(debt => ({ ...debt, ...uncertainMap[userId + '_' + debt.userId] && { isUncertain: true } }))
+        .filter(debt => debt.amount > 0 || debt.isUncertain)
+        .map(debt => ({ ...debt, amount: Math.max(0, debt.amount) })),
+      ...unfinishedReceiptIds.length > 0 && { unfinishedReceiptIds },
     }
   }
 
@@ -277,7 +300,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const debts = Object.entries(JSON.parse(req.body.debts))
       .map(([debtorId, amount]) => ({
         debtorId,
-        amount: Number(amount),
+        amount: (amount !== null && Number.isInteger(Number(amount)) && Number(amount) > 0) ? Number(amount) : null,
       }))
 
     if (id && req.body.leave_photo === 'true' && (!photo || !mime)) {
