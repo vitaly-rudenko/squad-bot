@@ -128,7 +128,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
         .map(debt => ({ ...debt, ...uncertainMap[userId + '_' + debt.userId] && { isUncertain: true } }))
         .filter(debt => debt.amount > 0 || debt.isUncertain)
         .map(debt => ({ ...debt, amount: Math.max(0, debt.amount) })),
-      ...unfinishedReceiptIds.length > 0 && { unfinishedReceipts: unfinishedReceiptIds },
+      ...unfinishedReceiptIds.length > 0 && { unfinishedReceiptIds },
     }
   }
 

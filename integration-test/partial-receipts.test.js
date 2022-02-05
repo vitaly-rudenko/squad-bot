@@ -34,7 +34,7 @@ describe('[partial receipts]', () => {
         isUncertain: true,
       }],
       outgoingDebts: [],
-      unfinishedReceipts: [receiptId],
+      unfinishedReceiptIds: [receiptId],
     })
   })
 
@@ -80,7 +80,7 @@ describe('[partial receipts]', () => {
         userId: user2.id,
         amount: 30,
       }],
-      unfinishedReceipts: [receipt1Id],
+      unfinishedReceiptIds: [receipt1Id],
     })
 
     expect(await getDebts(user2.id)).to.deep.equalInAnyOrder({
@@ -96,7 +96,7 @@ describe('[partial receipts]', () => {
         amount: 25,
       }],
       outgoingDebts: [],
-      unfinishedReceipts: [receipt2Id],
+      unfinishedReceiptIds: [receipt2Id],
     })
 
     expect(await getDebts(user3.id)).to.deep.equalInAnyOrder({
@@ -118,7 +118,7 @@ describe('[partial receipts]', () => {
         amount: 0,
         isUncertain: true,
       }],
-      unfinishedReceipts: [receipt1Id, receipt2Id, receipt3Id, receipt4Id],
+      unfinishedReceiptIds: [receipt1Id, receipt2Id, receipt3Id, receipt4Id],
     })
 
     expect(await getDebts(user4.id)).to.deep.equalInAnyOrder({
@@ -135,7 +135,7 @@ describe('[partial receipts]', () => {
         amount: 0,
         isUncertain: true,
       }],
-      unfinishedReceipts: [receipt3Id, receipt4Id],
+      unfinishedReceiptIds: [receipt3Id, receipt4Id],
     })
   })
 })

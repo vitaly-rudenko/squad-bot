@@ -202,7 +202,9 @@ function setDebts(debts) {
         
         if (debt) {
             debtorCheckbox.checked = true
-            debtors[i].querySelector(".debt_amount").value = Number(debt.amount / 100).toFixed(2)
+            if (debt.amount) {
+                debtors[i].querySelector(".debt_amount").value = Number(debt.amount / 100).toFixed(2)
+            }
         } else {
             debtorCheckbox.checked = false
             debtors[i].querySelector(".debt_amount").value = ''

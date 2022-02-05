@@ -2,9 +2,13 @@ import { renderMoney } from '../renderMoney.js'
 
 export function debtsCommand({ storage, getDebtsByUserId }) {
   return async (context) => {
+    const userId = context.state.userId
     const users = await storage.findUsers()
 
-    const { ingoingDebts, outgoingDebts } = await getDebtsByUserId(context.state.userId)
+    const { ingoingDebts, outgoingDebts, unfinishedReceiptIds } = await getDebtsByUserId(userId)
+    const unfinishedReceipts = await storage.findReceiptsByIds(unfinishedReceiptIds ?? [])
+    const unfinishedReceiptsByMe = unfinishedReceipts
+      .filter(r => r.debts.some(d => d.amount === null && d.debtorId === userId))
 
     function getUserName(id) {
       const user = users.find(u => u.id === id)
@@ -12,7 +16,20 @@ export function debtsCommand({ storage, getDebtsByUserId }) {
     }
 
     function renderDebt(debt) {
-      return `- ${getUserName(debt.userId)}: ${renderMoney(debt.amount)}${debt.isUncertain ? '+?' : ''} грн`
+      let amount = debt.amount > 0 ? renderMoney(debt.amount) : ''
+
+      if (debt.isUncertain) {
+        amount = amount ? amount + '+?' : '?'
+      }
+
+      return `- ${getUserName(debt.userId)}: ${amount} грн`
+    }
+
+    function renderUnfinishedReceipt(receipt, index) {
+      return `
+${index}. ${getUserName(receipt.payerId)}: ${renderMoney(receipt.amount)} грн
+    → 📅 ${[receipt.createdAt.toISOString().split('T')[0].replaceAll('-', '.'), receipt.description, receipt.hasPhoto && 'с фото'].filter(Boolean).join(', ')}
+      `.trim()
     }
 
     const ingoingDebtsFormatted = ingoingDebts.length > 0 ? `\
@@ -31,8 +48,15 @@ ${
     .join('\n')
 }` : 'Ты никому ничего не должен 🙂'
 
-    const isIncomplete = !context.state.user.isComplete && '❗️ Чтобы получать уведомления о платежах и новых чеках, выполни команду /start в ЛС бота.'
+    const unfinishedReceiptsFormatted = unfinishedReceiptsByMe.length > 0 && `\
+❗️ Ты не заполнил эти чеки (/receipts):
+${unfinishedReceiptsByMe
+  .map((r, i) => renderUnfinishedReceipt(r, i + 1)).join('\n')}   
+`
+// TODO: show your receipts that haven't been filled by someone else
 
-    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted, isIncomplete].filter(Boolean).join('\n\n'))
+    const isIncomplete = !context.state.user.isComplete && '💡 Чтобы получать уведомления о платежах и новых чеках, выполни команду /start в ЛС бота.'
+
+    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted, unfinishedReceiptsFormatted, isIncomplete].filter(Boolean).map(s => s.trim()).join('\n\n'))
   }
 }

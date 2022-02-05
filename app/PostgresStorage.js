@@ -144,6 +144,25 @@ export class PostgresStorage {
     return receipts
   }
 
+  async findReceiptsByIds(receiptIds) {
+    if (receiptIds.length === 0) return []
+
+    const response = await this._client.query(`
+      SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
+      FROM receipts r
+      WHERE id IN (${receiptIds.map((_, i) => `$${i + 1}`)})
+      ORDER BY created_at DESC;
+    `, [...receiptIds])
+
+    const receipts = []
+
+    for (const row of response.rows) {
+      receipts.push(await this.deserializeReceipt(row))
+    }
+
+    return receipts
+  }
+
   // @deprecated
   async findReceipts() {
     const response = await this._client.query(`
