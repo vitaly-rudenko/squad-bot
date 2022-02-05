@@ -300,7 +300,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const debts = Object.entries(JSON.parse(req.body.debts))
       .map(([debtorId, amount]) => ({
         debtorId,
-        amount: amount !== null ? Number(amount) : null,
+        amount: (amount !== null && Number.isInteger(Number(amount)) && Number(amount) > 0) ? Number(amount) : null,
       }))
 
     if (id && req.body.leave_photo === 'true' && (!photo || !mime)) {

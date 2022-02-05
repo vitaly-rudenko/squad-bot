@@ -19,17 +19,15 @@
         <div class="form_input">
             <label>* Кто платит</label>
             <select id="receipts_payer_select">
-                <option selected value="Валентин">Валентин</option>
-                <option value="Виталик">Виталик</option>
-                <option value="Миша">Миша</option>
+                <option selected value="?">Загрузка...</option>
             </select>
         </div>
 
         <div class="form_input">
             <label for="receipts_photo_input">Загрузить фотографию чека</label>
             <input type="file" id="receipts_photo_input" class="hidden" name="receipts_photo_input" accept=".jpg, .jpeg, .png">
-            <button id="receipts_add_photo_button" type="button">Добавить фото чека</button>
-            <button id="receipts_delete_photo_button" type="button">Удалить фото чека</button>
+            <button id="receipts_add_photo_button" class="hidden" type="button">Добавить фото чека</button>
+            <button id="receipts_delete_photo_button"  class="hidden" type="button">Удалить фото чека</button>
         </div>
 
         <div class="form_input">
