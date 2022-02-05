@@ -11,11 +11,15 @@ export function debtsCommand({ storage, getDebtsByUserId }) {
       return user ? user.name : `??? (${id})`
     }
 
+    function renderDebt(debt) {
+      return `- ${getUserName(debt.userId)}: ${renderMoney(debt.amount)}${debt.isUncertain ? '+?' : ''} грн`
+    }
+
     const ingoingDebtsFormatted = ingoingDebts.length > 0 ? `\
 🙂 Тебе должны:
 ${
   ingoingDebts
-    .map(debt => `- ${getUserName(debt.userId)}: ${renderMoney(debt.amount)} грн`)
+    .map(renderDebt)
     .join('\n')
 }` : 'Тебе никто ничего не должен 🙁'
 
@@ -23,7 +27,7 @@ ${
 🙁 Ты должен:
 ${
   outgoingDebts
-    .map(debt => `- ${getUserName(debt.userId)}: ${renderMoney(debt.amount)} грн`)
+    .map(renderDebt)
     .join('\n')
 }` : 'Ты никому ничего не должен 🙂'
 
