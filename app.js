@@ -222,7 +222,8 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
         } else {
           await sendNotification(user.id, `
 👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
-${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.\n💸 Проверить долги: /debts\n` : ''}\
+💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.
+💸 Проверить долги: /debts
 🧾 Посмотреть чеки: /receipts
           `)
         }
@@ -257,6 +258,65 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
     }
 
     return id
+  }
+
+  async function deleteReceipt(receiptId) {
+    const receipt = await storage.findReceiptById(receiptId)
+
+    await storage.deleteDebtsByReceiptId(receiptId)
+    await storage.deleteReceiptById(receiptId)
+
+    const payer = await storage.findUserById(receipt.payerId)
+    const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(d => d.debtorId)])]
+    const users = await storage.findUsersByIds(userIds)
+    const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
+
+    for (const user of users) {
+      if (!user.isComplete) continue;
+
+      try {
+        if (user.id === receipt.payerId) {
+          await sendNotification(user.id, `
+❌ 👤✏️🧾 Ты удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
+💸 Проверить долги: /debts
+🧾 Посмотреть чеки: /receipts
+          `)
+        } else {
+          await sendNotification(user.id, `
+❌ 👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
+💸 Проверить долги: /debts
+🧾 Посмотреть чеки: /receipts
+          `)
+        }
+      } catch (error) {
+        logError(error)
+      }
+    }
+  }
+
+  async function deletePayment(paymentId) {
+    const payment = await storage.findPaymentById(paymentId)
+    
+    const sender = await storage.findUserById(payment.fromUserId)
+    const receiver = await storage.findUserById(payment.toUserId)
+
+    await storage.deletePaymentById(paymentId)
+
+    if (sender.isComplete) {
+      await sendNotification(sender.id, `
+❌ 👤➡️👤 Ты удалил платеж пользователю ${receiver.name} (@${receiver.username}) на сумму ${renderMoney(payment.amount)} грн.
+💸 Проверить долги: /debts
+🧾 Посмотреть платежи: /payments
+      `)
+    }
+
+    if (receiver.isComplete) {
+      await sendNotification(receiver.id, `
+❌ 👤➡️👤 Пользователь ${sender.name} (@${sender.username}) удалил платеж тебе на сумму ${renderMoney(payment.amount)} грн.
+💸 Проверить долги: /debts
+🧾 Посмотреть платежи: /payments
+      `)
+    }
   }
 
   async function sendNotification(userId, message) {
@@ -348,7 +408,7 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   })
 
   app.delete('/payments/:paymentId', async (req, res) => {
-    await storage.deletePaymentById(req.params.paymentId)
+    await deletePayment(req.params.paymentId)
     res.sendStatus(200)
   })
 
@@ -389,8 +449,7 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
-    await storage.deleteDebtsByReceiptId(req.params.receiptId)
-    await storage.deleteReceiptById(req.params.receiptId)
+    await deleteReceipt(req.params.receiptId)
     res.sendStatus(200)
   })
 

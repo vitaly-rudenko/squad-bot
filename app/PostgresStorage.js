@@ -142,8 +142,6 @@ export class PostgresStorage {
       ORDER BY created_at DESC;
     `, [userId])
 
-    console.log('receipts by userId', userId, response.rows)
-
     const receipts = []
 
     for (const row of response.rows) {
@@ -251,6 +249,21 @@ export class PostgresStorage {
     }
   }
 
+  async findPaymentById(paymentId) {
+    const response = await this._client.query(`
+      SELECT p.*
+      FROM payments p
+      WHERE id = $1
+        AND p.deleted_at IS NULL;
+    `, [paymentId])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return this.deserializePayment(response.rows[0])
+  }
+
   async findPayments({ fromUserId = undefined, toUserId = undefined } = {}) {
     const conditions = [
       'p.deleted_at IS NULL'
@@ -268,19 +281,23 @@ export class PostgresStorage {
     }
 
     const response = await this._client.query(`
-      SELECT *
+      SELECT p.*
       FROM payments p
       ${conditions.length === 0 ? '' : ('WHERE ' + conditions.join(' AND '))}
       ORDER BY p.created_at DESC;
     `, variables)
 
-    return response.rows.map(row => ({
+    return response.rows.map(this.deserializePayment)
+  }
+
+  deserializePayment(row) {
+    return {
       id: row['id'],
       fromUserId: row['from_user_id'],
       toUserId: row['to_user_id'],
       amount: row['amount'],
       createdAt: new Date(row['created_at']),
-    }))
+    }
   }
 
   async findUsersByIds(userIds) {
