@@ -106,6 +106,12 @@ export async function getReceipt(receiptId) {
   return await response.json()
 }
 
+export async function deleteReceipt(receiptId) {
+  const response = await fetch(`http://localhost:3001/receipts/${receiptId}`, { method: 'DELETE' })
+
+  validateResponse(response)
+}
+
 export async function getReceiptPhoto(receiptId) {
   const response = await fetch(`http://localhost:3001/receipts/${receiptId}/photo`)
 
@@ -151,7 +157,13 @@ export async function createPayment(fromUserId, toUserId, amount) {
 
   validateResponse(response)
 
-  return payment
+  return (await response.json()).id
+}
+
+export async function deletePayment(paymentId) {
+  const response = await fetch(`http://localhost:3001/payments/${paymentId}`, { method: 'DELETE' })
+
+  validateResponse(response)
 }
 
 export async function getDebts(userId) {

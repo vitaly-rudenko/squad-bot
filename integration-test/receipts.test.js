@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
-import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getReceiptPhoto, expectReceiptToShallowEqual, getReceipt } from './helpers.js'
+import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getReceiptPhoto, expectReceiptToShallowEqual, getReceipt, deleteReceipt, getDebts, NO_DEBTS } from './helpers.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -203,6 +203,56 @@ describe('[receipts]', () => {
       expectReceiptsToEqual(await getReceipts(user2.id), [receipt1])
       expectReceiptsToEqual(await getReceipts(user3.id), [receipt2])
       expect(await getReceipts(user4.id)).to.deep.equalInAnyOrder([])
+    })
+  })
+
+  describe('DELETE /receipts/{receiptId}', () => {
+    it('should delete the receipt and its debts (simple)', async () => {
+      const [user1, user2] = await createUsers(2)
+
+      const receiptId = await createReceipt(user1.id, {
+        [user1.id]: 10,
+        [user2.id]: 10,
+      })
+      
+      await deleteReceipt(receiptId)
+
+      expect(await getReceipts(user1.id)).to.deep.equal([])
+      expect(await getReceipts(user2.id)).to.deep.equal([])
+      expect(await getDebts(user1.id)).to.deep.equalInAnyOrder(NO_DEBTS)
+      expect(await getDebts(user2.id)).to.deep.equalInAnyOrder(NO_DEBTS)
+    })
+
+    it('should delete the receipt and its debts (complex)', async () => {
+      const [user1, user2] = await createUsers(2)
+
+      const receipt1Id = await createReceipt(user1.id, {
+        [user1.id]: 10,
+        [user2.id]: 10,
+      })
+
+      const receipt2Id = await createReceipt(user2.id, {
+        [user1.id]: 10,
+      })
+
+      const receipt3Id = await createReceipt(user1.id, {
+        [user2.id]: null,
+      }, { description: 'hello world' })
+      
+      await deleteReceipt(receipt2Id)
+
+      expect((await getReceipts(user1.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])
+      expect((await getReceipts(user2.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])
+
+      await deleteReceipt(receipt1Id)
+
+      expect((await getReceipts(user1.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt3Id])
+      expect((await getReceipts(user2.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt3Id])
+
+      await deleteReceipt(receipt3Id)
+
+      expect((await getReceipts(user1.id))).to.deep.equal([])
+      expect((await getReceipts(user2.id))).to.deep.equal([])
     })
   })
 })

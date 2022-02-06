@@ -30,21 +30,24 @@ export class PostgresStorage {
 
   async deleteReceiptById(receiptId) {
     await this._client.query(`
-      DELETE FROM receipts
+      UPDATE receipts
+      SET deleted_at = NOW()
       WHERE id = $1;
     `, [receiptId])
   }
 
   async deleteDebtsByReceiptId(receiptId) {
     await this._client.query(`
-      DELETE FROM debts
+      UPDATE debts
+      SET deleted_at = NOW()
       WHERE receipt_id = $1;
     `, [receiptId])
   }
 
   async deletePaymentById(paymentId) {
     await this._client.query(`
-      DELETE FROM payments
+      UPDATE payments
+      SET deleted_at = NOW()
       WHERE id = $1;
     `, [paymentId])
   }
@@ -99,7 +102,8 @@ export class PostgresStorage {
     const response = await this._client.query(`
       SELECT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
       FROM receipts r
-      WHERE r.id = $1;
+      WHERE r.id = $1
+        AND r.deleted_at IS NULL;
     `, [receiptId])
 
     if (response.rowCount === 0) {
@@ -113,7 +117,8 @@ export class PostgresStorage {
     const response = await this._client.query(`
       SELECT r.photo, r.mime
       FROM receipts r
-      WHERE r.id = $1;
+      WHERE r.id = $1
+        AND r.deleted_at IS NULL;
     `, [receiptId])
 
     if (response.rowCount === 0 || !response.rows[0]['photo'] || !response.rows[0]['mime']) {
@@ -128,12 +133,16 @@ export class PostgresStorage {
 
   async findReceiptsByParticipantUserId(userId) {
     const response = await this._client.query(`
-      SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
+      SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo, r.deleted_at
       FROM receipts r
       LEFT JOIN debts d ON d.receipt_id = r.id
-      WHERE payer_id = $1 OR debtor_id = $1
+      WHERE (r.payer_id = $1 OR d.debtor_id = $1)
+        AND r.deleted_at IS NULL
+        AND d.deleted_at IS NULL
       ORDER BY created_at DESC;
     `, [userId])
+
+    console.log('receipts by userId', userId, response.rows)
 
     const receipts = []
 
@@ -151,6 +160,7 @@ export class PostgresStorage {
       SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
       FROM receipts r
       WHERE id IN (${receiptIds.map((_, i) => `$${i + 1}`)})
+        AND r.deleted_at IS NULL
       ORDER BY created_at DESC;
     `, [...receiptIds])
 
@@ -168,7 +178,8 @@ export class PostgresStorage {
     const response = await this._client.query(`
       SELECT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
       FROM receipts r
-      ORDER BY created_at DESC;
+      WHERE r.deleted_at IS NULL
+      ORDER BY r.created_at DESC;
     `, [])
 
     const receipts = []
@@ -194,10 +205,12 @@ export class PostgresStorage {
 
   async findDebtsByReceiptId(receiptId) {
     const response = await this._client.query(`
-      SELECT debts.*
-      FROM debts
-      JOIN receipts ON receipts.id = debts.receipt_id
-      WHERE debts.receipt_id = $1;
+      SELECT d.*
+      FROM debts d
+      JOIN receipts r ON r.id = d.receipt_id
+      WHERE d.receipt_id = $1
+        AND r.deleted_at IS NULL
+        AND d.deleted_at IS NULL;
     `, [receiptId])
 
     return response.rows.map(row => ({
@@ -239,24 +252,26 @@ export class PostgresStorage {
   }
 
   async findPayments({ fromUserId = undefined, toUserId = undefined } = {}) {
-    const conditions = []
+    const conditions = [
+      'p.deleted_at IS NULL'
+    ]
     const variables = []
 
     if (fromUserId) {
       variables.push(fromUserId)
-      conditions.push(`from_user_id = $${variables.length}`)
+      conditions.push(`p.from_user_id = $${variables.length}`)
     }
 
     if (toUserId) {
       variables.push(toUserId)
-      conditions.push(`to_user_id = $${variables.length}`)
+      conditions.push(`p.to_user_id = $${variables.length}`)
     }
 
     const response = await this._client.query(`
       SELECT *
-      FROM payments
+      FROM payments p
       ${conditions.length === 0 ? '' : ('WHERE ' + conditions.join(' AND '))}
-      ORDER BY created_at DESC;
+      ORDER BY p.created_at DESC;
     `, variables)
 
     return response.rows.map(row => ({
@@ -326,6 +341,8 @@ export class PostgresStorage {
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
       WHERE r.payer_id = $1 AND d.debtor_id != r.payer_id
+        AND r.deleted_at IS NULL
+        AND d.deleted_at IS NULL
       GROUP BY d.debtor_id, r.payer_id;
     `, [payerId])
 
@@ -343,6 +360,8 @@ export class PostgresStorage {
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
       WHERE d.debtor_id = $1 AND d.debtor_id != r.payer_id
+        AND r.deleted_at IS NULL
+        AND d.deleted_at IS NULL
       GROUP BY d.debtor_id, r.payer_id;
     `, [debtorId])
 
@@ -358,6 +377,7 @@ export class PostgresStorage {
       SELECT SUM(p.amount) AS amount, p.from_user_id
       FROM payments p
       WHERE p.to_user_id = $1
+        AND p.deleted_at IS NULL
       GROUP BY p.from_user_id;
     `, [toUserId])
 
@@ -372,6 +392,7 @@ export class PostgresStorage {
       SELECT SUM(p.amount) AS amount, p.to_user_id
       FROM payments p
       WHERE p.from_user_id = $1
+        AND p.deleted_at IS NULL
       GROUP BY p.to_user_id;
     `, [fromUserId])
 
