@@ -167,6 +167,7 @@ button {
     justify-content: space-between;
     margin-bottom: 7px;
     font-size: 14px;
+    border: none;
 }
 .receipt_list_item .payer {
     font-size: 19px;
