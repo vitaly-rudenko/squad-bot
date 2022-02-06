@@ -86,6 +86,10 @@ button {
     opacity: 0.7;
 }
 
+#receipts_add_photo_button {
+    margin-top: 5px;
+}
+
 .debtor {
     margin-bottom: 6px;
     display: flex;
