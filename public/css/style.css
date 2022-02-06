@@ -88,17 +88,18 @@ button {
 
 .debtor {
     margin-bottom: 6px;
-    padding: 6px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    background-color: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .debtor > div {
     width: 100%;
+}
+
+.receipt_list_item .debtor > div {
+    width: auto;
 }
 
 .debtor label {
@@ -108,16 +109,17 @@ button {
     white-space: nowrap;
 }
 
+
 .debtor>div {
     display: flex;
     align-items: center;
 }
 
 .debtor .debt_amount {
-    border-radius: 5px;
-    border: 1px solid grey;
-    padding: 6px;
+    padding: 10px;
     min-width: 200px;
+    border: none;
+    outline: none;
 }
 
 #error_message {
@@ -163,7 +165,7 @@ button {
 .receipt_list_item .payer, .receipt_list_item .debtor, .receipt_list_item .comment_item, .receipt_list_item .action_buttons, .payment_list_item .action_buttons {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 4px;
+    margin-bottom: 7px;
     font-size: 14px;
 }
 .receipt_list_item .payer {
