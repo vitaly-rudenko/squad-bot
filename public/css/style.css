@@ -127,6 +127,7 @@ button {
     min-width: 200px;
     border: none;
     outline: none;
+    text-align: right;
 }
 
 #error_message {
