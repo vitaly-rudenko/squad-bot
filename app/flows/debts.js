@@ -1,3 +1,4 @@
+import { renderDebtAmount } from '../renderDebtAmount.js'
 import { renderMoney } from '../renderMoney.js'
 
 export function debtsCommand({ storage, getDebtsByUserId }) {
@@ -16,13 +17,7 @@ export function debtsCommand({ storage, getDebtsByUserId }) {
     }
 
     function renderDebt(debt) {
-      let amount = debt.amount > 0 ? renderMoney(debt.amount) : ''
-
-      if (debt.isUncertain) {
-        amount = amount ? amount + '+?' : '?'
-      }
-
-      return `- ${getUserName(debt.userId)}: ${amount} грн`
+      return `- ${getUserName(debt.userId)}: ${renderDebtAmount(debt)} грн`
     }
 
     function renderUnfinishedReceipt(receipt, index) {

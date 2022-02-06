@@ -23,6 +23,7 @@ import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDelete
 import { paymentsGetCommand } from './app/flows/payments.js'
 import { renderMoney } from './app/renderMoney.js'
 import { withUserFactory } from './app/withUserFactory.js'
+import { renderDebtAmount } from './app/renderDebtAmount.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -203,21 +204,28 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     const payer = await storage.findUserById(payerId)
-    const userIds = debts.map(d => d.debtorId)
+    const userIds = [...new Set([payerId, ...debts.map(d => d.debtorId)])]
     const users = await storage.findUsersByIds(userIds)
     const notificationDescription = description ? `"${description}"` : 'без описания'
 
     for (const user of users) {
-      if (user.id === payerId || !user.isComplete) continue;
+      if (!user.isComplete) continue;
       const debt = debts.find(d => d.debtorId === user.id)
 
       try {
-        await sendNotification(user.id, `
-👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
-💵 Твой долг в этом чеке: ${renderMoney(debt.amount)} грн.
-💸 Проверить долги: /debts
+        if (user.id === payerId) {
+          await sendNotification(user.id, `
+👤✏️🧾 Ты ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.\n💸 Проверить долги: /debts\n` : ''}\
 🧾 Посмотреть чеки: /receipts
-        `)
+          `)
+        } else {
+          await sendNotification(user.id, `
+👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.\n💸 Проверить долги: /debts\n` : ''}\
+🧾 Посмотреть чеки: /receipts
+          `)
+        }
       } catch (error) {
         logError(error)
       }
@@ -231,6 +239,15 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
     const sender = await storage.findUserById(fromUserId)
     const receiver = await storage.findUserById(toUserId)
+
+    if (sender.isComplete) {
+      await sendNotification(sender.id, `
+👤➡️👤 Ты отправил пользователю ${receiver.name} (@${receiver.username}) платеж на сумму ${renderMoney(amount)} грн.
+💸 Проверить долги: /debts
+🧾 Посмотреть платежи: /payments
+      `)
+    }
+
     if (receiver.isComplete) {
       await sendNotification(receiver.id, `
 👤➡️👤 Пользователь ${sender.name} (@${sender.username}) отправил тебе платеж на сумму ${renderMoney(amount)} грн.
