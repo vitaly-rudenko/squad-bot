@@ -97,9 +97,15 @@ button {
     border-radius: 10px;
 }
 
+.debtor > div {
+    width: 100%;
+}
+
 .debtor label {
     padding: 6px;
     cursor: pointer;
+    width: 100%;
+    white-space: nowrap;
 }
 
 .debtor>div {
@@ -111,7 +117,7 @@ button {
     border-radius: 5px;
     border: 1px solid grey;
     padding: 6px;
-    width: 40%;
+    min-width: 200px;
 }
 
 #error_message {
