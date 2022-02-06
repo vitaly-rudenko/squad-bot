@@ -1,3 +1,5 @@
+import escapeHtml from 'escape-html'
+
 export function usersCommand({ storage }) {
   return async (context) => {
     const users = await storage.findUsers()
@@ -6,9 +8,9 @@ export function usersCommand({ storage }) {
 👥 Пользователи:
 ${
   users
-    .map(user => `- ${user.name} (ник: ${user.username}, id: ${user.id}${user.isComplete ? '' : ', без уведомлений'})`)
+    .map(user => `- <a href="tg://user?id=${user.id}">${escapeHtml(user.name)}</a> (ник: ${user.username}, id: ${user.id}${user.isComplete ? '' : ', без уведомлений'})`)
     .join('\n') || '- Никто не зарегистрирован :('
 }
-    `)
+    `, { parse_mode: 'html' })
   }
 }

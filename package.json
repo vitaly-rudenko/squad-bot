@@ -1,6 +1,6 @@
 {
   "name": "squad-bot",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "Telegram bot assistant for squads",
   "main": "app.js",
   "type": "module",
@@ -38,6 +38,7 @@
     "common-tags": "^1.8.2",
     "dotenv": "^12.0.3",
     "ejs": "^3.1.6",
+    "escape-html": "^1.0.3",
     "express": "^4.17.2",
     "googleapis": "^92.0.0",
     "jsonwebtoken": "^8.5.1",
