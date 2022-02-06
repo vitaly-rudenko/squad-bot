@@ -86,8 +86,8 @@ button {
     opacity: 0.7;
 }
 
-#receipts_add_photo_button {
-    margin-top: 5px;
+#receipts_add_photo_button, #receipts_delete_photo_button {
+    margin-top: 5px !important;
 }
 
 .debtor {
