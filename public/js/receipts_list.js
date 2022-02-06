@@ -30,14 +30,16 @@ function showReceipts() {
             <div>${renderMoney(receipts[i].amount)} грн</div>
         </div>`
 
+        receiptsHtml += '<div class="debtor_list">'
         for (let j = 0; j < receipts[i].debts.length; j++) {
             receiptsHtml += `<div class="debtor">
-                <div>${getUserNameById(receipts[i].debts[j].debtorId)}</div>
-                <div>${receipts[i].debts[j].amount
+                <div class="debt__name">${getUserNameById(receipts[i].debts[j].debtorId)}</div>
+                <div class="debt__amount">${receipts[i].debts[j].amount
                     ? (renderMoney(receipts[i].debts[j].amount) + ' грн')
                     : 'не заполнено'}</div>
             </div>`
         }
+        receiptsHtml+='</div>'
         receiptsHtml += `<div class="comment_item">
             <div>${receipts[i].description || ''}</div>
             <div>${renderDate(new Date(receipts[i].createdAt))}</div>

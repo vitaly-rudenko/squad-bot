@@ -91,7 +91,10 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid #e0e0e0;
+}
+
+.debtor:not(:last-child) {
+    border-bottom: 1px solid #ebebeb;
 }
 
 .debtor > div {
@@ -165,9 +168,8 @@ button {
 .receipt_list_item .payer, .receipt_list_item .debtor, .receipt_list_item .comment_item, .receipt_list_item .action_buttons, .payment_list_item .action_buttons {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 7px;
+    padding: 0px 0px 5px 0px;
     font-size: 14px;
-    border: none;
 }
 .receipt_list_item .payer {
     font-size: 19px;
