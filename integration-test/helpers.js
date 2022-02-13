@@ -90,7 +90,11 @@ export async function createReceipt(payerId, debts, {
 
 export async function getReceipts(userId) {
   const token = createToken(userId)
-  const response = await fetch(`http://localhost:3001/receipts?token=${token}`)
+  const response = await fetch('http://localhost:3001/receipts', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  })
 
   validateResponse(response)
 

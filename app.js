@@ -404,7 +404,7 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   })
 
   app.get('/receipts', async (req, res) => {
-    const token = req.query.token
+    const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
 
     let receipts = []
     if (token) {
