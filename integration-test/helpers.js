@@ -11,30 +11,29 @@ const createStringGenerator = (prefix = '') => {
 const generateUserId = createStringGenerator()
 
 export function validateResponse(response) {
-  if (response.status !== 200) {
+  if (!String(response.status).startsWith('2')) {
     throw new Error(`Invalid response: ${response.status} (${response.statusText})`)
   }
 }
 
 export async function createUser(index = null) {
   const id = [index, generateUserId()].filter(Boolean).join('_')
-  const user = {
-    id,
-    name: `User ${id}`,
-    username: `username_${id}`,
-  }
 
   const response = await fetch('http://localhost:3001/users', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(user)
+    body: JSON.stringify({
+      id,
+      name: `User ${id}`,
+      username: `username_${id}`,
+    })
   })
 
   validateResponse(response)
 
-  return user
+  return await response.json()
 }
 
 export async function createUsers(count = 1) {
@@ -86,7 +85,7 @@ export async function createReceipt(payerId, debts, {
 
   validateResponse(response)
 
-  return (await response.json()).id
+  return await response.json()
 }
 
 export async function getReceipts(userId) {
@@ -157,7 +156,7 @@ export async function createPayment(fromUserId, toUserId, amount) {
 
   validateResponse(response)
 
-  return (await response.json()).id
+  return await response.json()
 }
 
 export async function deletePayment(paymentId) {

@@ -35,7 +35,7 @@ describe('[receipts]', () => {
     it('should return 404 when there is no receipt photo', async () => {
       const [user] = await createUsers(1)
 
-      const receiptId = await createReceipt(user.id, { [user.id]: 1 })
+      const { id: receiptId } = await createReceipt(user.id, { [user.id]: 1 })
       const response = await getReceiptPhoto(receiptId)
 
       expect(response.status).to.equal(404)
@@ -44,11 +44,11 @@ describe('[receipts]', () => {
     it('should keep original date of receipt when updated', async () => {
       const [user1] = await createUsers(1)
 
-      const receiptId = await createReceipt(user1.id, { [user1.id]: 10 })
+      const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 })
 
       const originalReceipt = await getReceipt(receiptId)
 
-      const updatedReceiptId = await createReceipt(user1.id, { [user1.id]: 20 }, { description: 'hello world', receiptId })
+      const { id: updatedReceiptId } = await createReceipt(user1.id, { [user1.id]: 20 }, { description: 'hello world', receiptId })
 
       const receipt = await getReceipt(receiptId)
 
@@ -69,7 +69,7 @@ describe('[receipts]', () => {
     it('should update the receipt (leave photo)', async () => {
       const [user1, user2, user3] = await createUsers(3)
 
-      const receiptId = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
+      const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
 
       await createReceipt(user2.id, { [user1.id]: 10, [user3.id]: 20 }, { leavePhoto: true, description: 'hello world', receiptId })
 
@@ -98,7 +98,7 @@ describe('[receipts]', () => {
     it('should update the receipt (delete photo)', async () => {
       const [user1, user2] = await createUsers(2)
 
-      const receiptId = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
+      const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
 
       await createReceipt(user2.id, { [user1.id]: 10 }, { description: 'my receipt', receiptId })
 
@@ -123,7 +123,7 @@ describe('[receipts]', () => {
     it('should update the receipt (replace photo)', async () => {
       const [user1, user2] = await createUsers(2)
 
-      const receiptId = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
+      const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
 
       await createReceipt(user1.id, { [user2.id]: 5 }, { photo: updatedReceiptPhotoBuffer, mime: 'image/jpeg', receiptId })
 
@@ -210,7 +210,7 @@ describe('[receipts]', () => {
     it('should delete the receipt and its debts (simple)', async () => {
       const [user1, user2] = await createUsers(2)
 
-      const receiptId = await createReceipt(user1.id, {
+      const { id: receiptId } = await createReceipt(user1.id, {
         [user1.id]: 10,
         [user2.id]: 10,
       })
@@ -226,16 +226,16 @@ describe('[receipts]', () => {
     it('should delete the receipt and its debts (complex)', async () => {
       const [user1, user2] = await createUsers(2)
 
-      const receipt1Id = await createReceipt(user1.id, {
+      const { id: receipt1Id } = await createReceipt(user1.id, {
         [user1.id]: 10,
         [user2.id]: 10,
       })
 
-      const receipt2Id = await createReceipt(user2.id, {
+      const { id: receipt2Id } = await createReceipt(user2.id, {
         [user1.id]: 10,
       })
 
-      const receipt3Id = await createReceipt(user1.id, {
+      const { id: receipt3Id } = await createReceipt(user1.id, {
         [user2.id]: null,
       }, { description: 'hello world' })
       

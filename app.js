@@ -347,10 +347,11 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
 
   app.post('/users', async (req, res) => {
     const { id, username, name } = req.body
+    const user = { id, username, name }
 
     try {
-      await storage.createUser({ id, username, name })
-      res.sendStatus(200)
+      await storage.createUser(user)
+      res.json(user)
     } catch (error) {
       res.sendStatus(409)
     }
@@ -398,18 +399,8 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
       debts,
     })
 
-    res.json({ id })
-  })
-
-  app.post('/payments', async (req, res) => {
-    const { fromUserId, toUserId, amount } = req.body
-    const id = await storePayment({ fromUserId, toUserId, amount })
-    res.json({ id })
-  })
-
-  app.delete('/payments/:paymentId', async (req, res) => {
-    await deletePayment(req.params.paymentId)
-    res.sendStatus(200)
+    const receipt = await storage.findReceiptById(id)
+    res.json(receipt)
   })
 
   app.get('/receipts', async (req, res) => {
@@ -450,7 +441,19 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
 
   app.delete('/receipts/:receiptId', async (req, res) => {
     await deleteReceipt(req.params.receiptId)
-    res.sendStatus(200)
+    res.sendStatus(204)
+  })
+
+  app.post('/payments', async (req, res) => {
+    const { fromUserId, toUserId, amount } = req.body
+    const id = await storePayment({ fromUserId, toUserId, amount })
+    const payment = await storage.findPaymentById(id)
+    res.json(payment)
+  })
+
+  app.delete('/payments/:paymentId', async (req, res) => {
+    await deletePayment(req.params.paymentId)
+    res.sendStatus(204)
   })
 
   app.get('/payments', async (req, res) => {

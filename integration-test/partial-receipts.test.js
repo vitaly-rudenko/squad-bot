@@ -8,7 +8,7 @@ describe('[partial receipts]', () => {
   it('should create partial receipts (simple)', async () => {
     const [user1, user2] = await createUsers(2)
 
-    const receiptId = await createReceipt(user1.id, {
+    const { id: receiptId } = await createReceipt(user1.id, {
       [user1.id]: 10,
       [user2.id]: null
     }, { amount: 20 })
@@ -41,31 +41,31 @@ describe('[partial receipts]', () => {
   it('should create partial receipts (complex)', async () => {
     const [user1, user2, user3, user4] = await createUsers(4)
 
-    const receipt1Id = await createReceipt(user1.id, {
+    const { id: receipt1Id } = await createReceipt(user1.id, {
       [user1.id]: 10,
       [user2.id]: 20,
       [user3.id]: null,
     }, { amount: 50 })
 
-    const receipt2Id = await createReceipt(user2.id, {
+    const { id: receipt2Id } = await createReceipt(user2.id, {
       [user1.id]: 50,
       [user2.id]: null,
       [user3.id]: null,
       [user4.id]: 25,
     }, { amount: 100 })
 
-    const receipt3Id = await createReceipt(user3.id, {
+    const { id: receipt3Id } = await createReceipt(user3.id, {
       [user2.id]: 5,
       [user3.id]: 5,
       [user4.id]: null,
     }, { amount: 15 })
 
-    const receipt4Id = await createReceipt(user4.id, {
+    const { id: receipt4Id } = await createReceipt(user4.id, {
       [user3.id]: null,
       [user4.id]: null,
     }, { amount: 15 })
 
-    const receipt5Id = await createReceipt(user2.id, {
+    const { id: receipt5Id } = await createReceipt(user2.id, {
       [user2.id]: 10,
       [user3.id]: 15,
     }, { amount: 25 })
