@@ -2,15 +2,14 @@ import { generateTemporaryAuthToken } from '../generateTemporaryAuthToken.js'
 
 export function receiptsGetCommand() {
   return async (context) => {
-    const userId = context.state.userId
-    const token = generateTemporaryAuthToken(userId)
+    const token = generateTemporaryAuthToken(context.state.user)
 
     await context.reply(`
-Добавить чек можно здесь:
-https://groupsquadbot.herokuapp.com/?token=${token}
+✏️ Добавить чек можно здесь:
+${process.env.DOMAIN}/?token=${token}
 
-Посмотреть чеки можно здесь:
-https://groupsquadbot.herokuapp.com/receiptslist?token=${token}
+👀 Посмотреть чеки можно здесь:
+${process.env.DOMAIN}/receiptslist?token=${token}
 `)
   }
 }
