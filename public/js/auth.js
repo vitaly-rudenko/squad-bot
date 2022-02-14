@@ -11,37 +11,37 @@ init()
 async function init() {
   console.log('Authenticating...')
 
+  const query = new URLSearchParams(location.search)
+  const queryToken = query.get('token')
+
   const localToken = localStorage.getItem('auth_token_v1')
+
+  if (queryToken) {
+    console.log('Exchanging token for a permanent one...')
+    const response = await (await fetch(`/authenticate?token=${queryToken}`)).json()
+
+    if (typeof response === 'string') {
+      completeAuth(response)
+      return
+    }
+
+    console.log('Could not exchange token:', response)
+  }
+  
   if (localToken) {
     console.log('Using local authentication token')
     completeAuth(localToken)
     return
   }
 
-  const query = new URLSearchParams(location.search)
-  if (!query.has('token')) {
-    redirectToAuthPage()
-    return
-  }
-
-  const temporaryToken = query.get('token')
-  console.log('Exchanging a temporary token for a permanent one')
-
-  const response = await (await fetch(`/auth-token?temporary_auth_token=${temporaryToken}`)).json()
-
-  if (response.authToken) {
-    completeAuth(response.authToken)
-  } else {
-    console.log('Could not exchange auth token:', response)
-    redirectToAuthPage()
-    return
-  }
+  console.log('No token has been found, authentication failed')
+  redirectToAuthPage()
 }
 
 function completeAuth(token) {
   localStorage.setItem('auth_token_v1', token)
   authToken = token
-  console.log('Authentication complete', getCurrentUser())
+  console.log('Current user:', getCurrentUser())
 
   const authInfoDiv = document.getElementById('auth_info')
   authInfoDiv.innerHTML = `Авторизован как: ${getCurrentUser().name} (@${getCurrentUser().username})`
@@ -74,7 +74,6 @@ function createAuthorizationHeader() {
 }
 
 function redirectToAuthPage() {
-  console.log('Could not authenticate!')
   window.open('/authpage', '_self')
 }
 
