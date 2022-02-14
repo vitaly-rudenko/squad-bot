@@ -399,11 +399,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       return
     }
 
-    res.json({ authToken: jwt.sign({ user: {
+    res.json(jwt.sign({ user: {
       id: user.id,
       name: user.name,
       username: user.username,
-    } }, process.env.TOKEN_SECRET) })
+    } }, process.env.TOKEN_SECRET))
     temporaryAuthTokenCache.set(temporaryAuthToken)
   })
 

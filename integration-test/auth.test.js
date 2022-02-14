@@ -3,12 +3,12 @@ import jwt from 'jsonwebtoken'
 import { createUsers, generateUserId, getAuthToken } from './helpers.js'
 
 describe('[auth]', () => {
-  describe('GET /auth-token', () => {
+  describe('GET /authenticate', () => {
     it('should exchange temporary auth token for a permanent one', async () => {
       const [user] = await createUsers(1)
 
       const temporaryAuthToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET)
-      const { authToken } = await getAuthToken(temporaryAuthToken)
+      const authToken = await getAuthToken(temporaryAuthToken)
 
       expect(jwt.verify(authToken, process.env.TOKEN_SECRET).user).to.deep.equal(user)
     })
