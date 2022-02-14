@@ -17,11 +17,13 @@ export function receiptsGetCommand() {
       ], { columns: 1 }).reply_markup
     })
 
-    setTimeout(async () => {
-      await Promise.all([
-        context.deleteMessage(context.message.message_id).catch(() => {}),
-        context.deleteMessage(message.message_id).catch(() => {}),
-      ])
-    }, 60_000)
+    if (context.chat.type !== 'private') {
+      setTimeout(async () => {
+        await Promise.all([
+          context.deleteMessage(context.message.message_id).catch(() => {}),
+          context.deleteMessage(message.message_id).catch(() => {}),
+        ])
+      }, 60_000)
+    }
   }
 }

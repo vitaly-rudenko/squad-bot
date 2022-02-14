@@ -54,11 +54,13 @@ ${unfinishedReceiptsByMe
 
     const message = await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted, unfinishedReceiptsFormatted, isIncomplete].filter(Boolean).map(s => s.trim()).join('\n\n'))
 
-    setTimeout(async () => {
-      await Promise.all([
-        context.deleteMessage(context.message.message_id).catch(() => {}),
-        context.deleteMessage(message.message_id).catch(() => {}),
-      ])
-    }, 60_000)
+    if (context.chat.type !== 'private') {
+      setTimeout(async () => {
+        await Promise.all([
+          context.deleteMessage(context.message.message_id).catch(() => {}),
+          context.deleteMessage(message.message_id).catch(() => {}),
+        ])
+      }, 60_000)
+    }
   }
 }

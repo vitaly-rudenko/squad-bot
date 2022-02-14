@@ -161,8 +161,10 @@ export function cardsGetIdAction({ storage, userSessionManager }) {
     userSessionManager.clear(context.state.userId)
     const message = await context.reply(card.number)
 
-    setTimeout(async () => {
-      await context.deleteMessage(message.message_id).catch(() => {})
-    }, 60_000)
+    if (context.chat.type !== 'private') {
+      setTimeout(async () => {
+        await context.deleteMessage(message.message_id).catch(() => {})
+      }, 60_000)
+    }
   }
 }
