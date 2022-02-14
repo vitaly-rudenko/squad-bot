@@ -38,6 +38,9 @@ function completeAuth(token) {
   authToken = token
   console.log('Authentication complete', getCurrentUser())
 
+  const authInfoDiv = document.getElementById('auth_info')
+  authInfoDiv.innerHTML = `Авторизован как: ${getCurrentUser().name} (@${getCurrentUser().username})`
+
   resolveAuthPromise()
 }
 

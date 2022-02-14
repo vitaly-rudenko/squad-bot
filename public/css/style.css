@@ -16,6 +16,17 @@ a {
     display: none;
 }
 
+#auth_info {
+    z-index: 9999;
+    position: fixed;
+    top: 10px;
+    left: 0px;
+    opacity: 0.5;
+    width: 100vw;
+    text-align: center;
+    font-size: 12px;
+}
+
 button {
     cursor: pointer;
 }
@@ -30,6 +41,14 @@ button {
     font-size: 25px;
     font-weight: 700;
 }
+
+.container h5 {
+    margin-top: 0px;
+    font-size: 15px;
+    font-weight: 600;
+    opacity: 0.5;
+}
+
 .form_input {
     height: 56px;
     display: flex;
