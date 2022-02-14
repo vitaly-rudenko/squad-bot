@@ -120,7 +120,7 @@ export async function deleteReceipt(receiptId, userId) {
   validateResponse(response)
 }
 
-export async function getReceiptPhoto(receiptId, userId) {
+export async function getReceiptPhoto(receiptId) {
   const response = await fetch(`http://localhost:3001/receipts/${receiptId}/photo`)
 
   if (response.status !== 200) {
@@ -185,7 +185,7 @@ export async function deletePayment(paymentId, userId) {
 }
 
 export async function getDebts(userId) {
-  const response = await fetch(`http://localhost:3001/debts/${userId}`, {
+  const response = await fetch(`http://localhost:3001/debts`, {
     headers: createAuthorizationHeader({ userId }),
   })
 

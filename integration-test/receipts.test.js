@@ -26,7 +26,7 @@ describe('[receipts]', () => {
 
       const [receipt] = await getReceipts(user.id)
 
-      const { photo, mime } = await getReceiptPhoto(receipt.id, user.id)
+      const { photo, mime } = await getReceiptPhoto(receipt.id)
 
       expect(mime).to.equal('image/png')
       expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
@@ -36,7 +36,7 @@ describe('[receipts]', () => {
       const [user] = await createUsers(1)
 
       const { id: receiptId } = await createReceipt(user.id, { [user.id]: 1 })
-      const response = await getReceiptPhoto(receiptId, user.id)
+      const response = await getReceiptPhoto(receiptId)
 
       expect(response.status).to.equal(404)
     })
@@ -89,7 +89,7 @@ describe('[receipts]', () => {
         }]
       })
 
-      const { photo, mime } = await getReceiptPhoto(receiptId, user2.id)
+      const { photo, mime } = await getReceiptPhoto(receiptId)
 
       expect(mime).to.equal('image/png')
       expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
@@ -115,7 +115,7 @@ describe('[receipts]', () => {
         }]
       })
 
-      const response = await getReceiptPhoto(receiptId, user2.id)
+      const response = await getReceiptPhoto(receiptId)
 
       expect(response.status).to.equal(404)
     })
@@ -140,7 +140,7 @@ describe('[receipts]', () => {
         }]
       })
 
-      const { photo, mime } = await getReceiptPhoto(receiptId, user1.id)
+      const { photo, mime } = await getReceiptPhoto(receiptId)
 
       expect(mime).to.equal('image/jpeg')
       expect(photo).to.deep.equal(updatedReceiptPhotoBuffer.buffer)

@@ -535,8 +535,8 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
     res.json(payments)
   })
 
-  app.get('/debts/:userId', async (req, res) => {
-    const debts = await getDebtsByUserId(req.params.userId)
+  app.get('/debts', async (req, res) => {
+    const debts = await getDebtsByUserId(req.user.id)
     res.json(debts)
   })
 
