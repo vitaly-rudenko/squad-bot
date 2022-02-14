@@ -159,6 +159,10 @@ export function cardsGetIdAction({ storage, userSessionManager }) {
     const card = await storage.getCardById(cardId)
 
     userSessionManager.clear(context.state.userId)
-    await context.reply(card.number)
+    const message = await context.reply(card.number)
+
+    setTimeout(async () => {
+      await context.deleteMessage(message.message_id).catch(() => {})
+    }, 60_000)
   }
 }
