@@ -126,9 +126,7 @@ export async function deleteReceipt(receiptId, userId) {
 }
 
 export async function getReceiptPhoto(receiptId, userId) {
-  const response = await fetch(`http://localhost:3001/receipts/${receiptId}/photo`, {
-    headers: createAuthorizationHeader(userId),
-  })
+  const response = await fetch(`http://localhost:3001/receipts/${receiptId}/photo`)
 
   if (response.status !== 200) {
     return response

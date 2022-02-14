@@ -407,6 +407,17 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     temporaryAuthTokenCache.set(temporaryAuthToken)
   })
 
+  app.get('/receipts/:receiptId/photo', async (req, res) => {
+    const receiptId = req.params.receiptId
+    const receiptPhoto = await storage.getReceiptPhoto(receiptId)
+
+    if (receiptPhoto) {
+      res.contentType(receiptPhoto.mime).send(receiptPhoto.photo).end()
+    } else {
+      res.sendStatus(404)
+    }
+  })
+
   app.use((req, res, next) => {
     const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
 
@@ -498,17 +509,6 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     res.json(receipt)
-  })
-
-  app.get('/receipts/:receiptId/photo', async (req, res) => {
-    const receiptId = req.params.receiptId
-    const receiptPhoto = await storage.getReceiptPhoto(receiptId)
-
-    if (receiptPhoto) {
-      res.contentType(receiptPhoto.mime).send(receiptPhoto.photo).end()
-    } else {
-      res.sendStatus(404)
-    }
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
