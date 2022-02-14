@@ -1,6 +1,6 @@
 import chai, { expect } from 'chai'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
-import { createReceipt, createUsers, expectReceiptsToEqual, expectReceiptToShallowEqual, getDebts, getReceipt, getReceipts } from './helpers.js'
+import { createReceipt, createUsers, expectReceiptsToEqual, expectReceiptToShallowEqual, getDebts, getReceipt, getReceipts, NO_DEBTS } from './helpers.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -137,5 +137,32 @@ describe('[partial receipts]', () => {
       }],
       unfinishedReceiptIds: [receipt3Id, receipt4Id],
     })
+  })
+
+  it('should not mark receipt as unfinished if only the payer has not filled it in (1)', async () => {
+    const [user] = await createUsers(1)
+
+    const { id: receiptId } = await createReceipt(user.id, {
+      [user.id]: null,
+    }, { amount: 100 })
+
+    expect(await getDebts(user.id)).to.deep.equalInAnyOrder(NO_DEBTS)
+  })
+
+  it('should not mark receipt as unfinished if only the payer has not filled it in (1)', async () => {
+    const [user1, user2] = await createUsers(3)
+
+    await createReceipt(user1.id, {
+      [user1.id]: null,
+      [user2.id]: 50,
+    }, { amount: 100 })
+
+    await createReceipt(user2.id, {
+      [user1.id]: 50,
+      [user2.id]: null,
+    }, { amount: 100 })
+
+    expect(await getDebts(user1.id)).to.deep.equalInAnyOrder(NO_DEBTS)
+    expect(await getDebts(user2.id)).to.deep.equalInAnyOrder(NO_DEBTS)
   })
 })
