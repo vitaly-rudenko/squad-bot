@@ -214,7 +214,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       const debt = debts.find(d => d.debtorId === user.id)
 
       const notification = `
-👤✏️🧾 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+✏️🧾 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
 👤 Плательщик: ${payer.name} (@${payer.username})
 💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.
 💸 Проверить долги: /debts
@@ -239,7 +239,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const receiver = await storage.findUserById(toUserId)
 
     const notification = `
-👤➡️👤 Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(amount)} грн.
+➡️ Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(amount)} грн.
 👤 Отправитель: ${sender.name} (@${sender.username})
 👤 Получатель: ${receiver.name} (@${receiver.username})
 💸 Проверить долги: /debts
@@ -270,7 +270,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
 
     const notification = `
-❌ 👤✏️🧾 Пользователь ${editor.name} (@${editor.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
+❌ ✏️🧾 Пользователь ${editor.name} (@${editor.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
 👤 Плательщик: ${payer.name} (@${payer.username})
 💸 Проверить долги: /debts
 🧾 Посмотреть чеки: /receipts
@@ -297,7 +297,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     await storage.deletePaymentById(paymentId)
 
     const notification = `
-👤➡️👤 Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(payment.amount)} грн.
+❌ ➡️ Пользователь ${editor.name} (@${editor.username}) удалил платеж на сумму ${renderMoney(payment.amount)} грн.
 👤 Отправитель: ${sender.name} (@${sender.username})
 👤 Получатель: ${receiver.name} (@${receiver.username})
 💸 Проверить долги: /debts
