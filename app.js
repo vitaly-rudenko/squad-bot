@@ -170,7 +170,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.catch((error) => logError(error))
 
-  async function storeReceipt({ id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
+  async function storeReceipt(editorId, { id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
     const isNew = !Boolean(id)
     if (id) {
       await storage.updateReceipt({
@@ -203,6 +203,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       })
     }
 
+    const editor = await storage.findUserById(editorId)
     const payer = await storage.findUserById(payerId)
     const userIds = [...new Set([payerId, ...debts.map(d => d.debtorId)])]
     const users = await storage.findUsersByIds(userIds)
@@ -212,21 +213,16 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       if (!user.isComplete) continue;
       const debt = debts.find(d => d.debtorId === user.id)
 
-      try {
-        if (user.id === payerId) {
-          await sendNotification(user.id, `
-👤✏️🧾 Ты ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
-${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.\n💸 Проверить долги: /debts\n` : ''}\
-🧾 Посмотреть чеки: /receipts
-          `)
-        } else {
-          await sendNotification(user.id, `
-👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+      const notification = `
+👤✏️🧾 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+👤 Плательщик: ${payer.name} (@${payer.username})
 💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.
 💸 Проверить долги: /debts
 🧾 Посмотреть чеки: /receipts
-          `)
-        }
+      `
+
+      try {
+        await sendNotification(user.id, notification)
       } catch (error) {
         logError(error)
       }
@@ -235,87 +231,85 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
     return id
   }
 
-  async function storePayment({ fromUserId, toUserId, amount }) {
+  async function storePayment(editorId, { fromUserId, toUserId, amount }) {
     const id = await storage.createPayment({ fromUserId, toUserId, amount })
 
+    const editor = await storage.findUserById(editorId)
     const sender = await storage.findUserById(fromUserId)
     const receiver = await storage.findUserById(toUserId)
 
-    if (sender.isComplete) {
-      await sendNotification(sender.id, `
-👤➡️👤 Ты отправил пользователю ${receiver.name} (@${receiver.username}) платеж на сумму ${renderMoney(amount)} грн.
+    const notification = `
+👤➡️👤 Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(amount)} грн.
+👤 Отправитель: ${sender.name} (@${sender.username})
+👤 Получатель: ${receiver.name} (@${receiver.username})
 💸 Проверить долги: /debts
 🧾 Посмотреть платежи: /payments
-      `)
+    `
+
+    if (sender.isComplete) {
+      await sendNotification(sender.id, notification)
     }
 
     if (receiver.isComplete) {
-      await sendNotification(receiver.id, `
-👤➡️👤 Пользователь ${sender.name} (@${sender.username}) отправил тебе платеж на сумму ${renderMoney(amount)} грн.
-💸 Проверить долги: /debts
-🧾 Посмотреть платежи: /payments
-      `)
+      await sendNotification(receiver.id, notification)
     }
 
     return id
   }
 
-  async function deleteReceipt(receiptId) {
+  async function deleteReceipt(editorId, receiptId) {
     const receipt = await storage.findReceiptById(receiptId)
 
     await storage.deleteDebtsByReceiptId(receiptId)
     await storage.deleteReceiptById(receiptId)
 
+    const editor = await storage.findUserById(editorId)
     const payer = await storage.findUserById(receipt.payerId)
     const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(d => d.debtorId)])]
     const users = await storage.findUsersByIds(userIds)
     const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
 
+    const notification = `
+❌ 👤✏️🧾 Пользователь ${editor.name} (@${editor.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
+👤 Плательщик: ${payer.name} (@${payer.username})
+💸 Проверить долги: /debts
+🧾 Посмотреть чеки: /receipts
+    `
+
     for (const user of users) {
       if (!user.isComplete) continue;
 
       try {
-        if (user.id === receipt.payerId) {
-          await sendNotification(user.id, `
-❌ 👤✏️🧾 Ты удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
-💸 Проверить долги: /debts
-🧾 Посмотреть чеки: /receipts
-          `)
-        } else {
-          await sendNotification(user.id, `
-❌ 👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
-💸 Проверить долги: /debts
-🧾 Посмотреть чеки: /receipts
-          `)
-        }
+        await sendNotification(user.id, notification)
       } catch (error) {
         logError(error)
       }
     }
   }
 
-  async function deletePayment(paymentId) {
+  async function deletePayment(editorId, paymentId) {
     const payment = await storage.findPaymentById(paymentId)
     
+    const editor = await storage.findUserById(editorId)
     const sender = await storage.findUserById(payment.fromUserId)
     const receiver = await storage.findUserById(payment.toUserId)
 
     await storage.deletePaymentById(paymentId)
 
-    if (sender.isComplete) {
-      await sendNotification(sender.id, `
-❌ 👤➡️👤 Ты удалил платеж пользователю ${receiver.name} (@${receiver.username}) на сумму ${renderMoney(payment.amount)} грн.
+    const notification = `
+👤➡️👤 Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(payment.amount)} грн.
+👤 Отправитель: ${sender.name} (@${sender.username})
+👤 Получатель: ${receiver.name} (@${receiver.username})
 💸 Проверить долги: /debts
 🧾 Посмотреть платежи: /payments
-      `)
+    `
+
+    if (sender.isComplete) {
+      await sendNotification(sender.id, notification)
     }
 
     if (receiver.isComplete) {
-      await sendNotification(receiver.id, `
-❌ 👤➡️👤 Пользователь ${sender.name} (@${sender.username}) удалил платеж тебе на сумму ${renderMoney(payment.amount)} грн.
-💸 Проверить долги: /debts
-🧾 Посмотреть платежи: /payments
-      `)
+      await sendNotification(receiver.id, notification)
     }
   }
 
@@ -392,7 +386,6 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
     try {
       ({ type, user } = jwt.verify(temporaryAuthToken, process.env.TOKEN_SECRET))
     } catch (error) {
-      console.log(error)
       res.status(400).json({ error: { code: 'INVALID_TEMPORARY_AUTH_TOKEN' } })
       return
     }
@@ -415,7 +408,6 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
         req.user = user
         next()
       } catch (error) {
-        console.log(token, error)
         res.status(401).json({ error: { code: 'INVALID_AUTH_TOKEN', message: error.message } })
       }
     } else {
@@ -467,7 +459,7 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
       }
     }
 
-    id = await storeReceipt({
+    id = await storeReceipt(req.user.id, {
       id,
       payerId,
       photo,
@@ -509,19 +501,19 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
-    await deleteReceipt(req.params.receiptId)
+    await deleteReceipt(req.user.id, req.params.receiptId)
     res.sendStatus(204)
   })
 
   app.post('/payments', async (req, res) => {
     const { fromUserId, toUserId, amount } = req.body
-    const id = await storePayment({ fromUserId, toUserId, amount })
+    const id = await storePayment(req.user.id, { fromUserId, toUserId, amount })
     const payment = await storage.findPaymentById(id)
     res.json(payment)
   })
 
   app.delete('/payments/:paymentId', async (req, res) => {
-    await deletePayment(req.params.paymentId)
+    await deletePayment(req.user.id, req.params.paymentId)
     res.sendStatus(204)
   })
 
