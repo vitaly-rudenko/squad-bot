@@ -170,7 +170,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.catch((error) => logError(error))
 
-  async function storeReceipt({ id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
+  async function storeReceipt(editorId, { id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
     const isNew = !Boolean(id)
     if (id) {
       await storage.updateReceipt({
@@ -203,6 +203,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       })
     }
 
+    const editor = await storage.findUserById(editorId)
     const payer = await storage.findUserById(payerId)
     const userIds = [...new Set([payerId, ...debts.map(d => d.debtorId)])]
     const users = await storage.findUsersByIds(userIds)
@@ -212,21 +213,16 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       if (!user.isComplete) continue;
       const debt = debts.find(d => d.debtorId === user.id)
 
-      try {
-        if (user.id === payerId) {
-          await sendNotification(user.id, `
-👤✏️🧾 Ты ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
-${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.\n💸 Проверить долги: /debts\n` : ''}\
-🧾 Посмотреть чеки: /receipts
-          `)
-        } else {
-          await sendNotification(user.id, `
-👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+      const notification = `
+👤✏️🧾 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+👤 Плательщик: ${payer.name} (@${payer.username})
 💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.
 💸 Проверить долги: /debts
 🧾 Посмотреть чеки: /receipts
-          `)
-        }
+      `
+
+      try {
+        await sendNotification(user.id, notification)
       } catch (error) {
         logError(error)
       }
@@ -235,87 +231,85 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
     return id
   }
 
-  async function storePayment({ fromUserId, toUserId, amount }) {
+  async function storePayment(editorId, { fromUserId, toUserId, amount }) {
     const id = await storage.createPayment({ fromUserId, toUserId, amount })
 
+    const editor = await storage.findUserById(editorId)
     const sender = await storage.findUserById(fromUserId)
     const receiver = await storage.findUserById(toUserId)
 
-    if (sender.isComplete) {
-      await sendNotification(sender.id, `
-👤➡️👤 Ты отправил пользователю ${receiver.name} (@${receiver.username}) платеж на сумму ${renderMoney(amount)} грн.
+    const notification = `
+👤➡️👤 Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(amount)} грн.
+👤 Отправитель: ${sender.name} (@${sender.username})
+👤 Получатель: ${receiver.name} (@${receiver.username})
 💸 Проверить долги: /debts
 🧾 Посмотреть платежи: /payments
-      `)
+    `
+
+    if (sender.isComplete) {
+      await sendNotification(sender.id, notification)
     }
 
     if (receiver.isComplete) {
-      await sendNotification(receiver.id, `
-👤➡️👤 Пользователь ${sender.name} (@${sender.username}) отправил тебе платеж на сумму ${renderMoney(amount)} грн.
-💸 Проверить долги: /debts
-🧾 Посмотреть платежи: /payments
-      `)
+      await sendNotification(receiver.id, notification)
     }
 
     return id
   }
 
-  async function deleteReceipt(receiptId) {
+  async function deleteReceipt(editorId, receiptId) {
     const receipt = await storage.findReceiptById(receiptId)
 
     await storage.deleteDebtsByReceiptId(receiptId)
     await storage.deleteReceiptById(receiptId)
 
+    const editor = await storage.findUserById(editorId)
     const payer = await storage.findUserById(receipt.payerId)
     const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(d => d.debtorId)])]
     const users = await storage.findUsersByIds(userIds)
     const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
 
+    const notification = `
+❌ 👤✏️🧾 Пользователь ${editor.name} (@${editor.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
+👤 Плательщик: ${payer.name} (@${payer.username})
+💸 Проверить долги: /debts
+🧾 Посмотреть чеки: /receipts
+    `
+
     for (const user of users) {
       if (!user.isComplete) continue;
 
       try {
-        if (user.id === receipt.payerId) {
-          await sendNotification(user.id, `
-❌ 👤✏️🧾 Ты удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
-💸 Проверить долги: /debts
-🧾 Посмотреть чеки: /receipts
-          `)
-        } else {
-          await sendNotification(user.id, `
-❌ 👤✏️🧾 Пользователь ${payer.name} (@${payer.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
-💸 Проверить долги: /debts
-🧾 Посмотреть чеки: /receipts
-          `)
-        }
+        await sendNotification(user.id, notification)
       } catch (error) {
         logError(error)
       }
     }
   }
 
-  async function deletePayment(paymentId) {
+  async function deletePayment(editorId, paymentId) {
     const payment = await storage.findPaymentById(paymentId)
     
+    const editor = await storage.findUserById(editorId)
     const sender = await storage.findUserById(payment.fromUserId)
     const receiver = await storage.findUserById(payment.toUserId)
 
     await storage.deletePaymentById(paymentId)
 
-    if (sender.isComplete) {
-      await sendNotification(sender.id, `
-❌ 👤➡️👤 Ты удалил платеж пользователю ${receiver.name} (@${receiver.username}) на сумму ${renderMoney(payment.amount)} грн.
+    const notification = `
+👤➡️👤 Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(payment.amount)} грн.
+👤 Отправитель: ${sender.name} (@${sender.username})
+👤 Получатель: ${receiver.name} (@${receiver.username})
 💸 Проверить долги: /debts
 🧾 Посмотреть платежи: /payments
-      `)
+    `
+
+    if (sender.isComplete) {
+      await sendNotification(sender.id, notification)
     }
 
     if (receiver.isComplete) {
-      await sendNotification(receiver.id, `
-❌ 👤➡️👤 Пользователь ${sender.name} (@${sender.username}) удалил платеж тебе на сумму ${renderMoney(payment.amount)} грн.
-💸 Проверить долги: /debts
-🧾 Посмотреть платежи: /payments
-      `)
+      await sendNotification(receiver.id, notification)
     }
   }
 
@@ -332,6 +326,10 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   app.get('/', async (req, res) => {
     res.render('receipt')
   })
+
+  app.get('/auth', async (req, res) => {
+    res.render('auth')
+  })
   
   app.get('/paymentview', async (req, res) => {
     res.render('payment')
@@ -345,12 +343,96 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
     res.render('receipts_list')
   })
 
-  app.post('/users', async (req, res) => {
-    const { id, username, name } = req.body
+  // --- Telegram
+
+  const handledBotUpdates = new Cache(60_000)
+
+  app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
+    const updateId = req.body['update_id']
+    if (!updateId) {
+      console.log('Invalid update:', req.body)
+      res.sendStatus(500)
+      return
+    }
+
+    if (handledBotUpdates.has(updateId)) {
+      console.log('Update is already handled:', req.body)
+      res.sendStatus(200)
+      return
+    }
+
+    handledBotUpdates.set(updateId)
+    console.log('Update received:', req.body)
 
     try {
-      await storage.createUser({ id, username, name })
-      res.sendStatus(200)
+      await bot.handleUpdate(req.body, res)
+    } catch (error) {
+      next(error)
+    }
+  })
+
+  // --- API
+
+  const temporaryAuthTokenCache = new Cache(60_000)
+
+  app.get('/auth-token', async (req, res, next) => {
+    const temporaryAuthToken = req.query['temporary_auth_token']
+    if (temporaryAuthTokenCache.has(temporaryAuthToken)) {
+      res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
+      return
+    }
+
+    let userId
+    try {
+      ({ userId } = jwt.verify(temporaryAuthToken, process.env.TOKEN_SECRET))
+      if (!userId) {
+        throw new Error('Temporary token does not contain user ID')
+      }
+    } catch (error) {
+      res.status(400).json({ error: { code: 'INVALID_TEMPORARY_AUTH_TOKEN' } })
+      return
+    }
+
+    const user = await storage.findUserById(userId)
+    if (!user) {
+      res.status(404).json({ error: { code: 'USER_NOT_FOUND' } })
+      return
+    }
+
+    res.json({ authToken: jwt.sign({ user: {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+    } }, process.env.TOKEN_SECRET) })
+    temporaryAuthTokenCache.set(temporaryAuthToken)
+  })
+
+  app.use((req, res, next) => {
+    const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
+
+    if (token) {
+      try {
+        const { user } = jwt.verify(token, process.env.TOKEN_SECRET)
+        if (!user.id || !user.username || !user.name) {
+          throw new Error('Token does not contain user ID, username and name')
+        }
+        req.user = user
+        next()
+      } catch (error) {
+        res.status(401).json({ error: { code: 'INVALID_AUTH_TOKEN', message: error.message } })
+      }
+    } else {
+      res.status(401).json({ error: { code: 'AUTH_TOKEN_NOT_PROVIDED' } })
+    }
+  })
+
+  app.post('/users', async (req, res) => {
+    const { id, username, name } = req.body
+    const user = { id, username, name }
+
+    try {
+      await storage.createUser(user)
+      res.json(user)
     } catch (error) {
       res.sendStatus(409)
     }
@@ -388,7 +470,7 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
       }
     }
 
-    id = await storeReceipt({
+    id = await storeReceipt(req.user.id, {
       id,
       payerId,
       photo,
@@ -398,31 +480,12 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
       debts,
     })
 
-    res.json({ id })
-  })
-
-  app.post('/payments', async (req, res) => {
-    const { fromUserId, toUserId, amount } = req.body
-    const id = await storePayment({ fromUserId, toUserId, amount })
-    res.json({ id })
-  })
-
-  app.delete('/payments/:paymentId', async (req, res) => {
-    await deletePayment(req.params.paymentId)
-    res.sendStatus(200)
+    const receipt = await storage.findReceiptById(id)
+    res.json(receipt)
   })
 
   app.get('/receipts', async (req, res) => {
-    const token = req.query.token
-
-    let receipts = []
-    if (token) {
-      const { userId } = jwt.verify(token, process.env.TOKEN_SECRET)
-      receipts = await storage.findReceiptsByParticipantUserId(userId)
-    } else { // @deprecated
-      receipts = await storage.findReceipts()
-    }
-
+    const receipts = await storage.findReceiptsByParticipantUserId(req.user.id)
     res.json(receipts)
   })
 
@@ -449,8 +512,20 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
-    await deleteReceipt(req.params.receiptId)
-    res.sendStatus(200)
+    await deleteReceipt(req.user.id, req.params.receiptId)
+    res.sendStatus(204)
+  })
+
+  app.post('/payments', async (req, res) => {
+    const { fromUserId, toUserId, amount } = req.body
+    const id = await storePayment(req.user.id, { fromUserId, toUserId, amount })
+    const payment = await storage.findPaymentById(id)
+    res.json(payment)
+  })
+
+  app.delete('/payments/:paymentId', async (req, res) => {
+    await deletePayment(req.user.id, req.params.paymentId)
+    res.sendStatus(204)
   })
 
   app.get('/payments', async (req, res) => {
@@ -463,32 +538,6 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   app.get('/debts/:userId', async (req, res) => {
     const debts = await getDebtsByUserId(req.params.userId)
     res.json(debts)
-  })
-
-  const handledBotUpdates = new Cache(60_000)
-
-  app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
-    const updateId = req.body['update_id']
-    if (!updateId) {
-      console.log('Invalid update:', req.body)
-      res.sendStatus(500)
-      return
-    }
-
-    if (handledBotUpdates.has(updateId)) {
-      console.log('Update is already handled:', req.body)
-      res.sendStatus(200)
-      return
-    }
-
-    handledBotUpdates.set(updateId)
-    console.log('Update received:', req.body)
-
-    try {
-      await bot.handleUpdate(req.body, res)
-    } catch (error) {
-      next(error)
-    }
   })
 
   const port = Number(process.env.PORT) || 3001
@@ -506,7 +555,7 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
       await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
       break;
     } catch (error) {
-      console.log('Could not set webhook, retrying...')
+      console.log('Could not set webhook, retrying...', error.message)
       await new Promise(resolve => setTimeout(resolve, 1000))
     }
   }

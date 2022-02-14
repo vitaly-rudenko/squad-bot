@@ -9,8 +9,9 @@ let users = []
 
 init()
 async function init() {
+    await waitForAuth()
     users = await getUsers()
-    renderUsersSelect(paymentsFromUserSelect)
+    renderUsersSelect(paymentsFromUserSelect, getCurrentUser().id)
     renderUsersSelect(paymentsToUserSelect)
 }
 
@@ -33,7 +34,8 @@ function savePayment() {
         method: 'POST',
         body: JSON.stringify(payment),
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...createAuthorizationHeader(),
         }
     })
     .then((response) => {

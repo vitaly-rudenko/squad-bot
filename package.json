@@ -1,20 +1,16 @@
 {
   "name": "squad-bot",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Telegram bot assistant for squads",
   "main": "app.js",
   "type": "module",
   "scripts": {
-    "start": "npm run db:migrate && node app.js",
-    "debug": "npm run db:migrate && nodemon --ignore integration-test/ --legacy-watch app.js",
+    "start": "npm run umzug db:migrate && node app.js",
+    "start:dev": "npm run umzug db:migrate && nodemon --ignore integration-test/ app.js",
     "test": "mocha --recursive",
-    "test:watch": "npm run test -- --watch --parallel",
-    "test:watch:debug": "nodemon --delay 0.5 --exec 'npm run test'",
+    "test:dev": "nodemon --delay 0.5 --exec 'npm run test'",
     "test:integration": "mocha --recursive integration-test",
-    "test:integration:watch": "npm run test:integration -- --watch --parallel",
-    "test:integration:watch:debug": "nodemon --delay 1 --exec 'npm run test:integration'",
-    "db:reset": "npm run umzug db:migrate:undo:all && npm run db:migrate",
-    "db:migrate": "npm run umzug db:migrate",
+    "test:integration:dev": "nodemon --delay 1 --exec 'npm run test:integration'",
     "umzug": "node ./umzug/cli.js"
   },
   "repository": {

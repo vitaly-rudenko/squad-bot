@@ -9,7 +9,7 @@ export function debtsCommand({ storage, getDebtsByUserId }) {
     const { ingoingDebts, outgoingDebts, unfinishedReceiptIds } = await getDebtsByUserId(userId)
     const unfinishedReceipts = await storage.findReceiptsByIds(unfinishedReceiptIds ?? [])
     const unfinishedReceiptsByMe = unfinishedReceipts
-      .filter(r => r.debts.some(d => d.amount === null && d.debtorId === userId))
+      .filter(r => r.debts.some(d => d.amount === null && d.debtorId === userId && d.debtorId !== r.payerId))
 
     function getUserName(id) {
       const user = users.find(u => u.id === id)

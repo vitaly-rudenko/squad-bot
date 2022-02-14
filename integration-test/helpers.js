@@ -8,33 +8,33 @@ const createStringGenerator = (prefix = '') => {
   return () => prefix + crypto.randomBytes(10).toString('hex');
 }
 
-const generateUserId = createStringGenerator()
+export const generateUserId = createStringGenerator()
 
 export function validateResponse(response) {
-  if (response.status !== 200) {
+  if (!String(response.status).startsWith('2')) {
     throw new Error(`Invalid response: ${response.status} (${response.statusText})`)
   }
 }
 
 export async function createUser(index = null) {
-  const id = [index, generateUserId()].filter(Boolean).join('_')
-  const user = {
-    id,
-    name: `User ${id}`,
-    username: `username_${id}`,
-  }
+  const userId = [index, generateUserId()].filter(Boolean).join('_')
 
   const response = await fetch('http://localhost:3001/users', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...createAuthorizationHeader(userId),
     },
-    body: JSON.stringify(user)
+    body: JSON.stringify({
+      id: userId,
+      name: `User ${userId}`,
+      username: `username_${userId}`,
+    })
   })
 
   validateResponse(response)
 
-  return user
+  return await response.json()
 }
 
 export async function createUsers(count = 1) {
@@ -81,39 +81,54 @@ export async function createReceipt(payerId, debts, {
 
   const response = await fetch('http://localhost:3001/receipts', {
     method: 'POST',
+    headers: createAuthorizationHeader(payerId),
     body,
   })
 
   validateResponse(response)
 
-  return (await response.json()).id
+  return await response.json()
 }
 
 export async function getReceipts(userId) {
-  const token = createToken(userId)
-  const response = await fetch(`http://localhost:3001/receipts?token=${token}`)
+  const response = await fetch('http://localhost:3001/receipts', {
+    headers: createAuthorizationHeader(userId)
+  })
 
   validateResponse(response)
 
   return await response.json()
 }
 
-export async function getReceipt(receiptId) {
-  const response = await fetch(`http://localhost:3001/receipts/${receiptId}`)
+export async function getAuthToken(temporaryAuthToken) {
+  const response = await fetch(`http://localhost:3001/auth-token?temporary_auth_token=${temporaryAuthToken}`)
+
+  return await response.json()
+}
+
+export async function getReceipt(receiptId, userId) {
+  const response = await fetch(`http://localhost:3001/receipts/${receiptId}`, {
+    headers: createAuthorizationHeader(userId),
+  })
 
   validateResponse(response)
 
   return await response.json()
 }
 
-export async function deleteReceipt(receiptId) {
-  const response = await fetch(`http://localhost:3001/receipts/${receiptId}`, { method: 'DELETE' })
+export async function deleteReceipt(receiptId, userId) {
+  const response = await fetch(`http://localhost:3001/receipts/${receiptId}`, {
+    headers: createAuthorizationHeader(userId),
+    method: 'DELETE',
+  })
 
   validateResponse(response)
 }
 
-export async function getReceiptPhoto(receiptId) {
-  const response = await fetch(`http://localhost:3001/receipts/${receiptId}/photo`)
+export async function getReceiptPhoto(receiptId, userId) {
+  const response = await fetch(`http://localhost:3001/receipts/${receiptId}/photo`, {
+    headers: createAuthorizationHeader(userId),
+  })
 
   if (response.status !== 200) {
     return response
@@ -140,8 +155,12 @@ export function expectReceiptToShallowEqual(receipt1, receipt2) {
   expect(receipt).to.deep.equalInAnyOrder(receipt2)
 }
 
-export function createToken(userId) {
-  return jwt.sign({ userId }, TOKEN_SECRET)
+export function createToken(id, username = 'fake-username', name = 'Fake Name') {
+  return jwt.sign({ user: { id, username, name } }, TOKEN_SECRET)
+}
+
+export function createAuthorizationHeader(userId) {
+  return { 'Authorization': `Bearer ${createToken(userId)}` }
 }
 
 export async function createPayment(fromUserId, toUserId, amount) {
@@ -151,23 +170,29 @@ export async function createPayment(fromUserId, toUserId, amount) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...createAuthorizationHeader(fromUserId),
     },
     body: JSON.stringify(payment)
   })
 
   validateResponse(response)
 
-  return (await response.json()).id
+  return await response.json()
 }
 
-export async function deletePayment(paymentId) {
-  const response = await fetch(`http://localhost:3001/payments/${paymentId}`, { method: 'DELETE' })
+export async function deletePayment(paymentId, userId) {
+  const response = await fetch(`http://localhost:3001/payments/${paymentId}`, {
+    method: 'DELETE',
+    headers: createAuthorizationHeader(userId),
+  })
 
   validateResponse(response)
 }
 
 export async function getDebts(userId) {
-  const response = await fetch(`http://localhost:3001/debts/${userId}`)
+  const response = await fetch(`http://localhost:3001/debts/${userId}`, {
+    headers: createAuthorizationHeader(userId),
+  })
 
   validateResponse(response)
 

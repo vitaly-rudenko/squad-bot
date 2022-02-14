@@ -15,10 +15,10 @@ describe('[payments]', () => {
         [user4.id]: 10,
       })
 
-      const payment1Id = await createPayment(user2.id, user1.id, 20)
-      const payment2Id = await createPayment(user3.id, user1.id, 10)
-      const payment3Id = await createPayment(user3.id, user1.id, 20)
-      const payment4Id = await createPayment(user4.id, user1.id, 40)
+      const { id: payment1Id } = await createPayment(user2.id, user1.id, 20)
+      const { id: payment2Id } = await createPayment(user3.id, user1.id, 10)
+      const { id: payment3Id } = await createPayment(user3.id, user1.id, 20)
+      const { id: payment4Id } = await createPayment(user4.id, user1.id, 40)
 
       expect(await getDebts(user1.id)).to.deep.equalInAnyOrder({
         ingoingDebts: [],
@@ -28,7 +28,7 @@ describe('[payments]', () => {
         }]
       })
 
-      await deletePayment(payment2Id)
+      await deletePayment(payment2Id, user3.id)
 
       expect(await getDebts(user1.id)).to.deep.equalInAnyOrder({
         ingoingDebts: [{
@@ -41,8 +41,8 @@ describe('[payments]', () => {
         }]
       })
 
-      await deletePayment(payment1Id)
-      await deletePayment(payment4Id)
+      await deletePayment(payment1Id, user2.id)
+      await deletePayment(payment4Id, user4.id)
 
       expect(await getDebts(user1.id)).to.deep.equalInAnyOrder({
         ingoingDebts: [{
@@ -58,7 +58,7 @@ describe('[payments]', () => {
         outgoingDebts: []
       })
 
-      await deletePayment(payment3Id)
+      await deletePayment(payment3Id, user4.id)
 
       expect(await getDebts(user1.id)).to.deep.equalInAnyOrder({
         ingoingDebts: [{

@@ -1,9 +1,11 @@
 const fullscreenAnimationContainer = document.getElementById('fullscreen_animation_container')
 
-function renderUsersSelect(selectElement) {
+function renderUsersSelect(selectElement, selectedUserId = null) {
+    const selectedIndex = selectedUserId && users.findIndex(u => u.id === selectedUserId) || 0
+
     let selectHtml = ``
     for (let i = 0; i < users.length; i++) {
-        selectHtml += `<option ${i == 0 ? 'selected': ''} value="${users[i].id}">${users[i].name}</option>`
+        selectHtml += `<option ${i == selectedIndex ? 'selected': ''} value="${users[i].id}">${users[i].name}</option>`
     }
     selectElement.innerHTML = selectHtml
 }
@@ -30,7 +32,8 @@ async function getUsers() {
     const response = await fetch('/users', {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...createAuthorizationHeader(),
         }
     })
     const usersData = await response.json()

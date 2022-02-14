@@ -1,11 +1,15 @@
+import { generateTemporaryAuthToken } from '../generateTemporaryAuthToken.js'
+
 export function paymentsGetCommand() {
   return async (context) => {
-    await context.reply(`
-Добавить платеж можно здесь:
-https://groupsquadbot.herokuapp.com/paymentview
+    const token = generateTemporaryAuthToken(context.state.userId)
 
-Посмотреть платежи можно здесь:
-https://groupsquadbot.herokuapp.com/paymentslist
+    await context.reply(`
+✏️ Добавить платеж можно здесь:
+${process.env.DOMAIN}/paymentview?token=${token}
+
+👀 Посмотреть платежи можно здесь:
+${process.env.DOMAIN}/paymentslist?token=${token}
 `)
   }
 }

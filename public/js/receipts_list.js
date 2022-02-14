@@ -5,6 +5,7 @@ let receipts = []
 
 init()
 async function init() {
+    await waitForAuth()
     users = await getUsers()
     receipts = await getReceipts()
     showReceipts()
@@ -14,7 +15,8 @@ async function getReceipts() {
     const response = await fetch('/receipts', {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...createAuthorizationHeader(),
         }
     })
     const receiptsData = await response.json()
@@ -24,9 +26,11 @@ async function getReceipts() {
 function showReceipts() {
     let receiptsHtml = ``
     for (let i = 0; i < receipts.length; i++) {
+        const isUnfinished = receipts[i].debts.some(debt => debt.amount === null && debt.debtorId !== receipts[i].payerId)
+
         receiptsHtml += `<div class="receipt_list_item" onclick="toggleActiveItem(this)">
         <div class="payer">
-            <div>${getUserNameById(receipts[i].payerId)}</div>
+            <div>${isUnfinished ? '⚠️ ' : ''}${getUserNameById(receipts[i].payerId)}</div>
             <div>${renderMoney(receipts[i].amount)} грн</div>
         </div>`
 
@@ -81,7 +85,8 @@ function deleteReceiptById(receiptId) {
     if (!confirm("Удалить чек?")) return
 
     fetch(`/receipts/${receiptId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: createAuthorizationHeader(),
     })
     .then((response) => {
 		if(response.statusText == "OK") {
