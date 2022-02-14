@@ -52,6 +52,13 @@ ${unfinishedReceiptsByMe
 
     const isIncomplete = !context.state.user.isComplete && '💡 Чтобы получать уведомления о платежах и новых чеках, выполни команду /start в ЛС бота.'
 
-    await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted, unfinishedReceiptsFormatted, isIncomplete].filter(Boolean).map(s => s.trim()).join('\n\n'))
+    const message = await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted, unfinishedReceiptsFormatted, isIncomplete].filter(Boolean).map(s => s.trim()).join('\n\n'))
+
+    setTimeout(async () => {
+      await Promise.all([
+        context.deleteMessage(context.message.message_id).catch(() => {}),
+        context.deleteMessage(message.message_id).catch(() => {}),
+      ])
+    }, 60_000)
   }
 }
