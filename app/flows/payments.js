@@ -2,7 +2,7 @@ import { generateTemporaryAuthToken } from '../generateTemporaryAuthToken.js'
 
 export function paymentsGetCommand() {
   return async (context) => {
-    const token = generateTemporaryAuthToken(context.state.user)
+    const token = generateTemporaryAuthToken(context.state.userId)
 
     await context.reply(`
 ✏️ Добавить платеж можно здесь:

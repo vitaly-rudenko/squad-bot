@@ -2,7 +2,7 @@ import { generateTemporaryAuthToken } from '../generateTemporaryAuthToken.js'
 
 export function receiptsGetCommand() {
   return async (context) => {
-    const token = generateTemporaryAuthToken(context.state.user)
+    const token = generateTemporaryAuthToken(context.state.userId)
 
     await context.reply(`
 ✏️ Добавить чек можно здесь:

@@ -375,27 +375,35 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const temporaryAuthTokenCache = new Cache(60_000)
 
-  app.get('/auth-token', (req, res, next) => {
+  app.get('/auth-token', async (req, res, next) => {
     const temporaryAuthToken = req.query['temporary_auth_token']
     if (temporaryAuthTokenCache.has(temporaryAuthToken)) {
       res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
       return
     }
 
-    let type, user
+    let userId
     try {
-      ({ type, user } = jwt.verify(temporaryAuthToken, process.env.TOKEN_SECRET))
+      ({ userId } = jwt.verify(temporaryAuthToken, process.env.TOKEN_SECRET))
+      if (!userId) {
+        throw new Error('Temporary token does not contain user ID')
+      }
     } catch (error) {
       res.status(400).json({ error: { code: 'INVALID_TEMPORARY_AUTH_TOKEN' } })
       return
     }
 
-    if (type !== 'temporary') {
-      res.status(400).json({ error: { code: 'PROVIDED_TOKEN_IS_NOT_TEMPORARY' } })
+    const user = await storage.findUserById(userId)
+    if (!user) {
+      res.status(404).json({ error: { code: 'USER_NOT_FOUND' } })
       return
     }
-    
-    res.json({ authToken: jwt.sign({ user }, process.env.TOKEN_SECRET) })
+
+    res.json({ authToken: jwt.sign({ user: {
+      id: user.id,
+      name: user.name,
+      username: user.username,
+    } }, process.env.TOKEN_SECRET) })
     temporaryAuthTokenCache.set(temporaryAuthToken)
   })
 
