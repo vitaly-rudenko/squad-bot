@@ -25,6 +25,7 @@ a {
     width: 100vw;
     text-align: center;
     font-size: 12px;
+    cursor: pointer;
 }
 
 button {
