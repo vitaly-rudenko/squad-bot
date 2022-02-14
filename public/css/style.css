@@ -16,16 +16,22 @@ a {
     display: none;
 }
 
-#auth_info {
+#auth-info {
     z-index: 9999;
     position: fixed;
     top: 10px;
     left: 0px;
     opacity: 0.5;
     width: 100vw;
+    display: flex;
+    justify-content: center;
+}
+
+#auth-info p {
     text-align: center;
     font-size: 12px;
     cursor: pointer;
+    margin: 0px;
 }
 
 button {

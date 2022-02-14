@@ -43,13 +43,24 @@ function completeAuth(token) {
   authToken = token
   console.log('Current user:', getCurrentUser())
 
-  const authInfoDiv = document.getElementById('auth_info')
-  authInfoDiv.innerHTML = `Авторизован как: ${getCurrentUser().name} (@${getCurrentUser().username})`
-  authInfoDiv.addEventListener('click', () => {
+
+  
+
+  const authInfo = document.createElement('div')
+  authInfo.id = 'auth-info'
+
+  const authInfoText = document.createElement('p')
+  authInfoText.innerText= `Авторизован как: ${getCurrentUser().name} (@${getCurrentUser().username})`
+
+  authInfo.appendChild(authInfoText)
+
+  authInfoText.addEventListener('click', () => {
     if(confirm(`Выйти из аккаунта "${getCurrentUser().name}"?`)) {
       logOut()
     }
   })
+
+  document.body.appendChild(authInfo)
 
   resolveAuthPromise()
 }
