@@ -23,13 +23,8 @@ export async function createUser(index = null) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...createAuthorizationHeader(userId),
-    },
-    body: JSON.stringify({
-      id: userId,
-      name: `User ${userId}`,
-      username: `username_${userId}`,
-    })
+      ...createAuthorizationHeader({ userId }),
+    }
   })
 
   validateResponse(response)

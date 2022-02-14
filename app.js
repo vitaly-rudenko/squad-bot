@@ -438,7 +438,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   app.post('/users', async (req, res) => {
-    const { id, username, name } = req.body
+    const { id, username, name } = req.user
     const user = { id, username, name }
 
     try {
