@@ -53,7 +53,7 @@ describe('[auth]', () => {
 
       expect(response).to.deep.equal({
         error: {
-          code: 'INVALID_AUTH_TOKEN'
+          code: 'INVALID_TEMPORARY_AUTH_TOKEN'
         }
       })
     })

@@ -349,6 +349,34 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
     res.render('receipts_list')
   })
 
+  // --- Telegram
+
+  const handledBotUpdates = new Cache(60_000)
+
+  app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
+    const updateId = req.body['update_id']
+    if (!updateId) {
+      console.log('Invalid update:', req.body)
+      res.sendStatus(500)
+      return
+    }
+
+    if (handledBotUpdates.has(updateId)) {
+      console.log('Update is already handled:', req.body)
+      res.sendStatus(200)
+      return
+    }
+
+    handledBotUpdates.set(updateId)
+    console.log('Update received:', req.body)
+
+    try {
+      await bot.handleUpdate(req.body, res)
+    } catch (error) {
+      next(error)
+    }
+  })
+
   // --- API
 
   const temporaryAuthTokenCache = new Cache(60_000)
@@ -364,7 +392,8 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
     try {
       ({ type, user } = jwt.verify(temporaryAuthToken, process.env.TOKEN_SECRET))
     } catch (error) {
-      res.status(400).json({ error: { code: 'INVALID_AUTH_TOKEN' } })
+      console.log(error)
+      res.status(400).json({ error: { code: 'INVALID_TEMPORARY_AUTH_TOKEN' } })
       return
     }
 
@@ -386,10 +415,11 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
         req.user = user
         next()
       } catch (error) {
-        res.status(401).json({ error: { code: 'INVALID_AUTHORIZATION_TOKEN', message: error.message } })
+        console.log(token, error)
+        res.status(401).json({ error: { code: 'INVALID_AUTH_TOKEN', message: error.message } })
       }
     } else {
-      res.status(401).json({ error: { code: 'AUTHORIZATION_TOKEN_NOT_PROVIDED' } })
+      res.status(401).json({ error: { code: 'AUTH_TOKEN_NOT_PROVIDED' } })
     }
   })
 
@@ -507,32 +537,6 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
     res.json(debts)
   })
 
-  const handledBotUpdates = new Cache(60_000)
-
-  app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
-    const updateId = req.body['update_id']
-    if (!updateId) {
-      console.log('Invalid update:', req.body)
-      res.sendStatus(500)
-      return
-    }
-
-    if (handledBotUpdates.has(updateId)) {
-      console.log('Update is already handled:', req.body)
-      res.sendStatus(200)
-      return
-    }
-
-    handledBotUpdates.set(updateId)
-    console.log('Update received:', req.body)
-
-    try {
-      await bot.handleUpdate(req.body, res)
-    } catch (error) {
-      next(error)
-    }
-  })
-
   const port = Number(process.env.PORT) || 3001
 
   await new Promise(resolve => app.listen(port, () => resolve()))
@@ -548,7 +552,7 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
       await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
       break;
     } catch (error) {
-      console.log('Could not set webhook, retrying...')
+      console.log('Could not set webhook, retrying...', error.message)
       await new Promise(resolve => setTimeout(resolve, 1000))
     }
   }
