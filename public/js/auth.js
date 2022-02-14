@@ -59,7 +59,7 @@ function createAuthorizationHeader() {
 
 function redirectToAuthPage() {
   console.log('Could not authenticate!')
-  window.open('/auth', '_self')
+  window.open('/authpage', '_self')
 }
 
 function parseJwt(token) {

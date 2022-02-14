@@ -327,7 +327,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     res.render('receipt')
   })
 
-  app.get('/auth', async (req, res) => {
+  app.get('/authpage', async (req, res) => {
     res.render('auth')
   })
   
