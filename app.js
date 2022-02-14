@@ -214,9 +214,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       const debt = debts.find(d => d.debtorId === user.id)
 
       const notification = `
-✏️🧾 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
-👤 Плательщик: ${payer.name} (@${payer.username})
-💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.
+📝 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
+👤 Оплатил: ${payer.name} (@${payer.username})
+${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.\n` : ''}\
 💸 Проверить долги: /debts
 🧾 Посмотреть чеки: /receipts
       `
@@ -270,8 +270,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
 
     const notification = `
-❌ ✏️🧾 Пользователь ${editor.name} (@${editor.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
-👤 Плательщик: ${payer.name} (@${payer.username})
+❌ 📝 Пользователь ${editor.name} (@${editor.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
+👤 Оплатил: ${payer.name} (@${payer.username})
 💸 Проверить долги: /debts
 🧾 Посмотреть чеки: /receipts
     `
