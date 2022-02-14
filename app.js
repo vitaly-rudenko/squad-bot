@@ -405,6 +405,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     if (token) {
       try {
         const { user } = jwt.verify(token, process.env.TOKEN_SECRET)
+        if (!user.id || !user.username || !user.name) {
+          throw new Error('Token does not contain user ID, username and name')
+        }
         req.user = user
         next()
       } catch (error) {
