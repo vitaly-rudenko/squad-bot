@@ -5,6 +5,7 @@ let payments = []
 
 init()
 async function init() {
+    await waitForAuth()
     users = await getUsers()
     payments = await getPayments()
     showPayments()
@@ -14,7 +15,8 @@ async function getPayments() {
     const response = await fetch('/payments', {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...createAuthorizationHeader(),
         }
     })
     const paymentsData = await response.json()
@@ -70,7 +72,8 @@ function deletePaymentById(paymentId) {
     if (!confirm("Удалить перевод?")) return
 
     fetch(`/payments/${paymentId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: createAuthorizationHeader()
     })
     .then((response) => {
 		if(response.statusText == "OK") {

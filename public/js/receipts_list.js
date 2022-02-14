@@ -5,6 +5,7 @@ let receipts = []
 
 init()
 async function init() {
+    await waitForAuth()
     users = await getUsers()
     receipts = await getReceipts()
     showReceipts()
@@ -14,7 +15,8 @@ async function getReceipts() {
     const response = await fetch('/receipts', {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...createAuthorizationHeader(),
         }
     })
     const receiptsData = await response.json()
@@ -81,7 +83,8 @@ function deleteReceiptById(receiptId) {
     if (!confirm("Удалить чек?")) return
 
     fetch(`/receipts/${receiptId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: createAuthorizationHeader(),
     })
     .then((response) => {
 		if(response.statusText == "OK") {

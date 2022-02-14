@@ -23,8 +23,9 @@ receiptsDeletePhotoButton.addEventListener('click', deletePhoto)
 
 init()
 async function init() {
+    await waitForAuth()
     users = await getUsers()
-    renderUsersSelect(receiptsPayerSelect)
+    renderUsersSelect(receiptsPayerSelect, getCurrentUser().id)
     renderDebtors()
 
     const query = new URLSearchParams(location.search)
@@ -36,7 +37,9 @@ async function init() {
     if (query.has('receipt_id')) {
         try {
             const queryReceiptId = query.get('receipt_id')
-            const receipt = await (await fetch(`/receipts/${queryReceiptId}`)).json()
+            const receipt = await (await fetch(`/receipts/${queryReceiptId}`, {
+                headers: createAuthorizationHeader(),
+            })).json()
             receiptId = queryReceiptId
 
             console.log('Editing receipt:', receipt)
@@ -86,7 +89,7 @@ function renderDebtors() {
     let debtorsHtml = ``
     for (let i = 0; i < users.length; i++) {
         debtorsHtml += `<div class="debtor"><div>
-        <input class="debtor_checkbox" type="checkbox" checked id="debtor${i}" name="debtor${i}" value="${users[i].id}">
+        <input class="debtor_checkbox" type="checkbox" id="debtor${i}" name="debtor${i}" value="${users[i].id}">
         <label for="debtor${i}">${users[i].name}</label></div>
         <input class="debt_amount" type="number" placeholder="" oninput="calculateReceiptRemainBalance()">
     </div>`
@@ -153,6 +156,7 @@ function saveReceipt() {
 
     fetch('/receipts', {
         method: 'POST',
+        headers: createAuthorizationHeader(),
         body,
     })
     .then((response) => {
