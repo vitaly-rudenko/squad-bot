@@ -375,8 +375,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const temporaryAuthTokenCache = new Cache(60_000)
 
-  app.get('/auth-token', async (req, res, next) => {
-    const temporaryAuthToken = req.query['temporary_auth_token']
+  app.get('/authenticate', async (req, res, next) => {
+    const temporaryAuthToken = req.query['token']
     if (temporaryAuthTokenCache.has(temporaryAuthToken)) {
       res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
       return
