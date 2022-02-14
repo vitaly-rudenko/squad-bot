@@ -26,7 +26,7 @@ describe('[receipts]', () => {
 
       const [receipt] = await getReceipts(user.id)
 
-      const { photo, mime } = await getReceiptPhoto(receipt.id)
+      const { photo, mime } = await getReceiptPhoto(receipt.id, user.id)
 
       expect(mime).to.equal('image/png')
       expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
@@ -36,31 +36,31 @@ describe('[receipts]', () => {
       const [user] = await createUsers(1)
 
       const { id: receiptId } = await createReceipt(user.id, { [user.id]: 1 })
-      const response = await getReceiptPhoto(receiptId)
+      const response = await getReceiptPhoto(receiptId, user.id)
 
       expect(response.status).to.equal(404)
     })
 
     it('should keep original date of receipt when updated', async () => {
-      const [user1] = await createUsers(1)
+      const [user] = await createUsers(1)
 
-      const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 })
+      const { id: receiptId } = await createReceipt(user.id, { [user.id]: 10 })
 
-      const originalReceipt = await getReceipt(receiptId)
+      const originalReceipt = await getReceipt(receiptId, user.id)
 
-      const { id: updatedReceiptId } = await createReceipt(user1.id, { [user1.id]: 20 }, { description: 'hello world', receiptId })
+      const { id: updatedReceiptId } = await createReceipt(user.id, { [user.id]: 20 }, { description: 'hello world', receiptId })
 
-      const receipt = await getReceipt(receiptId)
+      const receipt = await getReceipt(receiptId, user.id)
 
       expect(updatedReceiptId).to.equal(originalReceipt.id)
       expect(receipt.createdAt).to.equal(originalReceipt.createdAt)
       expectReceiptToShallowEqual(receipt, {
-        payerId: user1.id,
+        payerId: user.id,
         amount: 20,
         description: 'hello world',
         hasPhoto: false,
         debts: [{
-          debtorId: user1.id,
+          debtorId: user.id,
           amount: 20,
         }]
       })
@@ -73,7 +73,7 @@ describe('[receipts]', () => {
 
       await createReceipt(user2.id, { [user1.id]: 10, [user3.id]: 20 }, { leavePhoto: true, description: 'hello world', receiptId })
 
-      const receipt = await getReceipt(receiptId)
+      const receipt = await getReceipt(receiptId, user2.id)
 
       expectReceiptToShallowEqual(receipt, {
         payerId: user2.id,
@@ -89,7 +89,7 @@ describe('[receipts]', () => {
         }]
       })
 
-      const { photo, mime } = await getReceiptPhoto(receiptId)
+      const { photo, mime } = await getReceiptPhoto(receiptId, user2.id)
 
       expect(mime).to.equal('image/png')
       expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
@@ -102,7 +102,7 @@ describe('[receipts]', () => {
 
       await createReceipt(user2.id, { [user1.id]: 10 }, { description: 'my receipt', receiptId })
 
-      const receipt = await getReceipt(receiptId)
+      const receipt = await getReceipt(receiptId, user2.id)
 
       expectReceiptToShallowEqual(receipt, {
         payerId: user2.id,
@@ -115,7 +115,7 @@ describe('[receipts]', () => {
         }]
       })
 
-      const response = await getReceiptPhoto(receiptId)
+      const response = await getReceiptPhoto(receiptId, user2.id)
 
       expect(response.status).to.equal(404)
     })
@@ -127,7 +127,7 @@ describe('[receipts]', () => {
 
       await createReceipt(user1.id, { [user2.id]: 5 }, { photo: updatedReceiptPhotoBuffer, mime: 'image/jpeg', receiptId })
 
-      const receipt = await getReceipt(receiptId)
+      const receipt = await getReceipt(receiptId, user1.id)
 
       expectReceiptToShallowEqual(receipt, {
         payerId: user1.id,
@@ -140,7 +140,7 @@ describe('[receipts]', () => {
         }]
       })
 
-      const { photo, mime } = await getReceiptPhoto(receiptId)
+      const { photo, mime } = await getReceiptPhoto(receiptId, user1.id)
 
       expect(mime).to.equal('image/jpeg')
       expect(photo).to.deep.equal(updatedReceiptPhotoBuffer.buffer)
@@ -215,7 +215,7 @@ describe('[receipts]', () => {
         [user2.id]: 10,
       })
       
-      await deleteReceipt(receiptId)
+      await deleteReceipt(receiptId, user1.id)
 
       expect(await getReceipts(user1.id)).to.deep.equal([])
       expect(await getReceipts(user2.id)).to.deep.equal([])
@@ -239,17 +239,17 @@ describe('[receipts]', () => {
         [user2.id]: null,
       }, { description: 'hello world' })
       
-      await deleteReceipt(receipt2Id)
+      await deleteReceipt(receipt2Id, user2.id)
 
       expect((await getReceipts(user1.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])
       expect((await getReceipts(user2.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])
 
-      await deleteReceipt(receipt1Id)
+      await deleteReceipt(receipt1Id, user1.id)
 
       expect((await getReceipts(user1.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt3Id])
       expect((await getReceipts(user2.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt3Id])
 
-      await deleteReceipt(receipt3Id)
+      await deleteReceipt(receipt3Id, user1.id)
 
       expect((await getReceipts(user1.id))).to.deep.equal([])
       expect((await getReceipts(user2.id))).to.deep.equal([])

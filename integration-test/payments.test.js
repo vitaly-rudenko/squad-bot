@@ -28,7 +28,7 @@ describe('[payments]', () => {
         }]
       })
 
-      await deletePayment(payment2Id)
+      await deletePayment(payment2Id, user3.id)
 
       expect(await getDebts(user1.id)).to.deep.equalInAnyOrder({
         ingoingDebts: [{
@@ -41,8 +41,8 @@ describe('[payments]', () => {
         }]
       })
 
-      await deletePayment(payment1Id)
-      await deletePayment(payment4Id)
+      await deletePayment(payment1Id, user2.id)
+      await deletePayment(payment4Id, user4.id)
 
       expect(await getDebts(user1.id)).to.deep.equalInAnyOrder({
         ingoingDebts: [{
@@ -58,7 +58,7 @@ describe('[payments]', () => {
         outgoingDebts: []
       })
 
-      await deletePayment(payment3Id)
+      await deletePayment(payment3Id, user4.id)
 
       expect(await getDebts(user1.id)).to.deep.equalInAnyOrder({
         ingoingDebts: [{

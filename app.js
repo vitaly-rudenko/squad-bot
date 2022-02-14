@@ -332,6 +332,10 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   app.get('/', async (req, res) => {
     res.render('receipt')
   })
+
+  app.get('/auth', async (req, res) => {
+    res.render('auth')
+  })
   
   app.get('/paymentview', async (req, res) => {
     res.render('payment')
@@ -343,6 +347,50 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   
   app.get('/receiptslist', async (req, res) => {
     res.render('receipts_list')
+  })
+
+  // --- API
+
+  const temporaryAuthTokenCache = new Cache(60_000)
+
+  app.get('/auth-token', (req, res, next) => {
+    const temporaryAuthToken = req.query['temporary_auth_token']
+    if (temporaryAuthTokenCache.has(temporaryAuthToken)) {
+      res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
+      return
+    }
+
+    let type, user
+    try {
+      ({ type, user } = jwt.verify(temporaryAuthToken, process.env.TOKEN_SECRET))
+    } catch (error) {
+      res.status(400).json({ error: { code: 'INVALID_AUTH_TOKEN' } })
+      return
+    }
+
+    if (type !== 'temporary') {
+      res.status(400).json({ error: { code: 'PROVIDED_TOKEN_IS_NOT_TEMPORARY' } })
+      return
+    }
+    
+    res.json({ authToken: jwt.sign({ user }, process.env.TOKEN_SECRET) })
+    temporaryAuthTokenCache.set(temporaryAuthToken)
+  })
+
+  app.use((req, res, next) => {
+    const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
+
+    if (token) {
+      try {
+        const { user } = jwt.verify(token, process.env.TOKEN_SECRET)
+        req.user = user
+        next()
+      } catch (error) {
+        res.status(401).json({ error: { code: 'INVALID_AUTHORIZATION_TOKEN', message: error.message } })
+      }
+    } else {
+      res.status(401).json({ error: { code: 'AUTHORIZATION_TOKEN_NOT_PROVIDED' } })
+    }
   })
 
   app.post('/users', async (req, res) => {
@@ -404,16 +452,7 @@ ${debt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}
   })
 
   app.get('/receipts', async (req, res) => {
-    const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
-
-    let receipts = []
-    if (token) {
-      const { userId } = jwt.verify(token, process.env.TOKEN_SECRET)
-      receipts = await storage.findReceiptsByParticipantUserId(userId)
-    } else { // @deprecated
-      receipts = await storage.findReceipts()
-    }
-
+    const receipts = await storage.findReceiptsByParticipantUserId(req.user.id)
     res.json(receipts)
   })
 

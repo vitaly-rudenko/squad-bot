@@ -13,7 +13,7 @@ describe('[partial receipts]', () => {
       [user2.id]: null
     }, { amount: 20 })
 
-    expectReceiptToShallowEqual(await getReceipt(receiptId), {
+    expectReceiptToShallowEqual(await getReceipt(receiptId, user1.id), {
       payerId: user1.id,
       amount: 20,
       hasPhoto: false,
