@@ -3,6 +3,11 @@ let resolveAuthPromise, authPromise = new Promise(resolve => resolveAuthPromise 
 let authToken
 
 init()
+  .catch((error) => {
+    console.log('Could not authenticate:', error)
+    logOut()
+  })
+
 async function init() {
   console.log('Authenticating...')
 
