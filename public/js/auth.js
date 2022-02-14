@@ -40,8 +40,19 @@ function completeAuth(token) {
 
   const authInfoDiv = document.getElementById('auth_info')
   authInfoDiv.innerHTML = `Авторизован как: ${getCurrentUser().name} (@${getCurrentUser().username})`
+  authInfoDiv.addEventListener('click', () => {
+    if(confirm(`Выйти из аккаунта "${getCurrentUser().name}"?`)) {
+      logOut()
+    }
+  })
 
   resolveAuthPromise()
+}
+
+function logOut() {
+  authToken = null
+  localStorage.removeItem('auth_token_v1')
+  redirectToAuthPage()
 }
 
 function waitForAuth() {
