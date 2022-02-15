@@ -1,5 +1,5 @@
 import { Markup } from 'telegraf'
-import { Phases } from '../../Phases.js'
+import { phases } from '../phases.js'
 
 export function cardsAddCommand({ userSessionManager }) {
   return async (context) => {
@@ -10,7 +10,7 @@ export function cardsAddCommand({ userSessionManager }) {
       ]).reply_markup
     })
     
-    userSessionManager.setPhase(context.state.userId, Phases.addCard.bank)
+    userSessionManager.setPhase(context.state.userId, phases.addCard.bank)
   }
 }
 
@@ -25,7 +25,7 @@ export function cardsAddBankAction({ userSessionManager }) {
     const message = await context.reply('Отправь номер карты')
     userSessionManager.context(context.state.userId).messageId = message.message_id
 
-    userSessionManager.setPhase(context.state.userId, Phases.addCard.number)
+    userSessionManager.setPhase(context.state.userId, phases.addCard.number)
   }
 }
 
@@ -75,7 +75,7 @@ export function cardsDeleteCommand({ storage, userSessionManager }) {
       ).reply_markup
     })
 
-    userSessionManager.setPhase(context.state.userId, Phases.deleteCard.id)
+    userSessionManager.setPhase(context.state.userId, phases.deleteCard.id)
   }
 }
 
@@ -92,9 +92,9 @@ export function cardsDeleteIdAction({ storage, userSessionManager }) {
   }
 }
 
-export function cardsGet({ usersStorage, userSessionManager }) {
+export function cardsGet({ storage, userSessionManager }) {
   return async (context) => {
-    const users = await usersStorage.findAll()
+    const users = await storage.findUsers()
 
     await context.reply('Выбери пользователя', {
       reply_markup: Markup.inlineKeyboard(
@@ -106,17 +106,17 @@ export function cardsGet({ usersStorage, userSessionManager }) {
       ).reply_markup
     })
 
-    userSessionManager.setPhase(context.state.userId, Phases.getCard.userId)
+    userSessionManager.setPhase(context.state.userId, phases.getCard.userId)
   }
 }
 
-export function cardsGetUserIdAction({ storage, usersStorage, userSessionManager }) {
+export function cardsGetUserIdAction({ storage, userSessionManager }) {
   return async (context) => {
     await context.answerCbQuery()
     await context.deleteMessage()
 
     const userId = context.match[1]
-    const user = await usersStorage.findById(userId)
+    const user = await storage.findUserById(userId)
 
     if (!user) {
       await context.reply('Пользователь еще не зарегистрирован.')
@@ -146,7 +146,7 @@ export function cardsGetUserIdAction({ storage, usersStorage, userSessionManager
       ).reply_markup
     })
 
-    userSessionManager.setPhase(context.state.userId, Phases.getCard.id)
+    userSessionManager.setPhase(context.state.userId, phases.getCard.id)
   }
 }
 

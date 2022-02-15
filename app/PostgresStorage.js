@@ -1,9 +1,13 @@
+import pg from 'pg'
 import { v4 as uuid } from 'uuid'
 
 export class PostgresStorage {
-  /** @param {import('pg').Client} client */
-  constructor(client) {
-    this._client = client
+  constructor(connectionString) {
+    this._client = new pg.Client(connectionString)
+  }
+
+  async connect() {
+    await this._client.connect()
   }
 
   async createReceipt({ payerId, amount, description = null, photo = null, mime = null }) {
@@ -55,11 +59,11 @@ export class PostgresStorage {
     `, [cardId])
   }
 
-  async createDebt({ userId, receiptId, amount }) {
+  async createDebt({ debtorId, receiptId, amount }) {
     await this._client.query(`
-      INSERT INTO debts (user_id, receipt_id, amount)
+      INSERT INTO debts (debtor_id, receipt_id, amount)
       VALUES ($1, $2, $3);
-    `, [userId, receiptId, amount])
+    `, [debtorId, receiptId, amount])
   }
 
   async createCard({ userId, bank, number }) {
@@ -67,6 +71,21 @@ export class PostgresStorage {
       INSERT INTO cards (user_id, bank, number)
       VALUES ($1, $2, $3);
     `, [userId, bank, number])
+  }
+
+  async createUser({ id, username, name }) {
+    await this._client.query(`
+      INSERT INTO users (id, username, name)
+      VALUES ($1, $2, $3);
+    `, [id, username, name])
+  }
+
+  async makeUserComplete(userId) {
+    await this._client.query(`
+      UPDATE users
+      SET is_complete = TRUE
+      where id = $1
+    `, [userId])
   }
 
   async createPayment({ fromUserId, toUserId, amount }) {
@@ -117,7 +136,7 @@ export class PostgresStorage {
       SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo, r.deleted_at
       FROM receipts r
       LEFT JOIN debts d ON d.receipt_id = r.id
-      WHERE (r.payer_id = $1 OR d.user_id = $1)
+      WHERE (r.payer_id = $1 OR d.debtor_id = $1)
         AND r.deleted_at IS NULL
         AND d.deleted_at IS NULL
       ORDER BY created_at DESC;
@@ -175,7 +194,7 @@ export class PostgresStorage {
     `, [receiptId])
 
     return response.rows.map(row => ({
-      userId: row['user_id'],
+      debtorId: row['debtor_id'],
       amount: row['amount'],
     }))
   }
@@ -263,36 +282,87 @@ export class PostgresStorage {
     }
   }
 
+  async findUsersByIds(userIds) {
+    // TODO: refactor
+    return (await this.findUsers()).filter(u => userIds.includes(u.id))
+  }
+
+  async findUsers() {
+    const response = await this._client.query(`
+      SELECT *
+      FROM users;
+    `, [])
+
+    return response.rows.map(this.deserializeUser)
+  }
+
+  async findUserByUsername(username) {
+    const response = await this._client.query(`
+      SELECT *
+      FROM users
+      WHERE username ilike $1;
+    `, [username])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return this.deserializeUser(response.rows[0])
+  }
+
+  async findUserById(userId) {
+    const response = await this._client.query(`
+      SELECT *
+      FROM users
+      WHERE id = $1;
+    `, [userId])
+
+    if (response.rowCount === 0) {
+      return null
+    }
+
+    return this.deserializeUser(response.rows[0])
+  }
+
+  deserializeUser(row) {
+    return {
+      id: row['id'],
+      name: row['name'],
+      username: row['username'],
+      isComplete: row['is_complete'],
+    }
+  }
+
   async getIngoingDebts(payerId) {
     const response = await this._client.query(`
-      SELECT SUM(d.amount) AS amount, d.user_id
+      SELECT SUM(d.amount) AS amount, d.debtor_id
         , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
-      WHERE r.payer_id = $1 AND d.user_id != r.payer_id
+      WHERE r.payer_id = $1 AND d.debtor_id != r.payer_id
         AND r.deleted_at IS NULL
         AND d.deleted_at IS NULL
-      GROUP BY d.user_id, r.payer_id;
+      GROUP BY d.debtor_id, r.payer_id;
     `, [payerId])
 
     return response.rows.map(row => ({
-      userId: row['user_id'],
+      userId: row['debtor_id'],
       amount: Number(row['amount']),
       uncertainReceiptIds: row['uncertain_receipt_ids'],
     }))
   }
 
-  async getOutgoingDebts(userId) {
+  async getOutgoingDebts(debtorId) {
     const response = await this._client.query(`
       SELECT SUM(d.amount) AS amount, r.payer_id
         , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
-      WHERE d.user_id = $1 AND d.user_id != r.payer_id
+      WHERE d.debtor_id = $1 AND d.debtor_id != r.payer_id
         AND r.deleted_at IS NULL
         AND d.deleted_at IS NULL
-      GROUP BY d.user_id, r.payer_id;
-    `, [userId])
+      GROUP BY d.debtor_id, r.payer_id;
+    `, [debtorId])
 
     return response.rows.map(row => ({
       userId: row['payer_id'],

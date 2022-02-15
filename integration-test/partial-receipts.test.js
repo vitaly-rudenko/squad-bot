@@ -19,10 +19,10 @@ describe('[partial receipts]', () => {
       hasPhoto: false,
       description: null,
       debts: [{
-        userId: user1.id,
+        debtorId: user1.id,
         amount: 10,
       }, {
-        userId: user2.id,
+        debtorId: user2.id,
         amount: null,
       }]
     })

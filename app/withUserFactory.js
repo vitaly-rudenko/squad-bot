@@ -1,14 +1,14 @@
 /** @typedef {import('telegraf').Context} Context */
 
-/** @param {import('../UsersPostgresStorage').UsersPostgresStorage} usersStorage */
-export const withUserFactory = (usersStorage) => {
+/** @param {import('./PostgresStorage').PostgresStorage} storage */
+export const withUserFactory = (storage) => {
   /** @template {Context} T */
   return ({ ignore = false } = {}) => {
     /** @param {T} context @param {Function} next */
     return async (context, next) => {
       const userId = context.state.userId ?? context.from.id
 
-      const user = await usersStorage.findById(userId)
+      const user = await storage.findUserById(userId)
       if (!user) {
         if (!ignore) {
           await context.reply(`
