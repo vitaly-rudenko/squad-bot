@@ -28,12 +28,9 @@ export class UsersPostgresStorage {
   /** @param {User} user */
   async update(user) {
     await this._client.query(`
-      UPDATE users u
-      SET
-        u.name = $2,
-        u.username = $3,
-        u.is_complete = $4
-      WHERE u.id = $1;
+      UPDATE users
+      SET (name, username, is_complete) = ($2, $3, $4)
+      WHERE id = $1;
     `, [user.id, user.name, user.username, user.isComplete])
   }
 
@@ -83,11 +80,6 @@ export class UsersPostgresStorage {
       Number.isInteger(limit) && `LIMIT ${limit}`,
       Number.isInteger(offset) && `OFFSET ${offset}`
     ].filter(Boolean).join(' ')
-
-    console.log(`
-    SELECT u.id, u.name, u.username, u.is_complete
-    FROM users u ${whereClause} ${paginationClause};
-  `, variables)
 
     const response = await this._client.query(`
       SELECT u.id, u.name, u.username, u.is_complete
