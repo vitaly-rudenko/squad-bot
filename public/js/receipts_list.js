@@ -19,8 +19,7 @@ async function getReceipts() {
             ...createAuthorizationHeader(),
         }
     })
-    const receiptsData = await response.json()
-    return receiptsData
+    return response.json()
 }
 
 function showReceipts() {
@@ -79,26 +78,18 @@ function showReceipts() {
     receiptListContainer.innerHTML = receiptsHtml
 }
 
-function deleteReceiptById(receiptId) {
-    event.stopPropagation()
-
+async function deleteReceiptById(receiptId) {
     if (!confirm("Удалить чек?")) return
 
-    fetch(`/receipts/${receiptId}`, {
+    const response = await fetch(`/receipts/${receiptId}`, {
         method: 'DELETE',
         headers: createAuthorizationHeader(),
     })
-    .then((response) => {
-		if(response.statusText == "OK") {
-            console.log('receipt deleted')
-            getReceipts().then((data) => {
-               receipts = data
-               showReceipts()
-            })
-            
-        }
-    })
-    .catch(e => console.error(e))
+
+    if (response.status === 204) {
+        receipts = await getReceipts()
+        showReceipts()
+    }
 }
 
 function updateReceiptById(receiptId) {
