@@ -1,13 +1,9 @@
-import pg from 'pg'
 import { v4 as uuid } from 'uuid'
 
 export class PostgresStorage {
-  constructor(connectionString) {
-    this._client = new pg.Client(connectionString)
-  }
-
-  async connect() {
-    await this._client.connect()
+  /** @param {import('pg').Client} client */
+  constructor(client) {
+    this._client = client
   }
 
   async createReceipt({ payerId, amount, description = null, photo = null, mime = null }) {
@@ -59,11 +55,11 @@ export class PostgresStorage {
     `, [cardId])
   }
 
-  async createDebt({ debtorId, receiptId, amount }) {
+  async createDebt({ userId, receiptId, amount }) {
     await this._client.query(`
       INSERT INTO debts (debtor_id, receipt_id, amount)
       VALUES ($1, $2, $3);
-    `, [debtorId, receiptId, amount])
+    `, [userId, receiptId, amount])
   }
 
   async createCard({ userId, bank, number }) {
@@ -71,21 +67,6 @@ export class PostgresStorage {
       INSERT INTO cards (user_id, bank, number)
       VALUES ($1, $2, $3);
     `, [userId, bank, number])
-  }
-
-  async createUser({ id, username, name }) {
-    await this._client.query(`
-      INSERT INTO users (id, username, name)
-      VALUES ($1, $2, $3);
-    `, [id, username, name])
-  }
-
-  async makeUserComplete(userId) {
-    await this._client.query(`
-      UPDATE users
-      SET is_complete = TRUE
-      where id = $1
-    `, [userId])
   }
 
   async createPayment({ fromUserId, toUserId, amount }) {
@@ -194,7 +175,7 @@ export class PostgresStorage {
     `, [receiptId])
 
     return response.rows.map(row => ({
-      debtorId: row['debtor_id'],
+      userId: row['debtor_id'],
       amount: row['amount'],
     }))
   }
@@ -282,57 +263,6 @@ export class PostgresStorage {
     }
   }
 
-  async findUsersByIds(userIds) {
-    // TODO: refactor
-    return (await this.findUsers()).filter(u => userIds.includes(u.id))
-  }
-
-  async findUsers() {
-    const response = await this._client.query(`
-      SELECT *
-      FROM users;
-    `, [])
-
-    return response.rows.map(this.deserializeUser)
-  }
-
-  async findUserByUsername(username) {
-    const response = await this._client.query(`
-      SELECT *
-      FROM users
-      WHERE username ilike $1;
-    `, [username])
-
-    if (response.rowCount === 0) {
-      return null
-    }
-
-    return this.deserializeUser(response.rows[0])
-  }
-
-  async findUserById(userId) {
-    const response = await this._client.query(`
-      SELECT *
-      FROM users
-      WHERE id = $1;
-    `, [userId])
-
-    if (response.rowCount === 0) {
-      return null
-    }
-
-    return this.deserializeUser(response.rows[0])
-  }
-
-  deserializeUser(row) {
-    return {
-      id: row['id'],
-      name: row['name'],
-      username: row['username'],
-      isComplete: row['is_complete'],
-    }
-  }
-
   async getIngoingDebts(payerId) {
     const response = await this._client.query(`
       SELECT SUM(d.amount) AS amount, d.debtor_id
@@ -352,7 +282,7 @@ export class PostgresStorage {
     }))
   }
 
-  async getOutgoingDebts(debtorId) {
+  async getOutgoingDebts(userId) {
     const response = await this._client.query(`
       SELECT SUM(d.amount) AS amount, r.payer_id
         , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
@@ -362,7 +292,7 @@ export class PostgresStorage {
         AND r.deleted_at IS NULL
         AND d.deleted_at IS NULL
       GROUP BY d.debtor_id, r.payer_id;
-    `, [debtorId])
+    `, [userId])
 
     return response.rows.map(row => ({
       userId: row['payer_id'],
