@@ -16,6 +16,7 @@ export class Cache {
     }, ttlMs)
   }
 
+  /** @param {any} value */
   set(key, value = true) {
     this._data.set(key, [Date.now(), value])
   }

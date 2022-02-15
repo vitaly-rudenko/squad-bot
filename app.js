@@ -1,6 +1,7 @@
 import './env.js'
 
 import { Telegraf } from 'telegraf'
+import pg from 'pg'
 import express from 'express'
 import ejs from 'ejs'
 import jwt from 'jsonwebtoken'
@@ -8,22 +9,24 @@ import dotenv from 'dotenv'
 import multer from 'multer'
 
 import { Cache } from './app/utils/Cache.js'
-import { versionCommand } from './app/flows/version.js'
+import { versionCommand } from './app/shared/flows/version.js'
 
 import { PostgresStorage } from './app/PostgresStorage.js'
-import { registerCommand, startCommand } from './app/flows/start.js'
-import { usersCommand } from './app/flows/users.js'
-import { debtsCommand } from './app/flows/debts.js'
-import { receiptsGetCommand } from './app/flows/receipts.js'
-import { withUserId } from './app/withUserId.js'
-import { withPhaseFactory } from './app/withPhaseFactory.js'
-import { UserSessionManager } from './app/utils/UserSessionManager.js'
-import { phases } from './app/phases.js'
-import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/flows/cards.js'
-import { paymentsGetCommand } from './app/flows/payments.js'
-import { renderMoney } from './app/renderMoney.js'
-import { withUserFactory } from './app/withUserFactory.js'
-import { renderDebtAmount } from './app/renderDebtAmount.js'
+import { registerCommand, startCommand } from './app/users/flows/start.js'
+import { usersCommand } from './app/users/flows/users.js'
+import { debtsCommand } from './app/debts/flows/debts.js'
+import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
+import { withUserId } from './app/users/middlewares/withUserId.js'
+import { withPhaseFactory } from './app/shared/middlewares/withPhaseFactory.js'
+import { UserSessionManager } from './app/users/UserSessionManager.js'
+import { Phases } from './app/Phases.js'
+import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
+import { paymentsGetCommand } from './app/payments/flows/payments.js'
+import { renderMoney } from './app/utils/renderMoney.js'
+import { withUserFactory } from './app/users/middlewares/withUserFactory.js'
+import { renderDebtAmount } from './app/debts/renderDebtAmount.js'
+import { User } from './app/users/User.js'
+import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -33,8 +36,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 (async () => {
   const upload = multer()
 
-  const storage = new PostgresStorage(process.env.DATABASE_URL)
-  await storage.connect()
+  const pgClient = new pg.Client(process.env.DATABASE_URL)
+  await pgClient.connect()
+
+  const storage = new PostgresStorage(pgClient)
+  const usersStorage = new UsersPostgresStorage(pgClient)
 
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
@@ -135,28 +141,28 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const userSessionManager = new UserSessionManager()
   const withPhase = withPhaseFactory(userSessionManager)
-  const withUser = withUserFactory(storage)
+  const withUser = withUserFactory(usersStorage)
 
   bot.use(withUserId())
 
   bot.command('version', versionCommand())
-  bot.command('start', startCommand({ storage }))
-  bot.command('register', registerCommand({ storage }))
+  bot.command('start', startCommand({ usersStorage }))
+  bot.command('register', registerCommand({ usersStorage }))
 
-  bot.command('users', withUser(), usersCommand({ storage }))
-  bot.command('debts', withUser(), debtsCommand({ storage, getDebtsByUserId }))
+  bot.command('users', withUser(), usersCommand({ usersStorage }))
+  bot.command('debts', withUser(), debtsCommand({ storage, usersStorage, getDebtsByUserId }))
   bot.command('receipts', withUser(), receiptsGetCommand())
   bot.command('payments', withUser(), paymentsGetCommand())
 
   bot.command('addcard', withUser(), cardsAddCommand({ userSessionManager }))
-  bot.action(/cards:add:bank:(.+)/, withUser(), withPhase(phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
+  bot.action(/cards:add:bank:(.+)/, withUser(), withPhase(Phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
 
   bot.command('deletecard', withUser(), cardsDeleteCommand({ storage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withUser(), withPhase(phases.deleteCard.id, cardsDeleteIdAction({ storage, userSessionManager })))
+  bot.action(/cards:delete:id:(.+)/, withUser(), withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ storage, userSessionManager })))
 
-  bot.command('cards', withUser(), cardsGet({ storage, userSessionManager }))
-  bot.action(/cards:get:user-id:(.+)/, withUser(), withPhase(phases.getCard.userId, cardsGetUserIdAction({ storage, userSessionManager })))
-  bot.action(/cards:get:id:(.+)/, withUser(), withPhase(phases.getCard.id, cardsGetIdAction({ storage, userSessionManager })))
+  bot.command('cards', withUser(), cardsGet({ usersStorage, userSessionManager }))
+  bot.action(/cards:get:user-id:(.+)/, withUser(), withPhase(Phases.getCard.userId, cardsGetUserIdAction({ storage, usersStorage, userSessionManager })))
+  bot.action(/cards:get:id:(.+)/, withUser(), withPhase(Phases.getCard.id, cardsGetIdAction({ storage, userSessionManager })))
 
   bot.on('message',
     withUser({ ignore: true }),
@@ -165,7 +171,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       await next();
     },
     // Cards
-    withPhase(phases.addCard.number, cardsAddNumberMessage({ storage, userSessionManager }))
+    withPhase(Phases.addCard.number, cardsAddNumberMessage({ storage, userSessionManager }))
   )
 
   bot.catch((error) => logError(error))
@@ -194,24 +200,24 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     for (const debt of debts) {
-      const { debtorId, amount } = debt
+      const { userId, amount } = debt
 
       await storage.createDebt({
         receiptId: id,
         amount,
-        debtorId,
+        userId,
       })
     }
 
-    const editor = await storage.findUserById(editorId)
-    const payer = await storage.findUserById(payerId)
-    const userIds = [...new Set([payerId, ...debts.map(d => d.debtorId)])]
-    const users = await storage.findUsersByIds(userIds)
+    const editor = await usersStorage.findById(editorId)
+    const payer = await usersStorage.findById(payerId)
+    const userIds = [...new Set([payerId, ...debts.map(d => d.userId)])]
+    const users = await usersStorage.findByIds(userIds)
     const notificationDescription = description ? `"${description}"` : 'без описания'
 
     for (const user of users) {
       if (!user.isComplete) continue;
-      const debt = debts.find(d => d.debtorId === user.id)
+      const debt = debts.find(d => d.userId === user.id)
 
       const notification = `
 📝 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
@@ -234,9 +240,9 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
   async function storePayment(editorId, { fromUserId, toUserId, amount }) {
     const id = await storage.createPayment({ fromUserId, toUserId, amount })
 
-    const editor = await storage.findUserById(editorId)
-    const sender = await storage.findUserById(fromUserId)
-    const receiver = await storage.findUserById(toUserId)
+    const editor = await usersStorage.findById(editorId)
+    const sender = await usersStorage.findById(fromUserId)
+    const receiver = await usersStorage.findById(toUserId)
 
     const notification = `
 ➡️ Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(amount)} грн.
@@ -263,10 +269,10 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
     await storage.deleteDebtsByReceiptId(receiptId)
     await storage.deleteReceiptById(receiptId)
 
-    const editor = await storage.findUserById(editorId)
-    const payer = await storage.findUserById(receipt.payerId)
-    const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(d => d.debtorId)])]
-    const users = await storage.findUsersByIds(userIds)
+    const editor = await usersStorage.findById(editorId)
+    const payer = await usersStorage.findById(receipt.payerId)
+    const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(d => d.userId)])]
+    const users = await usersStorage.findByIds(userIds)
     const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
 
     const notification = `
@@ -290,9 +296,9 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
   async function deletePayment(editorId, paymentId) {
     const payment = await storage.findPaymentById(paymentId)
     
-    const editor = await storage.findUserById(editorId)
-    const sender = await storage.findUserById(payment.fromUserId)
-    const receiver = await storage.findUserById(payment.toUserId)
+    const editor = await usersStorage.findById(editorId)
+    const sender = await usersStorage.findById(payment.fromUserId)
+    const receiver = await usersStorage.findById(payment.toUserId)
 
     await storage.deletePaymentById(paymentId)
 
@@ -393,7 +399,7 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
       return
     }
 
-    const user = await storage.findUserById(userId)
+    const user = await usersStorage.findById(userId)
     if (!user) {
       res.status(404).json({ error: { code: 'USER_NOT_FOUND' } })
       return
@@ -439,18 +445,22 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
 
   app.post('/users', async (req, res) => {
     const { id, username, name } = req.user
-    const user = { id, username, name }
 
     try {
-      await storage.createUser(user)
-      res.json(user)
+      const user = new User({ id, name, username })
+      await usersStorage.create(user)
+      res.json({
+        id: user.id,
+        name: user.name,
+        username: user.username,
+      })
     } catch (error) {
       res.sendStatus(409)
     }
   })
 
   app.get('/users', async (req, res) => {
-    const users = await storage.findUsers()
+    const users = await usersStorage.findAll()
     res.json(users)
   })
 
@@ -468,8 +478,8 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
     const description = req.body.description ?? null
     const amount = Number(req.body.amount)
     const debts = Object.entries(JSON.parse(req.body.debts))
-      .map(([debtorId, amount]) => ({
-        debtorId,
+      .map(([userId, amount]) => ({
+        userId,
         amount: (amount !== null && Number.isInteger(Number(amount)) && Number(amount) > 0) ? Number(amount) : null,
       }))
 

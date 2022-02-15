@@ -66,28 +66,19 @@ function showPayments() {
     paymentsListContainer.innerHTML = paymentsHtml
 }
 
-function deletePaymentById(paymentId) {
-    event.stopPropagation()
-
+async function deletePaymentById(paymentId) {
     if (!confirm("Удалить перевод?")) return
 
-    fetch(`/payments/${paymentId}`, {
+    const response = await fetch(`/payments/${paymentId}`, {
         method: 'DELETE',
         headers: createAuthorizationHeader()
     })
-    .then((response) => {
-		if(response.statusText == "OK") {
-            console.log('payment deleted')
-            getPayments().then((data) => {
-               payments = data
-               showPayments()
-            })
-            
-        }
-    })
-    .catch(e => console.error(e))
-}
 
+    if(response.status === 204) {
+        payments = await getPayments()
+        showPayments()
+    }
+}
 
 function getUserNameById(userId) {
     const user = users.find(u => u.id == userId)
