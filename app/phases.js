@@ -1,4 +1,4 @@
-export const Phases = organizeValues({
+export const phases = organizeValues({
   addCard: {
     bank: '',
     number: '',

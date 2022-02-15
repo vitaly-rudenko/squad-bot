@@ -1,8 +1,8 @@
 import escapeHtml from 'escape-html'
 
-export function usersCommand({ usersStorage }) {
+export function usersCommand({ storage }) {
   return async (context) => {
-    const users = await usersStorage.findAll()
+    const users = await storage.findUsers()
 
     await context.reply(`
 👥 Пользователи:
