@@ -12,6 +12,10 @@ a {
     text-decoration: none;
 }
 
+.action_buttons > * {
+    cursor: pointer;
+}
+
 .hidden { 
     display: none;
 }
