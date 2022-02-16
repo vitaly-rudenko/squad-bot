@@ -1,15 +1,15 @@
 import { renderDebtAmount } from '../renderDebtAmount.js'
-import { renderMoney } from '../renderMoney.js'
+import { renderMoney } from '../../utils/renderMoney.js'
 
-export function debtsCommand({ storage, getDebtsByUserId }) {
+export function debtsCommand({ storage, usersStorage, getDebtsByUserId }) {
   return async (context) => {
     const userId = context.state.userId
-    const users = await storage.findUsers()
+    const users = await usersStorage.findAll()
 
     const { ingoingDebts, outgoingDebts, unfinishedReceiptIds } = await getDebtsByUserId(userId)
     const unfinishedReceipts = await storage.findReceiptsByIds(unfinishedReceiptIds ?? [])
     const unfinishedReceiptsByMe = unfinishedReceipts
-      .filter(r => r.debts.some(d => d.amount === null && d.debtorId === userId && d.debtorId !== r.payerId))
+      .filter(r => r.debts.some(d => d.amount === null && d.userId === userId && d.userId !== r.payerId))
 
     function getUserName(id) {
       const user = users.find(u => u.id === id)
