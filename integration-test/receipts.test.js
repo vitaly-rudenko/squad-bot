@@ -60,7 +60,7 @@ describe('[receipts]', () => {
         description: 'hello world',
         hasPhoto: false,
         debts: [{
-          debtorId: user.id,
+          userId: user.id,
           amount: 20,
         }]
       })
@@ -81,10 +81,10 @@ describe('[receipts]', () => {
         description: 'hello world',
         hasPhoto: true,
         debts: [{
-          debtorId: user1.id,
+          userId: user1.id,
           amount: 10,
         }, {
-          debtorId: user3.id,
+          userId: user3.id,
           amount: 20,
         }]
       })
@@ -110,7 +110,7 @@ describe('[receipts]', () => {
         description: 'my receipt',
         hasPhoto: false,
         debts: [{
-          debtorId: user1.id,
+          userId: user1.id,
           amount: 10,
         }]
       })
@@ -135,7 +135,7 @@ describe('[receipts]', () => {
         description: null,
         hasPhoto: true,
         debts: [{
-          debtorId: user2.id,
+          userId: user2.id,
           amount: 5,
         }]
       })
@@ -167,10 +167,10 @@ describe('[receipts]', () => {
         hasPhoto: true,
         description: null,
         debts: [{
-          debtorId: user1.id,
+          userId: user1.id,
           amount: 5,
         }, {
-          debtorId: user2.id,
+          userId: user2.id,
           amount: 15,
         }]
       }
@@ -191,10 +191,10 @@ describe('[receipts]', () => {
         description: 'hello world',
         amount: 100,
         debts: [{
-          debtorId: user1.id,
+          userId: user1.id,
           amount: 50,
         }, {
-          debtorId: user3.id,
+          userId: user3.id,
           amount: 50,
         }]
       }
