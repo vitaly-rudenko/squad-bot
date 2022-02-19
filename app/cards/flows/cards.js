@@ -14,7 +14,7 @@ export function cardsAddCommand({ userSessionManager }) {
         { columns: 1 }
       ).reply_markup
     })
-    
+
     userSessionManager.setPhase(context.state.userId, Phases.addCard.bank)
   }
 }
@@ -78,7 +78,7 @@ export function cardsAddNumberMessage({ storage, userSessionManager }) {
     await context.reply(
       context.state.localize('command.cards.add.saved', {
         number: escapeMd(number),
-        bank: escapeMd(context.state.localize(`banks.${bank}.short`)),
+        bank: context.state.localize(`banks.${bank}.short`),
       }),
       { parse_mode: 'MarkdownV2' }
     )
@@ -90,14 +90,21 @@ export function cardsDeleteCommand({ storage, userSessionManager }) {
     const cards = await storage.findCardsByUserId(context.state.userId)
 
     if (cards.length === 0) {
-      await context.reply('У тебя нет карт. Добавить карту можно с помощью /addcard')
+      await context.reply(
+        context.state.localize('command.cards.delete.nothingToDelete'),
+        { parse_mode: 'MarkdownV2' }
+      )
       return
     }
 
-    await context.reply('Выбери карту для удаления', {
+    await context.reply(context.state.localize('command.cards.delete.chooseCard'), {
+      parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard(
         cards.map(card => Markup.button.callback(
-          `${card.number} (${card.bank})`,
+          context.state.localize('command.cards.delete.card', {
+            number: escapeMd(card.number),
+            bank: context.state.localize(`banks.${card.bank}.short`),
+          }),
           `cards:delete:id:${card.id}`
         )),
         { columns: 1 }
@@ -117,7 +124,10 @@ export function cardsDeleteIdAction({ storage, userSessionManager }) {
     await storage.deleteCardById(cardId)
 
     userSessionManager.clear(context.state.userId)
-    await context.reply('Карта была удалена')
+    await context.reply(
+      context.state.localize('command.cards.delete.deleted'),
+      { parse_mode: 'MarkdownV2' }
+    )
   }
 }
 
@@ -153,7 +163,7 @@ export function cardsGetUserIdAction({ storage, usersStorage, userSessionManager
     }
 
     const myself = context.state.userId === userId
-    
+
     const cards = await storage.findCardsByUserId(userId)
 
     if (cards.length === 0) {
@@ -192,7 +202,7 @@ export function cardsGetIdAction({ storage, userSessionManager }) {
 
     if (context.chat.type !== 'private') {
       setTimeout(async () => {
-        await context.deleteMessage(message.message_id).catch(() => {})
+        await context.deleteMessage(message.message_id).catch(() => { })
       }, 60_000)
     }
   }
