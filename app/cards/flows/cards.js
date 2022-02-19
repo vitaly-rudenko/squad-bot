@@ -1,13 +1,18 @@
 import { Markup } from 'telegraf'
 import { Phases } from '../../Phases.js'
+import { escapeMd } from '../../utils/escapeMd.js'
+import { formatCardNumber } from '../../utils/formatCardNumber.js'
+
+const banks = ['privatbank', 'monobank']
 
 export function cardsAddCommand({ userSessionManager }) {
   return async (context) => {
-    await context.reply('Какой банк?', {
-      reply_markup: Markup.inlineKeyboard([
-        Markup.button.callback('Приватбанк', 'cards:add:bank:privatbank'),
-        Markup.button.callback('Монобанк', 'cards:add:bank:monobank'),
-      ]).reply_markup
+    await context.reply(context.state.localize('command.cards.add.chooseBank'), {
+      parse_mode: 'MarkdownV2',
+      reply_markup: Markup.inlineKeyboard(
+        banks.map(bank => Markup.button.callback(context.state.localize(`banks.${bank}.long`), `cards:add:bank:${bank}`)),
+        { columns: 1 }
+      ).reply_markup
     })
     
     userSessionManager.setPhase(context.state.userId, Phases.addCard.bank)
@@ -22,7 +27,10 @@ export function cardsAddBankAction({ userSessionManager }) {
     const bank = context.match[1]
     userSessionManager.context(context.state.userId).bank = bank
 
-    const message = await context.reply('Отправь номер карты')
+    const message = await context.reply(
+      context.state.localize('command.cards.add.sendCardNumber'),
+      { parse_mode: 'MarkdownV2' }
+    )
     userSessionManager.context(context.state.userId).messageId = message.message_id
 
     userSessionManager.setPhase(context.state.userId, Phases.addCard.number)
@@ -34,6 +42,25 @@ export function cardsAddNumberMessage({ storage, userSessionManager }) {
     if (!('text' in context.message)) return
 
     const { bank, messageId } = userSessionManager.context(context.state.userId)
+
+    if (!/^[\d\s]+$/.test(context.message.text)) {
+      await context.reply(
+        context.state.localize('command.cards.add.invalidCardNumber'),
+        { parse_mode: 'MarkdownV2' },
+      )
+      userSessionManager.clear(context.state.userId)
+      return
+    }
+
+    if (context.message.text.split(/\d/).length - 1 !== 16) {
+      await context.reply(
+        context.state.localize('command.cards.add.invalidCardNumberLength'),
+        { parse_mode: 'MarkdownV2' },
+      )
+      userSessionManager.clear(context.state.userId)
+      return
+    }
+
     const number = formatCardNumber(context.message.text)
 
     await Promise.all([
@@ -48,12 +75,14 @@ export function cardsAddNumberMessage({ storage, userSessionManager }) {
     })
 
     userSessionManager.clear(context.state.userId)
-    await context.reply(`Карта была сохранена: ${number} (${bank})`)
+    await context.reply(
+      context.state.localize('command.cards.add.saved', {
+        number: escapeMd(number),
+        bank: escapeMd(context.state.localize(`banks.${bank}.short`)),
+      }),
+      { parse_mode: 'MarkdownV2' }
+    )
   }
-}
-
-export function formatCardNumber(number) {
-  return number.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim()
 }
 
 export function cardsDeleteCommand({ storage, userSessionManager }) {

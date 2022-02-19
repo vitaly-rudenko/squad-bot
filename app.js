@@ -27,6 +27,7 @@ import { withUserFactory } from './app/users/middlewares/withUserFactory.js'
 import { renderDebtAmount } from './app/debts/renderDebtAmount.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
+import { withLocalization } from './app/localization/middlewares/withLocalization.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -144,6 +145,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const withUser = withUserFactory(usersStorage)
 
   bot.use(withUserId())
+  bot.use(withLocalization())
 
   bot.command('version', versionCommand())
   bot.command('start', startCommand({ usersStorage }))
