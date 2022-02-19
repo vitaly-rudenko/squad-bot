@@ -32,7 +32,6 @@ export function cardsAddBankAction({ userSessionManager }) {
       { parse_mode: 'MarkdownV2' }
     )
     userSessionManager.context(context.state.userId).messageId = message.message_id
-
     userSessionManager.setPhase(context.state.userId, Phases.addCard.number)
   }
 }
@@ -102,7 +101,7 @@ export function cardsDeleteCommand({ storage, userSessionManager }) {
       reply_markup: Markup.inlineKeyboard(
         cards.map(card => Markup.button.callback(
           context.state.localize('command.cards.delete.card', {
-            number: escapeMd(card.number),
+            number: card.number,
             bank: context.state.localize(`banks.${card.bank}.short`),
           }),
           `cards:delete:id:${card.id}`
@@ -135,10 +134,14 @@ export function cardsGet({ usersStorage, userSessionManager }) {
   return async (context) => {
     const users = await usersStorage.findAll()
 
-    await context.reply('Выбери пользователя', {
+    await context.reply(context.state.localize('command.cards.get.chooseUser'), {
+      parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard(
         users.map(user => Markup.button.callback(
-          `${user.name} (@${user.username})`,
+          context.state.localize('command.cards.get.user', {
+            name: user.name,
+            username: user.name,
+          }),
           `cards:get:user-id:${user.id}`
         )),
         { columns: 2 }
@@ -156,29 +159,26 @@ export function cardsGetUserIdAction({ storage, usersStorage, userSessionManager
 
     const userId = context.match[1]
     const user = await usersStorage.findById(userId)
-
-    if (!user) {
-      await context.reply('Пользователь еще не зарегистрирован.')
-      return
-    }
-
-    const myself = context.state.userId === userId
+    const userType = context.state.userId === userId ? 'myself' : 'user'
 
     const cards = await storage.findCardsByUserId(userId)
 
     if (cards.length === 0) {
       await context.reply(
-        myself
-          ? 'У тебя нет карт. Добавить карту можно с помощью /addcard'
-          : `У пользователя ${user.name} еще нет карт.`
+        context.state.localize(`command.cards.get.nothingToGet.${userType}`, { name: escapeMd(user.name) }),
+        { parse_mode: 'MarkdownV2' }
       )
       return
     }
 
-    await context.reply(myself ? 'Выбери свою карту' : `Выбери карту пользователя ${user.name}`, {
+    await context.reply(context.state.localize(`command.cards.get.chooseCard.${userType}`, { name: escapeMd(user.name) }), {
+      parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard(
         cards.map(card => Markup.button.callback(
-          `${card.number} (${card.bank})`,
+          context.state.localize('command.cards.get.card', {
+            number: card.number,
+            bank: context.state.localize(`banks.${card.bank}.short`),
+          }),
           `cards:get:id:${card.id}`
         )),
         { columns: 1 }
