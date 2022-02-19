@@ -2,11 +2,6 @@ import { User } from '../../users/User.js'
 
 export function startCommand({ usersStorage }) {
   return async (context) => {
-    if (context.chat.type !== 'private') {
-      await context.reply('Эту команду можно выполнить только в ЛС бота.')
-      return
-    }
-
     const userId = context.state.userId
     const { first_name: name, username } = context.from
 
@@ -40,11 +35,6 @@ export function startCommand({ usersStorage }) {
 
 export function registerCommand({ usersStorage }) {
   return async (context) => {
-    if (context.chat.type === 'private') {
-      await context.reply('Эту команду можно выполнить только в чате. Используй /start')
-      return
-    }
-
     const userId = context.state.userId
     const { first_name: name, username } = context.from
 

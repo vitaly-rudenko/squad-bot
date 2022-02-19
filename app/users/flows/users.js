@@ -8,7 +8,7 @@ export function usersCommand({ usersStorage }) {
 👥 Пользователи:
 ${
   users
-    .map(user => `- <a href="tg://user?id=${user.id}">${escapeHtml(user.name)}</a> (ник: ${user.username}, id: ${user.id}${user.isComplete ? '' : ', без уведомлений'})`)
+    .map(user => `- <a href="tg://user?id=${user.id}">${escapeHtml(user.name)}</a> (@${user.username}, id: ${user.id}${user.isComplete ? '' : ', без уведомлений'})`)
     .join('\n') || '- Никто не зарегистрирован :('
 }
     `, { parse_mode: 'html' })

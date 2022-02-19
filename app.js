@@ -27,6 +27,10 @@ import { withUserFactory } from './app/users/middlewares/withUserFactory.js'
 import { renderDebtAmount } from './app/debts/renderDebtAmount.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
+import { withLocalization } from './app/localization/middlewares/withLocalization.js'
+import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
+import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
+import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -41,6 +45,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const storage = new PostgresStorage(pgClient)
   const usersStorage = new UsersPostgresStorage(pgClient)
+  const cardsStorage = new CardsPostgresStorage(pgClient)
 
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
@@ -51,9 +56,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     { command: 'debts', description: 'Посчитать долги' },
     { command: 'receipts', description: 'Добавить/посмотреть чеки' },
     { command: 'payments', description: 'Добавить/посмотреть платежи' },
-    { command: 'cards', description: 'Посмотреть банковские карты пользователя' },
-    { command: 'addcard', description: 'Добавить банковскую карту' },
-    { command: 'deletecard', description: 'Удалить банковскую карту' },
+    { command: 'cards', description: 'Переглянути банківські картки користувача' },
+    { command: 'addcard', description: 'Додати банківську картку' },
+    { command: 'deletecard', description: 'Видалити банківську картку' },
     { command: 'start', description: 'Зарегистрироваться' },
     { command: 'register', description: 'Зарегистрироваться' },
     { command: 'users', description: 'Список пользователей' },
@@ -144,12 +149,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const withUser = withUserFactory(usersStorage)
 
   bot.use(withUserId())
+  bot.use(withLocalization())
 
   bot.command('version', versionCommand())
-  bot.command('start', startCommand({ usersStorage }))
-  bot.command('register', registerCommand({ usersStorage }))
+  bot.command('start', withPrivateChat(), startCommand({ usersStorage }))
+  bot.command('register', withGroupChat(), registerCommand({ usersStorage }))
 
-  bot.command('users', withUser(), usersCommand({ usersStorage }))
+  bot.command('users', withPrivateChat(), withUser(), usersCommand({ usersStorage }))
   bot.command('debts', withUser(), debtsCommand({ storage, usersStorage, getDebtsByUserId }))
   bot.command('receipts', withUser(), receiptsGetCommand())
   bot.command('payments', withUser(), paymentsGetCommand())
@@ -157,12 +163,12 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.command('addcard', withUser(), cardsAddCommand({ userSessionManager }))
   bot.action(/cards:add:bank:(.+)/, withUser(), withPhase(Phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
 
-  bot.command('deletecard', withUser(), cardsDeleteCommand({ storage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withUser(), withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ storage, userSessionManager })))
+  bot.command('deletecard', withUser(), cardsDeleteCommand({ cardsStorage, userSessionManager }))
+  bot.action(/cards:delete:id:(.+)/, withUser(), withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))
 
   bot.command('cards', withUser(), cardsGet({ usersStorage, userSessionManager }))
-  bot.action(/cards:get:user-id:(.+)/, withUser(), withPhase(Phases.getCard.userId, cardsGetUserIdAction({ storage, usersStorage, userSessionManager })))
-  bot.action(/cards:get:id:(.+)/, withUser(), withPhase(Phases.getCard.id, cardsGetIdAction({ storage, userSessionManager })))
+  bot.action(/cards:get:user-id:(.+)/, withUser(), withPhase(Phases.getCard.userId, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager })))
+  bot.action(/cards:get:id:(.+)/, withUser(), withPhase(Phases.getCard.id, cardsGetIdAction({ cardsStorage, userSessionManager })))
 
   bot.on('message',
     withUser({ ignore: true }),
@@ -171,7 +177,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       await next();
     },
     // Cards
-    withPhase(Phases.addCard.number, cardsAddNumberMessage({ storage, userSessionManager }))
+    withPhase(Phases.addCard.number, cardsAddNumberMessage({ cardsStorage, userSessionManager }))
   )
 
   bot.catch((error) => logError(error))

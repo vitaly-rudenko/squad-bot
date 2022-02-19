@@ -48,25 +48,11 @@ export class PostgresStorage {
     `, [paymentId])
   }
 
-  async deleteCardById(cardId) {
-    await this._client.query(`
-      DELETE FROM cards
-      WHERE id = $1;
-    `, [cardId])
-  }
-
   async createDebt({ userId, receiptId, amount }) {
     await this._client.query(`
       INSERT INTO debts (user_id, receipt_id, amount)
       VALUES ($1, $2, $3);
     `, [userId, receiptId, amount])
-  }
-
-  async createCard({ userId, bank, number }) {
-    await this._client.query(`
-      INSERT INTO cards (user_id, bank, number)
-      VALUES ($1, $2, $3);
-    `, [userId, bank, number])
   }
 
   async createPayment({ fromUserId, toUserId, amount }) {
@@ -178,38 +164,6 @@ export class PostgresStorage {
       userId: row['user_id'],
       amount: row['amount'],
     }))
-  }
-
-  async getCardById(cardId) {
-    const response = await this._client.query(`
-      SELECT *
-      FROM cards
-      WHERE id = $1;
-    `, [cardId])
-
-    if (response.rowCount === 0) {
-      return null
-    }
-
-    return this.deserializeCard(response.rows[0])
-  }
-
-  async findCardsByUserId(userId) {
-    const response = await this._client.query(`
-      SELECT *
-      FROM cards
-      WHERE user_id = $1;
-    `, [userId])
-
-    return response.rows.map(this.deserializeCard)
-  }
-
-  deserializeCard(row) {
-    return {
-      id: row['id'],
-      bank: row['bank'],
-      number: row['number'],
-    }
   }
 
   async findPaymentById(paymentId) {
