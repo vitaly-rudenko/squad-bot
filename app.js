@@ -28,6 +28,8 @@ import { renderDebtAmount } from './app/debts/renderDebtAmount.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/withLocalization.js'
+import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
+import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -148,10 +150,10 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.use(withLocalization())
 
   bot.command('version', versionCommand())
-  bot.command('start', startCommand({ usersStorage }))
-  bot.command('register', registerCommand({ usersStorage }))
+  bot.command('start', withPrivateChat(), startCommand({ usersStorage }))
+  bot.command('register', withGroupChat(), registerCommand({ usersStorage }))
 
-  bot.command('users', withUser(), usersCommand({ usersStorage }))
+  bot.command('users', withPrivateChat(), withUser(), usersCommand({ usersStorage }))
   bot.command('debts', withUser(), debtsCommand({ storage, usersStorage, getDebtsByUserId }))
   bot.command('receipts', withUser(), receiptsGetCommand())
   bot.command('payments', withUser(), paymentsGetCommand())
