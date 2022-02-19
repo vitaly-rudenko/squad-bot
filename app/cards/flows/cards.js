@@ -2,6 +2,7 @@ import { Markup } from 'telegraf'
 import { Phases } from '../../Phases.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 import { formatCardNumber } from '../../utils/formatCardNumber.js'
+import { Card } from '../Card.js'
 
 const banks = ['privatbank', 'monobank']
 
@@ -36,7 +37,7 @@ export function cardsAddBankAction({ userSessionManager }) {
   }
 }
 
-export function cardsAddNumberMessage({ storage, userSessionManager }) {
+export function cardsAddNumberMessage({ cardsStorage, userSessionManager }) {
   return async (context) => {
     if (!('text' in context.message)) return
 
@@ -67,11 +68,13 @@ export function cardsAddNumberMessage({ storage, userSessionManager }) {
       context.deleteMessage(messageId),
     ])
 
-    await storage.createCard({
+    const card = new Card({
       userId: context.state.userId,
       bank,
       number,
     })
+
+    await cardsStorage.create(card)
 
     userSessionManager.clear(context.state.userId)
     await context.reply(
@@ -84,9 +87,9 @@ export function cardsAddNumberMessage({ storage, userSessionManager }) {
   }
 }
 
-export function cardsDeleteCommand({ storage, userSessionManager }) {
+export function cardsDeleteCommand({ cardsStorage, userSessionManager }) {
   return async (context) => {
-    const cards = await storage.findCardsByUserId(context.state.userId)
+    const cards = await cardsStorage.findByUserId(context.state.userId)
 
     if (cards.length === 0) {
       await context.reply(
@@ -114,13 +117,13 @@ export function cardsDeleteCommand({ storage, userSessionManager }) {
   }
 }
 
-export function cardsDeleteIdAction({ storage, userSessionManager }) {
+export function cardsDeleteIdAction({ cardsStorage, userSessionManager }) {
   return async (context) => {
     await context.answerCbQuery()
     await context.deleteMessage()
 
     const cardId = context.match[1]
-    await storage.deleteCardById(cardId)
+    await cardsStorage.deleteById(cardId)
 
     userSessionManager.clear(context.state.userId)
     await context.reply(
@@ -152,7 +155,7 @@ export function cardsGet({ usersStorage, userSessionManager }) {
   }
 }
 
-export function cardsGetUserIdAction({ storage, usersStorage, userSessionManager }) {
+export function cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }) {
   return async (context) => {
     await context.answerCbQuery()
     await context.deleteMessage()
@@ -161,8 +164,7 @@ export function cardsGetUserIdAction({ storage, usersStorage, userSessionManager
     const user = await usersStorage.findById(userId)
     const userType = context.state.userId === userId ? 'myself' : 'user'
 
-    const cards = await storage.findCardsByUserId(userId)
-
+    const cards = await cardsStorage.findByUserId(userId)
     if (cards.length === 0) {
       await context.reply(
         context.state.localize(`command.cards.get.nothingToGet.${userType}`, { name: escapeMd(user.name) }),
@@ -189,13 +191,13 @@ export function cardsGetUserIdAction({ storage, usersStorage, userSessionManager
   }
 }
 
-export function cardsGetIdAction({ storage, userSessionManager }) {
+export function cardsGetIdAction({ cardsStorage, userSessionManager }) {
   return async (context) => {
     await context.answerCbQuery()
     await context.deleteMessage()
 
     const cardId = context.match[1]
-    const card = await storage.getCardById(cardId)
+    const card = await cardsStorage.findById(cardId)
 
     userSessionManager.clear(context.state.userId)
     const message = await context.reply(card.number)
