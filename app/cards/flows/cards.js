@@ -143,7 +143,7 @@ export function cardsGet({ usersStorage, userSessionManager }) {
         users.map(user => Markup.button.callback(
           context.state.localize('command.cards.get.user', {
             name: user.name,
-            username: user.name,
+            username: user.username,
           }),
           `cards:get:user-id:${user.id}`
         )),
