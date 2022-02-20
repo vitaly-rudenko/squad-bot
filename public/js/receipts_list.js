@@ -25,18 +25,18 @@ async function getReceipts() {
 function showReceipts() {
     let receiptsHtml = ``
     for (let i = 0; i < receipts.length; i++) {
-        const isUnfinished = receipts[i].debts.some(debt => debt.amount === null && debt.userId !== receipts[i].payerId)
+        const isIncomplete = receipts[i].debts.some(debt => debt.amount === null && debt.debtorId !== receipts[i].payerId)
 
         receiptsHtml += `<div class="receipt_list_item" onclick="toggleActiveItem(this)">
         <div class="payer">
-            <div>${isUnfinished ? '⚠️ ' : ''}${getUserNameById(receipts[i].payerId)}</div>
+            <div>${isIncomplete ? '⚠️ ' : ''}${getUserNameById(receipts[i].payerId)}</div>
             <div>${renderMoney(receipts[i].amount)} грн</div>
         </div>`
 
         receiptsHtml += '<div class="debtor_list">'
         for (let j = 0; j < receipts[i].debts.length; j++) {
             receiptsHtml += `<div class="debtor">
-                <div class="debt__name">${getUserNameById(receipts[i].debts[j].userId)}</div>
+                <div class="debt__name">${getUserNameById(receipts[i].debts[j].debtorId)}</div>
                 <div class="debt__amount">${receipts[i].debts[j].amount
                     ? (renderMoney(receipts[i].debts[j].amount) + ' грн')
                     : 'не заполнено'}</div>

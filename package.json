@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "npm run umzug db:migrate && node app.js",
-    "start:dev": "npm run umzug db:migrate && nodemon --ignore integration-test/ app.js",
+    "start:dev": "npm run umzug db:migrate && nodemon --legacy-watch --ignore integration-test/ app.js",
     "test": "mocha --recursive",
     "test:dev": "nodemon --delay 0.5 --exec 'npm run test'",
     "test:integration": "mocha --recursive integration-test",

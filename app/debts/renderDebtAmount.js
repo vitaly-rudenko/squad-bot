@@ -1,11 +1,11 @@
 import { renderMoney } from '../utils/renderMoney.js'
 
+/** @param {import('./Debt').Debt} debt */
 export function renderDebtAmount(debt) {
-  let amount = debt.amount !== null && debt.amount > 0 ? renderMoney(debt.amount) : ''
+  return `${debt.amount !== null ? renderMoney(debt.amount) : '?'} грн`
+}
 
-  if (debt.amount === null || debt.isUncertain) {
-    amount = amount ? amount + '+?' : '?'
-  }
-
-  return amount
+/** @param {import('./AggregatedDebt').AggregatedDebt} debt */
+export function renderAggregatedDebt(debt) {
+  return `${debt.isIncomplete() ? (debt.amount === 0 ? '?' : `${debt.amount}+?`) : debt.amount} грн`
 }

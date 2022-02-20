@@ -31,6 +31,9 @@ import { withLocalization } from './app/localization/middlewares/withLocalizatio
 import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
 import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
+import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
+import { Debt } from './app/debts/Debt.js'
+import { AggregatedDebt } from './app/debts/AggregatedDebt.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -43,9 +46,10 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const pgClient = new pg.Client(process.env.DATABASE_URL)
   await pgClient.connect()
 
-  const storage = new PostgresStorage(pgClient)
   const usersStorage = new UsersPostgresStorage(pgClient)
   const cardsStorage = new CardsPostgresStorage(pgClient)
+  const debtsStorage = new DebtsPostgresStorage(pgClient)
+  const storage = new PostgresStorage(pgClient, debtsStorage)
 
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
@@ -82,19 +86,21 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
   }
 
-  async function getDebtsByUserId(userId) {
-    const ingoingDebts = await storage.getIngoingDebts(userId)
-    const outgoingDebts = await storage.getOutgoingDebts(userId)
+  /**
+   * @returns {Promise<{
+   *   ingoingDebts: import('./app/debts/AggregatedDebt').AggregatedDebt[],
+   *   outgoingDebts: import('./app/debts/AggregatedDebt').AggregatedDebt[],
+   *   incompleteReceiptIds: string[],
+   * }>}
+   */
+  async function aggregateDebtsByUserId(userId) {
+    const ingoingDebts = await debtsStorage.aggregateIngoingDebts(userId)
+    const outgoingDebts = await debtsStorage.aggregateOutgoingDebts(userId)
     const ingoingPayments = await storage.getIngoingPayments(userId)
     const outgoingPayments = await storage.getOutgoingPayments(userId)
 
-    const unfinishedReceiptIds = [...new Set([
-      ...ingoingDebts.flatMap(d => d.uncertainReceiptIds),
-      ...outgoingDebts.flatMap(d => d.uncertainReceiptIds),
-    ])]
-
     const debtMap = {}
-    const uncertainMap = {}
+    const incompleteMap = {}
     const addPayment = (fromUserId, toUserId, amount) => {
       const debtUserId = fromUserId === userId ? toUserId : fromUserId
 
@@ -110,16 +116,20 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     for (const debt of ingoingDebts) {
-      addPayment(userId, debt.userId, debt.amount)
-      if (debt.uncertainReceiptIds.length > 0) {
-        uncertainMap[debt.userId + '_' + userId] = true
+      addPayment(userId, debt.fromUserId, debt.amount)
+      if (debt.incompleteReceiptIds.length > 0) {
+        const key = debt.fromUserId + '_' + userId
+        if (!incompleteMap[key]) incompleteMap[key] = new Set()
+        incompleteMap[key].add(...debt.incompleteReceiptIds)
       }
     }
 
     for (const debt of outgoingDebts) {
-      addPayment(debt.userId, userId, debt.amount)
-      if (debt.uncertainReceiptIds.length > 0) {
-        uncertainMap[userId + '_' + debt.userId] = true
+      addPayment(debt.toUserId, userId, debt.amount)
+      if (debt.incompleteReceiptIds.length > 0) {
+        const key = userId + '_' + debt.toUserId
+        if (!incompleteMap[key]) incompleteMap[key] = new Set()
+        incompleteMap[key].add(...debt.incompleteReceiptIds)
       }
     }
 
@@ -128,19 +138,55 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     for (const payment of outgoingPayments)
       addPayment(userId, payment.userId, payment.amount)
 
-    const debts = Object.entries(debtMap)
-      .map(([userId, amount]) => ({ userId, amount }))
+    const debts = []
+    for (const [debtUserId, amount] of Object.entries(debtMap)) {
+      const ingoingKey = debtUserId + '_' + userId
+      const outgoingKey = userId + '_' + debtUserId
+
+      if (amount !== 0) {
+        const [fromUserId, toUserId] = amount > 0 ? [userId, debtUserId] : [debtUserId, userId]
+        const key = fromUserId + '_' + toUserId
+
+        debts.push(
+          new AggregatedDebt({
+            fromUserId,
+            toUserId,
+            amount: Math.abs(amount),
+            incompleteReceiptIds: incompleteMap[key] ? [...incompleteMap[key]] : [],
+          })
+        )
+      } else {
+        if (incompleteMap[ingoingKey]) {
+          debts.push(
+            new AggregatedDebt({
+              fromUserId: debtUserId,
+              toUserId: userId,
+              amount: 0,
+              incompleteReceiptIds: [...incompleteMap[ingoingKey]],
+            })
+          )
+        }
+
+        if (incompleteMap[outgoingKey]) {
+          debts.push(
+            new AggregatedDebt({
+              fromUserId: userId,
+              toUserId: debtUserId,
+              amount: 0,
+              incompleteReceiptIds: [...incompleteMap[outgoingKey]],
+            })
+          )
+        }
+      }
+    }
 
     return {
-      ingoingDebts: debts
-        .map(debt => ({ ...debt, ...uncertainMap[debt.userId + '_' + userId] && { isUncertain: true } }))
-        .filter(debt => debt.amount < 0 || debt.isUncertain)
-        .map(debt => ({ ...debt, amount: Math.max(0, -debt.amount) })),
-      outgoingDebts: debts
-        .map(debt => ({ ...debt, ...uncertainMap[userId + '_' + debt.userId] && { isUncertain: true } }))
-        .filter(debt => debt.amount > 0 || debt.isUncertain)
-        .map(debt => ({ ...debt, amount: Math.max(0, debt.amount) })),
-      ...unfinishedReceiptIds.length > 0 && { unfinishedReceiptIds },
+      ingoingDebts: debts.filter(debt => debt.toUserId === userId),
+      outgoingDebts: debts.filter(debt => debt.fromUserId === userId),
+      incompleteReceiptIds: [...new Set([
+        ...ingoingDebts.flatMap(d => d.incompleteReceiptIds),
+        ...outgoingDebts.flatMap(d => d.incompleteReceiptIds),
+      ])],
     }
   }
 
@@ -156,7 +202,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.command('register', withGroupChat(), registerCommand({ usersStorage }))
 
   bot.command('users', withPrivateChat(), withUser(), usersCommand({ usersStorage }))
-  bot.command('debts', withUser(), debtsCommand({ storage, usersStorage, getDebtsByUserId }))
+  bot.command('debts', withUser(), debtsCommand({ storage, usersStorage, aggregateDebtsByUserId }))
   bot.command('receipts', withUser(), receiptsGetCommand())
   bot.command('payments', withUser(), paymentsGetCommand())
 
@@ -194,7 +240,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
         mime,
       })
 
-      await storage.deleteDebtsByReceiptId(id)
+      await debtsStorage.deleteByReceiptId(id)
     } else {
       id = await storage.createReceipt({
         payerId,
@@ -206,29 +252,31 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     for (const debt of debts) {
-      const { userId, amount } = debt
+      const { debtorId, amount } = debt
 
-      await storage.createDebt({
-        receiptId: id,
-        amount,
-        userId,
-      })
+      await debtsStorage.create(
+        new Debt({
+          receiptId: id,
+          debtorId,
+          amount,
+        })
+      )
     }
 
     const editor = await usersStorage.findById(editorId)
     const payer = await usersStorage.findById(payerId)
-    const userIds = [...new Set([payerId, ...debts.map(d => d.userId)])]
+    const userIds = [...new Set([payerId, ...debts.map(debt => debt.debtorId)])]
     const users = await usersStorage.findByIds(userIds)
     const notificationDescription = description ? `"${description}"` : 'без описания'
 
     for (const user of users) {
       if (!user.isComplete) continue;
-      const debt = debts.find(d => d.userId === user.id)
+      const debt = debts.find(debt => debt.debtorId === user.id)
 
       const notification = `
 📝 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
 👤 Оплатил: ${payer.name} (@${payer.username})
-${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)} грн.\n` : ''}\
+${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}.\n` : ''}\
 💸 Проверить долги: /debts
 🧾 Посмотреть чеки: /receipts
       `
@@ -272,12 +320,12 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
   async function deleteReceipt(editorId, receiptId) {
     const receipt = await storage.findReceiptById(receiptId)
 
-    await storage.deleteDebtsByReceiptId(receiptId)
+    await debtsStorage.deleteByReceiptId(receiptId)
     await storage.deleteReceiptById(receiptId)
 
     const editor = await usersStorage.findById(editorId)
     const payer = await usersStorage.findById(receipt.payerId)
-    const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(d => d.userId)])]
+    const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(debt => debt.debtorId)])]
     const users = await usersStorage.findByIds(userIds)
     const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
 
@@ -301,7 +349,7 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
 
   async function deletePayment(editorId, paymentId) {
     const payment = await storage.findPaymentById(paymentId)
-    
+
     const editor = await usersStorage.findById(editorId)
     const sender = await usersStorage.findById(payment.fromUserId)
     const receiver = await usersStorage.findById(payment.toUserId)
@@ -342,15 +390,15 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
   app.get('/authpage', async (req, res) => {
     res.render('auth')
   })
-  
+
   app.get('/paymentview', async (req, res) => {
     res.render('payment')
   })
-  
+
   app.get('/paymentslist', async (req, res) => {
     res.render('payments_list')
   })
-  
+
   app.get('/receiptslist', async (req, res) => {
     res.render('receipts_list')
   })
@@ -411,11 +459,13 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
       return
     }
 
-    res.json(jwt.sign({ user: {
-      id: user.id,
-      name: user.name,
-      username: user.username,
-    } }, process.env.TOKEN_SECRET))
+    res.json(jwt.sign({
+      user: {
+        id: user.id,
+        name: user.name,
+        username: user.username,
+      }
+    }, process.env.TOKEN_SECRET))
     temporaryAuthTokenCache.set(temporaryAuthToken)
   })
 
@@ -470,6 +520,21 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
     res.json(users)
   })
 
+  function formatReceipt(receipt) {
+    return {
+      id: receipt.id,
+      createdAt: receipt.createdAt,
+      payerId: receipt.payerId,
+      amount: receipt.amount,
+      description: receipt.description,
+      hasPhoto: receipt.hasPhoto,
+      debts: receipt.debts.map(debt => ({
+        debtorId: debt.debtorId,
+        amount: debt.amount,
+      }))
+    }
+  }
+
   app.post('/receipts', upload.single('photo'), async (req, res) => {
     if (req.file && req.file.size > 10_000_000) { // 10 mb
       res.sendStatus(413)
@@ -484,8 +549,8 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
     const description = req.body.description ?? null
     const amount = Number(req.body.amount)
     const debts = Object.entries(JSON.parse(req.body.debts))
-      .map(([userId, amount]) => ({
-        userId,
+      .map(([debtorId, amount]) => ({
+        debtorId,
         amount: (amount !== null && Number.isInteger(Number(amount)) && Number(amount) > 0) ? Number(amount) : null,
       }))
 
@@ -508,12 +573,12 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
     })
 
     const receipt = await storage.findReceiptById(id)
-    res.json(receipt)
+    res.json(formatReceipt(receipt))
   })
 
   app.get('/receipts', async (req, res) => {
     const receipts = await storage.findReceiptsByParticipantUserId(req.user.id)
-    res.json(receipts)
+    res.json(receipts.map(formatReceipt))
   })
 
   app.get('/receipts/:receiptId', async (req, res) => {
@@ -524,7 +589,7 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
       return res.sendStatus(404)
     }
 
-    res.json(receipt)
+    res.json(formatReceipt(receipt))
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
@@ -552,8 +617,21 @@ ${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDe
   })
 
   app.get('/debts', async (req, res) => {
-    const debts = await getDebtsByUserId(req.user.id)
-    res.json(debts)
+    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await aggregateDebtsByUserId(req.user.id)
+
+    res.json({
+      ingoingDebts: ingoingDebts.map(debt => ({
+        userId: debt.fromUserId,
+        amount: debt.amount,
+        ...debt.incompleteReceiptIds.length > 0 && { isIncomplete: debt.incompleteReceiptIds.length > 0 },
+      })),
+      outgoingDebts: outgoingDebts.map(debt => ({
+        userId: debt.toUserId,
+        amount: debt.amount,
+        ...debt.incompleteReceiptIds.length > 0 && { isIncomplete: debt.incompleteReceiptIds.length > 0 },
+      })),
+      ...incompleteReceiptIds.length > 0 && { incompleteReceiptIds }
+    })
   })
 
   const port = Number(process.env.PORT) || 3001

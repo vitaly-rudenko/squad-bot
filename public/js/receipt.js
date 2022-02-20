@@ -46,7 +46,7 @@ async function init() {
 
             hasPhoto = receipt.hasPhoto
             receiptsPayerSelect.value = receipt.payerId
-            receiptsAmountInput.value = Number(receipt.amount / 100).toFixed(2)
+            receiptsAmountInput.value = (receipt.amount / 100).toFixed(2)
             receiptsDescriptionInput.value = receipt.description
             setDebts(receipt.debts)
 
@@ -202,12 +202,12 @@ function setDebts(debts) {
     for (let i = 0; i < debtors.length; i++) {
         const debtorCheckbox = debtors[i].querySelector(".debtor_checkbox")
         const userId = debtorCheckbox.value
-        const debt = debts.find(d => d.userId === userId)
+        const debt = debts.find(debt => debt.debtorId === userId)
         
         if (debt) {
             debtorCheckbox.checked = true
             if (debt.amount) {
-                debtors[i].querySelector(".debt_amount").value = Number(debt.amount / 100).toFixed(2)
+                debtors[i].querySelector(".debt_amount").value = (debt.amount / 100).toFixed(2)
             }
         } else {
             debtorCheckbox.checked = false

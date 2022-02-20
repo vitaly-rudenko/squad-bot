@@ -1,9 +1,11 @@
 import { v4 as uuid } from 'uuid'
+import { toNullableAmount } from './utils/toNullableAmount.js'
 
 export class PostgresStorage {
   /** @param {import('pg').Client} client */
-  constructor(client) {
+  constructor(client, debtsStorage) {
     this._client = client
+    this._debtsStorage = debtsStorage
   }
 
   async createReceipt({ payerId, amount, description = null, photo = null, mime = null }) {
@@ -32,27 +34,12 @@ export class PostgresStorage {
     `, [receiptId])
   }
 
-  async deleteDebtsByReceiptId(receiptId) {
-    await this._client.query(`
-      UPDATE debts
-      SET deleted_at = NOW()
-      WHERE receipt_id = $1;
-    `, [receiptId])
-  }
-
   async deletePaymentById(paymentId) {
     await this._client.query(`
       UPDATE payments
       SET deleted_at = NOW()
       WHERE id = $1;
     `, [paymentId])
-  }
-
-  async createDebt({ userId, receiptId, amount }) {
-    await this._client.query(`
-      INSERT INTO debts (user_id, receipt_id, amount)
-      VALUES ($1, $2, $3);
-    `, [userId, receiptId, amount])
   }
 
   async createPayment({ fromUserId, toUserId, amount }) {
@@ -103,7 +90,7 @@ export class PostgresStorage {
       SELECT DISTINCT r.id, r.created_at, r.payer_id, r.amount, r.description, (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo, r.deleted_at
       FROM receipts r
       LEFT JOIN debts d ON d.receipt_id = r.id
-      WHERE (r.payer_id = $1 OR d.user_id = $1)
+      WHERE (r.payer_id = $1 OR d.debtor_id = $1)
         AND r.deleted_at IS NULL
         AND d.deleted_at IS NULL
       ORDER BY created_at DESC;
@@ -143,27 +130,11 @@ export class PostgresStorage {
       id: row['id'],
       createdAt: new Date(row['created_at']),
       payerId: row['payer_id'],
-      amount: row['amount'],
+      amount: toNullableAmount(row['amount']),
       description: row['description'],
       hasPhoto: row['has_photo'],
-      debts: await this.findDebtsByReceiptId(row['id'])
+      debts: await this._debtsStorage.findByReceiptId(row['id'])
     }
-  }
-
-  async findDebtsByReceiptId(receiptId) {
-    const response = await this._client.query(`
-      SELECT d.*
-      FROM debts d
-      JOIN receipts r ON r.id = d.receipt_id
-      WHERE d.receipt_id = $1
-        AND r.deleted_at IS NULL
-        AND d.deleted_at IS NULL;
-    `, [receiptId])
-
-    return response.rows.map(row => ({
-      userId: row['user_id'],
-      amount: row['amount'],
-    }))
   }
 
   async findPaymentById(paymentId) {
@@ -212,47 +183,9 @@ export class PostgresStorage {
       id: row['id'],
       fromUserId: row['from_user_id'],
       toUserId: row['to_user_id'],
-      amount: row['amount'],
+      amount: toNullableAmount(row['amount']),
       createdAt: new Date(row['created_at']),
     }
-  }
-
-  async getIngoingDebts(payerId) {
-    const response = await this._client.query(`
-      SELECT SUM(d.amount) AS amount, d.user_id
-        , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
-      FROM debts d
-      LEFT JOIN receipts r ON d.receipt_id = r.id
-      WHERE r.payer_id = $1 AND d.user_id != r.payer_id
-        AND r.deleted_at IS NULL
-        AND d.deleted_at IS NULL
-      GROUP BY d.user_id, r.payer_id;
-    `, [payerId])
-
-    return response.rows.map(row => ({
-      userId: row['user_id'],
-      amount: Number(row['amount']),
-      uncertainReceiptIds: row['uncertain_receipt_ids'],
-    }))
-  }
-
-  async getOutgoingDebts(userId) {
-    const response = await this._client.query(`
-      SELECT SUM(d.amount) AS amount, r.payer_id
-        , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS uncertain_receipt_ids
-      FROM debts d
-      LEFT JOIN receipts r ON d.receipt_id = r.id
-      WHERE d.user_id = $1 AND d.user_id != r.payer_id
-        AND r.deleted_at IS NULL
-        AND d.deleted_at IS NULL
-      GROUP BY d.user_id, r.payer_id;
-    `, [userId])
-
-    return response.rows.map(row => ({
-      userId: row['payer_id'],
-      amount: Number(row['amount']),
-      uncertainReceiptIds: row['uncertain_receipt_ids'],
-    }))
   }
 
   async getIngoingPayments(toUserId) {
@@ -266,7 +199,7 @@ export class PostgresStorage {
 
     return response.rows.map(row => ({
       userId: row['from_user_id'],
-      amount: Number(row['amount']),
+      amount: toNullableAmount(row['amount']),
     }))
   }
 
@@ -281,7 +214,7 @@ export class PostgresStorage {
 
     return response.rows.map(row => ({
       userId: row['to_user_id'],
-      amount: Number(row['amount']),
+      amount: toNullableAmount(row['amount']),
     }))
   }
 }
