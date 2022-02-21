@@ -272,11 +272,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     for (const user of users) {
       if (!user.isComplete) continue;
       const debt = debts.find(debt => debt.debtorId === user.id)
+      const isIncomplete = debt.amount === null
+      const isPayer = user.id === payerId
 
       const notification = `
 📝 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
 👤 Оплатил: ${payer.name} (@${payer.username})
-${user.id !== payerId ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}.\n` : ''}\
+${(!isPayer && (isNew || isIncomplete)) ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}.\n` : ''}\
 💸 Проверить долги: /debts
 🧾 Посмотреть чеки: /receipts
       `
