@@ -187,7 +187,7 @@ function divideMoneyAmongUsers() {
 
     const debtors = getCheckeduserIds()
     const debtorAmount = amount / debtors.length
-    setDebts(debtors.map(userId => ({ userId, amount: debtorAmount })))
+    setDebts(debtors.map(debtorId => ({ debtorId, amount: debtorAmount })))
 }
 
 function getCheckeduserIds() {
@@ -201,8 +201,8 @@ function setDebts(debts) {
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor")
     for (let i = 0; i < debtors.length; i++) {
         const debtorCheckbox = debtors[i].querySelector(".debtor_checkbox")
-        const userId = debtorCheckbox.value
-        const debt = debts.find(debt => debt.debtorId === userId)
+        const debtorId = debtorCheckbox.value
+        const debt = debts.find(debt => debt.debtorId === debtorId)
         
         if (debt) {
             debtorCheckbox.checked = true
