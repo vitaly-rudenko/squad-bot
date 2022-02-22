@@ -2,13 +2,17 @@ import { expect } from 'chai'
 import fetch, { FormData, File } from 'node-fetch'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
+import { uniqueNamesGenerator, names } from 'unique-names-generator'
 import { TOKEN_SECRET } from './env.js'
 
-const createStringGenerator = (prefix = '') => {
-  return () => prefix + crypto.randomBytes(10).toString('hex');
+const nameConfig = {
+  dictionaries: [names],
+  style: 'lowerCase',
 }
 
-export const generateUserId = createStringGenerator()
+export const generateUserId = () => {
+  return `${uniqueNamesGenerator(nameConfig)}_${crypto.randomBytes(3).toString('hex')}`
+}
 
 export function validateResponse(response) {
   if (!String(response.status).startsWith('2')) {
@@ -148,10 +152,16 @@ export function expectReceiptToShallowEqual(receipt1, receipt2) {
   expect(receipt).to.deep.equalInAnyOrder(receipt2)
 }
 
-
-
-export function createAuthorizationHeader({ userId, username = `username_${userId}`, name = `User ${userId}` }) {
+export function createAuthorizationHeader({
+  userId,
+  username = `username_${userId}`,
+  name = toCapital(userId.split('_').slice(1).join(' ')),
+}) {
   return { 'Authorization': `Bearer ${createToken({ userId, username, name })}` }
+}
+
+function toCapital(str) {
+  return str[0].toUpperCase() + str.slice(1)
 }
 
 export function createToken({ userId, username, name }) {
