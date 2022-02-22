@@ -41,12 +41,13 @@
       "noOutgoingDebts": "➡️ Ти нікому нічого не винен",
       "debt": "\\- *{name}*: {amount}",
       "incompleteReceipts": [
-        "⚠️ Ти не заповнив ці чеки:",
-        "{incompleteReceipts}",
-        "Заповнити їх можна тут: /receipts"
+        "⚠️ Будь ласка, заповни ці чеки:",
+        "{incompleteReceipts}"
       ],
       "incompleteReceipt": [
-        "\\- {createdAt}: *{name}*: {amount}: {description}, {photo}"
+        "{index}\\. *{name}*: {amount}",
+        "    → від {createdAt}, {description}, {photo}",
+        "    → [заповнити]({receiptUrl})"
       ],
       "noDescription": "без опису",
       "withPhoto": "з фото",

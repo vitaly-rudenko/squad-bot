@@ -7,5 +7,5 @@ export function renderDebtAmount(debt) {
 
 /** @param {import('./AggregatedDebt').AggregatedDebt} debt */
 export function renderAggregatedDebt(debt) {
-  return `${debt.isIncomplete() ? (debt.amount === 0 ? '?' : `${renderMoney(debt.amount)}+?`) : renderMoney(debt.amount)} грн`
+  return `${debt.isIncomplete() ? (debt.amount === 0 ? '*?*' : `${renderMoney(debt.amount)}*\\+?*`) : renderMoney(debt.amount)} грн`
 }
