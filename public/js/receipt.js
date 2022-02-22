@@ -3,6 +3,7 @@ const receiptsAmountInput = document.getElementById("receipts_amount_input")
 const receiptsPhotoInput = document.getElementById("receipts_photo_input")
 const receiptsAddPhotoButton = document.getElementById("receipts_add_photo_button")
 const receiptsDeletePhotoButton = document.getElementById("receipts_delete_photo_button")
+const receiptsOpenPhotoLink = document.getElementById("open_photo_link")
 const receiptsDescriptionInput = document.getElementById("receipts_description_input")
 const receiptDebtorsContainer = document.getElementById("receipt_debtors_container")
 const addReceiptButton = document.getElementById("add_receipt_button")
@@ -13,6 +14,7 @@ const pageTitle = document.getElementById('page_title')
 let users = []
 let receiptId = null
 let hasPhoto = false
+let hasPhotoBeenChanged = false
 
 addReceiptButton.addEventListener('click', saveReceipt)
 divideMoneyButton.addEventListener('click', divideMoneyAmongUsers)
@@ -20,6 +22,9 @@ receiptsAmountInput.addEventListener('input', calculateReceiptRemainBalance)
 receiptsPhotoInput.addEventListener('change', photoChange)
 receiptsAddPhotoButton.addEventListener('click', addPhoto)
 receiptsDeletePhotoButton.addEventListener('click', deletePhoto)
+receiptsOpenPhotoLink.addEventListener('click', () => {
+    window.open(`/receipts/${receiptId}/photo`, '_blank')
+})
 
 init()
 async function init() {
@@ -33,6 +38,9 @@ async function init() {
     if (query.has('success')) {
         playSuccessAnimation()
     }
+
+    pageTitle.innerText = 'Створити чек'
+    addReceiptButton.innerText = 'Створити чек'
 
     if (query.has('receipt_id')) {
         try {
@@ -50,8 +58,8 @@ async function init() {
             receiptsDescriptionInput.value = receipt.description
             setDebts(receipt.debts)
 
-            pageTitle.innerText = 'Редактировать чек'
-            addReceiptButton.innerText = 'Сохранить чек'
+            pageTitle.innerText = 'Редагувати чек'
+            addReceiptButton.innerText = 'Редагувати чек'
         } catch (error) {
             console.error(error)
         }
@@ -62,6 +70,7 @@ async function init() {
 
 function photoChange() {
     hasPhoto = Boolean(receiptsPhotoInput.value)
+    hasPhotoBeenChanged = true
     refreshPhoto()
 }
 
@@ -72,6 +81,7 @@ function addPhoto() {
 function deletePhoto() {
     receiptsPhotoInput.value = ''
     hasPhoto = false
+    hasPhotoBeenChanged = true
     refreshPhoto()
 }
 
@@ -79,9 +89,14 @@ function refreshPhoto() {
     if (hasPhoto) {
         receiptsAddPhotoButton.classList.add('hidden')
         receiptsDeletePhotoButton.classList.remove('hidden')
+        
+        if (!hasPhotoBeenChanged && receiptId) {
+            receiptsOpenPhotoLink.classList.remove('hidden')
+        }
     } else {
         receiptsAddPhotoButton.classList.remove('hidden')
         receiptsDeletePhotoButton.classList.add('hidden')
+        receiptsOpenPhotoLink.classList.add('hidden')
     }
 }
 
@@ -98,14 +113,14 @@ function renderDebtors() {
 
     const debtors = document.querySelectorAll('.debtor input[type="number"]')
     for (const debtor of debtors) {
-        debtor.placeholder = '0.00 (заполнить позже)'
+        debtor.placeholder = '0.00 (заповнити пізніше)'
 
         debtor.addEventListener('focus', () => {
             debtor.placeholder = '0.00'
         })
 
         debtor.addEventListener('blur', () => {
-            debtor.placeholder = '0.00 (заполнить позже)'
+            debtor.placeholder = '0.00 (заповнити пізніше)'
         })
     }
 }
@@ -115,7 +130,7 @@ function saveReceipt() {
     if(!rawAmount) return
 
     addReceiptButton.disabled = true
-	addReceiptButton.innerHTML = "Обработка..."
+	addReceiptButton.innerHTML = "Обробка..."
     addReceiptButton.classList.add('disabled')
 
     const debts = {}
@@ -221,7 +236,7 @@ function calculateReceiptRemainBalance() {
 
     const amount = receiptsAmountInput.value
     if(!amount) {
-        errorMessage.innerHTML = 'Остаток: 0 грн'
+        errorMessage.innerHTML = 'Залишок: 0 грн'
         errorMessage.classList.remove('red_color')
         return
     } 
@@ -231,10 +246,10 @@ function calculateReceiptRemainBalance() {
         debtorsSum += Number(debtors[i].parentElement.parentElement.querySelector(".debt_amount").value)
     }
     if(debtorsSum != amount) {
-        errorMessage.innerHTML = `Остаток: ${(amount - debtorsSum).toFixed(2)} грн`
+        errorMessage.innerHTML = `Залишок: ${(amount - debtorsSum).toFixed(2)} грн`
         errorMessage.classList.add('red_color')
     } else {
-        errorMessage.innerHTML = 'Остаток: 0 грн'
+        errorMessage.innerHTML = 'Залишок: 0 грн'
         errorMessage.classList.remove('red_color')
     }
 }

@@ -14,39 +14,39 @@
     <div id="nav_container" class="nav_container"></div>
 
     <div class="container">
-        <h1 id="page_title">Добавить чек</h1>
+        <h1 id="page_title">Завантаження...</h1>
 
         <div class="form_input">
-            <label>* Кто платит</label>
+            <label>* Платник</label>
             <select id="receipts_payer_select">
-                <option selected value="?">Загрузка...</option>
+                <option selected value="?">Завантаження...</option>
             </select>
         </div>
 
         <div class="form_input">
-            <label for="receipts_photo_input">Загрузить фотографию чека</label>
             <input type="file" id="receipts_photo_input" class="hidden" name="receipts_photo_input" accept=".jpg, .jpeg, .png">
-            <button id="receipts_add_photo_button" class="hidden" type="button">Добавить фото чека</button>
-            <button id="receipts_delete_photo_button"  class="hidden" type="button">Удалить фото чека</button>
+            <button id="receipts_add_photo_button" class="hidden" type="button">Додати фото чека</button>
+            <button id="receipts_delete_photo_button" class="hidden" type="button">Видалити фото чека</button>
+            <a id="open_photo_link" class="hidden" href="#">Відкрити фото чека</a>
         </div>
 
         <div class="form_input">
-            <label>* Сумма, грн</label>
+            <label>* Сума, грн</label>
             <input id="receipts_amount_input" type="number" placeholder="0.00">
         </div>
 
         <div class="form_input">
-            <label>Описание</label>
+            <label>Опис</label>
             <input id="receipts_description_input" type="text" placeholder="Мак">
         </div>
 
-        <h3>За кого платишь</h3>
-        <button id="divide_money_button">Распределить поровну</button>
+        <h3>Учасники</h3>
+        <button id="divide_money_button">Розподілити порівну</button>
 
         <div id="receipt_debtors_container"></div>
 
-        <p id="error_message">Остаток: 0 грн</p>
-        <button id="add_receipt_button" class="" style="background:  rgb(226 152 17);">Добавить чек</button>
+        <p id="error_message">Залишок: 0 грн</p>
+        <button id="add_receipt_button">Зберегти чек</button>
     </div>
 
     <div id="fullscreen_animation_container">
@@ -55,8 +55,8 @@
         <img class="animation3" src="/static/img/party.png">
         <!-- <img class="animation4" src="/static/img/thumbup.png"> -->
         <!-- <img class="animation5" src="/static/img/thumbup.png"> -->
-        <div class="animation6">УСПЕШНО</div>
-        <div class="animation7">Чек добавлен/обновлен</div>
+        <div class="animation6">УСПІШНО</div>
+        <div class="animation7">Чек був збережений</div>
         <img class="animation10" src="/static/img/women-with-bunny-ears.png">
     </div>
 
