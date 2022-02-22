@@ -19,10 +19,10 @@ describe('[partial receipts]', () => {
       hasPhoto: false,
       description: null,
       debts: [{
-        userId: user1.id,
+        debtorId: user1.id,
         amount: 10,
       }, {
-        userId: user2.id,
+        debtorId: user2.id,
         amount: null,
       }]
     })
@@ -31,10 +31,10 @@ describe('[partial receipts]', () => {
       ingoingDebts: [{
         userId: user2.id,
         amount: 0,
-        isUncertain: true,
+        isIncomplete: true,
       }],
       outgoingDebts: [],
-      unfinishedReceiptIds: [receiptId],
+      incompleteReceiptIds: [receiptId],
     })
   })
 
@@ -65,7 +65,7 @@ describe('[partial receipts]', () => {
       [user4.id]: null,
     }, { amount: 15 })
 
-    const { id: receipt5Id } = await createReceipt(user2.id, {
+    await createReceipt(user2.id, {
       [user2.id]: 10,
       [user3.id]: 15,
     }, { amount: 25 })
@@ -74,13 +74,13 @@ describe('[partial receipts]', () => {
       ingoingDebts: [{
         userId: user3.id,
         amount: 0,
-        isUncertain: true,
+        isIncomplete: true,
       }],
       outgoingDebts: [{
         userId: user2.id,
         amount: 30,
       }],
-      unfinishedReceiptIds: [receipt1Id],
+      incompleteReceiptIds: [receipt1Id],
     })
 
     expect(await getDebts(user2.id)).to.deep.equalInAnyOrder({
@@ -90,42 +90,42 @@ describe('[partial receipts]', () => {
       }, {
         userId: user3.id,
         amount: 10,
-        isUncertain: true,
+        isIncomplete: true,
       }, {
         userId: user4.id,
         amount: 25,
       }],
       outgoingDebts: [],
-      unfinishedReceiptIds: [receipt2Id],
+      incompleteReceiptIds: [receipt2Id],
     })
 
     expect(await getDebts(user3.id)).to.deep.equalInAnyOrder({
       ingoingDebts: [{
         userId: user4.id,
         amount: 0,
-        isUncertain: true,
+        isIncomplete: true,
       }],
       outgoingDebts: [{
         userId: user1.id,
         amount: 0,
-        isUncertain: true,
+        isIncomplete: true,
       }, {
         userId: user2.id,
         amount: 10,
-        isUncertain: true,
+        isIncomplete: true,
       }, {
         userId: user4.id,
         amount: 0,
-        isUncertain: true,
+        isIncomplete: true,
       }],
-      unfinishedReceiptIds: [receipt1Id, receipt2Id, receipt3Id, receipt4Id],
+      incompleteReceiptIds: [receipt1Id, receipt2Id, receipt3Id, receipt4Id],
     })
 
     expect(await getDebts(user4.id)).to.deep.equalInAnyOrder({
       ingoingDebts: [{
         userId: user3.id,
         amount: 0,
-        isUncertain: true,
+        isIncomplete: true,
       }],
       outgoingDebts: [{
         userId: user2.id,
@@ -133,23 +133,23 @@ describe('[partial receipts]', () => {
       }, {
         userId: user3.id,
         amount: 0,
-        isUncertain: true,
+        isIncomplete: true,
       }],
-      unfinishedReceiptIds: [receipt3Id, receipt4Id],
+      incompleteReceiptIds: [receipt3Id, receipt4Id],
     })
   })
 
-  it('should not mark receipt as unfinished if only the payer has not filled it in (1)', async () => {
+  it('should not mark receipt as incomplete if only the payer has not filled it in (1)', async () => {
     const [user] = await createUsers(1)
 
-    const { id: receiptId } = await createReceipt(user.id, {
+    await createReceipt(user.id, {
       [user.id]: null,
     }, { amount: 100 })
 
     expect(await getDebts(user.id)).to.deep.equalInAnyOrder(NO_DEBTS)
   })
 
-  it('should not mark receipt as unfinished if only the payer has not filled it in (1)', async () => {
+  it('should not mark receipt as incomplete if only the payer has not filled it in (1)', async () => {
     const [user1, user2] = await createUsers(3)
 
     await createReceipt(user1.id, {

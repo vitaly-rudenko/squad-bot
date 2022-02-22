@@ -1,58 +1,74 @@
-import { renderDebtAmount } from '../renderDebtAmount.js'
+import { renderAggregatedDebt } from '../renderDebtAmount.js'
 import { renderMoney } from '../../utils/renderMoney.js'
+import { escapeMd } from '../../utils/escapeMd.js'
 
-export function debtsCommand({ storage, usersStorage, getDebtsByUserId }) {
+export function debtsCommand({ storage, usersStorage, aggregateDebtsByUserId }) {
   return async (context) => {
     const userId = context.state.userId
     const users = await usersStorage.findAll()
 
-    const { ingoingDebts, outgoingDebts, unfinishedReceiptIds } = await getDebtsByUserId(userId)
-    const unfinishedReceipts = await storage.findReceiptsByIds(unfinishedReceiptIds ?? [])
-    const unfinishedReceiptsByMe = unfinishedReceipts
-      .filter(r => r.debts.some(d => d.amount === null && d.userId === userId && d.userId !== r.payerId))
+    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await aggregateDebtsByUserId(userId)
+    const incompleteReceipts = await storage.findReceiptsByIds(incompleteReceiptIds ?? [])
+    const incompleteReceiptsByMe = incompleteReceipts
+      .filter(receipt => receipt.debts.some(debt => debt.amount === null && debt.debtorId === userId && debt.debtorId !== receipt.payerId))
 
     function getUserName(id) {
-      const user = users.find(u => u.id === id)
-      return user ? user.name : `??? (${id})`
+      return users.find(u => u.id === id)?.name ?? id
     }
 
-    function renderDebt(debt) {
-      return `- ${getUserName(debt.userId)}: ${renderDebtAmount(debt)} грн`
+    function localizeAggregatedDebt(debt) {
+      return context.state.localize('command.debts.debt', {
+        name: escapeMd(getUserName(debt.fromUserId === userId ? debt.toUserId : debt.fromUserId)),
+        amount: renderAggregatedDebt(debt),
+      })
     }
 
-    function renderUnfinishedReceipt(receipt, index) {
-      return `
-${index}. ${getUserName(receipt.payerId)}: ${renderMoney(receipt.amount)} грн
-    → 📅 ${[receipt.createdAt.toISOString().split('T')[0].replaceAll('-', '.'), receipt.description, receipt.hasPhoto && 'с фото'].filter(Boolean).join(', ')}
-      `.trim()
+    function localizeIncompleteReceipt(receipt, index) {
+      return context.state.localize('command.debts.incompleteReceipt', {
+        index,
+        name: escapeMd(getUserName(receipt.payerId)),
+        amount: escapeMd(`${renderMoney(receipt.amount)} грн`),
+        createdAt: escapeMd(receipt.createdAt.toISOString().split('T')[0].replaceAll('-', '.')),
+        description: escapeMd(receipt.description || context.state.localize('command.debts.noDescription')),
+        photo: receipt.hasPhoto
+          ? context.state.localize('command.debts.withPhoto')
+          : context.state.localize('command.debts.withoutPhoto'),
+        receiptUrl: escapeMd(`${process.env.DOMAIN}/?receipt_id=${receipt.id}`)
+      })
     }
 
-    const ingoingDebtsFormatted = ingoingDebts.length > 0 ? `\
-🙂 Тебе должны:
-${
-  ingoingDebts
-    .map(renderDebt)
-    .join('\n')
-}` : 'Тебе никто ничего не должен 🙁'
+    const ingoingDebtsFormatted = ingoingDebts.length > 0
+      ? context.state.localize('command.debts.ingoingDebts', { 
+        debts: ingoingDebts.map(localizeAggregatedDebt).join('\n')
+      })
+      : context.state.localize('command.debts.noIngoingDebts')
 
-    const outgoingDebtsFormatted = outgoingDebts.length > 0 ? `\
-🙁 Ты должен:
-${
-  outgoingDebts
-    .map(renderDebt)
-    .join('\n')
-}` : 'Ты никому ничего не должен 🙂'
+    const outgoingDebtsFormatted = outgoingDebts.length > 0
+      ? context.state.localize('command.debts.outgoingDebts', {
+        debts: outgoingDebts.map(localizeAggregatedDebt).join('\n')
+      })
+      : context.state.localize('command.debts.noOutgoingDebts')
 
-    const unfinishedReceiptsFormatted = unfinishedReceiptsByMe.length > 0 && `\
-❗️ Ты не заполнил эти чеки (/receipts):
-${unfinishedReceiptsByMe
-  .map((r, i) => renderUnfinishedReceipt(r, i + 1)).join('\n')}   
-`
-// TODO: show your receipts that haven't been filled by someone else
 
-    const isIncomplete = !context.state.user.isComplete && '💡 Чтобы получать уведомления о платежах и новых чеках, выполни команду /start в ЛС бота.'
+    const incompleteReceiptsFormatted = incompleteReceiptsByMe.length > 0
+      && context.state.localize('command.debts.incompleteReceipts', {
+        incompleteReceipts: incompleteReceiptsByMe
+          .map((receipt, i) => localizeIncompleteReceipt(receipt, i + 1))
+          .join('\n')
+      })
 
-    const message = await context.reply([outgoingDebtsFormatted, ingoingDebtsFormatted, unfinishedReceiptsFormatted, isIncomplete].filter(Boolean).map(s => s.trim()).join('\n\n'))
+    const isIncomplete = !context.state.user.isComplete
+      && context.state.localize('command.debts.incompleteUser')
+
+    const message = await context.reply(
+      [
+        outgoingDebtsFormatted,
+        ingoingDebtsFormatted,
+        incompleteReceiptsFormatted,
+        isIncomplete
+      ].filter(Boolean).map(s => s.trim()).join('\n\n'),
+      { parse_mode: 'MarkdownV2' }
+    )
 
     if (context.chat.type !== 'private') {
       setTimeout(async () => {
