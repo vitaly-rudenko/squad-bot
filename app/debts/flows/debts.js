@@ -19,7 +19,7 @@ export function debtsCommand({ storage, usersStorage, aggregateDebtsByUserId }) 
     function localizeAggregatedDebt(debt) {
       return context.state.localize('command.debts.debt', {
         name: escapeMd(getUserName(debt.fromUserId === userId ? debt.toUserId : debt.fromUserId)),
-        amount: renderAggregatedDebt(debt),
+        amount: escapeMd(renderAggregatedDebt(debt)),
       })
     }
 
