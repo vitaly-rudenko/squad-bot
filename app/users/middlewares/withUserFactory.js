@@ -11,11 +11,10 @@ export const withUserFactory = (usersStorage) => {
       const user = await usersStorage.findById(userId)
       if (!user) {
         if (!ignore) {
-          await context.reply(`
-Сначала нужно зарегистрироваться ❌
-Выполни команду /register здесь в чате.
-Или выполни команду /start в ЛС бота чтобы получать уведомления о платежах и чеках.
-          `)
+          await context.reply(
+            context.state.localize('unregistered'),
+            { parse_mode: 'MarkdownV2' }
+          )
         }
         return
       }
