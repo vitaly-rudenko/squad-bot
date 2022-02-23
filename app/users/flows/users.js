@@ -1,4 +1,3 @@
-import escapeHtml from 'escape-html'
 import { escapeMd } from '../../utils/escapeMd.js'
 
 export function usersCommand({ usersStorage }) {
