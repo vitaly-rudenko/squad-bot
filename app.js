@@ -58,8 +58,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
-    { command: 'receipts', description: 'Добавить/посмотреть чеки' },
-    { command: 'payments', description: 'Добавить/посмотреть платежи' },
+    { command: 'receipts', description: 'Додати або переглянути чеки' },
+    { command: 'payments', description: 'Додати або переглянути платежі' },
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
