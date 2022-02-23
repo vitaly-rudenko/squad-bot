@@ -26,9 +26,8 @@ export function startCommand({ usersStorage }) {
     }
 
     await context.reply(
-      isNew
-        ? '🎉 Ты успешно зарегистрировался'
-        : '📝 Твои данные были обновлены, теперь ты можешь получать уведомления'
+      context.state.localize(isNew ? 'command.start.signedUp' : 'command.start.updated'),
+      { parse_mode: 'MarkdownV2' }
     )
   }
 }
@@ -59,9 +58,8 @@ export function registerCommand({ usersStorage }) {
     }
 
     await context.reply(
-      isNew
-        ? '🎉 Ты успешно зарегистрировался (без поддержки уведомлений)'
-        : '📝 Твои данные были обновлены'
+      context.state.localize(isNew ? 'command.start.incompleteSignedUp' : 'command.start.incompleteUpdated'),
+      { parse_mode: 'MarkdownV2' }
     )
   }
 }

@@ -57,7 +57,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const bot = new Telegraf(telegramBotToken)
 
   bot.telegram.setMyCommands([
-    { command: 'debts', description: 'Посчитать долги' },
+    { command: 'debts', description: 'Підрахувати борги' },
     { command: 'receipts', description: 'Добавить/посмотреть чеки' },
     { command: 'payments', description: 'Добавить/посмотреть платежи' },
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
