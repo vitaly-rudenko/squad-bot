@@ -63,10 +63,10 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
-    { command: 'start', description: 'Зарегистрироваться' },
-    { command: 'register', description: 'Зарегистрироваться' },
-    { command: 'users', description: 'Список пользователей' },
-    { command: 'version', description: 'Версия' },
+    { command: 'start', description: 'Зареєструватись' },
+    { command: 'register', description: 'Зареєструватись' },
+    { command: 'users', description: 'Список користувачів' },
+    { command: 'version', description: 'Версія' },
   ])
 
   process.on('unhandledRejection', async (error) => {
