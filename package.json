@@ -7,8 +7,9 @@
   "scripts": {
     "start": "npm run umzug db:migrate && node app.js",
     "start:dev": "npm run umzug db:migrate && nodemon --legacy-watch --ignore integration-test/ app.js",
-    "test": "mocha --recursive",
-    "test:dev": "nodemon --delay 0.5 --exec 'npm run test'",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "mocha --recursive test",
+    "test:unit:dev": "nodemon --delay 0.5 --exec 'npm run test:unit'",
     "test:integration": "mocha --recursive integration-test",
     "test:integration:dev": "nodemon --delay 1 --exec 'npm run test:integration'",
     "umzug": "node ./umzug/cli.js"
