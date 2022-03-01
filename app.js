@@ -34,6 +34,11 @@ import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { Debt } from './app/debts/Debt.js'
 import { AggregatedDebt } from './app/debts/AggregatedDebt.js'
+import { localize } from './app/localization/localize.js'
+import { escapeMd } from './app/utils/escapeMd.js'
+import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
+import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
+import { TelegramLogger } from './app/shared/TelegramLogger.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -56,6 +61,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
 
+  const logger = new TelegramLogger({ bot, debugChatId })
+  const notifier = new TelegramNotifier({ bot })
+
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
     { command: 'receipts', description: 'Додати або переглянути чеки' },
@@ -69,22 +77,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     { command: 'version', description: 'Версія' },
   ])
 
-  process.on('unhandledRejection', async (error) => {
-    await logError(error)
+  process.on('unhandledRejection', (error) => {
+    logger.error(error)
   })
-
-  async function logError(error) {
-    console.error('Unexpected error:', error)
-
-    try {
-      await bot.telegram.sendMessage(
-        debugChatId,
-        `❗️Unexpected error at ${new Date().toISOString()}❗️\n${error.name}: ${error.message}\n\nStack:\n${error.stack}`
-      )
-    } catch (error) {
-      console.warn('Could not post log to debug chat:', error)
-    }
-  }
 
   /**
    * @returns {Promise<{
@@ -226,7 +221,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     withPhase(Phases.addCard.number, cardsAddNumberMessage({ cardsStorage, userSessionManager }))
   )
 
-  bot.catch((error) => logError(error))
+  bot.catch((error) => logger.error(error))
 
   async function storeReceipt(editorId, { id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
     const isNew = !Boolean(id)
@@ -263,30 +258,18 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       )
     }
 
-    const editor = await usersStorage.findById(editorId)
-    const payer = await usersStorage.findById(payerId)
-    const userIds = [...new Set([payerId, ...debts.map(debt => debt.debtorId)])]
-    const users = await usersStorage.findByIds(userIds)
-    const notificationDescription = description ? `"${description}"` : 'без описания'
+    const notifier = await new ReceiptTelegramNotifier({
+      localize,
+      telegramNotifier: new TelegramNotifier({ bot }),
+      usersStorage,
+      logger,
+    })
 
-    for (const user of users) {
-      if (!user.isComplete) continue;
-      const debt = debts.find(debt => debt.debtorId === user.id)
-      const showDebt = (user.id !== payerId) && (isNew || debt?.amount === null)
-
-      const notification = `
-📝 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
-👤 Оплатил: ${payer.name} (@${payer.username})
-${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}.\n` : ''}\
-💸 Проверить долги: /debts
-🧾 Посмотреть чеки: /receipts
-      `
-
-      try {
-        await sendNotification(user.id, notification)
-      } catch (error) {
-        logError(error)
-      }
+    const receipt = { payerId, amount, description, debts }
+    if (isNew) {
+      notifier.receiptCreated(receipt, { editorId })
+    } else {
+      notifier.receiptUpdated(receipt, { editorId })
     }
 
     return id
@@ -308,11 +291,11 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
     `
 
     if (sender.isComplete) {
-      await sendNotification(sender.id, notification)
+      await notifier.notify(sender.id, notification)
     }
 
     if (receiver.isComplete) {
-      await sendNotification(receiver.id, notification)
+      await notifier.notify(receiver.id, notification)
     }
 
     return id
@@ -341,9 +324,9 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
       if (!user.isComplete) continue;
 
       try {
-        await sendNotification(user.id, notification)
+        await notifier.notify(user.id, notification)
       } catch (error) {
-        logError(error)
+        logger.error(error)
       }
     }
   }
@@ -366,16 +349,12 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
     `
 
     if (sender.isComplete) {
-      await sendNotification(sender.id, notification)
+      await notifier.notify(sender.id, notification)
     }
 
     if (receiver.isComplete) {
-      await sendNotification(receiver.id, notification)
+      await notifier.notify(receiver.id, notification)
     }
-  }
-
-  async function sendNotification(userId, message) {
-    await bot.telegram.sendMessage(userId, message.trim())
   }
 
   const app = express()
