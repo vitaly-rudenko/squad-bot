@@ -6,37 +6,10 @@ import { Debt } from '../../../app/debts/Debt.js'
 import { ReceiptTelegramNotifier } from '../../../app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { User } from '../../../app/users/User.js'
 import { stripIndent } from 'common-tags'
-import { localizeMock } from '../../helpers/localize.mock.js'
+import { localizeMock } from '../../helpers/localizeMock.js'
+import { UsersMockStorage } from '../../helpers/UsersMockStorage.js'
 
 chai.use(deepEqualInAnyOrder)
-
-class UsersMockStorage {
-  constructor() {
-    this._users = new Map()
-  }
-
-  mock_storeUsers(...users) {
-    for (const user of users) {
-      this._users.set(user.id, user)
-    }
-  }
-
-  findById(userId) {
-    return this._users.get(userId) || null
-  }
-
-  findByIds(userIds) {
-    const users = []
-
-    for (const userId of userIds) {
-      if (this._users.has(userId)) {
-        users.push(this._users.get(userId))
-      }
-    }
-
-    return users
-  }
-}
 
 const chance = new Chance()
 
@@ -96,7 +69,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       ]
 
-      await receiptTelegramNotifier.receiptCreated({
+      await receiptTelegramNotifier.created({
         payerId: payer.id,
         amount,
         description,
@@ -150,7 +123,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       ]
 
-      await receiptTelegramNotifier.receiptCreated({
+      await receiptTelegramNotifier.created({
         payerId: payer.id,
         amount,
         description: null,
@@ -205,7 +178,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       ]
 
-      await receiptTelegramNotifier.receiptUpdated({
+      await receiptTelegramNotifier.updated({
         payerId: payer.id,
         amount,
         description,
@@ -258,7 +231,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       ]
 
-      await receiptTelegramNotifier.receiptUpdated({
+      await receiptTelegramNotifier.updated({
         payerId: payer.id,
         amount,
         description: null,

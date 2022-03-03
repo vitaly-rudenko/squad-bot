@@ -10,15 +10,15 @@ export class ReceiptTelegramNotifier {
     this._logger = logger
   }
 
-  async receiptCreated(receipt, { editorId }) {
-    await this._notify(receipt, { editorId, isNew: true })
+  async created(receipt, { editorId }) {
+    await this._stored(receipt, { editorId, isNew: true })
   }
 
-  async receiptUpdated(receipt, { editorId }) {
-    await this._notify(receipt, { editorId, isNew: false })
+  async updated(receipt, { editorId }) {
+    await this._stored(receipt, { editorId, isNew: false })
   }
 
-  async _notify(receipt, { editorId, isNew }) {
+  async _stored(receipt, { editorId, isNew }) {
     const { payerId, amount, description, debts } = receipt
 
     const editor = await this._usersStorage.findById(editorId)
@@ -31,36 +31,35 @@ export class ReceiptTelegramNotifier {
       const debt = debts.find(debt => debt.debtorId === user.id)
       const showDebt = (user.id !== payerId) && (isNew || debt?.amount === null)
 
-      const notification = this._localize('notifications.receiptStored.message', {
+      const notification = this._localize(user.locale, 'notifications.receiptStored.message', {
         editorName: escapeMd(editor.name),
         editorUsername: escapeMd(editor.username),
         action: this._localize(
+          user.locale,
           isNew
             ? 'notifications.receiptStored.actions.added'
             : 'notifications.receiptStored.actions.updated',
-          {},
-          user.locale
         ),
         receiptDescription: description
           ? this._localize(
+            user.locale,
             'notifications.receiptStored.description',
             { description: escapeMd(description) },
-            user.locale
           )
-          : this._localize('notifications.receiptStored.noDescription', {}, user.locale),
+          : this._localize(user.locale, 'notifications.receiptStored.noDescription'),
         receiptAmount: escapeMd(`${renderMoney(amount)} грн`),
         payerName: escapeMd(payer.name),
         payerUsername: escapeMd(payer.username),
         debt: showDebt
           ? this._localize(
+            user.locale,
             isNew
               ? 'notifications.receiptStored.debt.new'
               : 'notifications.receiptStored.debt.incomplete',
             { debtAmount: debt && escapeMd(renderDebtAmount(debt)) },
-            user.locale
           )
           : ''
-      }, user.locale)
+      })
 
       try {
         await this._telegramNotifier.notify(user.id, notification)

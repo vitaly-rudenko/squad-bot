@@ -39,6 +39,7 @@ import { escapeMd } from './app/utils/escapeMd.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
 import { TelegramLogger } from './app/shared/TelegramLogger.js'
+import { PaymentTelegramNotifier } from './app/payments/notifications/PaymentTelegramNotifier.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -62,7 +63,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const bot = new Telegraf(telegramBotToken)
 
   const logger = new TelegramLogger({ bot, debugChatId })
-  const notifier = new TelegramNotifier({ bot })
+  const telegramNotifier = new TelegramNotifier({ bot })
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
@@ -260,16 +261,16 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
     const notifier = await new ReceiptTelegramNotifier({
       localize,
-      telegramNotifier: new TelegramNotifier({ bot }),
+      telegramNotifier,
       usersStorage,
       logger,
     })
 
     const receipt = { payerId, amount, description, debts }
     if (isNew) {
-      notifier.receiptCreated(receipt, { editorId })
+      notifier.created(receipt, { editorId })
     } else {
-      notifier.receiptUpdated(receipt, { editorId })
+      notifier.updated(receipt, { editorId })
     }
 
     return id
@@ -324,7 +325,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       if (!user.isComplete) continue;
 
       try {
-        await notifier.notify(user.id, notification)
+        await telegramNotifier.notify(user.id, notification)
       } catch (error) {
         logger.error(error)
       }
@@ -349,11 +350,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     `
 
     if (sender.isComplete) {
-      await notifier.notify(sender.id, notification)
+      await telegramNotifier.notify(sender.id, notification)
     }
 
     if (receiver.isComplete) {
-      await notifier.notify(receiver.id, notification)
+      await telegramNotifier.notify(receiver.id, notification)
     }
   }
 

@@ -1,4 +1,4 @@
-export function localizeMock(key, parameters, locale) {
+export function localizeMock(locale, key, parameters) {
   if (parameters && Object.keys(parameters).length > 0) {
     return `${key}(${locale}):${
       Object.entries(parameters)
