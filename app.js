@@ -64,6 +64,12 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const logger = new TelegramLogger({ bot, debugChatId })
   const telegramNotifier = new TelegramNotifier({ bot })
+  const receiptNotifier = await new ReceiptTelegramNotifier({
+    localize,
+    telegramNotifier,
+    usersStorage,
+    logger,
+  })
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
@@ -259,18 +265,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       )
     }
 
-    const notifier = await new ReceiptTelegramNotifier({
-      localize,
-      telegramNotifier,
-      usersStorage,
-      logger,
-    })
-
     const receipt = { payerId, amount, description, debts }
     if (isNew) {
-      notifier.created(receipt, { editorId })
+      receiptNotifier.created(receipt, { editorId })
     } else {
-      notifier.updated(receipt, { editorId })
+      receiptNotifier.updated(receipt, { editorId })
     }
 
     return id
@@ -308,28 +307,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     await debtsStorage.deleteByReceiptId(receiptId)
     await storage.deleteReceiptById(receiptId)
 
-    const editor = await usersStorage.findById(editorId)
-    const payer = await usersStorage.findById(receipt.payerId)
-    const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(debt => debt.debtorId)])]
-    const users = await usersStorage.findByIds(userIds)
-    const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
-
-    const notification = `
-❌ 📝 Пользователь ${editor.name} (@${editor.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
-👤 Оплатил: ${payer.name} (@${payer.username})
-💸 Проверить долги: /debts
-🧾 Посмотреть чеки: /receipts
-    `
-
-    for (const user of users) {
-      if (!user.isComplete) continue;
-
-      try {
-        await telegramNotifier.notify(user.id, notification)
-      } catch (error) {
-        logger.error(error)
-      }
-    }
+    await receiptNotifier.deleted(receipt, { editorId })
   }
 
   async function deletePayment(editorId, paymentId) {

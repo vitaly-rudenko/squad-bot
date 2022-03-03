@@ -266,4 +266,104 @@ describe('ReceiptTelegramNotifier', () => {
         ])
     })
   })
+
+  describe('[receipt deleted]', () => {
+    it('should notify participants about deleted receipts (with description)', async () => {
+      const editor = createUser()
+      const payer = createUser()
+      const debtor = createUser()
+
+      usersStorage.mock_storeUsers(editor, payer, debtor)
+
+      const receiptId = 'fake-receipt-id'
+      const amount = 1200
+      const description = 'Hello world!'
+      const debts = [
+        new Debt({
+          receiptId,
+          debtorId: debtor.id,
+          amount: 1200,
+        }),
+      ]
+
+      await receiptTelegramNotifier.deleted({
+        payerId: payer.id,
+        amount,
+        description,
+        debts,
+      }, { editorId: editor.id })
+
+      expect(telegramNotifier.notify.args)
+        .to.deep.equalInAnyOrder([
+          [payer.id, stripIndent`
+            notifications.receiptDeleted.message(${payer.locale}):
+              editorName: ${editor.name}
+              editorUsername: ${editor.username}
+              receiptDescription: notifications.receiptDeleted.description(${payer.locale}):
+                description: Hello world\\!
+              receiptAmount: 12 грн
+              payerName: ${payer.name}
+              payerUsername: ${payer.username}
+          `],
+          [debtor.id, stripIndent`
+            notifications.receiptDeleted.message(${debtor.locale}):
+              editorName: ${editor.name}
+              editorUsername: ${editor.username}
+              receiptDescription: notifications.receiptDeleted.description(${debtor.locale}):
+                description: Hello world\\!
+              receiptAmount: 12 грн
+              payerName: ${payer.name}
+              payerUsername: ${payer.username}
+          `]
+        ])
+    })
+
+    it('should notify participants about deleted receipts (without description)', async () => {
+      const editor = createUser()
+      const payer = createUser()
+      const debtor = createUser()
+
+      usersStorage.mock_storeUsers(editor, payer, debtor)
+
+      const receiptId = 'fake-receipt-id'
+      const amount = 1230
+      const description = 'Hello world!'
+      const debts = [
+        new Debt({
+          receiptId,
+          debtorId: debtor.id,
+          amount: null,
+        }),
+      ]
+
+      await receiptTelegramNotifier.deleted({
+        payerId: payer.id,
+        amount,
+        description: null,
+        debts,
+      }, { editorId: editor.id })
+
+      expect(telegramNotifier.notify.args)
+        .to.deep.equalInAnyOrder([
+          [payer.id, stripIndent`
+            notifications.receiptDeleted.message(${payer.locale}):
+              editorName: ${editor.name}
+              editorUsername: ${editor.username}
+              receiptDescription: notifications.receiptDeleted.noDescription(${payer.locale})
+              receiptAmount: 12\\.30 грн
+              payerName: ${payer.name}
+              payerUsername: ${payer.username}
+          `],
+          [debtor.id, stripIndent`
+            notifications.receiptDeleted.message(${debtor.locale}):
+              editorName: ${editor.name}
+              editorUsername: ${editor.username}
+              receiptDescription: notifications.receiptDeleted.noDescription(${debtor.locale})
+              receiptAmount: 12\\.30 грн
+              payerName: ${payer.name}
+              payerUsername: ${payer.username}
+          `]
+        ])
+    })
+  })
 })

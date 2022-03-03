@@ -10,6 +10,40 @@ export class ReceiptTelegramNotifier {
     this._logger = logger
   }
 
+  async deleted(receipt, { editorId }) {
+    const { payerId, description, amount, debts } = receipt
+
+    const editor = await this._usersStorage.findById(editorId)
+    const payer = await this._usersStorage.findById(payerId)
+    const userIds = [...new Set([payerId, ...debts.map(debt => debt.debtorId)])]
+    const users = await this._usersStorage.findByIds(userIds)
+
+    for (const user of users) {
+      if (!user.isComplete) continue;
+
+      const notification = this._localize(user.locale, 'notifications.receiptDeleted.message', {
+        editorName: editor.name,
+        editorUsername: editor.username,
+        receiptDescription: description
+          ? this._localize(
+            user.locale,
+            'notifications.receiptDeleted.description',
+            { description: escapeMd(description) },
+          )
+          : this._localize(user.locale, 'notifications.receiptDeleted.noDescription'),
+        receiptAmount: escapeMd(`${renderMoney(amount)} грн`),
+        payerName: payer.name,
+        payerUsername: payer.username,
+      })
+
+      try {
+        await this._telegramNotifier.notify(user.id, notification)
+      } catch (error) {
+        this._logger.error(error)
+      }
+    }
+  }
+  
   async created(receipt, { editorId }) {
     await this._stored(receipt, { editorId, isNew: true })
   }
