@@ -57,7 +57,7 @@ export class DebtsPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`d.id IN (${ids.map((_, i) => `$${i + 1}`).join(', ')})`)
+      conditions.push(`d.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
       variables.push(...ids)
     }
 
@@ -66,7 +66,7 @@ export class DebtsPostgresStorage {
         throw new Error('"receiptIds" cannot be empty')
       }
 
-      conditions.push(`d.receipt_id IN (${receiptIds.map((_, i) => `$${i + 1}`).join(', ')})`)
+      conditions.push(`d.receipt_id IN (${receiptIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
       variables.push(...receiptIds)
     }
 

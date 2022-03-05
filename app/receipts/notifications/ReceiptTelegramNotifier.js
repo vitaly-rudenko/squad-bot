@@ -3,15 +3,18 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
 export class ReceiptTelegramNotifier {
-  constructor({ telegramNotifier, usersStorage, localize, logger }) {
+  constructor({ telegramNotifier, usersStorage, debtsStorage, localize, logger }) {
     this._usersStorage = usersStorage
+    this._debtsStorage = debtsStorage
     this._telegramNotifier = telegramNotifier
     this._localize = localize
     this._logger = logger
   }
 
+  /** @param {import('../Receipt').Receipt} receipt */
   async deleted(receipt, { editorId }) {
-    const { payerId, description, amount, debts } = receipt
+    const { payerId, description, amount } = receipt
+    const debts = await this._debtsStorage.findByReceiptId(receipt.id)
 
     const editor = await this._usersStorage.findById(editorId)
     const payer = await this._usersStorage.findById(payerId)
@@ -44,16 +47,20 @@ export class ReceiptTelegramNotifier {
     }
   }
   
+  /** @param {import('../Receipt').Receipt} receipt */
   async created(receipt, { editorId }) {
     await this._stored(receipt, { editorId, isNew: true })
   }
 
+  /** @param {import('../Receipt').Receipt} receipt */
   async updated(receipt, { editorId }) {
     await this._stored(receipt, { editorId, isNew: false })
   }
 
+  /** @param {import('../Receipt').Receipt} receipt */
   async _stored(receipt, { editorId, isNew }) {
-    const { payerId, amount, description, debts } = receipt
+    const { payerId, amount, description } = receipt
+    const debts = await this._debtsStorage.findByReceiptId(receipt.id)
 
     const editor = await this._usersStorage.findById(editorId)
     const payer = await this._usersStorage.findById(payerId)
@@ -84,15 +91,15 @@ export class ReceiptTelegramNotifier {
         receiptAmount: escapeMd(`${renderMoney(amount)} грн`),
         payerName: escapeMd(payer.name),
         payerUsername: escapeMd(payer.username),
-        debt: showDebt
-          ? this._localize(
+        ...showDebt && {
+          debt: this._localize(
             user.locale,
             isNew
               ? 'notifications.receiptStored.debt.new'
               : 'notifications.receiptStored.debt.incomplete',
             { debtAmount: debt && escapeMd(renderDebtAmount(debt)) },
           )
-          : ''
+        }
       })
 
       try {

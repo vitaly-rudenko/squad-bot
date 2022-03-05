@@ -102,7 +102,7 @@ export class PaymentsPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`p.id IN (${ids.map((_, i) => `$${i + 1}`).join(', ')})`)
+      conditions.push(`p.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
       variables.push(...ids)
     }
 
@@ -111,7 +111,7 @@ export class PaymentsPostgresStorage {
         throw new Error('"fromUserIds" cannot be empty')
       }
 
-      conditions.push(`p.from_user_id IN (${fromUserIds.map((_, i) => `$${i + 1}`).join(', ')})`)
+      conditions.push(`p.from_user_id IN (${fromUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
       variables.push(...fromUserIds)
     }
 
@@ -120,7 +120,7 @@ export class PaymentsPostgresStorage {
         throw new Error('"toUserIds" cannot be empty')
       }
 
-      conditions.push(`p.to_user_id IN (${toUserIds.map((_, i) => `$${i + 1}`).join(', ')})`)
+      conditions.push(`p.to_user_id IN (${toUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
       variables.push(...toUserIds)
     }
 
@@ -136,7 +136,8 @@ export class PaymentsPostgresStorage {
 
     const response = await this._client.query(`
       SELECT p.id, p.from_user_id, p.to_user_id, p.amount, p.created_at
-      FROM payments p ${whereClause} ${paginationClause};
+      FROM payments p ${whereClause} ${paginationClause}
+      ORDER BY created_at DESC;
     `, variables)
 
     return response.rows.map(row => this.deserializePayment(row))
