@@ -570,24 +570,28 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   await new Promise(resolve => app.listen(port, () => resolve()))
 
-  await bot.telegram.deleteWebhook()
-
-  const domain = process.env.DOMAIN
-  const webhookUrl = `${domain}/bot${telegramBotToken}`
-
-  console.log('Setting webhook to', webhookUrl)
-  while (true) {
-    try {
-      await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
-      break;
-    } catch (error) {
-      console.log('Could not set webhook, retrying...', error.message)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+  if (process.env.DISABLE_BOT !== 'true') {
+    await bot.telegram.deleteWebhook()
+  
+    const domain = process.env.DOMAIN
+    const webhookUrl = `${domain}/bot${telegramBotToken}`
+  
+    console.log('Setting webhook to', webhookUrl)
+    while (true) {
+      try {
+        await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+        break;
+      } catch (error) {
+        console.log('Could not set webhook, retrying...', error.message)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
     }
+  
+    console.log(
+      `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
+      await bot.telegram.getWebhookInfo()
+    )
+  } else {
+    console.log('Telegram bot is disabled by the environment variable')
   }
-
-  console.log(
-    `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
-    await bot.telegram.getWebhookInfo()
-  )
 })()
