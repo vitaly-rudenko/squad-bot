@@ -4,13 +4,21 @@ import { generateTemporaryAuthToken } from '../../auth/generateTemporaryAuthToke
 export function paymentsGetCommand() {
   /** @param {import('telegraf').Context} context */
   return async (context) => {
+    const isPrivateChat = context.chat.type === 'private'
+
     const token = generateTemporaryAuthToken(context.state.userId)
 
-    const addUrl = `${process.env.DOMAIN}/paymentview?token=${token}`
-    const viewUrl = `${process.env.DOMAIN}/paymentslist?token=${token}`
+    const queryString = isPrivateChat ? `?token=${token}`: ''
+    const addUrl = `${process.env.DOMAIN}/paymentview${queryString}`
+    const viewUrl = `${process.env.DOMAIN}/paymentslist${queryString}`
 
     const message = await context.reply(
-      context.state.localize('command.payments.chooseAction', { name: context.state.user.name }),
+      context.state.localize(
+        isPrivateChat
+          ? 'command.payments.chooseAction'
+          : 'command.payments.chooseActionWithoutToken',
+        { name: context.state.user.name }
+      ),
       {
         reply_markup: Markup.inlineKeyboard([
           Markup.button.url(context.state.localize('command.payments.actions.add'), addUrl),
