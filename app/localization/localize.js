@@ -28,11 +28,15 @@ export function get(messageKey, locale) {
   return result ?? messageKey
 }
 
-export function localize(messageKey, replacements = null, locale) {
+export function localize(locale, messageKey, replacements = null) {
   let result = get(messageKey, locale)
 
   if (Array.isArray(result)) {
-    result = result.join('\n')
+    result = result.map(item => (
+      item.endsWith('\\')
+        ? item.slice(0, -1)
+        : `${item}\n`
+    )).join('')
   }
 
   if (replacements) {
