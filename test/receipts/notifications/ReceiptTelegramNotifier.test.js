@@ -1,27 +1,14 @@
 import chai, { expect } from 'chai'
-import { Chance } from 'chance'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { spy } from 'sinon'
 import { Debt } from '../../../app/debts/Debt.js'
 import { ReceiptTelegramNotifier } from '../../../app/receipts/notifications/ReceiptTelegramNotifier.js'
-import { User } from '../../../app/users/User.js'
 import { stripIndent } from 'common-tags'
 import { localizeMock } from '../../helpers/localizeMock.js'
 import { UsersMockStorage } from '../../helpers/UsersMockStorage.js'
+import { createUser } from '../../helpers/createUser.js'
 
 chai.use(deepEqualInAnyOrder)
-
-const chance = new Chance()
-
-function createUser() {
-  return new User({
-    id: chance.guid(),
-    name: chance.name(),
-    username: chance.name(),
-    isComplete: true,
-    locale: chance.locale(),
-  })
-}
 
 describe('ReceiptTelegramNotifier', () => {
   /** @type {ReceiptTelegramNotifier} */
