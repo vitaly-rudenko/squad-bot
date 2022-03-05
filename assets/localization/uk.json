@@ -115,7 +115,7 @@
     },
     "receiptDeleted": {
       "message": [
-        "❌ 📝 Користувач {editorName} \\(@{editorUsername}\\) видалив чек {receiptDescription} на суму {receiptAmount} грн.",
+        "❌ 📝 Користувач {editorName} \\(@{editorUsername}\\) видалив чек {receiptDescription} на суму {receiptAmount}\\.",
         "👤 Оплатив: {payerName} \\(@{payerUsername}\\)",
         "💸 Перевірити борги: /debts",
         "🧾 Переглянути платежі: /payments"
