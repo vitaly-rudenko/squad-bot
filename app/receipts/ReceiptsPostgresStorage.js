@@ -67,22 +67,7 @@ export class ReceiptsPostgresStorage {
   }
 
   async findByParticipantUserId(userId) {
-    const response = await this._client.query(`
-      SELECT DISTINCT r.id
-        , r.created_at
-        , r.payer_id
-        , r.amount
-        , r.description
-        , (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
-      FROM receipts r
-      LEFT JOIN debts d ON d.receipt_id = r.id
-      WHERE (r.payer_id = $1 OR d.debtor_id = $1)
-        AND r.deleted_at IS NULL
-        AND d.deleted_at IS NULL
-      ORDER BY created_at DESC;
-    `, [userId])
-
-    return response.rows.map(row => this.deserializeReceipt(row))
+    return this._find({ participantUserIds: [userId] })
   }
 
   /** @param {string} id */
@@ -99,13 +84,17 @@ export class ReceiptsPostgresStorage {
   /**
    * @param {{
    *   ids?: string[],
+   *   participantUserIds?: string[],
    *   limit?: number,
    *   offset?: number,
    * }} options 
    */
-  async _find({ ids, limit, offset } = {}) {
+  async _find({ ids, participantUserIds, limit, offset } = {}) {
     const conditions = ['r.deleted_at IS NULL']
     const variables = []
+    const joins = []
+
+    let isDistinct = false
 
     if (ids && Array.isArray(ids)) {
       if (ids.length === 0) {
@@ -116,10 +105,25 @@ export class ReceiptsPostgresStorage {
       variables.push(...ids)
     }
 
+    if (participantUserIds && Array.isArray(participantUserIds)) {
+      if (participantUserIds.length === 0) {
+        throw new Error('"participantUserIds" cannot be empty')
+      }
+
+      const userIdsSql = `(${participantUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`
+      conditions.push(`r.payer_id IN ${userIdsSql} OR d.debtor_id IN ${userIdsSql}`)
+      variables.push(...participantUserIds)
+
+      isDistinct = true
+      joins.push('LEFT JOIN debts d ON d.receipt_id = r.id')
+      conditions.push('d.deleted_at IS NULL')
+    }
+
     if (conditions.length === 0) {
       throw new Error('No conditions were provided for the search')
     }
 
+    const joinClause = joins.join(' ')
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
     const paginationClause = [
       Number.isInteger(limit) && `LIMIT ${limit}`,
@@ -127,13 +131,13 @@ export class ReceiptsPostgresStorage {
     ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
-      SELECT r.id
+      SELECT${isDistinct ? ' DISTINCT' : ''} r.id
         , r.created_at
         , r.payer_id
         , r.amount
         , r.description
         , (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
-      FROM receipts r ${whereClause} ${paginationClause}
+      FROM receipts r ${joinClause} ${whereClause} ${paginationClause}
       ORDER BY created_at DESC;
     `, variables)
 
