@@ -311,9 +311,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const app = express()
   app.use(express.json())
-  app.use("/static", express.static("./public"))
-  app.engine("html", ejs.renderFile)
-  app.set("view engine", "html")
+  app.use('/static', express.static('./public'))
+  app.engine('html', ejs.renderFile)
+  app.set('view engine', 'html')
 
   app.get('/', async (req, res) => {
     res.render('receipt')
