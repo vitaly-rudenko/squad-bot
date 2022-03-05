@@ -11,7 +11,6 @@ import multer from 'multer'
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/shared/flows/version.js'
 
-import { PostgresStorage } from './app/PostgresStorage.js'
 import { registerCommand, startCommand } from './app/users/flows/start.js'
 import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
@@ -39,6 +38,9 @@ import { TelegramLogger } from './app/shared/TelegramLogger.js'
 import { PaymentTelegramNotifier } from './app/payments/notifications/PaymentTelegramNotifier.js'
 import { PaymentsPostgresStorage } from './app/payments/PaymentsPostgresStorage.js'
 import { Payment } from './app/payments/Payment.js'
+import { ReceiptsPostgresStorage } from './app/receipts/ReceiptsPostgresStorage.js'
+import { Receipt } from './app/receipts/Receipt.js'
+import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -55,7 +57,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const cardsStorage = new CardsPostgresStorage(pgClient)
   const debtsStorage = new DebtsPostgresStorage(pgClient)
   const paymentsStorage = new PaymentsPostgresStorage(pgClient)
-  const storage = new PostgresStorage(pgClient, debtsStorage)
+  const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
 
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
@@ -76,6 +78,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     localize,
     telegramNotifier,
     usersStorage,
+    debtsStorage,
     logger,
   })
 
@@ -212,7 +215,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.command('register', withGroupChat(), registerCommand({ usersStorage }))
 
   bot.command('users', withPrivateChat(), withUser(), usersCommand({ usersStorage }))
-  bot.command('debts', withUser(), debtsCommand({ storage, usersStorage, aggregateDebtsByUserId }))
+  bot.command('debts', withUser(), debtsCommand({ receiptsStorage, usersStorage, aggregateDebtsByUserId }))
   bot.command('receipts', withUser(), receiptsGetCommand())
   bot.command('payments', withUser(), paymentsGetCommand())
 
@@ -238,56 +241,47 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.catch((error) => logger.error(error))
 
-  async function storeReceipt(editorId, { id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
-    const isNew = !Boolean(id)
-    if (id) {
-      await storage.updateReceipt({
-        id,
-        payerId,
-        amount,
-        description,
-        photo,
-        mime,
-      })
-
-      await debtsStorage.deleteByReceiptId(id)
+  /**
+   * @param {object} data
+   * @param {Receipt} data.receipt
+   * @param {ReceiptPhoto} data.receiptPhoto
+   * @param {{ debtorId: string, amount: number }[]} data.debts
+   * @param {object} meta
+   * @param {string} meta.editorId
+   */
+  async function storeReceipt({ receipt, receiptPhoto, debts }, { editorId }) {
+    const isNew = !receipt.id
+    if (isNew) {
+      receipt = await receiptsStorage.create(receipt, receiptPhoto)
     } else {
-      id = await storage.createReceipt({
-        payerId,
-        amount,
-        description,
-        photo,
-        mime,
-      })
+      await receiptsStorage.update(receipt, receiptPhoto)
+      await debtsStorage.deleteByReceiptId(receipt.id)
     }
 
     for (const debt of debts) {
-      const { debtorId, amount } = debt
-
       await debtsStorage.create(
         new Debt({
-          receiptId: id,
-          debtorId,
-          amount,
+          receiptId: receipt.id,
+          debtorId: debt.debtorId,
+          amount: debt.amount,
         })
       )
     }
 
-    const receipt = { payerId, amount, description, debts }
     if (isNew) {
       receiptNotifier.created(receipt, { editorId })
     } else {
       receiptNotifier.updated(receipt, { editorId })
     }
 
-    return id
+    return receiptsStorage.findById(receipt.id)
   }
 
   async function deleteReceipt(editorId, receiptId) {
-    const receipt = await storage.findReceiptById(receiptId)
+    const receipt = await receiptsStorage.findById(receiptId)
 
     await debtsStorage.deleteByReceiptId(receiptId)
-    await storage.deleteReceiptById(receiptId)
+    await receiptsStorage.deleteById(receiptId)
 
     await receiptNotifier.deleted(receipt, { editorId })
   }
@@ -297,11 +291,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       new Payment({ fromUserId, toUserId, amount })
     )
 
-    await paymentNotifier.created({
-      fromUserId,
-      toUserId,
-      amount,
-    }, { editorId })
+    await paymentNotifier.created(payment, { editorId })
 
     return payment
   }
@@ -408,10 +398,10 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {
     const receiptId = req.params.receiptId
-    const receiptPhoto = await storage.getReceiptPhoto(receiptId)
+    const receiptPhoto = await receiptsStorage.getReceiptPhoto(receiptId)
 
     if (receiptPhoto) {
-      res.contentType(receiptPhoto.mime).send(receiptPhoto.photo).end()
+      res.contentType(receiptPhoto.mime).send(receiptPhoto.binary).end()
     } else {
       res.sendStatus(404)
     }
@@ -457,7 +447,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     res.json(users)
   })
 
-  function formatReceipt(receipt) {
+  async function formatReceipt(receipt) {
+    const debts = await debtsStorage.findByReceiptId(receipt.id)
+    
     return {
       id: receipt.id,
       createdAt: receipt.createdAt,
@@ -465,7 +457,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       amount: receipt.amount,
       description: receipt.description,
       hasPhoto: receipt.hasPhoto,
-      debts: receipt.debts.map(debt => ({
+      debts: debts.map(debt => ({
         debtorId: debt.debtorId,
         amount: debt.amount,
       }))
@@ -478,55 +470,62 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       return
     }
 
-    let id = req.body.id ?? null
-
+    const id = req.body.id ?? null
     const payerId = req.body.payer_id
-    let photo = req.file?.buffer ?? null
-    let mime = req.file?.mimetype ?? null
+    const binary = req.file?.buffer ?? null
+    const mime = req.file?.mimetype ?? null
     const description = req.body.description ?? null
     const amount = Number(req.body.amount)
     const debts = Object.entries(JSON.parse(req.body.debts))
       .map(([debtorId, amount]) => ({
         debtorId,
-        amount: (amount !== null && Number.isInteger(Number(amount)) && Number(amount) > 0) ? Number(amount) : null,
+        amount: (amount && Number.isInteger(Number(amount)))
+          ? Number(amount)
+          : null,
       }))
 
-    if (id && req.body.leave_photo === 'true' && (!photo || !mime)) {
-      const receiptPhoto = await storage.getReceiptPhoto(id)
-      if (receiptPhoto) {
-        photo = receiptPhoto.photo
-        mime = receiptPhoto.mime
-      }
+    let receiptPhoto = binary && mime
+      ? new ReceiptPhoto({ binary, mime })
+      : null
+
+    if (id && !receiptPhoto && req.body.leave_photo === 'true') {
+      receiptPhoto = await receiptsStorage.getReceiptPhoto(id)
     }
 
-    id = await storeReceipt(req.user.id, {
+    const receipt = new Receipt({
       id,
       payerId,
-      photo,
-      mime,
-      description,
       amount,
-      debts,
+      description,
     })
 
-    const receipt = await storage.findReceiptById(id)
-    res.json(formatReceipt(receipt))
+    const storedReceipt = await storeReceipt({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
+    
+    res.json(await formatReceipt(storedReceipt))
   })
 
   app.get('/receipts', async (req, res) => {
-    const receipts = await storage.findReceiptsByParticipantUserId(req.user.id)
-    res.json(receipts.map(formatReceipt))
+    const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
+
+    const formattedReceipts = []
+    for (const receipt of receipts) {
+      formattedReceipts.push(
+        await formatReceipt(receipt)
+      )
+    }
+
+    res.json(formattedReceipts)
   })
 
   app.get('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
-    const receipt = await storage.findReceiptById(receiptId)
+    const receipt = await receiptsStorage.findById(receiptId)
 
     if (!receipt) {
       return res.sendStatus(404)
     }
 
-    res.json(formatReceipt(receipt))
+    res.json(await formatReceipt(receipt))
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {

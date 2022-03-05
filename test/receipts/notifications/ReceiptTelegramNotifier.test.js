@@ -7,6 +7,7 @@ import { stripIndent } from 'common-tags'
 import { localizeMock } from '../../helpers/localizeMock.js'
 import { UsersMockStorage } from '../../helpers/UsersMockStorage.js'
 import { createUser } from '../../helpers/createUser.js'
+import { DebtsMockStorage } from '../../helpers/DebtsMockStorage.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -15,6 +16,8 @@ describe('ReceiptTelegramNotifier', () => {
   let receiptTelegramNotifier
   /** @type {UsersMockStorage} */
   let usersStorage
+  /** @type {DebtsMockStorage} */
+  let debtsStorage
   let telegramNotifier
   let logger
 
@@ -24,6 +27,7 @@ describe('ReceiptTelegramNotifier', () => {
     }
 
     usersStorage = new UsersMockStorage()
+    debtsStorage = new DebtsMockStorage()
     
     logger = {
       error: spy(),
@@ -32,6 +36,7 @@ describe('ReceiptTelegramNotifier', () => {
     receiptTelegramNotifier = new ReceiptTelegramNotifier({
       telegramNotifier,
       usersStorage,
+      debtsStorage,
       localize: localizeMock,
       logger,
     })
@@ -48,19 +53,22 @@ describe('ReceiptTelegramNotifier', () => {
       const receiptId = 'fake-receipt-id'
       const amount = 1200
       const description = 'Hello world!'
-      const debts = [
+
+      debtsStorage.mock_storeDebts(
         new Debt({
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
         }),
-      ]
+      )
 
       await receiptTelegramNotifier.created({
         payerId: payer.id,
         amount,
         description,
-        debts,
+        hasPhoto: false,
+        createdAt: new Date(),
+        id: receiptId,
       }, { editorId: editor.id })
 
       expect(telegramNotifier.notify.args)
@@ -75,7 +83,6 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
-              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -102,19 +109,22 @@ describe('ReceiptTelegramNotifier', () => {
 
       const receiptId = 'fake-receipt-id'
       const amount = 1230
-      const debts = [
+
+      debtsStorage.mock_storeDebts(
         new Debt({
           receiptId,
           debtorId: debtor.id,
           amount: null,
         }),
-      ]
+      )
 
       await receiptTelegramNotifier.created({
         payerId: payer.id,
         amount,
         description: null,
-        debts,
+        hasPhoto: false,
+        createdAt: new Date(),
+        id: receiptId,
       }, { editorId: editor.id })
 
       expect(telegramNotifier.notify.args)
@@ -128,7 +138,6 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.30 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
-              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -157,19 +166,22 @@ describe('ReceiptTelegramNotifier', () => {
       const receiptId = 'fake-receipt-id'
       const amount = 1200
       const description = 'Hello world!'
-      const debts = [
+
+      debtsStorage.mock_storeDebts(
         new Debt({
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
         }),
-      ]
+      )
 
       await receiptTelegramNotifier.updated({
         payerId: payer.id,
         amount,
         description,
-        debts,
+        hasPhoto: false,
+        createdAt: new Date(),
+        id: receiptId,
       }, { editorId: editor.id })
 
       expect(telegramNotifier.notify.args)
@@ -184,7 +196,6 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
-              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -196,7 +207,6 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
-              debt: ''
           `]
         ])
     })
@@ -210,19 +220,22 @@ describe('ReceiptTelegramNotifier', () => {
 
       const receiptId = 'fake-receipt-id'
       const amount = 1234
-      const debts = [
+
+      debtsStorage.mock_storeDebts(
         new Debt({
           receiptId,
           debtorId: debtor.id,
           amount: null,
         }),
-      ]
+      )
 
       await receiptTelegramNotifier.updated({
         payerId: payer.id,
         amount,
         description: null,
-        debts,
+        hasPhoto: false,
+        createdAt: new Date(),
+        id: receiptId,
       }, { editorId: editor.id })
 
       expect(telegramNotifier.notify.args)
@@ -236,7 +249,6 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.34 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
-              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -265,19 +277,22 @@ describe('ReceiptTelegramNotifier', () => {
       const receiptId = 'fake-receipt-id'
       const amount = 1200
       const description = 'Hello world!'
-      const debts = [
+
+      debtsStorage.mock_storeDebts(
         new Debt({
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
         }),
-      ]
+      )
 
       await receiptTelegramNotifier.deleted({
         payerId: payer.id,
         amount,
         description,
-        debts,
+        hasPhoto: false,
+        createdAt: new Date(),
+        id: receiptId,
       }, { editorId: editor.id })
 
       expect(telegramNotifier.notify.args)
@@ -314,20 +329,22 @@ describe('ReceiptTelegramNotifier', () => {
 
       const receiptId = 'fake-receipt-id'
       const amount = 1230
-      const description = 'Hello world!'
-      const debts = [
+
+      debtsStorage.mock_storeDebts(
         new Debt({
           receiptId,
           debtorId: debtor.id,
           amount: null,
         }),
-      ]
+      )
 
       await receiptTelegramNotifier.deleted({
         payerId: payer.id,
         amount,
         description: null,
-        debts,
+        hasPhoto: false,
+        createdAt: new Date(),
+        id: receiptId,
       }, { editorId: editor.id })
 
       expect(telegramNotifier.notify.args)
