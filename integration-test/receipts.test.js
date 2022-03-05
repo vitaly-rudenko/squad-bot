@@ -41,7 +41,7 @@ describe('[receipts]', () => {
       expect(response.status).to.equal(404)
     })
 
-    it('should keep original date of receipt when updated', async () => {
+    it('should keep original date and ID of receipt when updated', async () => {
       const [user] = await createUsers(1)
 
       const { id: receiptId } = await createReceipt(user.id, { [user.id]: 10 })

@@ -37,14 +37,17 @@ export class PaymentTelegramNotifier {
     }
   }
 
+  /** @param {import('../Payment').Payment} payment */
   async created(payment, { editorId }) {
     await this._notify(payment, { editorId, isNew: true })
   }
 
+  /** @param {import('../Payment').Payment} payment */
   async updated(payment, { editorId }) {
     await this._notify(payment, { editorId, isNew: false })
   }
 
+  /** @param {import('../Payment').Payment} payment */
   async _notify(payment, { editorId, isNew }) {
     const { fromUserId, toUserId, amount } = payment
     

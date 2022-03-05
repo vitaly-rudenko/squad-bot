@@ -67,7 +67,7 @@ export class UsersPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`u.id IN (${ids.map((_, i) => `$${i + 1}`).join(', ')})`)
+      conditions.push(`u.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
       variables.push(...ids)
     }
 
