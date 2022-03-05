@@ -22,9 +22,7 @@ import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
-import { renderMoney } from './app/utils/renderMoney.js'
 import { withUserFactory } from './app/users/middlewares/withUserFactory.js'
-import { renderDebtAmount } from './app/debts/renderDebtAmount.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/withLocalization.js'
@@ -35,7 +33,6 @@ import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { Debt } from './app/debts/Debt.js'
 import { AggregatedDebt } from './app/debts/AggregatedDebt.js'
 import { localize } from './app/localization/localize.js'
-import { escapeMd } from './app/utils/escapeMd.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
 import { TelegramLogger } from './app/shared/TelegramLogger.js'
@@ -64,7 +61,15 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const logger = new TelegramLogger({ bot, debugChatId })
   const telegramNotifier = new TelegramNotifier({ bot })
-  const receiptNotifier = await new ReceiptTelegramNotifier({
+
+  const paymentNotifier = new PaymentTelegramNotifier({
+    localize,
+    telegramNotifier,
+    usersStorage,
+    logger,
+  })
+
+  const receiptNotifier = new ReceiptTelegramNotifier({
     localize,
     telegramNotifier,
     usersStorage,
@@ -275,32 +280,6 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     return id
   }
 
-  async function storePayment(editorId, { fromUserId, toUserId, amount }) {
-    const id = await storage.createPayment({ fromUserId, toUserId, amount })
-
-    const editor = await usersStorage.findById(editorId)
-    const sender = await usersStorage.findById(fromUserId)
-    const receiver = await usersStorage.findById(toUserId)
-
-    const notification = `
-➡️ Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(amount)} грн.
-👤 Отправитель: ${sender.name} (@${sender.username})
-👤 Получатель: ${receiver.name} (@${receiver.username})
-💸 Проверить долги: /debts
-🧾 Посмотреть платежи: /payments
-    `
-
-    if (sender.isComplete) {
-      await notifier.notify(sender.id, notification)
-    }
-
-    if (receiver.isComplete) {
-      await notifier.notify(receiver.id, notification)
-    }
-
-    return id
-  }
-
   async function deleteReceipt(editorId, receiptId) {
     const receipt = await storage.findReceiptById(receiptId)
 
@@ -310,30 +289,24 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     await receiptNotifier.deleted(receipt, { editorId })
   }
 
+  async function storePayment(editorId, { fromUserId, toUserId, amount }) {
+    const id = await storage.createPayment({ fromUserId, toUserId, amount })
+
+    await paymentNotifier.created({
+      fromUserId,
+      toUserId,
+      amount,
+    }, { editorId })
+
+    return id
+  }
+
   async function deletePayment(editorId, paymentId) {
     const payment = await storage.findPaymentById(paymentId)
 
-    const editor = await usersStorage.findById(editorId)
-    const sender = await usersStorage.findById(payment.fromUserId)
-    const receiver = await usersStorage.findById(payment.toUserId)
-
     await storage.deletePaymentById(paymentId)
 
-    const notification = `
-❌ ➡️ Пользователь ${editor.name} (@${editor.username}) удалил платеж на сумму ${renderMoney(payment.amount)} грн.
-👤 Отправитель: ${sender.name} (@${sender.username})
-👤 Получатель: ${receiver.name} (@${receiver.username})
-💸 Проверить долги: /debts
-🧾 Посмотреть платежи: /payments
-    `
-
-    if (sender.isComplete) {
-      await telegramNotifier.notify(sender.id, notification)
-    }
-
-    if (receiver.isComplete) {
-      await telegramNotifier.notify(receiver.id, notification)
-    }
+    await paymentNotifier.deleted(payment, { editorId })
   }
 
   const app = express()
