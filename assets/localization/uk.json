@@ -122,6 +122,28 @@
       ],
       "description": "\"{description}\"",
       "noDescription": "без опису"
+    },
+    "paymentStored": {
+      "message": [
+        "➡️ Користувач {editorName} \\(@{editorUsername}\\) {action} платіж на суму {amount}\\.",
+        "👤 Відправник: {senderName} \\(@{senderUsername}\\)",
+        "👤 Отримувач: {receiverName} \\(@{receiverUsername}\\)",
+        "💸 Перевірити борги: /debts",
+        "🧾 Переглянути платежі: /payments"
+      ],
+      "actions": {
+        "added": "створив",
+        "updated": "відредагував"
+      }
+    },
+    "paymentDeleted": {
+      "message": [
+        "❌ ➡️ Користувач {editorName} \\(@{editorUsername}\\) видалив платіж на суму {amount}\\.",
+        "👤 Відправник: {senderName} \\(@{senderUsername}\\)",
+        "👤 Отримувач: {receiverName} \\(@{receiverUsername}\\)",
+        "💸 Перевірити борги: /debts",
+        "🧾 Переглянути платежі: /payments"
+      ]
     }
   },
   "banks": {
