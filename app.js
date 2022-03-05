@@ -37,6 +37,8 @@ import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTel
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
 import { TelegramLogger } from './app/shared/TelegramLogger.js'
 import { PaymentTelegramNotifier } from './app/payments/notifications/PaymentTelegramNotifier.js'
+import { PaymentsPostgresStorage } from './app/payments/PaymentsPostgresStorage.js'
+import { Payment } from './app/payments/Payment.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -52,6 +54,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const usersStorage = new UsersPostgresStorage(pgClient)
   const cardsStorage = new CardsPostgresStorage(pgClient)
   const debtsStorage = new DebtsPostgresStorage(pgClient)
+  const paymentsStorage = new PaymentsPostgresStorage(pgClient)
   const storage = new PostgresStorage(pgClient, debtsStorage)
 
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
@@ -103,8 +106,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   async function aggregateDebtsByUserId(userId) {
     const ingoingDebts = await debtsStorage.aggregateIngoingDebts(userId)
     const outgoingDebts = await debtsStorage.aggregateOutgoingDebts(userId)
-    const ingoingPayments = await storage.getIngoingPayments(userId)
-    const outgoingPayments = await storage.getOutgoingPayments(userId)
+    const ingoingPayments = await paymentsStorage.aggregateIngoingPayments(userId)
+    const outgoingPayments = await paymentsStorage.aggregateOutgoingPayments(userId)
 
     const debtMap = {}
     const incompleteMap = {}
@@ -141,9 +144,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     for (const payment of ingoingPayments)
-      addPayment(payment.userId, userId, payment.amount)
+      addPayment(payment.fromUserId, userId, payment.amount)
     for (const payment of outgoingPayments)
-      addPayment(userId, payment.userId, payment.amount)
+      addPayment(userId, payment.toUserId, payment.amount)
 
     const debts = []
     for (const [debtUserId, amount] of Object.entries(debtMap)) {
@@ -290,7 +293,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   }
 
   async function storePayment(editorId, { fromUserId, toUserId, amount }) {
-    const id = await storage.createPayment({ fromUserId, toUserId, amount })
+    const payment = await paymentsStorage.create(
+      new Payment({ fromUserId, toUserId, amount })
+    )
 
     await paymentNotifier.created({
       fromUserId,
@@ -298,13 +303,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       amount,
     }, { editorId })
 
-    return id
+    return payment
   }
 
   async function deletePayment(editorId, paymentId) {
-    const payment = await storage.findPaymentById(paymentId)
+    const payment = await paymentsStorage.findById(paymentId)
 
-    await storage.deletePaymentById(paymentId)
+    await paymentsStorage.deleteById(paymentId)
 
     await paymentNotifier.deleted(payment, { editorId })
   }
@@ -531,8 +536,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   app.post('/payments', async (req, res) => {
     const { fromUserId, toUserId, amount } = req.body
-    const id = await storePayment(req.user.id, { fromUserId, toUserId, amount })
-    const payment = await storage.findPaymentById(id)
+    const payment = await storePayment(req.user.id, { fromUserId, toUserId, amount })
     res.json(payment)
   })
 
@@ -544,7 +548,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   app.get('/payments', async (req, res) => {
     const fromUserId = req.query['from_user_id']
     const toUserId = req.query['to_user_id']
-    const payments = await storage.findPayments({ fromUserId, toUserId })
+
+    const payments = fromUserId
+      ? await paymentsStorage.findByFromUserId(fromUserId)
+      : await paymentsStorage.findByToUserId(toUserId)
+
     res.json(payments)
   })
 
