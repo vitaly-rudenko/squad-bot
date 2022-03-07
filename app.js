@@ -41,6 +41,7 @@ import { Payment } from './app/payments/Payment.js'
 import { ReceiptsPostgresStorage } from './app/receipts/ReceiptsPostgresStorage.js'
 import { Receipt } from './app/receipts/Receipt.js'
 import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
+import { PaymentManager } from './app/payments/PaymentManager.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -82,6 +83,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     logger,
   })
 
+  const paymentManager = new PaymentManager({
+    paymentNotifier,
+    paymentsStorage,
+  })
+
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
     { command: 'receipts', description: 'Додати або переглянути чеки' },
@@ -101,8 +107,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   /**
    * @returns {Promise<{
-   *   ingoingDebts: import('./app/debts/AggregatedDebt').AggregatedDebt[],
-   *   outgoingDebts: import('./app/debts/AggregatedDebt').AggregatedDebt[],
+   *   ingoingDebts: AggregatedDebt[],
+   *   outgoingDebts: AggregatedDebt[],
    *   incompleteReceiptIds: string[],
    * }>}
    */
@@ -535,12 +541,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   app.post('/payments', async (req, res) => {
     const { fromUserId, toUserId, amount } = req.body
-    const payment = await storePayment(req.user.id, { fromUserId, toUserId, amount })
-    res.json(payment)
+    const payment = new Payment({ fromUserId, toUserId, amount })
+    const storedPayment = await paymentManager.store(payment, { editorId: req.user.id })
+    res.json(storedPayment)
   })
 
   app.delete('/payments/:paymentId', async (req, res) => {
-    await deletePayment(req.user.id, req.params.paymentId)
+    await paymentManager.delete(req.params.paymentId, { editorId: req.user.id })
     res.sendStatus(204)
   })
 
