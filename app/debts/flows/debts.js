@@ -2,12 +2,12 @@ import { renderAggregatedDebt } from '../renderDebtAmount.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function debtsCommand({ receiptsStorage, usersStorage, aggregateDebtsByUserId }) {
+export function debtsCommand({ receiptsStorage, usersStorage, debtManager }) {
   return async (context) => {
     const userId = context.state.userId
     const users = await usersStorage.findAll()
 
-    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await aggregateDebtsByUserId(userId)
+    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await debtManager.aggregateByUserId(userId)
     const incompleteReceipts = await receiptsStorage.findByIds(incompleteReceiptIds ?? [])
     const incompleteReceiptsByMe = incompleteReceipts
       .filter(receipt => receipt.debts.some(debt => debt.amount === null && debt.debtorId === userId && debt.debtorId !== receipt.payerId))

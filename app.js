@@ -29,7 +29,6 @@ import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
 import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
-import { AggregatedDebt } from './app/debts/AggregatedDebt.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
@@ -42,6 +41,7 @@ import { Receipt } from './app/receipts/Receipt.js'
 import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
+import { DebtManager } from './app/debts/DebtManager.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -94,6 +94,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     paymentsStorage,
   })
 
+  const debtManager = new DebtManager({
+    debtsStorage,
+    paymentsStorage,
+  })
+
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
     { command: 'receipts', description: 'Додати або переглянути чеки' },
@@ -111,110 +116,6 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     logger.error(error)
   })
 
-  /**
-   * @returns {Promise<{
-   *   ingoingDebts: AggregatedDebt[],
-   *   outgoingDebts: AggregatedDebt[],
-   *   incompleteReceiptIds: string[],
-   * }>}
-   */
-  async function aggregateDebtsByUserId(userId) {
-    const ingoingDebts = await debtsStorage.aggregateIngoingDebts(userId)
-    const outgoingDebts = await debtsStorage.aggregateOutgoingDebts(userId)
-    const ingoingPayments = await paymentsStorage.aggregateIngoingPayments(userId)
-    const outgoingPayments = await paymentsStorage.aggregateOutgoingPayments(userId)
-
-    const debtMap = {}
-    const incompleteMap = {}
-    const addPayment = (fromUserId, toUserId, amount) => {
-      const debtUserId = fromUserId === userId ? toUserId : fromUserId
-
-      if (!debtMap[debtUserId]) {
-        debtMap[debtUserId] = 0
-      }
-
-      if (fromUserId === userId) {
-        debtMap[debtUserId] -= amount
-      } else {
-        debtMap[debtUserId] += amount
-      }
-    }
-
-    for (const debt of ingoingDebts) {
-      addPayment(userId, debt.fromUserId, debt.amount)
-      if (debt.incompleteReceiptIds.length > 0) {
-        const key = debt.fromUserId + '_' + userId
-        if (!incompleteMap[key]) incompleteMap[key] = new Set()
-        incompleteMap[key].add(...debt.incompleteReceiptIds)
-      }
-    }
-
-    for (const debt of outgoingDebts) {
-      addPayment(debt.toUserId, userId, debt.amount)
-      if (debt.incompleteReceiptIds.length > 0) {
-        const key = userId + '_' + debt.toUserId
-        if (!incompleteMap[key]) incompleteMap[key] = new Set()
-        incompleteMap[key].add(...debt.incompleteReceiptIds)
-      }
-    }
-
-    for (const payment of ingoingPayments)
-      addPayment(payment.fromUserId, userId, payment.amount)
-    for (const payment of outgoingPayments)
-      addPayment(userId, payment.toUserId, payment.amount)
-
-    const debts = []
-    for (const [debtUserId, amount] of Object.entries(debtMap)) {
-      const ingoingKey = debtUserId + '_' + userId
-      const outgoingKey = userId + '_' + debtUserId
-
-      if (amount !== 0) {
-        const [fromUserId, toUserId] = amount > 0 ? [userId, debtUserId] : [debtUserId, userId]
-        const key = fromUserId + '_' + toUserId
-
-        debts.push(
-          new AggregatedDebt({
-            fromUserId,
-            toUserId,
-            amount: Math.abs(amount),
-            incompleteReceiptIds: incompleteMap[key] ? [...incompleteMap[key]] : [],
-          })
-        )
-      } else {
-        if (incompleteMap[ingoingKey]) {
-          debts.push(
-            new AggregatedDebt({
-              fromUserId: debtUserId,
-              toUserId: userId,
-              amount: 0,
-              incompleteReceiptIds: [...incompleteMap[ingoingKey]],
-            })
-          )
-        }
-
-        if (incompleteMap[outgoingKey]) {
-          debts.push(
-            new AggregatedDebt({
-              fromUserId: userId,
-              toUserId: debtUserId,
-              amount: 0,
-              incompleteReceiptIds: [...incompleteMap[outgoingKey]],
-            })
-          )
-        }
-      }
-    }
-
-    return {
-      ingoingDebts: debts.filter(debt => debt.toUserId === userId),
-      outgoingDebts: debts.filter(debt => debt.fromUserId === userId),
-      incompleteReceiptIds: [...new Set([
-        ...ingoingDebts.flatMap(d => d.incompleteReceiptIds),
-        ...outgoingDebts.flatMap(d => d.incompleteReceiptIds),
-      ])],
-    }
-  }
-
   const userSessionManager = new UserSessionManager()
   const withPhase = withPhaseFactory(userSessionManager)
   const withUser = withUserFactory(usersStorage)
@@ -227,7 +128,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.command('register', withGroupChat(), registerCommand({ usersStorage }))
 
   bot.command('users', withPrivateChat(), withUser(), usersCommand({ usersStorage }))
-  bot.command('debts', withUser(), debtsCommand({ receiptsStorage, usersStorage, aggregateDebtsByUserId }))
+  bot.command('debts', withUser(), debtsCommand({ receiptsStorage, usersStorage, debtManager }))
   bot.command('receipts', withUser(), receiptsGetCommand())
   bot.command('payments', withUser(), paymentsGetCommand())
 
@@ -501,7 +402,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   app.get('/debts', async (req, res) => {
-    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await aggregateDebtsByUserId(req.user.id)
+    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await debtManager.aggregateByUserId(req.user.id)
 
     res.json({
       ingoingDebts: ingoingDebts.map(debt => ({
