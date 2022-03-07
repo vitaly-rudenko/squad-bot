@@ -29,7 +29,6 @@ import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
 import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
-import { Debt } from './app/debts/Debt.js'
 import { AggregatedDebt } from './app/debts/AggregatedDebt.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
@@ -41,6 +40,7 @@ import { Payment } from './app/payments/Payment.js'
 import { ReceiptsPostgresStorage } from './app/receipts/ReceiptsPostgresStorage.js'
 import { Receipt } from './app/receipts/Receipt.js'
 import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
+import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
@@ -81,6 +81,12 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     usersStorage,
     debtsStorage,
     logger,
+  })
+
+  const receiptManager = new ReceiptManager({
+    debtsStorage,
+    receiptNotifier,
+    receiptsStorage,
   })
 
   const paymentManager = new PaymentManager({
@@ -246,69 +252,6 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   )
 
   bot.catch((error) => logger.error(error))
-
-  /**
-   * @param {object} data
-   * @param {Receipt} data.receipt
-   * @param {ReceiptPhoto} data.receiptPhoto
-   * @param {{ debtorId: string, amount: number }[]} data.debts
-   * @param {object} meta
-   * @param {string} meta.editorId
-   */
-  async function storeReceipt({ receipt, receiptPhoto, debts }, { editorId }) {
-    const isNew = !receipt.id
-    if (isNew) {
-      receipt = await receiptsStorage.create(receipt, receiptPhoto)
-    } else {
-      await receiptsStorage.update(receipt, receiptPhoto)
-      await debtsStorage.deleteByReceiptId(receipt.id)
-    }
-
-    for (const debt of debts) {
-      await debtsStorage.create(
-        new Debt({
-          receiptId: receipt.id,
-          debtorId: debt.debtorId,
-          amount: debt.amount,
-        })
-      )
-    }
-
-    if (isNew) {
-      receiptNotifier.created(receipt, { editorId })
-    } else {
-      receiptNotifier.updated(receipt, { editorId })
-    }
-
-    return receiptsStorage.findById(receipt.id)
-  }
-
-  async function deleteReceipt(editorId, receiptId) {
-    const receipt = await receiptsStorage.findById(receiptId)
-
-    await debtsStorage.deleteByReceiptId(receiptId)
-    await receiptsStorage.deleteById(receiptId)
-
-    await receiptNotifier.deleted(receipt, { editorId })
-  }
-
-  async function storePayment(editorId, { fromUserId, toUserId, amount }) {
-    const payment = await paymentsStorage.create(
-      new Payment({ fromUserId, toUserId, amount })
-    )
-
-    await paymentNotifier.created(payment, { editorId })
-
-    return payment
-  }
-
-  async function deletePayment(editorId, paymentId) {
-    const payment = await paymentsStorage.findById(paymentId)
-
-    await paymentsStorage.deleteById(paymentId)
-
-    await paymentNotifier.deleted(payment, { editorId })
-  }
 
   const app = express()
   app.use(express.json())
@@ -490,6 +433,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
           : null,
       }))
 
+    const receipt = new Receipt({ id, payerId, amount, description })
+
     let receiptPhoto = binary && mime
       ? new ReceiptPhoto({ binary, mime })
       : null
@@ -498,14 +443,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       receiptPhoto = await receiptsStorage.getReceiptPhoto(id)
     }
 
-    const receipt = new Receipt({
-      id,
-      payerId,
-      amount,
-      description,
-    })
-
-    const storedReceipt = await storeReceipt({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
+    const storedReceipt = await receiptManager.store({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
     
     res.json(await formatReceipt(storedReceipt))
   })
@@ -535,7 +473,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
-    await deleteReceipt(req.user.id, req.params.receiptId)
+    await receiptManager.delete(req.params.receiptId, { editorId: req.user.id })
     res.sendStatus(204)
   })
 
