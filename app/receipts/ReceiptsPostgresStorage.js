@@ -20,10 +20,10 @@ export class ReceiptsPostgresStorage {
     const response = await this._client.query(`
       INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *;
+      RETURNING id;
     `, [uuid(), new Date().toISOString(), payerId, amount, description, binary, mime])
 
-    return this.deserializeReceipt(response.rows[0])
+    return this.findById(response.rows[0]['id'])
   }
 
   /**
@@ -37,8 +37,10 @@ export class ReceiptsPostgresStorage {
     await this._client.query(`
       UPDATE receipts
       SET payer_id = $2, amount = $3, description = $4, photo = $5, mime = $6
-      WHERE id = $1
+      WHERE id = $1;
     `, [id, payerId, amount, description, binary, mime])
+
+    return this.findById(id)
   }
 
   /** @param {string} id */

@@ -32,6 +32,8 @@ export class UsersPostgresStorage {
       SET (name, username, is_complete) = ($2, $3, $4)
       WHERE id = $1;
     `, [user.id, user.name, user.username, user.isComplete])
+
+    return this.findById(user.id)
   }
 
   /** @deprecated */

@@ -470,7 +470,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       return
     }
 
-    const id = req.body.id ?? null
+    const id = req.body.id ?? undefined
     const payerId = req.body.payer_id
     const binary = req.file?.buffer ?? null
     const mime = req.file?.mimetype ?? null

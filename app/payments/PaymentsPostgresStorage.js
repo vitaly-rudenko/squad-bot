@@ -15,10 +15,10 @@ export class PaymentsPostgresStorage {
     const response = await this._client.query(`
       INSERT INTO payments (from_user_id, to_user_id, amount, created_at)
       VALUES ($1, $2, $3, $4)
-      RETURNING *;
+      RETURNING id;
     `, [fromUserId, toUserId, amount, createdAt])
 
-    return this.deserializePayment(response.rows[0])
+    return this.findById(response.rows[0]['id'])
   }
 
   /** @param {string} id */
