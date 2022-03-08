@@ -1,14 +1,14 @@
 export class TelegramLogger {
-  constructor({ bot, debugChatId }) {
+  constructor({ telegram, debugChatId }) {
     this._debugChatId = debugChatId
-    this._bot = bot
+    this._telegram = telegram
   }
   
   async error(error) {
     console.error('Unexpected error:', error)
 
     try {
-      await this._bot.telegram.sendMessage(
+      await this._telegram.sendMessage(
         this._debugChatId,
         `❗️Unexpected error at ${new Date().toISOString()}❗️\n${error.name}: ${error.message}\n\nStack:\n${error.stack}`
       )

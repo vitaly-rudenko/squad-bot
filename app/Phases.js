@@ -5,10 +5,6 @@ export const Phases = organizeValues({
   },
   deleteCard: {
     id: '',
-  },
-  getCard: {
-    userId: '',
-    id: '',
   }
 })
 

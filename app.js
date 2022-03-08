@@ -11,7 +11,7 @@ import multer from 'multer'
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/shared/flows/version.js'
 
-import { registerCommand, startCommand } from './app/users/flows/start.js'
+import { startCommand } from './app/users/flows/start.js'
 import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
@@ -65,8 +65,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
 
-  const logger = new TelegramLogger({ bot, debugChatId })
-  const telegramNotifier = new TelegramNotifier({ bot })
+  const logger = new TelegramLogger({ telegram: bot.telegram, debugChatId })
+  const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
 
   const paymentNotifier = new PaymentTelegramNotifier({
     localize,
@@ -107,7 +107,6 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
     { command: 'start', description: 'Зареєструватись' },
-    { command: 'register', description: 'Зареєструватись' },
     { command: 'users', description: 'Список користувачів' },
     { command: 'version', description: 'Версія' },
   ])
@@ -123,27 +122,47 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.use(withUserId())
   bot.use(withLocalization())
 
+  bot.use(async (context) => {
+    const userId = context.state.userId
+    const { first_name: name, username } = context.from
+
+    const user = new User({
+      id: userId,
+      name,
+      username: username || null,
+      isComplete: false,
+    })
+    
+    try {
+      await usersStorage.create(user)
+    } catch (error) {
+      if (error.code !== 'ALREADY_EXISTS') {
+        throw error
+      }
+    }
+  })
+
+  bot.use(withUser()) // TODO: cache to avoid too many requests against database
+
   bot.command('version', versionCommand())
   bot.command('start', withPrivateChat(), startCommand({ usersStorage }))
-  bot.command('register', withGroupChat(), registerCommand({ usersStorage }))
 
-  bot.command('users', withPrivateChat(), withUser(), usersCommand({ usersStorage }))
-  bot.command('debts', withUser(), debtsCommand({ receiptsStorage, usersStorage, debtManager }))
-  bot.command('receipts', withUser(), receiptsGetCommand())
-  bot.command('payments', withUser(), paymentsGetCommand())
+  bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
+  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtManager }))
+  bot.command('receipts', receiptsGetCommand())
+  bot.command('payments', paymentsGetCommand())
 
-  bot.command('addcard', withUser(), cardsAddCommand({ userSessionManager }))
-  bot.action(/cards:add:bank:(.+)/, withUser(), withPhase(Phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
+  bot.command('addcard', cardsAddCommand({ userSessionManager }))
+  bot.action(/cards:add:bank:(.+)/, withPhase(Phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
 
-  bot.command('deletecard', withUser(), cardsDeleteCommand({ cardsStorage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withUser(), withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))
+  bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
+  bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))
 
-  bot.command('cards', withUser(), cardsGet({ usersStorage, userSessionManager }))
-  bot.action(/cards:get:user-id:(.+)/, withUser(), withPhase(Phases.getCard.userId, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager })))
-  bot.action(/cards:get:id:(.+)/, withUser(), withPhase(Phases.getCard.id, cardsGetIdAction({ cardsStorage, userSessionManager })))
+  bot.command('cards', cardsGet({ usersStorage, userSessionManager }))
+  bot.action(/cards:get:user-id:(.+)/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
+  bot.action(/cards:get:id:(.+)/, cardsGetIdAction({ cardsStorage, userSessionManager }))
 
   bot.on('message',
-    withUser({ ignore: true }),
     async (context, next) => {
       if ('text' in context.message && context.message.text.startsWith('/')) return;
       await next();
