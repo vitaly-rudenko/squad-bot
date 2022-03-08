@@ -15,18 +15,16 @@ import { startCommand } from './app/users/flows/start.js'
 import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
-import { withUserId } from './app/users/middlewares/withUserId.js'
 import { withPhaseFactory } from './app/shared/middlewares/withPhaseFactory.js'
 import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
-import { withUserFactory } from './app/users/middlewares/withUserFactory.js'
+import { withUser } from './app/users/middlewares/withUser.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/withLocalization.js'
 import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
-import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
@@ -117,32 +115,16 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   const userSessionManager = new UserSessionManager()
   const withPhase = withPhaseFactory(userSessionManager)
-  const withUser = withUserFactory(usersStorage)
 
-  bot.use(withUserId())
-  bot.use(withLocalization())
-
-  bot.use(async (context) => {
-    const userId = context.state.userId
-    const { first_name: name, username } = context.from
-
-    const user = new User({
-      id: userId,
-      name,
-      username: username || null,
-      isComplete: false,
-    })
-    
-    try {
-      await usersStorage.create(user)
-    } catch (error) {
-      if (error.code !== 'ALREADY_EXISTS') {
-        throw error
-      }
+  bot.use((context, next) => {
+    if (!context.from.is_bot) {
+      return next()
     }
   })
 
-  bot.use(withUser()) // TODO: cache to avoid too many requests against database
+  // TODO: cache to avoid too many requests against database
+  bot.use(withUser(usersStorage)) 
+  bot.use(withLocalization())
 
   bot.command('version', versionCommand())
   bot.command('start', withPrivateChat(), startCommand({ usersStorage }))
