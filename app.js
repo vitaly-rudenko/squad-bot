@@ -42,6 +42,9 @@ import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
 import { DebtManager } from './app/debts/DebtManager.js'
+import { MembershipManager } from './app/chats/MembershipManager.js'
+import { MembershipCache } from './app/chats/MembershipCache.js'
+import { MembershipPostgresStorage } from './app/chats/MembershipPostgresStorage.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -99,6 +102,12 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     paymentsStorage,
   })
 
+  const membershipManager = new MembershipManager({
+    membershipCache: new MembershipCache(),
+    membershipStorage: new MembershipPostgresStorage(pgClient),
+    telegram: bot.telegram,
+  })
+
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
     { command: 'receipts', description: 'Додати або переглянути чеки' },
@@ -143,6 +152,18 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   bot.use(withUser()) // TODO: cache to avoid too many requests against database
+
+  bot.use(withGroupChat(), async (context) => {
+    await membershipManager.link(context.state.userId, context.chat.id)
+  })
+
+  bot.on('chat_member', async (context) => {
+    if (['member', 'administrator', 'creator'].includes(context.chatMember.new_chat_member.status)) {
+      await membershipManager.link(context.state.userId, context.chat.id)
+    } else {
+      await membershipManager.unlink(context.state.userId, context.chat.id)
+    }
+  })
 
   bot.command('version', versionCommand())
   bot.command('start', withPrivateChat(), startCommand({ usersStorage }))
