@@ -40,6 +40,7 @@ import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
 import { DebtManager } from './app/debts/DebtManager.js'
+import { withRegisteredUser } from './app/users/middlewares/withRegisteredUser.js'
 import { UserManager } from './app/users/UserManager.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
@@ -133,6 +134,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.command('version', versionCommand())
   bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
+
+  bot.use(withRegisteredUser({ userManager, usersStorage, logger }))
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtManager }))
