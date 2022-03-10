@@ -1,6 +1,6 @@
 import { User } from '../User.js'
 
-export const withRegisteredUser = ({ userManager, usersStorage, logger }) => {
+export const withRegisteredUser = ({ userManager, usersStorage }) => {
   /** @param {import('telegraf').Context} context @param {Function} next */
   return async (context, next) => {
     const { userId } = context.state
@@ -22,7 +22,7 @@ export const withRegisteredUser = ({ userManager, usersStorage, logger }) => {
 
       userManager.clearCache(userId)
 
-      logger.info(`User has been registered: ${name} (${userId}, @${username})`)
+      console.log(`User has been registered: ${name} (${userId}, @${username})`)
     } catch (error) {
       if (error.code !== 'ALREADY_EXISTS') {
         throw error

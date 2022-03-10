@@ -30,7 +30,7 @@ import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
-import { TelegramLogger } from './app/shared/TelegramLogger.js'
+import { TelegramErrorLogger } from './app/shared/TelegramErrorLogger.js'
 import { PaymentTelegramNotifier } from './app/payments/notifications/PaymentTelegramNotifier.js'
 import { PaymentsPostgresStorage } from './app/payments/PaymentsPostgresStorage.js'
 import { Payment } from './app/payments/Payment.js'
@@ -65,14 +65,14 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
 
-  const logger = new TelegramLogger({ telegram: bot.telegram, debugChatId })
+  const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
   const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
 
   const paymentNotifier = new PaymentTelegramNotifier({
     localize,
     telegramNotifier,
     usersStorage,
-    logger,
+    errorLogger,
   })
 
   const receiptNotifier = new ReceiptTelegramNotifier({
@@ -80,7 +80,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     telegramNotifier,
     usersStorage,
     debtsStorage,
-    logger,
+    errorLogger,
   })
 
   const receiptManager = new ReceiptManager({
@@ -117,7 +117,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   ])
 
   process.on('unhandledRejection', (error) => {
-    logger.error(error)
+    errorLogger.log(error)
   })
 
   const userSessionManager = new UserSessionManager()
@@ -135,7 +135,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.command('version', versionCommand())
   bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
 
-  bot.use(withRegisteredUser({ userManager, usersStorage, logger }))
+  bot.use(withRegisteredUser({ userManager, usersStorage }))
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtManager }))
@@ -161,7 +161,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     withPhase(Phases.addCard.number, cardsAddNumberMessage({ cardsStorage, userSessionManager }))
   )
 
-  bot.catch((error) => logger.error(error))
+  bot.catch((error) => errorLogger.log(error))
 
   const app = express()
   app.use(express.json())
@@ -438,13 +438,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
   
-    console.log('Setting webhook to', webhookUrl)
+    console.log('Setting webhook to:', { webhookUrl })
     while (true) {
       try {
         await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
-        break;
+        break
       } catch (error) {
-        console.log('Could not set webhook, retrying...', error.message)
+        console.log('Could not set webhook, retrying...', { error })
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }

@@ -2,11 +2,11 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
 export class PaymentTelegramNotifier {
-  constructor({ usersStorage, telegramNotifier, localize, logger }) {
+  constructor({ usersStorage, telegramNotifier, localize, errorLogger }) {
     this._usersStorage = usersStorage
     this._telegramNotifier = telegramNotifier
     this._localize = localize
-    this._logger = logger
+    this._errorLogger = errorLogger
   }
 
   async deleted(payment, { editorId }) {
@@ -32,7 +32,7 @@ export class PaymentTelegramNotifier {
       try {
         await this._telegramNotifier.notify(user.id, notification)
       } catch (error) {
-        this._logger.error(error)
+        this._errorLogger.log(error)
       }
     }
   }
@@ -77,7 +77,7 @@ export class PaymentTelegramNotifier {
       try {
         await this._telegramNotifier.notify(user.id, notification)
       } catch (error) {
-        this._logger.error(error)
+        this._errorLogger.log(error)
       }
     }
   }

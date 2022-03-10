@@ -3,12 +3,12 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
 export class ReceiptTelegramNotifier {
-  constructor({ telegramNotifier, usersStorage, debtsStorage, localize, logger }) {
+  constructor({ telegramNotifier, usersStorage, debtsStorage, localize, errorLogger }) {
     this._usersStorage = usersStorage
     this._debtsStorage = debtsStorage
     this._telegramNotifier = telegramNotifier
     this._localize = localize
-    this._logger = logger
+    this._errorLogger = errorLogger
   }
 
   /** @param {import('../Receipt').Receipt} receipt */
@@ -42,7 +42,7 @@ export class ReceiptTelegramNotifier {
       try {
         await this._telegramNotifier.notify(user.id, notification)
       } catch (error) {
-        this._logger.error(error)
+        this._errorLogger.log(error)
       }
     }
   }
@@ -105,7 +105,7 @@ export class ReceiptTelegramNotifier {
       try {
         await this._telegramNotifier.notify(user.id, notification)
       } catch (error) {
-        this._logger.error(error)
+        this._errorLogger.log(error)
       }
     }
   }

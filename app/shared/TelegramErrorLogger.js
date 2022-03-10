@@ -1,14 +1,10 @@
-export class TelegramLogger {
+export class TelegramErrorLogger {
   constructor({ telegram, debugChatId }) {
     this._debugChatId = debugChatId
     this._telegram = telegram
   }
 
-  info(message) {
-    console.log(message)
-  }
-
-  error(error) {
+  log(error) {
     console.error('Unexpected error:', error)
 
     this._telegram.sendMessage(
