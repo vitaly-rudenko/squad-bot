@@ -130,8 +130,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtManager }))
-  bot.command('receipts', receiptsGetCommand())
-  bot.command('payments', paymentsGetCommand())
+  bot.command('receipts', receiptsGetCommand({ usersStorage }))
+  bot.command('payments', paymentsGetCommand({ usersStorage }))
 
   bot.command('addcard', cardsAddCommand({ userSessionManager }))
   bot.action(/cards:add:bank:(.+)/, withPhase(Phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
