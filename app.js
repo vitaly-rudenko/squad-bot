@@ -40,6 +40,7 @@ import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
 import { DebtManager } from './app/debts/DebtManager.js'
+import { UserManager } from './app/users/UserManager.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -95,6 +96,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const debtManager = new DebtManager({
     debtsStorage,
     paymentsStorage,
+  })
+
+  const userManager = new UserManager({
+    defaultLocale: 'uk',
+    usersStorage,
   })
 
   bot.telegram.setMyCommands([
