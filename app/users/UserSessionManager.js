@@ -2,8 +2,8 @@ import { Cache } from '../utils/Cache.js'
 
 export class UserSessionManager {
   constructor() {
-    this._phases = new Cache(60 * 60_000);
-    this._contexts = new Cache(60 * 60_000);
+    this._phases = new Cache(30 * 60_000);
+    this._contexts = new Cache(30 * 60_000);
   }
 
   setPhase(userId, phase) {

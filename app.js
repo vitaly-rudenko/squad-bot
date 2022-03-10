@@ -65,6 +65,9 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
 
+  process.once('SIGINT', () => bot.stop('SIGINT'))
+  process.once('SIGTERM', () => bot.stop('SIGTERM'))
+
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
   const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
 
@@ -130,7 +133,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   bot.use(withUserId())
-  bot.use(withLocalization())
+  bot.use(withLocalization({ userManager }))
 
   bot.command('version', versionCommand())
   bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
@@ -154,10 +157,10 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.on('message',
     async (context, next) => {
-      if ('text' in context.message && context.message.text.startsWith('/')) return;
-      await next();
+      if ('text' in context.message && context.message.text.startsWith('/')) return
+      return next()
     },
-    // Cards
+    // cards
     withPhase(Phases.addCard.number, cardsAddNumberMessage({ cardsStorage, userSessionManager }))
   )
 
@@ -432,9 +435,13 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   await new Promise(resolve => app.listen(port, () => resolve()))
 
-  if (process.env.DISABLE_BOT !== 'true') {
+  try {
     await bot.telegram.deleteWebhook()
-  
+  } catch (error) {
+    console.log('Could not delete webhook:', error)
+  }
+
+  if (process.env.USE_WEBHOOKS === 'true') {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
   
@@ -444,7 +451,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
         await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
         break
       } catch (error) {
-        console.log('Could not set webhook, retrying...', { error })
+        console.log('Could not set webhook, retrying...', error)
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
@@ -454,6 +461,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       await bot.telegram.getWebhookInfo()
     )
   } else {
-    console.log('Telegram bot is disabled by the environment variable')
+    await bot.launch()
+
+    console.log('Telegram bot is running')
   }
 })()
