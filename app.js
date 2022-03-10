@@ -54,12 +54,6 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const pgClient = new pg.Client(process.env.DATABASE_URL)
   await pgClient.connect()
 
-  const _query = pgClient.query.bind(pgClient)
-  pgClient.query = (...args) => {
-    console.log('Query:', ...args)
-    return _query(...args)
-  }
-
   const usersStorage = new UsersPostgresStorage(pgClient)
   const cardsStorage = new CardsPostgresStorage(pgClient)
   const debtsStorage = new DebtsPostgresStorage(pgClient)
