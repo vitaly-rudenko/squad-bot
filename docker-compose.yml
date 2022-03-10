@@ -32,3 +32,18 @@ services:
       POSTGRES_DB: "squadbot"
       POSTGRES_USER: "squadbot"
       POSTGRES_PASSWORD: "p4ssw0rd"
+
+  serveo:
+    container_name: serveo
+    image: taichunmin/serveo:latest
+    tty: true
+    stdin_open: true
+    command: >
+      autossh -M 0
+      -o ServerAliveInterval=60
+      -o ServerAliveCountMax=3
+      -o ExitOnForwardFailure=yes
+      -o StrictHostKeyChecking=no
+      -R squadbot.vitaly-rudenko.com:80:squadbot:1234
+      -p 2222
+      vitaly-rudenko.com
