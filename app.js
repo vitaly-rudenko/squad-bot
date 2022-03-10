@@ -20,7 +20,7 @@ import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
-import { withUser } from './app/users/middlewares/withUser.js'
+import { withUserId } from './app/users/middlewares/withUserId.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/withLocalization.js'
@@ -122,8 +122,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
   })
 
-  // TODO: cache to avoid too many requests against database
-  bot.use(withUser(usersStorage)) 
+  bot.use(withUserId())
   bot.use(withLocalization())
 
   bot.command('version', versionCommand())
@@ -211,7 +210,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   // --- API
 
-  const temporaryAuthTokenCache = new Cache(60_000)
+  const temporaryAuthTokenCache = new Cache(5 * 60_000)
 
   app.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']
