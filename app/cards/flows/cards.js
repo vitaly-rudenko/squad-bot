@@ -8,7 +8,7 @@ const banks = ['privatbank', 'monobank']
 
 export function cardsAddCommand({ userSessionManager }) {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { localize } = context.state
 
     await context.reply(localize('command.cards.add.chooseBank'), {
       parse_mode: 'MarkdownV2',
@@ -17,8 +17,6 @@ export function cardsAddCommand({ userSessionManager }) {
         { columns: 1 }
       ).reply_markup
     })
-
-    userSessionManager.setPhase(userId, Phases.addCard.bank)
   }
 }
 

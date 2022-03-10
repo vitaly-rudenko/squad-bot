@@ -54,6 +54,12 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const pgClient = new pg.Client(process.env.DATABASE_URL)
   await pgClient.connect()
 
+  const _query = pgClient.query.bind(pgClient)
+  pgClient.query = (...args) => {
+    console.log('Query:', ...args)
+    return _query(...args)
+  }
+
   const usersStorage = new UsersPostgresStorage(pgClient)
   const cardsStorage = new CardsPostgresStorage(pgClient)
   const debtsStorage = new DebtsPostgresStorage(pgClient)
@@ -102,10 +108,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     paymentsStorage,
   })
 
-  const userManager = new UserManager({
-    defaultLocale: 'uk',
-    usersStorage,
-  })
+  const userManager = new UserManager({ usersStorage })
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
@@ -146,7 +149,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.command('payments', paymentsGetCommand({ usersStorage }))
 
   bot.command('addcard', cardsAddCommand({ userSessionManager }))
-  bot.action(/cards:add:bank:(.+)/, withPhase(Phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
+  bot.action(/cards:add:bank:(.+)/, cardsAddBankAction({ userSessionManager }))
 
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
   bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))

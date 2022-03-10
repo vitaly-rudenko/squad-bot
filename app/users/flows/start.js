@@ -14,17 +14,11 @@ export function startCommand({ userManager, usersStorage }) {
 
     try {
       await usersStorage.create(user)
-      await context.reply(
-        localize('command.start.signedUp'),
-        { parse_mode: 'MarkdownV2' }
-      )
+      await context.reply(localize('command.start.signedUp'), { parse_mode: 'MarkdownV2' })
     } catch (error) {
       if (error.code === 'ALREADY_EXISTS') {
         await usersStorage.update(user)
-        await context.reply(
-          localize('command.start.updated'),
-          { parse_mode: 'MarkdownV2' }
-        )
+        await context.reply(localize('command.start.updated'), { parse_mode: 'MarkdownV2' })
       } else {
         throw error
       }

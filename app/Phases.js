@@ -1,6 +1,5 @@
 export const Phases = organizeValues({
   addCard: {
-    bank: '',
     number: '',
   },
   deleteCard: {

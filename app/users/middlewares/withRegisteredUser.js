@@ -6,20 +6,29 @@ export const withRegisteredUser = ({ userManager, usersStorage }) => {
     const { userId } = context.state
     const { first_name: name, username } = context.from
 
-    if (await userManager.isRegistered(userId)) {
+    const isPrivateChat = context.chat.type === 'private'
+    const existingUser = await userManager.getCachedUser(userId)
+
+    const user = new User({
+      id: userId,
+      name,
+      username: username || null,
+      isComplete: isPrivateChat,
+    })
+
+    if (existingUser) {
+      if (!existingUser.isComplete && isPrivateChat) {
+        await usersStorage.update(user)
+        userManager.clearCache(userId)
+        
+        console.log(`User has been upgraded: ${name} (${userId}, @${username})`)
+      }
+
       return next()
     }
 
     try {
-      await usersStorage.create(
-        new User({
-          id: userId,
-          name,
-          username: username || null,
-          isComplete: context.chat.type === 'private',
-        })
-      )
-
+      await usersStorage.create(user)
       userManager.clearCache(userId)
 
       console.log(`User has been registered: ${name} (${userId}, @${username})`)
