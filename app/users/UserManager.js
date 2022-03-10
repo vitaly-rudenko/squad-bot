@@ -7,6 +7,10 @@ export class UserManager {
     this._userCache = new Cache(60 * 60_000)
   }
 
+  clearCache(userId) {
+    this._userCache.delete(userId)
+  }
+
   async isRegistered(userId) {
     return Boolean(await this._getCachedUser(userId))
   }

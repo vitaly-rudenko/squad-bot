@@ -1,6 +1,6 @@
 import { User } from '../../users/User.js'
 
-export function startCommand({ usersStorage }) {
+export function startCommand({ userManager, usersStorage }) {
   return async (context) => {
     const { userId, localize } = context.state
     const { first_name: name, username } = context.from
@@ -29,5 +29,7 @@ export function startCommand({ usersStorage }) {
         throw error
       }
     }
+
+    userManager.clearCache(userId)
   }
 }

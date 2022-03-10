@@ -132,7 +132,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.use(withLocalization())
 
   bot.command('version', versionCommand())
-  bot.command('start', withPrivateChat(), startCommand({ usersStorage }))
+  bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtManager }))
