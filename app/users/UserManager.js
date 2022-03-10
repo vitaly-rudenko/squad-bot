@@ -1,4 +1,4 @@
-import { Cache } from '../utils/Cache'
+import { Cache } from '../utils/Cache.js'
 
 export class UserManager {
   constructor({ defaultLocale, usersStorage }) {
