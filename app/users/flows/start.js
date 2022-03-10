@@ -2,7 +2,7 @@ import { User } from '../../users/User.js'
 
 export function startCommand({ usersStorage }) {
   return async (context) => {
-    const userId = context.state.userId
+    const { userId, localize } = context.state
     const { first_name: name, username } = context.from
 
     const user = new User({
@@ -12,22 +12,22 @@ export function startCommand({ usersStorage }) {
       isComplete: true,
     })
 
-    let isNew = false
-
     try {
       await usersStorage.create(user)
-      isNew = true
+      await context.reply(
+        localize('command.start.signedUp'),
+        { parse_mode: 'MarkdownV2' }
+      )
     } catch (error) {
       if (error.code === 'ALREADY_EXISTS') {
         await usersStorage.update(user)
+        await context.reply(
+          localize('command.start.updated'),
+          { parse_mode: 'MarkdownV2' }
+        )
       } else {
         throw error
       }
     }
-
-    await context.reply(
-      context.state.localize(isNew ? 'command.start.signedUp' : 'command.start.updated'),
-      { parse_mode: 'MarkdownV2' }
-    )
   }
 }
