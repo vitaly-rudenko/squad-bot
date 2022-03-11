@@ -83,6 +83,7 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
+              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -138,6 +139,7 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.30 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
+              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -196,6 +198,7 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
+              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -207,6 +210,7 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
+              debt: ''
           `]
         ])
     })
@@ -249,6 +253,7 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.34 грн
               payerName: ${payer.name}
               payerUsername: ${payer.username}
+              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):

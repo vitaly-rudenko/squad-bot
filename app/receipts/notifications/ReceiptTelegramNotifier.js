@@ -70,7 +70,7 @@ export class ReceiptTelegramNotifier {
     for (const user of users) {
       if (!user.isComplete) continue;
       const debt = debts.find(debt => debt.debtorId === user.id)
-      const showDebt = (user.id !== payerId) && (isNew || debt?.amount === null)
+      const hideDebt = user.id === payerId || (!isNew && debt?.amount !== null)
 
       const notification = this._localize(user.locale, 'notifications.receiptStored.message', {
         editorName: escapeMd(editor.name),
@@ -91,15 +91,13 @@ export class ReceiptTelegramNotifier {
         receiptAmount: escapeMd(`${renderMoney(amount)} грн`),
         payerName: escapeMd(payer.name),
         payerUsername: escapeMd(payer.username),
-        ...showDebt && {
-          debt: this._localize(
-            user.locale,
-            isNew
-              ? 'notifications.receiptStored.debt.new'
-              : 'notifications.receiptStored.debt.incomplete',
-            { debtAmount: debt && escapeMd(renderDebtAmount(debt)) },
-          )
-        }
+        debt: hideDebt ? '' : this._localize(
+          user.locale,
+          isNew
+            ? 'notifications.receiptStored.debt.new'
+            : 'notifications.receiptStored.debt.incomplete',
+          { debtAmount: debt && escapeMd(renderDebtAmount(debt)) },
+        )
       })
 
       try {
