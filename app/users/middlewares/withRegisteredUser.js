@@ -21,7 +21,7 @@ export const withRegisteredUser = ({ userManager, usersStorage }) => {
         await usersStorage.update(user)
         userManager.clearCache(userId)
         
-        console.log(`User has been upgraded: ${name} (${userId}, @${username})`)
+        console.log(`User is now complete: ${name} (${userId}, @${username})`)
       }
 
       return next()
@@ -31,7 +31,7 @@ export const withRegisteredUser = ({ userManager, usersStorage }) => {
       await usersStorage.create(user)
       userManager.clearCache(userId)
 
-      console.log(`User has been registered: ${name} (${userId}, @${username})`)
+      console.log(`User has been registered: ${name} (${userId}, @${username}, complete: ${isPrivateChat})`)
     } catch (error) {
       if (error.code !== 'ALREADY_EXISTS') {
         throw error

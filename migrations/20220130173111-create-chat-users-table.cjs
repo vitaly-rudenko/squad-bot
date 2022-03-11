@@ -6,7 +6,7 @@ module.exports = {
         chat_id VARCHAR NOT NULL,
         user_id VARCHAR NOT NULL,
         PRIMARY KEY (chat_id, user_id)
-      );
+      )
     `)
   },
 

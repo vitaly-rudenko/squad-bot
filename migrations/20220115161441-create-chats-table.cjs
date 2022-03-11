@@ -4,7 +4,7 @@ module.exports = {
     await db.query(`
       CREATE TABLE chats (
         id VARCHAR PRIMARY KEY
-      );
+      )
     `)
   },
 

@@ -12,7 +12,7 @@ function renderUsersSelect(selectElement, selectedUserId = null) {
 
 function playSuccessAnimation() {
     fullscreenAnimationContainer.classList.add('active')
-    setTimeout(() => fullscreenAnimationContainer.classList.remove('active'), 6000);
+    setTimeout(() => fullscreenAnimationContainer.classList.remove('active'), 6000)
 }
 
 function moneyToCoins(money) {
@@ -20,7 +20,7 @@ function moneyToCoins(money) {
     return money.toFixed()
 }
 
-function renderMoney(money) {
+function renderAmount(money) {
     money = money / 100
 
     return money.toFixed(2).endsWith('00')

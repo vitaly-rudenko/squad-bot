@@ -42,6 +42,7 @@ import { PaymentManager } from './app/payments/PaymentManager.js'
 import { DebtManager } from './app/debts/DebtManager.js'
 import { withRegisteredUser } from './app/users/middlewares/withRegisteredUser.js'
 import { UserManager } from './app/users/UserManager.js'
+import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -71,19 +72,22 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
   const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
 
+  const massTelegramNotificationFactory = new MassTelegramNotificationFactory({
+    telegramNotifier,
+    errorLogger,
+  })
+
   const paymentNotifier = new PaymentTelegramNotifier({
     localize,
-    telegramNotifier,
+    massTelegramNotificationFactory,
     usersStorage,
-    errorLogger,
   })
 
   const receiptNotifier = new ReceiptTelegramNotifier({
     localize,
-    telegramNotifier,
+    massTelegramNotificationFactory,
     usersStorage,
     debtsStorage,
-    errorLogger,
   })
 
   const receiptManager = new ReceiptManager({

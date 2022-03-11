@@ -28,7 +28,7 @@ export function debtsCommand({ receiptsStorage, usersStorage, debtManager }) {
       return localize('command.debts.incompleteReceipt', {
         index,
         name: escapeMd(getUserName(receipt.payerId)),
-        amount: escapeMd(`${renderMoney(receipt.amount)} грн`),
+        amount: escapeMd(renderMoney(receipt.amount)),
         createdAt: escapeMd(receipt.createdAt.toISOString().split('T')[0].replaceAll('-', '.')),
         description: escapeMd(receipt.description || localize('command.debts.noDescription')),
         photo: receipt.hasPhoto
