@@ -11,29 +11,38 @@ import multer from 'multer'
 import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/shared/flows/version.js'
 
-import { PostgresStorage } from './app/PostgresStorage.js'
-import { registerCommand, startCommand } from './app/users/flows/start.js'
+import { startCommand } from './app/users/flows/start.js'
 import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
-import { withUserId } from './app/users/middlewares/withUserId.js'
 import { withPhaseFactory } from './app/shared/middlewares/withPhaseFactory.js'
 import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
-import { renderMoney } from './app/utils/renderMoney.js'
-import { withUserFactory } from './app/users/middlewares/withUserFactory.js'
-import { renderDebtAmount } from './app/debts/renderDebtAmount.js'
+import { withUserId } from './app/users/middlewares/withUserId.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/withLocalization.js'
 import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
-import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
-import { Debt } from './app/debts/Debt.js'
-import { AggregatedDebt } from './app/debts/AggregatedDebt.js'
+import { localize } from './app/localization/localize.js'
+import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
+import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
+import { TelegramErrorLogger } from './app/shared/TelegramErrorLogger.js'
+import { PaymentTelegramNotifier } from './app/payments/notifications/PaymentTelegramNotifier.js'
+import { PaymentsPostgresStorage } from './app/payments/PaymentsPostgresStorage.js'
+import { Payment } from './app/payments/Payment.js'
+import { ReceiptsPostgresStorage } from './app/receipts/ReceiptsPostgresStorage.js'
+import { Receipt } from './app/receipts/Receipt.js'
+import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
+import { ReceiptManager } from './app/receipts/ReceiptManager.js'
+import { PaymentManager } from './app/payments/PaymentManager.js'
+import { DebtManager } from './app/debts/DebtManager.js'
+import { withRegisteredUser } from './app/users/middlewares/withRegisteredUser.js'
+import { UserManager } from './app/users/UserManager.js'
+import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -49,12 +58,55 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const usersStorage = new UsersPostgresStorage(pgClient)
   const cardsStorage = new CardsPostgresStorage(pgClient)
   const debtsStorage = new DebtsPostgresStorage(pgClient)
-  const storage = new PostgresStorage(pgClient, debtsStorage)
+  const paymentsStorage = new PaymentsPostgresStorage(pgClient)
+  const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
 
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
+
+  process.once('SIGINT', () => bot.stop('SIGINT'))
+  process.once('SIGTERM', () => bot.stop('SIGTERM'))
+
+  const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
+  const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
+
+  const massTelegramNotificationFactory = new MassTelegramNotificationFactory({
+    telegramNotifier,
+    errorLogger,
+  })
+
+  const paymentNotifier = new PaymentTelegramNotifier({
+    localize,
+    massTelegramNotificationFactory,
+    usersStorage,
+  })
+
+  const receiptNotifier = new ReceiptTelegramNotifier({
+    localize,
+    massTelegramNotificationFactory,
+    usersStorage,
+    debtsStorage,
+  })
+
+  const receiptManager = new ReceiptManager({
+    debtsStorage,
+    receiptNotifier,
+    receiptsStorage,
+  })
+
+  const paymentManager = new PaymentManager({
+    paymentNotifier,
+    paymentsStorage,
+  })
+
+  const debtManager = new DebtManager({
+    debtsStorage,
+    paymentsStorage,
+  })
+
+  const userManager = new UserManager({ usersStorage })
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
@@ -64,325 +116,62 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
     { command: 'start', description: 'Зареєструватись' },
-    { command: 'register', description: 'Зареєструватись' },
     { command: 'users', description: 'Список користувачів' },
     { command: 'version', description: 'Версія' },
   ])
 
-  process.on('unhandledRejection', async (error) => {
-    await logError(error)
+  process.on('unhandledRejection', (error) => {
+    errorLogger.log(error)
   })
-
-  async function logError(error) {
-    console.error('Unexpected error:', error)
-
-    try {
-      await bot.telegram.sendMessage(
-        debugChatId,
-        `❗️Unexpected error at ${new Date().toISOString()}❗️\n${error.name}: ${error.message}\n\nStack:\n${error.stack}`
-      )
-    } catch (error) {
-      console.warn('Could not post log to debug chat:', error)
-    }
-  }
-
-  /**
-   * @returns {Promise<{
-   *   ingoingDebts: import('./app/debts/AggregatedDebt').AggregatedDebt[],
-   *   outgoingDebts: import('./app/debts/AggregatedDebt').AggregatedDebt[],
-   *   incompleteReceiptIds: string[],
-   * }>}
-   */
-  async function aggregateDebtsByUserId(userId) {
-    const ingoingDebts = await debtsStorage.aggregateIngoingDebts(userId)
-    const outgoingDebts = await debtsStorage.aggregateOutgoingDebts(userId)
-    const ingoingPayments = await storage.getIngoingPayments(userId)
-    const outgoingPayments = await storage.getOutgoingPayments(userId)
-
-    const debtMap = {}
-    const incompleteMap = {}
-    const addPayment = (fromUserId, toUserId, amount) => {
-      const debtUserId = fromUserId === userId ? toUserId : fromUserId
-
-      if (!debtMap[debtUserId]) {
-        debtMap[debtUserId] = 0
-      }
-
-      if (fromUserId === userId) {
-        debtMap[debtUserId] -= amount
-      } else {
-        debtMap[debtUserId] += amount
-      }
-    }
-
-    for (const debt of ingoingDebts) {
-      addPayment(userId, debt.fromUserId, debt.amount)
-      if (debt.incompleteReceiptIds.length > 0) {
-        const key = debt.fromUserId + '_' + userId
-        if (!incompleteMap[key]) incompleteMap[key] = new Set()
-        incompleteMap[key].add(...debt.incompleteReceiptIds)
-      }
-    }
-
-    for (const debt of outgoingDebts) {
-      addPayment(debt.toUserId, userId, debt.amount)
-      if (debt.incompleteReceiptIds.length > 0) {
-        const key = userId + '_' + debt.toUserId
-        if (!incompleteMap[key]) incompleteMap[key] = new Set()
-        incompleteMap[key].add(...debt.incompleteReceiptIds)
-      }
-    }
-
-    for (const payment of ingoingPayments)
-      addPayment(payment.userId, userId, payment.amount)
-    for (const payment of outgoingPayments)
-      addPayment(userId, payment.userId, payment.amount)
-
-    const debts = []
-    for (const [debtUserId, amount] of Object.entries(debtMap)) {
-      const ingoingKey = debtUserId + '_' + userId
-      const outgoingKey = userId + '_' + debtUserId
-
-      if (amount !== 0) {
-        const [fromUserId, toUserId] = amount > 0 ? [userId, debtUserId] : [debtUserId, userId]
-        const key = fromUserId + '_' + toUserId
-
-        debts.push(
-          new AggregatedDebt({
-            fromUserId,
-            toUserId,
-            amount: Math.abs(amount),
-            incompleteReceiptIds: incompleteMap[key] ? [...incompleteMap[key]] : [],
-          })
-        )
-      } else {
-        if (incompleteMap[ingoingKey]) {
-          debts.push(
-            new AggregatedDebt({
-              fromUserId: debtUserId,
-              toUserId: userId,
-              amount: 0,
-              incompleteReceiptIds: [...incompleteMap[ingoingKey]],
-            })
-          )
-        }
-
-        if (incompleteMap[outgoingKey]) {
-          debts.push(
-            new AggregatedDebt({
-              fromUserId: userId,
-              toUserId: debtUserId,
-              amount: 0,
-              incompleteReceiptIds: [...incompleteMap[outgoingKey]],
-            })
-          )
-        }
-      }
-    }
-
-    return {
-      ingoingDebts: debts.filter(debt => debt.toUserId === userId),
-      outgoingDebts: debts.filter(debt => debt.fromUserId === userId),
-      incompleteReceiptIds: [...new Set([
-        ...ingoingDebts.flatMap(d => d.incompleteReceiptIds),
-        ...outgoingDebts.flatMap(d => d.incompleteReceiptIds),
-      ])],
-    }
-  }
 
   const userSessionManager = new UserSessionManager()
   const withPhase = withPhaseFactory(userSessionManager)
-  const withUser = withUserFactory(usersStorage)
+
+  bot.use((context, next) => {
+    if (!context.from.is_bot) {
+      return next()
+    }
+  })
 
   bot.use(withUserId())
-  bot.use(withLocalization())
+  bot.use(withLocalization({ userManager }))
 
   bot.command('version', versionCommand())
-  bot.command('start', withPrivateChat(), startCommand({ usersStorage }))
-  bot.command('register', withGroupChat(), registerCommand({ usersStorage }))
+  bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
 
-  bot.command('users', withPrivateChat(), withUser(), usersCommand({ usersStorage }))
-  bot.command('debts', withUser(), debtsCommand({ storage, usersStorage, aggregateDebtsByUserId }))
-  bot.command('receipts', withUser(), receiptsGetCommand())
-  bot.command('payments', withUser(), paymentsGetCommand())
+  bot.use(withRegisteredUser({ userManager, usersStorage }))
 
-  bot.command('addcard', withUser(), cardsAddCommand({ userSessionManager }))
-  bot.action(/cards:add:bank:(.+)/, withUser(), withPhase(Phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
+  bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
+  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
+  bot.command('receipts', receiptsGetCommand({ usersStorage }))
+  bot.command('payments', paymentsGetCommand({ usersStorage }))
 
-  bot.command('deletecard', withUser(), cardsDeleteCommand({ cardsStorage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withUser(), withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))
+  bot.command('addcard', cardsAddCommand({ userSessionManager }))
+  bot.action(/cards:add:bank:(.+)/, cardsAddBankAction({ userSessionManager }))
 
-  bot.command('cards', withUser(), cardsGet({ usersStorage, userSessionManager }))
-  bot.action(/cards:get:user-id:(.+)/, withUser(), withPhase(Phases.getCard.userId, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager })))
-  bot.action(/cards:get:id:(.+)/, withUser(), withPhase(Phases.getCard.id, cardsGetIdAction({ cardsStorage, userSessionManager })))
+  bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
+  bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))
+
+  bot.command('cards', cardsGet({ usersStorage, userSessionManager }))
+  bot.action(/cards:get:user-id:(.+)/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
+  bot.action(/cards:get:id:(.+)/, cardsGetIdAction({ cardsStorage, userSessionManager }))
 
   bot.on('message',
-    withUser({ ignore: true }),
     async (context, next) => {
-      if ('text' in context.message && context.message.text.startsWith('/')) return;
-      await next();
+      if ('text' in context.message && context.message.text.startsWith('/')) return
+      return next()
     },
-    // Cards
+    // cards
     withPhase(Phases.addCard.number, cardsAddNumberMessage({ cardsStorage, userSessionManager }))
   )
 
-  bot.catch((error) => logError(error))
-
-  async function storeReceipt(editorId, { id = undefined, payerId, amount, description = null, photo = null, mime = null, debts }) {
-    const isNew = !Boolean(id)
-    if (id) {
-      await storage.updateReceipt({
-        id,
-        payerId,
-        amount,
-        description,
-        photo,
-        mime,
-      })
-
-      await debtsStorage.deleteByReceiptId(id)
-    } else {
-      id = await storage.createReceipt({
-        payerId,
-        amount,
-        description,
-        photo,
-        mime,
-      })
-    }
-
-    for (const debt of debts) {
-      const { debtorId, amount } = debt
-
-      await debtsStorage.create(
-        new Debt({
-          receiptId: id,
-          debtorId,
-          amount,
-        })
-      )
-    }
-
-    const editor = await usersStorage.findById(editorId)
-    const payer = await usersStorage.findById(payerId)
-    const userIds = [...new Set([payerId, ...debts.map(debt => debt.debtorId)])]
-    const users = await usersStorage.findByIds(userIds)
-    const notificationDescription = description ? `"${description}"` : 'без описания'
-
-    for (const user of users) {
-      if (!user.isComplete) continue;
-      const debt = debts.find(debt => debt.debtorId === user.id)
-      const showDebt = (user.id !== payerId) && (isNew || debt?.amount === null)
-
-      const notification = `
-📝 Пользователь ${editor.name} (@${editor.username}) ${isNew ? 'добавил' : 'отредактировал'} чек ${notificationDescription} на сумму ${renderMoney(amount)} грн.
-👤 Оплатил: ${payer.name} (@${payer.username})
-${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(debt)}.\n` : ''}\
-💸 Проверить долги: /debts
-🧾 Посмотреть чеки: /receipts
-      `
-
-      try {
-        await sendNotification(user.id, notification)
-      } catch (error) {
-        logError(error)
-      }
-    }
-
-    return id
-  }
-
-  async function storePayment(editorId, { fromUserId, toUserId, amount }) {
-    const id = await storage.createPayment({ fromUserId, toUserId, amount })
-
-    const editor = await usersStorage.findById(editorId)
-    const sender = await usersStorage.findById(fromUserId)
-    const receiver = await usersStorage.findById(toUserId)
-
-    const notification = `
-➡️ Пользователь ${editor.name} (@${editor.username}) создал платеж на сумму ${renderMoney(amount)} грн.
-👤 Отправитель: ${sender.name} (@${sender.username})
-👤 Получатель: ${receiver.name} (@${receiver.username})
-💸 Проверить долги: /debts
-🧾 Посмотреть платежи: /payments
-    `
-
-    if (sender.isComplete) {
-      await sendNotification(sender.id, notification)
-    }
-
-    if (receiver.isComplete) {
-      await sendNotification(receiver.id, notification)
-    }
-
-    return id
-  }
-
-  async function deleteReceipt(editorId, receiptId) {
-    const receipt = await storage.findReceiptById(receiptId)
-
-    await debtsStorage.deleteByReceiptId(receiptId)
-    await storage.deleteReceiptById(receiptId)
-
-    const editor = await usersStorage.findById(editorId)
-    const payer = await usersStorage.findById(receipt.payerId)
-    const userIds = [...new Set([receipt.payerId, ...receipt.debts.map(debt => debt.debtorId)])]
-    const users = await usersStorage.findByIds(userIds)
-    const notificationDescription = receipt.description ? `"${receipt.description}"` : 'без описания'
-
-    const notification = `
-❌ 📝 Пользователь ${editor.name} (@${editor.username}) удалил чек ${notificationDescription} на сумму ${renderMoney(receipt.amount)} грн.
-👤 Оплатил: ${payer.name} (@${payer.username})
-💸 Проверить долги: /debts
-🧾 Посмотреть чеки: /receipts
-    `
-
-    for (const user of users) {
-      if (!user.isComplete) continue;
-
-      try {
-        await sendNotification(user.id, notification)
-      } catch (error) {
-        logError(error)
-      }
-    }
-  }
-
-  async function deletePayment(editorId, paymentId) {
-    const payment = await storage.findPaymentById(paymentId)
-
-    const editor = await usersStorage.findById(editorId)
-    const sender = await usersStorage.findById(payment.fromUserId)
-    const receiver = await usersStorage.findById(payment.toUserId)
-
-    await storage.deletePaymentById(paymentId)
-
-    const notification = `
-❌ ➡️ Пользователь ${editor.name} (@${editor.username}) удалил платеж на сумму ${renderMoney(payment.amount)} грн.
-👤 Отправитель: ${sender.name} (@${sender.username})
-👤 Получатель: ${receiver.name} (@${receiver.username})
-💸 Проверить долги: /debts
-🧾 Посмотреть платежи: /payments
-    `
-
-    if (sender.isComplete) {
-      await sendNotification(sender.id, notification)
-    }
-
-    if (receiver.isComplete) {
-      await sendNotification(receiver.id, notification)
-    }
-  }
-
-  async function sendNotification(userId, message) {
-    await bot.telegram.sendMessage(userId, message.trim())
-  }
+  bot.catch((error) => errorLogger.log(error))
 
   const app = express()
   app.use(express.json())
-  app.use("/static", express.static("./public"))
-  app.engine("html", ejs.renderFile)
-  app.set("view engine", "html")
+  app.use('/static', express.static('./public'))
+  app.engine('html', ejs.renderFile)
+  app.set('view engine', 'html')
 
   app.get('/', async (req, res) => {
     res.render('receipt')
@@ -434,7 +223,7 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
 
   // --- API
 
-  const temporaryAuthTokenCache = new Cache(60_000)
+  const temporaryAuthTokenCache = new Cache(5 * 60_000)
 
   app.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']
@@ -472,10 +261,10 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {
     const receiptId = req.params.receiptId
-    const receiptPhoto = await storage.getReceiptPhoto(receiptId)
+    const receiptPhoto = await receiptsStorage.getReceiptPhoto(receiptId)
 
     if (receiptPhoto) {
-      res.contentType(receiptPhoto.mime).send(receiptPhoto.photo).end()
+      res.contentType(receiptPhoto.mime).send(receiptPhoto.binary).end()
     } else {
       res.sendStatus(404)
     }
@@ -521,7 +310,9 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
     res.json(users)
   })
 
-  function formatReceipt(receipt) {
+  async function formatReceipt(receipt) {
+    const debts = await debtsStorage.findByReceiptId(receipt.id)
+
     return {
       id: receipt.id,
       createdAt: receipt.createdAt,
@@ -529,7 +320,7 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
       amount: receipt.amount,
       description: receipt.description,
       hasPhoto: receipt.hasPhoto,
-      debts: receipt.debts.map(debt => ({
+      debts: debts.map(debt => ({
         debtorId: debt.debtorId,
         amount: debt.amount,
       }))
@@ -542,83 +333,83 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
       return
     }
 
-    let id = req.body.id ?? null
-
+    const id = req.body.id ?? undefined
     const payerId = req.body.payer_id
-    let photo = req.file?.buffer ?? null
-    let mime = req.file?.mimetype ?? null
+    const binary = req.file?.buffer ?? null
+    const mime = req.file?.mimetype ?? null
     const description = req.body.description ?? null
     const amount = Number(req.body.amount)
     const debts = Object.entries(JSON.parse(req.body.debts))
       .map(([debtorId, amount]) => ({
         debtorId,
-        amount: (amount !== null && Number.isInteger(Number(amount)) && Number(amount) > 0) ? Number(amount) : null,
+        amount: (amount && Number.isInteger(Number(amount)))
+          ? Number(amount)
+          : null,
       }))
 
-    if (id && req.body.leave_photo === 'true' && (!photo || !mime)) {
-      const receiptPhoto = await storage.getReceiptPhoto(id)
-      if (receiptPhoto) {
-        photo = receiptPhoto.photo
-        mime = receiptPhoto.mime
-      }
+    const receipt = new Receipt({ id, payerId, amount, description })
+
+    let receiptPhoto = binary && mime
+      ? new ReceiptPhoto({ binary, mime })
+      : null
+
+    if (id && !receiptPhoto && req.body.leave_photo === 'true') {
+      receiptPhoto = await receiptsStorage.getReceiptPhoto(id)
     }
 
-    id = await storeReceipt(req.user.id, {
-      id,
-      payerId,
-      photo,
-      mime,
-      description,
-      amount,
-      debts,
-    })
+    const storedReceipt = await receiptManager.store({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
 
-    const receipt = await storage.findReceiptById(id)
-    res.json(formatReceipt(receipt))
+    res.json(await formatReceipt(storedReceipt))
   })
 
   app.get('/receipts', async (req, res) => {
-    const receipts = await storage.findReceiptsByParticipantUserId(req.user.id)
-    res.json(receipts.map(formatReceipt))
+    const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
+
+    const formattedReceipts = []
+    for (const receipt of receipts) {
+      formattedReceipts.push(
+        await formatReceipt(receipt)
+      )
+    }
+
+    res.json(formattedReceipts)
   })
 
   app.get('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
-    const receipt = await storage.findReceiptById(receiptId)
+    const receipt = await receiptsStorage.findById(receiptId)
 
     if (!receipt) {
       return res.sendStatus(404)
     }
 
-    res.json(formatReceipt(receipt))
+    res.json(await formatReceipt(receipt))
   })
 
   app.delete('/receipts/:receiptId', async (req, res) => {
-    await deleteReceipt(req.user.id, req.params.receiptId)
+    await receiptManager.delete(req.params.receiptId, { editorId: req.user.id })
     res.sendStatus(204)
   })
 
   app.post('/payments', async (req, res) => {
     const { fromUserId, toUserId, amount } = req.body
-    const id = await storePayment(req.user.id, { fromUserId, toUserId, amount })
-    const payment = await storage.findPaymentById(id)
-    res.json(payment)
+    const payment = new Payment({ fromUserId, toUserId, amount })
+    const storedPayment = await paymentManager.store(payment, { editorId: req.user.id })
+    res.json(storedPayment)
   })
 
   app.delete('/payments/:paymentId', async (req, res) => {
-    await deletePayment(req.user.id, req.params.paymentId)
+    await paymentManager.delete(req.params.paymentId, { editorId: req.user.id })
     res.sendStatus(204)
   })
 
   app.get('/payments', async (req, res) => {
-    const fromUserId = req.query['from_user_id']
-    const toUserId = req.query['to_user_id']
-    const payments = await storage.findPayments({ fromUserId, toUserId })
+    const payments = await paymentsStorage.findByParticipantUserId(req.user.id)
     res.json(payments)
   })
 
   app.get('/debts', async (req, res) => {
-    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await aggregateDebtsByUserId(req.user.id)
+    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await debtManager.aggregateByUserId(req.user.id)
 
     res.json({
       ingoingDebts: ingoingDebts.map(debt => ({
@@ -639,24 +430,34 @@ ${showDebt ? `💵 Твой долг в этом чеке: ${renderDebtAmount(de
 
   await new Promise(resolve => app.listen(port, () => resolve()))
 
-  await bot.telegram.deleteWebhook()
-
-  const domain = process.env.DOMAIN
-  const webhookUrl = `${domain}/bot${telegramBotToken}`
-
-  console.log('Setting webhook to', webhookUrl)
-  while (true) {
-    try {
-      await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
-      break;
-    } catch (error) {
-      console.log('Could not set webhook, retrying...', error.message)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
+  try {
+    await bot.telegram.deleteWebhook()
+  } catch (error) {
+    console.log('Could not delete webhook:', error)
   }
 
-  console.log(
-    `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
-    await bot.telegram.getWebhookInfo()
-  )
+  if (process.env.USE_WEBHOOKS === 'true') {
+    const domain = process.env.DOMAIN
+    const webhookUrl = `${domain}/bot${telegramBotToken}`
+
+    console.log('Setting webhook to:', { webhookUrl })
+    while (true) {
+      try {
+        await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
+        break
+      } catch (error) {
+        console.log('Could not set webhook, retrying...', error)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+
+    console.log(
+      `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
+      await bot.telegram.getWebhookInfo()
+    )
+  } else {
+    await bot.launch()
+
+    console.log('Telegram bot is running')
+  }
 })()

@@ -33,7 +33,7 @@ function showReceipts() {
         receiptsHtml += `<div class="receipt_list_item" onclick="toggleActiveItem(this)">
         <div class="payer">
             <div>${isIncomplete ? '⚠️ ' : (isSumMismatched ? '❗️ ' : '')}${getUserNameById(receipt.payerId)}</div>
-            <div>${renderMoney(receipt.amount)} грн</div>
+            <div>${renderAmount(receipt.amount)} грн</div>
         </div>`
         
 
@@ -42,7 +42,7 @@ function showReceipts() {
             receiptsHtml += `<div class="debtor">
                 <div class="debt__name">${getUserNameById(receipt.debts[j].debtorId)}</div>
                 <div class="debt__amount">${receipt.debts[j].amount
-                    ? (renderMoney(receipt.debts[j].amount) + ' грн')
+                    ? (renderAmount(receipt.debts[j].amount) + ' грн')
                     : 'не заполнено'}</div>
             </div>`
         }

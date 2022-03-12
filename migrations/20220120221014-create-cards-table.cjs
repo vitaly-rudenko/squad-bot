@@ -7,7 +7,7 @@ module.exports = {
         user_id VARCHAR,
         number VARCHAR,
         bank BANK
-      );
+      )
     `)
   },
 

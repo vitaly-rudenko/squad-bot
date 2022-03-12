@@ -1,13 +1,8 @@
 export const Phases = organizeValues({
   addCard: {
-    bank: '',
     number: '',
   },
   deleteCard: {
-    id: '',
-  },
-  getCard: {
-    userId: '',
     id: '',
   }
 })
@@ -18,7 +13,6 @@ export const Phases = organizeValues({
 * @template T
 */
 export function organizeValues(values, parents = []) {
-  // @ts-ignore
   return Object.fromEntries(
     Object.entries(values).map(([key, value]) => {
       return [

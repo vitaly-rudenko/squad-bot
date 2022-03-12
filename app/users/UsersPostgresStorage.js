@@ -32,6 +32,8 @@ export class UsersPostgresStorage {
       SET (name, username, is_complete) = ($2, $3, $4)
       WHERE id = $1;
     `, [user.id, user.name, user.username, user.isComplete])
+
+    return this.findById(user.id)
   }
 
   /** @deprecated */
@@ -47,6 +49,7 @@ export class UsersPostgresStorage {
 
   /** @param {string[]} ids */
   async findByIds(ids) {
+    if (ids.length === 0) return []
     return this._find({ ids })
   }
 
@@ -67,7 +70,7 @@ export class UsersPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`u.id IN (${ids.map((_, i) => `$${i + 1}`).join(', ')})`)
+      conditions.push(`u.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
       variables.push(...ids)
     }
 

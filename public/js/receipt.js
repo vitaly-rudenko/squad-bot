@@ -175,7 +175,7 @@ function saveReceipt() {
         body,
     })
     .then((response) => {
-        return response.json();
+        return response.json()
     })
     .then((data) => {
         if (!data.id) {

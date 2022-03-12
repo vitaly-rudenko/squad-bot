@@ -12,6 +12,10 @@ class MigrationsCli {
 
   async runTask(task, { migrateTo, undoTo, migrationName }) {
     switch (task) {
+      case 'db:reset':
+        await this.undo(0)
+        await this.migrate()
+        break
       case 'db:migrate':
         await this.migrate(migrateTo)
         break
@@ -55,7 +59,7 @@ class MigrationsCli {
  *
  * @param {string} destination Migration destination.
  */
-  async migrate(destination) {
+  async migrate(destination = undefined) {
     const migrations = destination !== undefined
       ? await umzug.up({ to: destination })
       : await umzug.up()

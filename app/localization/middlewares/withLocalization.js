@@ -2,12 +2,16 @@ import { localize } from '../localize.js'
 
 const DEFAULT_LOCALE = 'uk'
 
-export const withLocalization = () => {
-  /** @param {import('telegraf').Context} context @param {Function} next */
+export const withLocalization = ({ userManager }) => {
+  /** @param {import('telegraf').Context} context */
   return async (context, next) => {
-    context.state.localize = (message, replacements) =>
-      localize(message, replacements, context.state.user?.locale ?? DEFAULT_LOCALE);
+    const { userId } = context.state
 
-    await next();
+    const user = await userManager.getCachedUser(userId)
+
+    context.state.localize = (message, replacements = null) =>
+      localize(user?.locale ?? DEFAULT_LOCALE, message, replacements)
+
+    return next()
   }
 }

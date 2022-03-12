@@ -6,7 +6,7 @@ module.exports = {
         id VARCHAR PRIMARY KEY,
         username VARCHAR,
         name VARCHAR
-      );
+      )
     `)
   },
 

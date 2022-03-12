@@ -1,19 +1,30 @@
 import { Markup } from 'telegraf'
 import { generateTemporaryAuthToken } from '../../auth/generateTemporaryAuthToken.js'
 
-export function receiptsGetCommand() {
+export function receiptsGetCommand({ usersStorage }) {
   return async (context) => {
-    const token = generateTemporaryAuthToken(context.state.userId)
+    const { userId, localize } = context.state
+    const isPrivateChat = context.chat.type === 'private'
 
-    const addUrl = `${process.env.DOMAIN}/?token=${token}`
-    const viewUrl = `${process.env.DOMAIN}/receiptslist?token=${token}`
+    const token = generateTemporaryAuthToken(userId)
+
+    const queryString = isPrivateChat ? `?token=${token}`: ''
+    const addUrl = `${process.env.DOMAIN}/${queryString}`
+    const viewUrl = `${process.env.DOMAIN}/receiptslist${queryString}`
+
+    const user = await usersStorage.findById(userId)
 
     const message = await context.reply(
-      context.state.localize('command.receipts.chooseAction', { name: context.state.user.name }),
+      localize(
+        isPrivateChat
+          ? 'command.receipts.chooseAction'
+          : 'command.receipts.chooseActionWithoutToken',
+        { name: user.name }
+      ),
       {
         reply_markup: Markup.inlineKeyboard([
-          Markup.button.url(context.state.localize('command.receipts.actions.add'), addUrl),
-          Markup.button.url(context.state.localize('command.receipts.actions.view'), viewUrl),
+          Markup.button.url(localize('command.receipts.actions.add'), addUrl),
+          Markup.button.url(localize('command.receipts.actions.view'), viewUrl),
         ], { columns: 1 }).reply_markup
       }
     )

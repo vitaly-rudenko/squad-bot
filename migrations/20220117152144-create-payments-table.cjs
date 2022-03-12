@@ -8,7 +8,7 @@ module.exports = {
         from_user_id VARCHAR,
         to_user_id VARCHAR,
         amount INTEGER
-      );
+      )
     `)
   },
 

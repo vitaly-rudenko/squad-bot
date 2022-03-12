@@ -4,12 +4,12 @@ module.exports = {
     await db.query(`
       CREATE TABLE chats (
         id VARCHAR PRIMARY KEY
-      );
+      )
     `)
   },
 
   /** @param {{ context: import('pg').Pool }} context */
-  async down(db) {
+  async down({ context: db }) {
     await db.query(`
       DROP TABLE chats;
     `)
