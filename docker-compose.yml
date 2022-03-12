@@ -16,6 +16,7 @@ services:
       DEBUG_CHAT_ID: "-123456789"
       DOMAIN: "<webhook domain>"
       PORT: "1234"
+      USE_WEBHOOKS: "false"
     volumes:
       - .:/squadbot
     ports:

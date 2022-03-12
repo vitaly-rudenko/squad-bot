@@ -49,6 +49,7 @@ export class UsersPostgresStorage {
 
   /** @param {string[]} ids */
   async findByIds(ids) {
+    if (ids.length === 0) return []
     return this._find({ ids })
   }
 

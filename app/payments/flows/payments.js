@@ -1,28 +1,31 @@
 import { Markup } from 'telegraf'
 import { generateTemporaryAuthToken } from '../../auth/generateTemporaryAuthToken.js'
 
-export function paymentsGetCommand() {
+export function paymentsGetCommand({ usersStorage }) {
   /** @param {import('telegraf').Context} context */
   return async (context) => {
+    const { userId, localize } = context.state
     const isPrivateChat = context.chat.type === 'private'
 
-    const token = generateTemporaryAuthToken(context.state.userId)
+    const token = generateTemporaryAuthToken(userId)
 
     const queryString = isPrivateChat ? `?token=${token}`: ''
     const addUrl = `${process.env.DOMAIN}/paymentview${queryString}`
     const viewUrl = `${process.env.DOMAIN}/paymentslist${queryString}`
 
+    const user = await usersStorage.findById(userId)
+
     const message = await context.reply(
-      context.state.localize(
+      localize(
         isPrivateChat
           ? 'command.payments.chooseAction'
           : 'command.payments.chooseActionWithoutToken',
-        { name: context.state.user.name }
+        { name: user.name }
       ),
       {
         reply_markup: Markup.inlineKeyboard([
-          Markup.button.url(context.state.localize('command.payments.actions.add'), addUrl),
-          Markup.button.url(context.state.localize('command.payments.actions.view'), viewUrl),
+          Markup.button.url(localize('command.payments.actions.add'), addUrl),
+          Markup.button.url(localize('command.payments.actions.view'), viewUrl),
         ], { columns: 1 }).reply_markup
       }
     )

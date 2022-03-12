@@ -1,13 +1,8 @@
 export const Phases = organizeValues({
   addCard: {
-    bank: '',
     number: '',
   },
   deleteCard: {
-    id: '',
-  },
-  getCard: {
-    userId: '',
     id: '',
   }
 })

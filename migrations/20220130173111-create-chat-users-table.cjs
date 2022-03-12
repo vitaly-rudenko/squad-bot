@@ -6,12 +6,12 @@ module.exports = {
         chat_id VARCHAR NOT NULL,
         user_id VARCHAR NOT NULL,
         PRIMARY KEY (chat_id, user_id)
-      );
+      )
     `)
   },
 
   /** @param {{ context: import('pg').Pool }} context */
-  async down(db) {
+  async down({ context: db }) {
     await db.query(`
       DROP TABLE chat_users;
     `)

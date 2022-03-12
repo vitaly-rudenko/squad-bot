@@ -8,7 +8,7 @@ module.exports = {
         payer_id VARCHAR,
         amount INTEGER,
         description TEXT
-      );
+      )
     `)
   },
 

@@ -8,6 +8,8 @@ import { localizeMock } from '../../helpers/localizeMock.js'
 import { UsersMockStorage } from '../../helpers/UsersMockStorage.js'
 import { createUser } from '../../helpers/createUser.js'
 import { DebtsMockStorage } from '../../helpers/DebtsMockStorage.js'
+import { MassTelegramNotificationFactory } from '../../../app/shared/notifications/MassTelegramNotification.js'
+import { escapeMd } from '../../../app/utils/escapeMd.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -19,7 +21,6 @@ describe('ReceiptTelegramNotifier', () => {
   /** @type {DebtsMockStorage} */
   let debtsStorage
   let telegramNotifier
-  let logger
 
   beforeEach(() => {
     telegramNotifier = {
@@ -28,17 +29,17 @@ describe('ReceiptTelegramNotifier', () => {
 
     usersStorage = new UsersMockStorage()
     debtsStorage = new DebtsMockStorage()
-    
-    logger = {
-      error: spy(),
-    }
+
+    const errorLogger = { log: spy() }
 
     receiptTelegramNotifier = new ReceiptTelegramNotifier({
-      telegramNotifier,
+      massTelegramNotificationFactory: new MassTelegramNotificationFactory({
+        telegramNotifier,
+        errorLogger,
+      }),
       usersStorage,
       debtsStorage,
       localize: localizeMock,
-      logger,
     })
   })
 
@@ -62,7 +63,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       )
 
-      await receiptTelegramNotifier.created({
+      const notification = await receiptTelegramNotifier.created({
         payerId: payer.id,
         amount,
         description,
@@ -71,29 +72,32 @@ describe('ReceiptTelegramNotifier', () => {
         id: receiptId,
       }, { editorId: editor.id })
 
+      await notification.send()
+
       expect(telegramNotifier.notify.args)
         .to.deep.equalInAnyOrder([
           [payer.id, stripIndent`
             notifications.receiptStored.message(${payer.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.added(${payer.locale})
               receiptDescription: notifications.receiptStored.description(${payer.locale}):
                 description: Hello world\\!
               receiptAmount: 12 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
+              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.added(${debtor.locale})
               receiptDescription: notifications.receiptStored.description(${debtor.locale}):
                 description: Hello world\\!
               receiptAmount: 12 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
               debt: notifications.receiptStored.debt.new(${debtor.locale}):
                 debtAmount: 12 грн
           `]
@@ -118,7 +122,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       )
 
-      await receiptTelegramNotifier.created({
+      const notification = await receiptTelegramNotifier.created({
         payerId: payer.id,
         amount,
         description: null,
@@ -127,27 +131,30 @@ describe('ReceiptTelegramNotifier', () => {
         id: receiptId,
       }, { editorId: editor.id })
 
+      await notification.send()
+
       expect(telegramNotifier.notify.args)
         .to.deep.equalInAnyOrder([
           [payer.id, stripIndent`
             notifications.receiptStored.message(${payer.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.added(${payer.locale})
               receiptDescription: notifications.receiptStored.noDescription(${payer.locale})
               receiptAmount: 12\\.30 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
+              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.added(${debtor.locale})
               receiptDescription: notifications.receiptStored.noDescription(${debtor.locale})
               receiptAmount: 12\\.30 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
               debt: notifications.receiptStored.debt.new(${debtor.locale}):
                 debtAmount: \\? грн
           `]
@@ -175,7 +182,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       )
 
-      await receiptTelegramNotifier.updated({
+      const notification = await receiptTelegramNotifier.updated({
         payerId: payer.id,
         amount,
         description,
@@ -184,29 +191,33 @@ describe('ReceiptTelegramNotifier', () => {
         id: receiptId,
       }, { editorId: editor.id })
 
+      await notification.send()
+
       expect(telegramNotifier.notify.args)
         .to.deep.equalInAnyOrder([
           [payer.id, stripIndent`
             notifications.receiptStored.message(${payer.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.updated(${payer.locale})
               receiptDescription: notifications.receiptStored.description(${payer.locale}):
                 description: Hello world\\!
               receiptAmount: 12 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
+              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.updated(${debtor.locale})
               receiptDescription: notifications.receiptStored.description(${debtor.locale}):
                 description: Hello world\\!
               receiptAmount: 12 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
+              debt: ''
           `]
         ])
     })
@@ -229,7 +240,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       )
 
-      await receiptTelegramNotifier.updated({
+      const notification = await receiptTelegramNotifier.updated({
         payerId: payer.id,
         amount,
         description: null,
@@ -238,27 +249,30 @@ describe('ReceiptTelegramNotifier', () => {
         id: receiptId,
       }, { editorId: editor.id })
 
+      await notification.send()
+
       expect(telegramNotifier.notify.args)
         .to.deep.equalInAnyOrder([
           [payer.id, stripIndent`
             notifications.receiptStored.message(${payer.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.updated(${payer.locale})
               receiptDescription: notifications.receiptStored.noDescription(${payer.locale})
               receiptAmount: 12\\.34 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
+              debt: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.updated(${debtor.locale})
               receiptDescription: notifications.receiptStored.noDescription(${debtor.locale})
               receiptAmount: 12\\.34 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
               debt: notifications.receiptStored.debt.incomplete(${debtor.locale}):
                 debtAmount: \\? грн
           `]
@@ -286,7 +300,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       )
 
-      await receiptTelegramNotifier.deleted({
+      const notification = await receiptTelegramNotifier.deleted({
         payerId: payer.id,
         amount,
         description,
@@ -295,27 +309,29 @@ describe('ReceiptTelegramNotifier', () => {
         id: receiptId,
       }, { editorId: editor.id })
 
+      await notification.send()
+
       expect(telegramNotifier.notify.args)
         .to.deep.equalInAnyOrder([
           [payer.id, stripIndent`
             notifications.receiptDeleted.message(${payer.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               receiptDescription: notifications.receiptDeleted.description(${payer.locale}):
                 description: Hello world\\!
               receiptAmount: 12 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
           `],
           [debtor.id, stripIndent`
             notifications.receiptDeleted.message(${debtor.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               receiptDescription: notifications.receiptDeleted.description(${debtor.locale}):
                 description: Hello world\\!
               receiptAmount: 12 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
           `]
         ])
     })
@@ -338,7 +354,7 @@ describe('ReceiptTelegramNotifier', () => {
         }),
       )
 
-      await receiptTelegramNotifier.deleted({
+      const notification = await receiptTelegramNotifier.deleted({
         payerId: payer.id,
         amount,
         description: null,
@@ -347,25 +363,27 @@ describe('ReceiptTelegramNotifier', () => {
         id: receiptId,
       }, { editorId: editor.id })
 
+      await notification.send()
+
       expect(telegramNotifier.notify.args)
         .to.deep.equalInAnyOrder([
           [payer.id, stripIndent`
             notifications.receiptDeleted.message(${payer.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               receiptDescription: notifications.receiptDeleted.noDescription(${payer.locale})
               receiptAmount: 12\\.30 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
           `],
           [debtor.id, stripIndent`
             notifications.receiptDeleted.message(${debtor.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
               receiptDescription: notifications.receiptDeleted.noDescription(${debtor.locale})
               receiptAmount: 12\\.30 грн
-              payerName: ${payer.name}
-              payerUsername: ${payer.username}
+              payerName: ${escapeMd(payer.name)}
+              payerUsername: ${escapeMd(payer.username)}
           `]
         ])
     })

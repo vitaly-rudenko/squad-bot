@@ -7,7 +7,7 @@ module.exports = {
         receipt_id VARCHAR,
         debtor_id VARCHAR,
         amount INTEGER
-      );
+      )
     `)
   },
 
