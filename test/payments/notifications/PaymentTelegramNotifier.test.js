@@ -9,6 +9,7 @@ import { UsersMockStorage } from '../../helpers/UsersMockStorage.js'
 import { createUser } from '../../helpers/createUser.js'
 import { MassTelegramNotificationFactory } from '../../../app/shared/notifications/MassTelegramNotification.js'
 import { Payment } from '../../../app/payments/Payment.js'
+import { escapeMd } from '../../../app/utils/escapeMd.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -25,7 +26,7 @@ describe('PaymentTelegramNotifier', () => {
     }
 
     usersStorage = new UsersMockStorage()
-    
+
     const errorLogger = { log: spy() }
 
     paymentTelegramNotifier = new PaymentTelegramNotifier({
@@ -45,7 +46,7 @@ describe('PaymentTelegramNotifier', () => {
       const editor = createUser()
 
       usersStorage.mock_storeUsers(sender, receiver, editor)
-      
+
       const payment = new Payment({
         fromUserId: sender.id,
         toUserId: receiver.id,
@@ -59,23 +60,23 @@ describe('PaymentTelegramNotifier', () => {
         .to.deep.equalInAnyOrder([
           [sender.id, stripIndent`
             notifications.paymentStored.message(${sender.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
-              senderName: ${sender.name}
-              senderUsername: ${sender.username}
-              receiverName: ${receiver.name}
-              receiverUsername: ${receiver.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
+              senderName: ${escapeMd(sender.name)}
+              senderUsername: ${escapeMd(sender.username)}
+              receiverName: ${escapeMd(receiver.name)}
+              receiverUsername: ${escapeMd(receiver.username)}
               amount: 12 грн
               action: notifications.paymentStored.actions.added(${sender.locale})
           `],
           [receiver.id, stripIndent`
             notifications.paymentStored.message(${receiver.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
-              senderName: ${sender.name}
-              senderUsername: ${sender.username}
-              receiverName: ${receiver.name}
-              receiverUsername: ${receiver.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
+              senderName: ${escapeMd(sender.name)}
+              senderUsername: ${escapeMd(sender.username)}
+              receiverName: ${escapeMd(receiver.name)}
+              receiverUsername: ${escapeMd(receiver.username)}
               amount: 12 грн
               action: notifications.paymentStored.actions.added(${receiver.locale})
           `]
@@ -104,23 +105,23 @@ describe('PaymentTelegramNotifier', () => {
         .to.deep.equalInAnyOrder([
           [sender.id, stripIndent`
             notifications.paymentStored.message(${sender.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
-              senderName: ${sender.name}
-              senderUsername: ${sender.username}
-              receiverName: ${receiver.name}
-              receiverUsername: ${receiver.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
+              senderName: ${escapeMd(sender.name)}
+              senderUsername: ${escapeMd(sender.username)}
+              receiverName: ${escapeMd(receiver.name)}
+              receiverUsername: ${escapeMd(receiver.username)}
               amount: 12.30 грн
               action: notifications.paymentStored.actions.updated(${sender.locale})
           `],
           [receiver.id, stripIndent`
             notifications.paymentStored.message(${receiver.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
-              senderName: ${sender.name}
-              senderUsername: ${sender.username}
-              receiverName: ${receiver.name}
-              receiverUsername: ${receiver.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
+              senderName: ${escapeMd(sender.name)}
+              senderUsername: ${escapeMd(sender.username)}
+              receiverName: ${escapeMd(receiver.name)}
+              receiverUsername: ${escapeMd(receiver.username)}
               amount: 12.30 грн
               action: notifications.paymentStored.actions.updated(${receiver.locale})
           `]
@@ -149,22 +150,22 @@ describe('PaymentTelegramNotifier', () => {
         .to.deep.equalInAnyOrder([
           [sender.id, stripIndent`
             notifications.paymentDeleted.message(${sender.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
-              senderName: ${sender.name}
-              senderUsername: ${sender.username}
-              receiverName: ${receiver.name}
-              receiverUsername: ${receiver.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
+              senderName: ${escapeMd(sender.name)}
+              senderUsername: ${escapeMd(sender.username)}
+              receiverName: ${escapeMd(receiver.name)}
+              receiverUsername: ${escapeMd(receiver.username)}
               amount: 12.34 грн
           `],
           [receiver.id, stripIndent`
             notifications.paymentDeleted.message(${receiver.locale}):
-              editorName: ${editor.name}
-              editorUsername: ${editor.username}
-              senderName: ${sender.name}
-              senderUsername: ${sender.username}
-              receiverName: ${receiver.name}
-              receiverUsername: ${receiver.username}
+              editorName: ${escapeMd(editor.name)}
+              editorUsername: ${escapeMd(editor.username)}
+              senderName: ${escapeMd(sender.name)}
+              senderUsername: ${escapeMd(sender.username)}
+              receiverName: ${escapeMd(receiver.name)}
+              receiverUsername: ${escapeMd(receiver.username)}
               amount: 12.34 грн
           `]
         ])

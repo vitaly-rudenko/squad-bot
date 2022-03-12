@@ -10,7 +10,7 @@ export class PaymentManager {
     if (!isNew) {
       throw new Error('Updating payments is not currently supported')
     }
-    
+
     const storedPayment = await this._paymentsStorage.create(payment)
 
     const notification = await this._paymentNotifier.created(storedPayment, { editorId })
@@ -25,6 +25,6 @@ export class PaymentManager {
 
     await this._paymentsStorage.deleteById(paymentId)
 
-    await notification.send() 
+    await notification.send()
   }
 }
