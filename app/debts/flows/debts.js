@@ -2,7 +2,7 @@ import { renderAggregatedDebt } from '../renderDebtAmount.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function debtsCommand({ receiptsStorage, usersStorage, debtManager }) {
+export function debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }) {
   return async (context) => {
     const { userId, localize } = context.state
     const users = await usersStorage.findAll()
@@ -10,8 +10,14 @@ export function debtsCommand({ receiptsStorage, usersStorage, debtManager }) {
 
     const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await debtManager.aggregateByUserId(userId)
     const incompleteReceipts = await receiptsStorage.findByIds(incompleteReceiptIds ?? [])
+    const incompleteReceiptDebts = await debtsStorage.findByReceiptIds(incompleteReceiptIds)
     const incompleteReceiptsByMe = incompleteReceipts
-      .filter(receipt => receipt.debts.some(debt => debt.amount === null && debt.debtorId === userId && debt.debtorId !== receipt.payerId))
+      .filter(receipt => incompleteReceiptDebts.some(debt =>
+        debt.receiptId === receipt.id &&
+        debt.amount === null &&
+        debt.debtorId === userId &&
+        debt.debtorId !== receipt.payerId
+      ))
 
     function getUserName(id) {
       return users.find(u => u.id === id)?.name ?? id
@@ -39,7 +45,7 @@ export function debtsCommand({ receiptsStorage, usersStorage, debtManager }) {
     }
 
     const ingoingDebtsFormatted = ingoingDebts.length > 0
-      ? localize('command.debts.ingoingDebts', { 
+      ? localize('command.debts.ingoingDebts', {
         debts: ingoingDebts.map(localizeAggregatedDebt).join('\n')
       })
       : localize('command.debts.noIngoingDebts')

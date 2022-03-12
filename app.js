@@ -142,7 +142,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   bot.use(withRegisteredUser({ userManager, usersStorage }))
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
-  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtManager }))
+  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
   bot.command('receipts', receiptsGetCommand({ usersStorage }))
   bot.command('payments', paymentsGetCommand({ usersStorage }))
 
@@ -312,7 +312,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   async function formatReceipt(receipt) {
     const debts = await debtsStorage.findByReceiptId(receipt.id)
-    
+
     return {
       id: receipt.id,
       createdAt: receipt.createdAt,
@@ -358,7 +358,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     const storedReceipt = await receiptManager.store({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
-    
+
     res.json(await formatReceipt(storedReceipt))
   })
 
@@ -404,13 +404,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   app.get('/payments', async (req, res) => {
-    const fromUserId = req.query['from_user_id']
-    const toUserId = req.query['to_user_id']
-
-    const payments = fromUserId
-      ? await paymentsStorage.findByFromUserId(fromUserId)
-      : await paymentsStorage.findByToUserId(toUserId)
-
+    const payments = await paymentsStorage.findByParticipantUserId(req.user.id)
     res.json(payments)
   })
 
@@ -445,7 +439,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   if (process.env.USE_WEBHOOKS === 'true') {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
-  
+
     console.log('Setting webhook to:', { webhookUrl })
     while (true) {
       try {
@@ -456,7 +450,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
-  
+
     console.log(
       `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
       await bot.telegram.getWebhookInfo()

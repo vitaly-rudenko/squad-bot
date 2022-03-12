@@ -75,25 +75,19 @@ export class PaymentsPostgresStorage {
   }
 
   /** @param {string} userId */
-  async findByFromUserId(userId) {
-    return this._find({ fromUserIds: [userId] })
-  }
-
-  /** @param {string} userId */
-  async findByToUserId(userId) {
-    return this._find({ toUserIds: [userId] })
+  async findByParticipantUserId(userId) {
+    return this._find({ participantUserIds: [userId] })
   }
 
   /**
    * @param {{
    *   ids?: string[],
-   *   fromUserIds?: string[],
-   *   toUserIds?: string[],
+   *   participantUserIds?: string[],
    *   limit?: number,
    *   offset?: number,
-   * }} options 
+   * }} options
    */
-  async _find({ ids, fromUserIds, toUserIds, limit, offset } = {}) {
+  async _find({ ids, participantUserIds, limit, offset } = {}) {
     const conditions = ['p.deleted_at IS NULL']
     const variables = []
 
@@ -106,22 +100,14 @@ export class PaymentsPostgresStorage {
       variables.push(...ids)
     }
 
-    if (fromUserIds && Array.isArray(fromUserIds)) {
-      if (fromUserIds.length === 0) {
-        throw new Error('"fromUserIds" cannot be empty')
+    if (participantUserIds && Array.isArray(participantUserIds)) {
+      if (participantUserIds.length === 0) {
+        throw new Error('"participantUserIds" cannot be empty')
       }
 
-      conditions.push(`p.from_user_id IN (${fromUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...fromUserIds)
-    }
-
-    if (toUserIds && Array.isArray(toUserIds)) {
-      if (toUserIds.length === 0) {
-        throw new Error('"toUserIds" cannot be empty')
-      }
-
-      conditions.push(`p.to_user_id IN (${toUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...toUserIds)
+      const userIdsSql = `(${participantUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`
+      conditions.push(`p.from_user_id IN ${userIdsSql} OR p.to_user_id IN ${userIdsSql}`)
+      variables.push(...participantUserIds)
     }
 
     if (conditions.length === 0) {
