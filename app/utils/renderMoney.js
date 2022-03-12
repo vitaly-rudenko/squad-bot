@@ -1,7 +1,12 @@
-export function renderMoney(money) {
-  money = money / 100
+export function renderAmount(amount) {
+  amount = amount / 100
 
-  return money.toFixed(2).endsWith('00')
-    ? money.toFixed(0)
-    : money.toFixed(2)
+  return amount.toFixed(2).endsWith('00')
+    ? amount.toFixed(0)
+    : amount.toFixed(2)
+}
+
+export function renderMoney(amount, currency = 'UAH') {
+  if (currency !== 'UAH') throw new Error('Unsupported currency')
+  return `${typeof amount === 'number' ? renderAmount(amount) : amount} грн`
 }

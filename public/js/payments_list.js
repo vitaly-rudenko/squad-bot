@@ -34,7 +34,7 @@ function showPayments() {
                 <div class="to_user">${getUserNameById(payments[i].toUserId)}</div>
             </div>
             <div>
-                <div class="amount">${renderMoney(payments[i].amount)} грн</div>
+                <div class="amount">${renderAmount(payments[i].amount)} грн</div>
                 <div class="date">${renderDate(new Date(payments[i].createdAt))}</div>
             </div>
         </div>

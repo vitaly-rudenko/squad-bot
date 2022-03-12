@@ -2,11 +2,10 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
 export class PaymentTelegramNotifier {
-  constructor({ usersStorage, telegramNotifier, localize, logger }) {
+  constructor({ usersStorage, massTelegramNotificationFactory, localize }) {
     this._usersStorage = usersStorage
-    this._telegramNotifier = telegramNotifier
+    this._massTelegramNotificationFactory = massTelegramNotificationFactory
     this._localize = localize
-    this._logger = logger
   }
 
   async deleted(payment, { editorId }) {
@@ -15,6 +14,8 @@ export class PaymentTelegramNotifier {
     const editor = await this._usersStorage.findById(editorId)
     const sender = await this._usersStorage.findById(fromUserId)
     const receiver = await this._usersStorage.findById(toUserId)
+
+    const massNotification = this._massTelegramNotificationFactory.create()
 
     for (const user of [sender, receiver]) {
       if (!user.isComplete) continue
@@ -26,34 +27,34 @@ export class PaymentTelegramNotifier {
         senderUsername: escapeMd(sender.username),
         receiverName: escapeMd(receiver.name),
         receiverUsername: escapeMd(receiver.username),
-        amount: `${renderMoney(amount)} грн`,
+        amount: renderMoney(amount),
       })
   
-      try {
-        await this._telegramNotifier.notify(user.id, notification)
-      } catch (error) {
-        this._logger.error(error)
-      }
+      massNotification.add(user.id, notification)
     }
+
+    return massNotification
   }
 
   /** @param {import('../Payment').Payment} payment */
   async created(payment, { editorId }) {
-    await this._notify(payment, { editorId, isNew: true })
+    return this._stored(payment, { editorId, isNew: true })
   }
 
   /** @param {import('../Payment').Payment} payment */
   async updated(payment, { editorId }) {
-    await this._notify(payment, { editorId, isNew: false })
+    return this._stored(payment, { editorId, isNew: false })
   }
 
   /** @param {import('../Payment').Payment} payment */
-  async _notify(payment, { editorId, isNew }) {
+  async _stored(payment, { editorId, isNew }) {
     const { fromUserId, toUserId, amount } = payment
     
     const editor = await this._usersStorage.findById(editorId)
     const sender = await this._usersStorage.findById(fromUserId)
     const receiver = await this._usersStorage.findById(toUserId)
+
+    const massNotification = this._massTelegramNotificationFactory.create()
 
     for (const user of [sender, receiver]) {
       if (!user.isComplete) continue
@@ -65,7 +66,7 @@ export class PaymentTelegramNotifier {
         senderUsername: escapeMd(sender.username),
         receiverName: escapeMd(receiver.name),
         receiverUsername: escapeMd(receiver.username),
-        amount: `${renderMoney(amount)} грн`,
+        amount: renderMoney(amount),
         action: this._localize(
           user.locale,
           isNew
@@ -74,11 +75,9 @@ export class PaymentTelegramNotifier {
         ),
       })
   
-      try {
-        await this._telegramNotifier.notify(user.id, notification)
-      } catch (error) {
-        this._logger.error(error)
-      }
+      massNotification.add(user.id, notification)
     }
+
+    return massNotification
   }
 }

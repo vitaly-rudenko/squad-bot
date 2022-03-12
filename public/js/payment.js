@@ -39,7 +39,7 @@ function savePayment() {
         }
     })
     .then((response) => {
-        return response.json();
+        return response.json()
     })
     .then((data) => {
 		console.log('add new payment: ', data)

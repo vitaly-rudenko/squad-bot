@@ -36,21 +36,22 @@ export class ReceiptManager {
       )
     }
 
-    if (isNew) {
-      this._receiptNotifier.created(storedReceipt, { editorId })
-    } else {
-      this._receiptNotifier.updated(storedReceipt, { editorId })
-    }
+    const notification = isNew
+      ? await this._receiptNotifier.created(storedReceipt, { editorId })
+      : await this._receiptNotifier.updated(storedReceipt, { editorId })
+
+    await notification.send()
 
     return storedReceipt
   }
 
   async delete(receiptId, { editorId }) {
     const receipt = await this._receiptsStorage.findById(receiptId)
+    const notification = await this._receiptNotifier.deleted(receipt, { editorId })
 
     await this._debtsStorage.deleteByReceiptId(receiptId)
     await this._receiptsStorage.deleteById(receiptId)
 
-    await this._receiptNotifier.deleted(receipt, { editorId })
+    await notification.send()
   }
 }

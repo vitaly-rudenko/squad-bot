@@ -15,24 +15,22 @@ import { startCommand } from './app/users/flows/start.js'
 import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
-import { withUserId } from './app/users/middlewares/withUserId.js'
 import { withPhaseFactory } from './app/shared/middlewares/withPhaseFactory.js'
 import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
-import { withUserFactory } from './app/users/middlewares/withUserFactory.js'
+import { withUserId } from './app/users/middlewares/withUserId.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/withLocalization.js'
 import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
-import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
-import { TelegramLogger } from './app/shared/TelegramLogger.js'
+import { TelegramErrorLogger } from './app/shared/TelegramErrorLogger.js'
 import { PaymentTelegramNotifier } from './app/payments/notifications/PaymentTelegramNotifier.js'
 import { PaymentsPostgresStorage } from './app/payments/PaymentsPostgresStorage.js'
 import { Payment } from './app/payments/Payment.js'
@@ -45,6 +43,10 @@ import { DebtManager } from './app/debts/DebtManager.js'
 import { MembershipManager } from './app/chats/MembershipManager.js'
 import { MembershipCache } from './app/chats/MembershipCache.js'
 import { MembershipPostgresStorage } from './app/chats/MembershipPostgresStorage.js'
+import { withRegisteredUser } from './app/users/middlewares/withRegisteredUser.js'
+import { UserManager } from './app/users/UserManager.js'
+import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
+import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
   console.log('Using .env file')
@@ -68,22 +70,28 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
 
-  const logger = new TelegramLogger({ telegram: bot.telegram, debugChatId })
+  process.once('SIGINT', () => bot.stop('SIGINT'))
+  process.once('SIGTERM', () => bot.stop('SIGTERM'))
+
+  const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
   const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
+
+  const massTelegramNotificationFactory = new MassTelegramNotificationFactory({
+    telegramNotifier,
+    errorLogger,
+  })
 
   const paymentNotifier = new PaymentTelegramNotifier({
     localize,
-    telegramNotifier,
+    massTelegramNotificationFactory,
     usersStorage,
-    logger,
   })
 
   const receiptNotifier = new ReceiptTelegramNotifier({
     localize,
-    telegramNotifier,
+    massTelegramNotificationFactory,
     usersStorage,
     debtsStorage,
-    logger,
   })
 
   const receiptManager = new ReceiptManager({
@@ -108,6 +116,8 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     telegram: bot.telegram,
   })
 
+  const userManager = new UserManager({ usersStorage })
+
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
     { command: 'receipts', description: 'Додати або переглянути чеки' },
@@ -121,37 +131,20 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   ])
 
   process.on('unhandledRejection', (error) => {
-    logger.error(error)
+    errorLogger.log(error)
   })
 
   const userSessionManager = new UserSessionManager()
   const withPhase = withPhaseFactory(userSessionManager)
-  const withUser = withUserFactory(usersStorage)
 
-  bot.use(withUserId())
-  bot.use(withLocalization())
-
-  bot.use(async (context) => {
-    const userId = context.state.userId
-    const { first_name: name, username } = context.from
-
-    const user = new User({
-      id: userId,
-      name,
-      username: username || null,
-      isComplete: false,
-    })
-    
-    try {
-      await usersStorage.create(user)
-    } catch (error) {
-      if (error.code !== 'ALREADY_EXISTS') {
-        throw error
-      }
+  bot.use((context, next) => {
+    if (!context.from.is_bot) {
+      return next()
     }
   })
 
-  bot.use(withUser()) // TODO: cache to avoid too many requests against database
+  bot.use(withUserId())
+  bot.use(withLocalization({ userManager }))
 
   bot.use(withGroupChat(), async (context) => {
     await membershipManager.link(context.state.userId, context.chat.id)
@@ -166,15 +159,17 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   bot.command('version', versionCommand())
-  bot.command('start', withPrivateChat(), startCommand({ usersStorage }))
+  bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
+
+  bot.use(withRegisteredUser({ userManager, usersStorage }))
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
-  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtManager }))
-  bot.command('receipts', receiptsGetCommand())
-  bot.command('payments', paymentsGetCommand())
+  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
+  bot.command('receipts', receiptsGetCommand({ usersStorage }))
+  bot.command('payments', paymentsGetCommand({ usersStorage }))
 
   bot.command('addcard', cardsAddCommand({ userSessionManager }))
-  bot.action(/cards:add:bank:(.+)/, withPhase(Phases.addCard.bank, cardsAddBankAction({ userSessionManager })))
+  bot.action(/cards:add:bank:(.+)/, cardsAddBankAction({ userSessionManager }))
 
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
   bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))
@@ -185,14 +180,14 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   bot.on('message',
     async (context, next) => {
-      if ('text' in context.message && context.message.text.startsWith('/')) return;
-      await next();
+      if ('text' in context.message && context.message.text.startsWith('/')) return
+      return next()
     },
-    // Cards
+    // cards
     withPhase(Phases.addCard.number, cardsAddNumberMessage({ cardsStorage, userSessionManager }))
   )
 
-  bot.catch((error) => logger.error(error))
+  bot.catch((error) => errorLogger.log(error))
 
   const app = express()
   app.use(express.json())
@@ -250,7 +245,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   // --- API
 
-  const temporaryAuthTokenCache = new Cache(60_000)
+  const temporaryAuthTokenCache = new Cache(5 * 60_000)
 
   app.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']
@@ -339,7 +334,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   async function formatReceipt(receipt) {
     const debts = await debtsStorage.findByReceiptId(receipt.id)
-    
+
     return {
       id: receipt.id,
       createdAt: receipt.createdAt,
@@ -385,7 +380,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
 
     const storedReceipt = await receiptManager.store({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
-    
+
     res.json(await formatReceipt(storedReceipt))
   })
 
@@ -431,13 +426,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   app.get('/payments', async (req, res) => {
-    const fromUserId = req.query['from_user_id']
-    const toUserId = req.query['to_user_id']
-
-    const payments = fromUserId
-      ? await paymentsStorage.findByFromUserId(fromUserId)
-      : await paymentsStorage.findByToUserId(toUserId)
-
+    const payments = await paymentsStorage.findByParticipantUserId(req.user.id)
     res.json(payments)
   })
 
@@ -463,28 +452,34 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   await new Promise(resolve => app.listen(port, () => resolve()))
 
-  if (process.env.DISABLE_BOT !== 'true') {
+  try {
     await bot.telegram.deleteWebhook()
-  
+  } catch (error) {
+    console.log('Could not delete webhook:', error)
+  }
+
+  if (process.env.USE_WEBHOOKS === 'true') {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
-  
-    console.log('Setting webhook to', webhookUrl)
+
+    console.log('Setting webhook to:', { webhookUrl })
     while (true) {
       try {
         await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
-        break;
+        break
       } catch (error) {
-        console.log('Could not set webhook, retrying...', error.message)
+        console.log('Could not set webhook, retrying...', error)
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
-  
+
     console.log(
       `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
       await bot.telegram.getWebhookInfo()
     )
   } else {
-    console.log('Telegram bot is disabled by the environment variable')
+    await bot.launch()
+
+    console.log('Telegram bot is running')
   }
 })()
