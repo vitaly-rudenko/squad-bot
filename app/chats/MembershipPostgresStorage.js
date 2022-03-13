@@ -1,5 +1,3 @@
-import { Membership } from './Membership.js'
-
 export class MembershipPostgresStorage {
   /** @param {import('pg').Client} client */
   constructor(client) {
@@ -11,11 +9,11 @@ export class MembershipPostgresStorage {
       INSERT INTO memberships (user_id, chat_id, updated_at)
       VALUES ($1, $2, $3)
       ON CONFLICT (user_id, chat_id) DO UPDATE
-      SET updated_at = $3
+      SET updated_at = $3;
     `, [userId, chatId, new Date()])
   }
 
-  async deleteById(userId, chatId) {
+  async delete(userId, chatId) {
     await this._client.query(`
       DELETE FROM memberships
       WHERE user_id = $1
@@ -31,5 +29,19 @@ export class MembershipPostgresStorage {
     `, [chatId])
 
     return response.rows.map(row => row['user_id'])
+  }
+
+  async findOldestUserIds({ limit }) {
+    const response = await this._client.query(`
+      SELECT m.user_id, m.chat_id
+      FROM memberships m
+      ORDER BY m.updated_at ASC
+      LIMIT ${limit};
+    `, [])
+
+    return response.rows.map(row => ({
+      userId: row['user_id'],
+      chatId: row['chat_id'],
+    }))
   }
 }
