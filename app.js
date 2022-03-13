@@ -5,7 +5,6 @@ import pg from 'pg'
 import express from 'express'
 import ejs from 'ejs'
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
 import multer from 'multer'
 
 import { Cache } from './app/utils/Cache.js'
@@ -41,17 +40,14 @@ import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
 import { DebtManager } from './app/debts/DebtManager.js'
 import { MembershipManager } from './app/chats/MembershipManager.js'
-import { MembershipCache } from './app/chats/MembershipCache.js'
+import { MembershipInMemoryCache } from './app/chats/MembershipInMemoryCache.js'
 import { MembershipPostgresStorage } from './app/chats/MembershipPostgresStorage.js'
 import { withRegisteredUser } from './app/users/middlewares/withRegisteredUser.js'
 import { UserManager } from './app/users/UserManager.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
 import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
-
-if (process.env.USE_NATIVE_ENV !== 'true') {
-  console.log('Using .env file')
-  dotenv.config()
-}
+import { UserInMemoryCache } from './app/users/UserInMemoryCache.js'
+import { withChatId } from './app/shared/middlewares/withChatId.js'
 
 (async () => {
   const upload = multer()
@@ -111,12 +107,15 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   })
 
   const membershipManager = new MembershipManager({
-    membershipCache: new MembershipCache(),
+    membershipCache: new MembershipInMemoryCache(),
     membershipStorage: new MembershipPostgresStorage(pgClient),
     telegram: bot.telegram,
   })
 
-  const userManager = new UserManager({ usersStorage })
+  const userManager = new UserManager({
+    usersStorage,
+    userCache: new UserInMemoryCache(),
+  })
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
@@ -143,25 +142,35 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     }
   })
 
+  bot.command('version', versionCommand())
+
   bot.use(withUserId())
+  bot.use(withChatId())
   bot.use(withLocalization({ userManager }))
 
-  bot.use(withGroupChat(), async (context) => {
-    await membershipManager.link(context.state.userId, context.chat.id)
-  })
+  // TODO: enable this
+  // bot.on('chat_member', async (context) => {
+  //   const { userId, chatId } = context.state
 
-  bot.on('chat_member', async (context) => {
-    if (['member', 'administrator', 'creator'].includes(context.chatMember.new_chat_member.status)) {
-      await membershipManager.link(context.state.userId, context.chat.id)
-    } else {
-      await membershipManager.unlink(context.state.userId, context.chat.id)
-    }
-  })
+  //   if (context.chatMember.new_chat_member.user.is_bot) {
+  //     console.log(`Bot ${userId} is ignored in the chat: ${chatId}`)
+  //     return
+  //   }
 
-  bot.command('version', versionCommand())
+  //   if (['member', 'administrator', 'creator', 'restricted'].includes(context.chatMember.new_chat_member.status)) {
+  //     await membershipManager.link(userId, chatId)
+  //   } else {
+  //     await membershipManager.unlink(userId, chatId)
+  //   }
+  // })
+
   bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
 
   bot.use(withRegisteredUser({ userManager, usersStorage }))
+  bot.use(withGroupChat(), async (context) => {
+    const { userId, chatId } = context.state
+    await membershipManager.link(userId, chatId, { optimize: true })
+  })
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))

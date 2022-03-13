@@ -20,7 +20,7 @@ export const withRegisteredUser = ({ userManager, usersStorage }) => {
       if (!existingUser.isComplete && isPrivateChat) {
         await usersStorage.update(user)
         userManager.clearCache(userId)
-        
+
         console.log(`User is now complete: ${name} (${userId}, @${username})`)
       }
 

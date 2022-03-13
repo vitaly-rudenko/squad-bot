@@ -1,9 +1,7 @@
-import { Cache } from '../utils/Cache.js'
-
 export class UserManager {
-  constructor({ usersStorage }) {
+  constructor({ userCache, usersStorage }) {
     this._usersStorage = usersStorage
-    this._userCache = new Cache(60 * 60_000)
+    this._userCache = userCache
   }
 
   clearCache(userId) {
@@ -11,13 +9,14 @@ export class UserManager {
   }
 
   async getCachedUser(userId) {
-    if (this._userCache.has(userId)) {
-      return this._userCache.get(userId)
+    const cachedUser = await this._userCache.get(userId)
+    if (cachedUser) {
+      return cachedUser
     }
 
     const user = await this._usersStorage.findById(userId)
     if (user) {
-      this._userCache.set(userId, user)
+      this._userCache.cache(user)
     }
 
     return user
