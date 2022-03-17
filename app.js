@@ -14,16 +14,16 @@ import { startCommand } from './app/users/flows/start.js'
 import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
-import { withPhaseFactory } from './app/shared/middlewares/withPhaseFactory.js'
+import { withPhaseFactory } from './app/shared/middlewares/phase.js'
 import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
-import { withUserId } from './app/users/middlewares/withUserId.js'
+import { withUserId } from './app/users/middlewares/userId.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
-import { withLocalization } from './app/localization/middlewares/withLocalization.js'
-import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
+import { withLocalization } from './app/localization/middlewares/localization.js'
+import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
@@ -45,9 +45,9 @@ import { MembershipPostgresStorage } from './app/chats/MembershipPostgresStorage
 import { withRegisteredUser } from './app/users/middlewares/withRegisteredUser.js'
 import { UserManager } from './app/users/UserManager.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
-import { withGroupChat } from './app/shared/middlewares/withGroupChat.js'
+import { withGroupChat } from './app/shared/middlewares/groupChat.js'
 import { UserInMemoryCache } from './app/users/UserInMemoryCache.js'
-import { withChatId } from './app/shared/middlewares/withChatId.js'
+import { withChatId } from './app/shared/middlewares/chatId.js'
 
 (async () => {
   const upload = multer()
@@ -106,9 +106,10 @@ import { withChatId } from './app/shared/middlewares/withChatId.js'
     paymentsStorage,
   })
 
+  const membershipStorage = new MembershipPostgresStorage(pgClient)
   const membershipManager = new MembershipManager({
     membershipCache: new MembershipInMemoryCache(),
-    membershipStorage: new MembershipPostgresStorage(pgClient),
+    membershipStorage,
     telegram: bot.telegram,
   })
 
@@ -164,12 +165,14 @@ import { withChatId } from './app/shared/middlewares/withChatId.js'
   //   }
   // })
 
-  bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
+  bot.command('start', requirePrivateChat(), startCommand({ userManager }))
 
-  bot.use(withRegisteredUser({ userManager, usersStorage }))
-  bot.use(withGroupChat(), async (context) => {
+  bot.use(registerUser({ userManager }))
+  bot.use(withGroupChat(), async (context, next) => {
     const { userId, chatId } = context.state
     await membershipManager.link(userId, chatId, { optimize: true })
+
+    return next()
   })
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
@@ -181,7 +184,7 @@ import { withChatId } from './app/shared/middlewares/withChatId.js'
   bot.action(/cards:add:bank:(.+)/, cardsAddBankAction({ userSessionManager }))
 
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))
+  bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage, userSessionManager }))
 
   bot.command('cards', cardsGet({ usersStorage, userSessionManager }))
   bot.action(/cards:get:user-id:(.+)/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
@@ -326,6 +329,7 @@ import { withChatId } from './app/shared/middlewares/withChatId.js'
     try {
       const user = new User({ id, name, username })
       await usersStorage.create(user)
+
       res.json({
         id: user.id,
         name: user.name,
