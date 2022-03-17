@@ -48,6 +48,7 @@ import { MassTelegramNotificationFactory } from './app/shared/notifications/Mass
 import { withGroupChat } from './app/shared/middlewares/groupChat.js'
 import { UserInMemoryCache } from './app/users/UserInMemoryCache.js'
 import { withChatId } from './app/shared/middlewares/chatId.js'
+import { wrap } from './app/shared/middlewares/wrap.js'
 
 (async () => {
   const upload = multer()
@@ -61,6 +62,7 @@ import { withChatId } from './app/shared/middlewares/chatId.js'
   const paymentsStorage = new PaymentsPostgresStorage(pgClient)
   const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
 
+  const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
   const debugChatId = process.env.DEBUG_CHAT_ID
@@ -137,11 +139,12 @@ import { withChatId } from './app/shared/middlewares/chatId.js'
   const userSessionManager = new UserSessionManager()
   const withPhase = withPhaseFactory(userSessionManager)
 
-  bot.use((context, next) => {
-    if (!context.from.is_bot) {
+  if (!useWebhooks) {
+    bot.use((context, next) => {
+      console.log('Direct update received:', context.update)
       return next()
-    }
-  })
+    })
+  }
 
   bot.command('version', versionCommand())
 
@@ -168,12 +171,12 @@ import { withChatId } from './app/shared/middlewares/chatId.js'
   bot.command('start', requirePrivateChat(), startCommand({ userManager }))
 
   bot.use(registerUser({ userManager }))
-  bot.use(withGroupChat(), async (context, next) => {
+  bot.use(wrap(withGroupChat(), async (context, next) => {
     const { userId, chatId } = context.state
     await membershipManager.link(userId, chatId, { optimize: true })
 
     return next()
-  })
+  }))
 
   bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
@@ -196,7 +199,7 @@ import { withChatId } from './app/shared/middlewares/chatId.js'
       return next()
     },
     // cards
-    withPhase(Phases.addCard.number, cardsAddNumberMessage({ cardsStorage, userSessionManager }))
+    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage, userSessionManager }))
   )
 
   bot.catch((error) => errorLogger.log(error))
@@ -234,19 +237,19 @@ import { withChatId } from './app/shared/middlewares/chatId.js'
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
     if (!updateId) {
-      console.log('Invalid update:', req.body)
+      console.log('Invalid webhook update:', req.body)
       res.sendStatus(500)
       return
     }
 
     if (handledBotUpdates.has(updateId)) {
-      console.log('Update is already handled:', req.body)
+      console.log('Webhook update is already handled:', req.body)
       res.sendStatus(200)
       return
     }
 
     handledBotUpdates.set(updateId)
-    console.log('Update received:', req.body)
+    console.log('Webhook update received:', req.body)
 
     try {
       await bot.handleUpdate(req.body, res)
@@ -471,7 +474,7 @@ import { withChatId } from './app/shared/middlewares/chatId.js'
     console.log('Could not delete webhook:', error)
   }
 
-  if (process.env.USE_WEBHOOKS === 'true') {
+  if (useWebhooks) {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
 
