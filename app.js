@@ -159,21 +159,32 @@ import { wrap } from './app/shared/middlewares/wrap.js'
   bot.use(withChatId())
   bot.use(withLocalization({ userManager }))
 
-  // TODO: enable this
-  // bot.on('chat_member', async (context) => {
-  //   const { userId, chatId } = context.state
+  bot.on('new_chat_members', async (context) => {
+    const { chatId } = context.state
 
-  //   if (context.chatMember.new_chat_member.user.is_bot) {
-  //     console.log(`Bot ${userId} is ignored in the chat: ${chatId}`)
-  //     return
-  //   }
+    for (const chatMember of context.message.new_chat_members) {
+      if (!useTestMode && chatMember.is_bot) continue
 
-  //   if (['member', 'administrator', 'creator', 'restricted'].includes(context.chatMember.new_chat_member.status)) {
-  //     await membershipManager.link(userId, chatId)
-  //   } else {
-  //     await membershipManager.unlink(userId, chatId)
-  //   }
-  // })
+      const user = fromTelegramUser(chatMember)
+
+      try {
+        await userManager.softRegister(user)
+        await membershipManager.hardLink(user.id, chatId)
+      } catch (error) {
+        errorLogger.log(error, 'Could not register new chat member', { user })
+      }
+    }
+  })
+
+  bot.on('left_chat_member', async (context) => {
+    const user = context.message.left_chat_member
+    if (!useTestMode && user.is_bot) return
+
+    const { chatId } = context.state
+    const userId = String(user.id)
+
+    await membershipManager.unlink(userId, chatId)
+  })
 
   bot.command('start', requirePrivateChat(), startCommand({ userManager }))
 
