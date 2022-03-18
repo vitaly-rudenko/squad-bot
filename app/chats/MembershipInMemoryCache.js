@@ -5,13 +5,13 @@ export class MembershipInMemoryCache {
     this._cache = new Cache(60 * 60_000)
   }
 
-  cache(userId, chatId) {
+  async cache(userId, chatId) {
     const hasBeenLinked = this._cache.has(`${userId}_${chatId}`)
     this._cache.set(`${userId}_${chatId}`)
     return !hasBeenLinked
   }
 
-  delete(userId, chatId) {
+  async delete(userId, chatId) {
     this._cache.delete(`${userId}_${chatId}`)
   }
 }

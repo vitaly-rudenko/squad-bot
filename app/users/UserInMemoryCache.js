@@ -5,19 +5,15 @@ export class UserInMemoryCache {
     this._cache = new Cache(60 * 60_000)
   }
 
-  cache(user) {
+  async cache(user) {
     this._cache.set(user.id, user)
   }
 
-  get(userId) {
+  async get(userId) {
     return this._cache.get(userId)
   }
 
-  has(userId) {
-    return this._cache.has(userId)
-  }
-
-  delete(userId) {
+  async delete(userId) {
     this._cache.delete(userId)
   }
 }
