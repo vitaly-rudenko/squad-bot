@@ -4,12 +4,17 @@ export class TelegramErrorLogger {
     this._telegram = telegram
   }
 
-  log(error) {
-    console.error('Unexpected error:', error)
+  log(error, message = 'Unexpected error:', context = {}) {
+    console.error(`${message}:`, error, context)
 
     this._telegram.sendMessage(
       this._debugChatId,
-      `❗️Unexpected error at ${new Date().toISOString()}❗️\n${error.name}: ${error.message}\n\nStack:\n${error.stack}`
+      [
+        `❗️ ${new Date().toISOString().replace('T', ' ').replace('Z', '')} ${message}:`,
+        String(error.stack) || `${error.name}: ${error.message}`,
+        `Context:`,
+        `${JSON.stringify(context)}`
+      ].join('\n')
     ).catch(error => console.warn('Could not log to the debug chat:', error))
   }
 }
