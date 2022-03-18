@@ -42,12 +42,13 @@ import { DebtManager } from './app/debts/DebtManager.js'
 import { MembershipManager } from './app/chats/MembershipManager.js'
 import { MembershipInMemoryCache } from './app/chats/MembershipInMemoryCache.js'
 import { MembershipPostgresStorage } from './app/chats/MembershipPostgresStorage.js'
-import { withRegisteredUser } from './app/users/middlewares/withRegisteredUser.js'
+import { registerUser } from './app/users/middlewares/registeredUser.js'
 import { UserManager } from './app/users/UserManager.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
 import { withGroupChat } from './app/shared/middlewares/groupChat.js'
 import { UserInMemoryCache } from './app/users/UserInMemoryCache.js'
 import { withChatId } from './app/shared/middlewares/chatId.js'
+import { fromTelegramUser } from './app/users/fromTelegramUser.js'
 import { wrap } from './app/shared/middlewares/wrap.js'
 
 (async () => {
@@ -178,7 +179,7 @@ import { wrap } from './app/shared/middlewares/wrap.js'
     return next()
   }))
 
-  bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
+  bot.command('users', usersCommand({ usersStorage, membershipStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
   bot.command('receipts', receiptsGetCommand({ usersStorage }))
   bot.command('payments', paymentsGetCommand({ usersStorage }))
