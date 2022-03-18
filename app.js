@@ -180,7 +180,7 @@ import { wrap } from './app/shared/middlewares/wrap.js'
   bot.use(registerUser({ userManager }))
   bot.use(wrap(withGroupChat(), async (context, next) => {
     const { userId, chatId } = context.state
-    await membershipManager.link(userId, chatId, { optimize: true })
+    await membershipManager.softLink(userId, chatId)
 
     return next()
   }))

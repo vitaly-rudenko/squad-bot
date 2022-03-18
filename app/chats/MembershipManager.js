@@ -5,13 +5,20 @@ export class MembershipManager {
     this._membershipStorage = membershipStorage
   }
 
-  async link(userId, chatId, { optimize = false } = {}) {
-    const isNew = await this._membershipCache.cache(userId, chatId)
+  async hardLink(userId, chatId) {
+    await this._membershipCache.cache(userId, chatId)
+    await this._storeLink(userId, chatId)
+  }
 
-    if (!optimize || isNew) {
-      await this._membershipStorage.store(userId, chatId)
-      console.log(`User ${userId} is now linked to the chat: ${chatId}`)
+  async softLink(userId, chatId) {
+    if (await this._membershipCache.cache(userId, chatId)) {
+      await this._storeLink(userId, chatId)
     }
+  }
+
+  async _storeLink(userId, chatId) {
+    await this._membershipStorage.store(userId, chatId)
+    console.log(`User ${userId} is now linked to the chat: ${chatId}`)
   }
 
   async unlink(userId, chatId) {
@@ -23,7 +30,7 @@ export class MembershipManager {
 
   async refreshLink(userId, chatId) {
     if (await this.isChatMember(userId, chatId)) {
-      await this.link(userId, chatId)
+      await this.hardLink(userId, chatId)
     } else {
       await this.unlink(userId, chatId)
     }
