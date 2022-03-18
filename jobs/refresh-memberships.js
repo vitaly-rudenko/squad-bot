@@ -1,4 +1,4 @@
-import './env.js'
+import '../env.js'
 
 import pg from 'pg'
 import { Telegraf } from 'telegraf'
@@ -14,6 +14,9 @@ import { TelegramErrorLogger } from '../app/shared/TelegramErrorLogger.js'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
   const bot = new Telegraf(telegramBotToken)
 
+  const debugChatId = process.env.DEBUG_CHAT_ID
+  const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
+
   const membershipStorage = new MembershipPostgresStorage(pgClient)
   const membershipManager = new MembershipManager({
     telegram: bot.telegram,
@@ -21,10 +24,8 @@ import { TelegramErrorLogger } from '../app/shared/TelegramErrorLogger.js'
     membershipStorage,
   })
 
-  const memberships = await membershipStorage.findOldestUserIds({ limit: 10 })
-
-  const debugChatId = process.env.DEBUG_CHAT_ID
-  const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
+  const memberships = await membershipStorage.findOldest({ limit: 10 })
+  console.log(`Found ${memberships.length} memberships to refresh`)
 
   for (const { userId, chatId } of memberships) {
     console.log(`Refreshing membership of user ${userId} in chat: ${chatId}`)
@@ -35,6 +36,7 @@ import { TelegramErrorLogger } from '../app/shared/TelegramErrorLogger.js'
       errorLogger.log(error)
     }
   }
-
+})().then(() => {
   console.log('Done!')
-})()
+  process.exit(0)
+})

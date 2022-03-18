@@ -31,7 +31,7 @@ export class MembershipPostgresStorage {
     return response.rows.map(row => row['user_id'])
   }
 
-  async findOldestUserIds({ limit }) {
+  async findOldest({ limit }) {
     const response = await this._client.query(`
       SELECT m.user_id, m.chat_id
       FROM memberships m
