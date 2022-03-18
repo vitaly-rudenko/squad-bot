@@ -63,6 +63,7 @@ import { wrap } from './app/shared/middlewares/wrap.js'
   const paymentsStorage = new PaymentsPostgresStorage(pgClient)
   const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
 
+  const useTestMode = process.env.USE_TEST_MODE === 'true'
   const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
@@ -146,6 +147,11 @@ import { wrap } from './app/shared/middlewares/wrap.js'
       return next()
     })
   }
+
+  bot.use((context, next) => {
+    if (!useTestMode && context.from.is_bot) return
+    return next()
+  })
 
   bot.command('version', versionCommand())
 
