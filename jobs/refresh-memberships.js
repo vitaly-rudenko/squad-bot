@@ -33,7 +33,7 @@ import { TelegramErrorLogger } from '../app/shared/TelegramErrorLogger.js'
     try {
       await membershipManager.refreshLink(userId, chatId)
     } catch (error) {
-      errorLogger.log(error)
+      errorLogger.log(error, 'Could not refresh membership link', { userId, chatId })
     }
   }
 })().then(() => {

@@ -14,7 +14,7 @@ export class MassTelegramNotification {
       try {
         await this._telegramNotifier.notify(userId, message)
       } catch (error) {
-        this._errorLogger.log(error)
+        this._errorLogger.log(error, 'Could not send notification', { userId, message })
       }
     }
   }
