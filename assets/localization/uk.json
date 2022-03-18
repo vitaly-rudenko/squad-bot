@@ -7,8 +7,12 @@
       "incompleteUpdated": "📝 Твої дані були оновлені"
     },
     "users": {
-      "users": [
+      "allUsers": [
         "👥 Користувачі:",
+        "{users}"
+      ],
+      "chatUsers": [
+        "👥 Користувачі у цьому чаті:",
         "{users}"
       ],
       "user": "\\- *[{name}]({profileUrl})* \\(@{username}, id: `{id}`, {completenessStatus}\\)",
