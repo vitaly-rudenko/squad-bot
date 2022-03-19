@@ -54,6 +54,10 @@ import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 
 (async () => {
+  if (useTestMode) {
+    console.warn('⚠️  Test mode is enabled')
+  }
+
   const upload = multer()
 
   const redis = new Redis(process.env.REDIS_URL)
@@ -116,14 +120,14 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
   const membershipManager = new MembershipManager({
-    membershipCache: new MembershipCache(createRedisCache('memberships', 60 * 60_000)),
+    membershipCache: new MembershipCache(createRedisCache('memberships', useTestMode ? 60_000 : 60 * 60_000)),
     membershipStorage,
     telegram: bot.telegram,
   })
 
   const userManager = new UserManager({
     usersStorage,
-    userCache: new UserCache(createRedisCache('users', 60 * 60_000)),
+    userCache: new UserCache(createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)),
   })
 
   bot.telegram.setMyCommands([
@@ -143,8 +147,8 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
   })
 
   const userSessionManager = new UserSessionManager({
-    contextsCache: createRedisCache('contexts', 30 * 60_000),
-    phasesCache: createRedisCache('phases', 30 * 60_000),
+    contextsCache: createRedisCache('contexts', 5 * 60_000),
+    phasesCache: createRedisCache('phases', 5 * 60_000),
   })
   const withPhase = withPhaseFactory(userSessionManager)
 
@@ -283,7 +287,7 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 
   // --- API
 
-  const temporaryAuthTokenCache = createRedisCache('tokens', 5 * 60_000)
+  const temporaryAuthTokenCache = createRedisCache('tokens', useTestMode ? 60_000 : 5 * 60_000)
 
   app.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']
