@@ -56,7 +56,7 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 (async () => {
   const upload = multer()
 
-  const redis = new Redis(Number(process.env.REDIS_PORT), process.env.REDIS_HOST)
+  const redis = new Redis(process.env.REDIS_URL)
   const createRedisCache = createRedisCacheFactory(redis)
 
   const pgClient = new pg.Client(process.env.DATABASE_URL)

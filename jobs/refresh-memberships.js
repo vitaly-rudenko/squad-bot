@@ -20,7 +20,7 @@ import { createRedisCacheFactory } from '../app/utils/createRedisCacheFactory.js
   const debugChatId = process.env.DEBUG_CHAT_ID
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
 
-  const redis = new Redis(Number(process.env.REDIS_PORT), process.env.REDIS_HOST)
+  const redis = new Redis(process.env.REDIS_URL)
   const createRedisCache = createRedisCacheFactory(redis)
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
