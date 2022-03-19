@@ -8,8 +8,13 @@ services:
       # USE_TEST_MODE: "true"
     command: |
       ./wait-for-it.sh postgres:5432 -t 120 --
+      ./wait-for-it.sh redis:6379 -t 120 --
       npm run start:dev
 
   postgres:
     ports:
       - 5432:5432
+
+  redis:
+    ports:
+      - 6379:6379

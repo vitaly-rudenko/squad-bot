@@ -8,7 +8,6 @@ import jwt from 'jsonwebtoken'
 import multer from 'multer'
 import Redis from 'ioredis'
 
-import { InMemoryCache } from './app/utils/InMemoryCache.js'
 import { versionCommand } from './app/shared/flows/version.js'
 
 import { startCommand } from './app/users/flows/start.js'
@@ -41,27 +40,24 @@ import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
 import { DebtManager } from './app/debts/DebtManager.js'
 import { MembershipManager } from './app/chats/MembershipManager.js'
-import { MembershipInMemoryCache } from './app/chats/MembershipInMemoryCache.js'
+import { MembershipCache } from './app/chats/MembershipCache.js'
 import { MembershipPostgresStorage } from './app/chats/MembershipPostgresStorage.js'
 import { registerUser } from './app/users/middlewares/registeredUser.js'
 import { UserManager } from './app/users/UserManager.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
 import { withGroupChat } from './app/shared/middlewares/groupChat.js'
-import { UserInMemoryCache } from './app/users/UserInMemoryCache.js'
+import { UserCache } from './app/users/UserCache.js'
 import { withChatId } from './app/shared/middlewares/chatId.js'
 import { fromTelegramUser } from './app/users/fromTelegramUser.js'
 import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
-import { RedisCache } from './app/utils/RedisCache.js'
+import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 
 (async () => {
   const upload = multer()
 
-  const redis = new Redis()
-  const redisCache = new RedisCache(redis, 'test', 10_000)
-
-  console.log(await redisCache.has('key'))
-  console.log(await redisCache.set('key', 'value'))
+  const redis = new Redis(Number(process.env.REDIS_PORT), process.env.REDIS_HOST)
+  const createRedisCache = createRedisCacheFactory(redis)
 
   const pgClient = new pg.Client(process.env.DATABASE_URL)
   await pgClient.connect()
@@ -120,14 +116,14 @@ import { RedisCache } from './app/utils/RedisCache.js'
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
   const membershipManager = new MembershipManager({
-    membershipCache: new MembershipInMemoryCache(),
+    membershipCache: new MembershipCache(createRedisCache('memberships', 60 * 60_000)),
     membershipStorage,
     telegram: bot.telegram,
   })
 
   const userManager = new UserManager({
     usersStorage,
-    userCache: new UserInMemoryCache(),
+    userCache: new UserCache(createRedisCache('users', 60 * 60_000)),
   })
 
   bot.telegram.setMyCommands([
@@ -146,7 +142,10 @@ import { RedisCache } from './app/utils/RedisCache.js'
     errorLogger.log(error)
   })
 
-  const userSessionManager = new UserSessionManager()
+  const userSessionManager = new UserSessionManager({
+    contextsCache: createRedisCache('contexts', 30 * 60_000),
+    phasesCache: createRedisCache('phases', 30 * 60_000),
+  })
   const withPhase = withPhaseFactory(userSessionManager)
 
   if (!useWebhooks) {
@@ -258,7 +257,7 @@ import { RedisCache } from './app/utils/RedisCache.js'
 
   // --- Telegram
 
-  const handledBotUpdates = new InMemoryCache(60_000)
+  const handledBotUpdates = createRedisCache('updates', 60_000)
 
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
@@ -284,7 +283,7 @@ import { RedisCache } from './app/utils/RedisCache.js'
 
   // --- API
 
-  const temporaryAuthTokenCache = new InMemoryCache(5 * 60_000)
+  const temporaryAuthTokenCache = createRedisCache('tokens', 5 * 60_000)
 
   app.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']

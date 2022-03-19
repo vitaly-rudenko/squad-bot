@@ -1,8 +1,6 @@
-import { InMemoryCache } from '../utils/InMemoryCache.js'
-
-export class MembershipInMemoryCache {
-  constructor() {
-    this._cache = new InMemoryCache(60 * 60_000)
+export class MembershipCache {
+  constructor(cache) {
+    this._cache = cache
   }
 
   async cache(userId, chatId) {

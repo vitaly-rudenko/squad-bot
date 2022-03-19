@@ -1,11 +1,14 @@
 import '../env.js'
 
 import pg from 'pg'
+import Redis from 'ioredis'
+
 import { Telegraf } from 'telegraf'
 import { MembershipPostgresStorage } from '../app/chats/MembershipPostgresStorage.js'
 import { MembershipManager } from '../app/chats/MembershipManager.js'
-import { MembershipInMemoryCache } from '../app/chats/MembershipInMemoryCache.js'
+import { MembershipCache } from '../app/chats/MembershipCache.js'
 import { TelegramErrorLogger } from '../app/shared/TelegramErrorLogger.js'
+import { createRedisCacheFactory } from '../app/utils/createRedisCacheFactory.js'
 
 (async () => {
   const pgClient = new pg.Client(process.env.DATABASE_URL)
@@ -17,10 +20,13 @@ import { TelegramErrorLogger } from '../app/shared/TelegramErrorLogger.js'
   const debugChatId = process.env.DEBUG_CHAT_ID
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
 
+  const redis = new Redis(Number(process.env.REDIS_PORT), process.env.REDIS_HOST)
+  const createRedisCache = createRedisCacheFactory(redis)
+
   const membershipStorage = new MembershipPostgresStorage(pgClient)
   const membershipManager = new MembershipManager({
     telegram: bot.telegram,
-    membershipCache: new MembershipInMemoryCache(),
+    membershipCache: new MembershipCache(createRedisCache('memberships', 60 * 60_000)),
     membershipStorage,
   })
 

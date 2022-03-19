@@ -1,9 +1,7 @@
-import { InMemoryCache } from '../utils/InMemoryCache.js'
-
 export class UserSessionManager {
-  constructor() {
-    this._phases = new InMemoryCache(30 * 60_000)
-    this._contexts = new InMemoryCache(30 * 60_000)
+  constructor({ phasesCache, contextsCache }) {
+    this._phases = phasesCache
+    this._contexts = contextsCache
   }
 
   async setPhase(userId, phase) {
