@@ -1,4 +1,4 @@
-export class Cache {
+export class InMemoryCache {
   constructor(ttlMs) {
     this._ttlMs = ttlMs
     this._data = new Map()
@@ -17,23 +17,21 @@ export class Cache {
   }
 
   /** @param {any} value */
-  set(key, value = true) {
+  async set(key, value = true) {
+    const isNew = !this._data.has(key)
     this._data.set(key, [Date.now(), value])
+    return isNew
   }
 
-  get(key) {
-    if (!this._data.has(key)) {
-      return undefined
-    }
-
-    return this._data.get(key)[1]
+  async get(key) {
+    return this._data.get(key)?.[1]
   }
 
-  has(key) {
+  async has(key) {
     return this._data.has(key)
   }
 
-  delete(key) {
+  async delete(key) {
     this._data.delete(key)
   }
 }

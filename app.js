@@ -6,8 +6,9 @@ import express from 'express'
 import ejs from 'ejs'
 import jwt from 'jsonwebtoken'
 import multer from 'multer'
+import Redis from 'ioredis'
 
-import { Cache } from './app/utils/Cache.js'
+import { InMemoryCache } from './app/utils/InMemoryCache.js'
 import { versionCommand } from './app/shared/flows/version.js'
 
 import { startCommand } from './app/users/flows/start.js'
@@ -50,9 +51,17 @@ import { UserInMemoryCache } from './app/users/UserInMemoryCache.js'
 import { withChatId } from './app/shared/middlewares/chatId.js'
 import { fromTelegramUser } from './app/users/fromTelegramUser.js'
 import { wrap } from './app/shared/middlewares/wrap.js'
+import { useTestMode } from './env.js'
+import { RedisCache } from './app/utils/RedisCache.js'
 
 (async () => {
   const upload = multer()
+
+  const redis = new Redis()
+  const redisCache = new RedisCache(redis, 'test', 10_000)
+
+  console.log(await redisCache.has('key'))
+  console.log(await redisCache.set('key', 'value'))
 
   const pgClient = new pg.Client(process.env.DATABASE_URL)
   await pgClient.connect()
@@ -63,7 +72,6 @@ import { wrap } from './app/shared/middlewares/wrap.js'
   const paymentsStorage = new PaymentsPostgresStorage(pgClient)
   const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
 
-  const useTestMode = process.env.USE_TEST_MODE === 'true'
   const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
@@ -201,7 +209,7 @@ import { wrap } from './app/shared/middlewares/wrap.js'
   bot.command('receipts', receiptsGetCommand({ usersStorage }))
   bot.command('payments', paymentsGetCommand({ usersStorage }))
 
-  bot.command('addcard', cardsAddCommand({ userSessionManager }))
+  bot.command('addcard', cardsAddCommand())
   bot.action(/cards:add:bank:(.+)/, cardsAddBankAction({ userSessionManager }))
 
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
@@ -250,7 +258,7 @@ import { wrap } from './app/shared/middlewares/wrap.js'
 
   // --- Telegram
 
-  const handledBotUpdates = new Cache(60_000)
+  const handledBotUpdates = new InMemoryCache(60_000)
 
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
@@ -260,16 +268,14 @@ import { wrap } from './app/shared/middlewares/wrap.js'
       return
     }
 
-    if (handledBotUpdates.has(updateId)) {
+    if (!(await handledBotUpdates.set(updateId))) {
       console.log('Webhook update is already handled:', req.body)
       res.sendStatus(200)
       return
     }
 
-    handledBotUpdates.set(updateId)
-    console.log('Webhook update received:', req.body)
-
     try {
+      console.log('Webhook update received:', req.body)
       await bot.handleUpdate(req.body, res)
     } catch (error) {
       next(error)
@@ -278,11 +284,11 @@ import { wrap } from './app/shared/middlewares/wrap.js'
 
   // --- API
 
-  const temporaryAuthTokenCache = new Cache(5 * 60_000)
+  const temporaryAuthTokenCache = new InMemoryCache(5 * 60_000)
 
   app.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']
-    if (temporaryAuthTokenCache.has(temporaryAuthToken)) {
+    if (!(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
       res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
       return
     }
@@ -311,7 +317,6 @@ import { wrap } from './app/shared/middlewares/wrap.js'
         username: user.username,
       }
     }, process.env.TOKEN_SECRET))
-    temporaryAuthTokenCache.set(temporaryAuthToken)
   })
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {

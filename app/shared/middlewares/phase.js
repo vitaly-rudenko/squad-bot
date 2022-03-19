@@ -6,7 +6,7 @@ export const withPhaseFactory = (userSessionManager) => {
     return async (context, next) => {
       const { userId } = context.state
 
-      if (userSessionManager.getPhase(userId) === phase) {
+      if ((await userSessionManager.getPhase(userId)) === phase) {
         return next()
       }
     }

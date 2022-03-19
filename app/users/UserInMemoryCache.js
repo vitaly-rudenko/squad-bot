@@ -1,19 +1,19 @@
-import { Cache } from '../utils/Cache.js'
+import { InMemoryCache } from '../utils/InMemoryCache.js'
 
 export class UserInMemoryCache {
   constructor() {
-    this._cache = new Cache(60 * 60_000)
+    this._cache = new InMemoryCache(60 * 60_000)
   }
 
   async cache(user) {
-    this._cache.set(user.id, user)
+    return await this._cache.set(user.id, user)
   }
 
   async get(userId) {
-    return this._cache.get(userId)
+    return await this._cache.get(userId)
   }
 
   async delete(userId) {
-    this._cache.delete(userId)
+    await this._cache.delete(userId)
   }
 }
