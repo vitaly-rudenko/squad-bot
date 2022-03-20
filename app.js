@@ -52,10 +52,11 @@ import { fromTelegramUser } from './app/users/fromTelegramUser.js'
 import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
+import { logger } from './logger.js'
 
 (async () => {
   if (useTestMode) {
-    console.warn('⚠️  Test mode is enabled')
+    logger.warn('Test mode is enabled')
   }
 
   const upload = multer()
@@ -65,6 +66,14 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 
   const pgClient = new pg.Client(process.env.DATABASE_URL)
   await pgClient.connect()
+
+  if (process.env.LOG_DATABASE_QUERIES === 'true') {
+    const query = pgClient.query.bind(pgClient)
+    pgClient.query = (...args) => {
+      logger.debug('Database query:', ...args)
+      return query(...args)
+    }
+  }
 
   const usersStorage = new UsersPostgresStorage(pgClient)
   const cardsStorage = new CardsPostgresStorage(pgClient)
@@ -154,7 +163,7 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 
   if (!useWebhooks) {
     bot.use((context, next) => {
-      console.log('Direct update received:', context.update)
+      logger.debug('Direct update received:', context.update)
       return next()
     })
   }
@@ -266,19 +275,19 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
     if (!updateId) {
-      console.log('Invalid webhook update:', req.body)
+      logger.warn('Invalid webhook update:', req.body)
       res.sendStatus(500)
       return
     }
 
     if (!(await handledBotUpdates.set(updateId))) {
-      console.log('Webhook update is already handled:', req.body)
+      logger.debug('Webhook update is already handled:', req.body)
       res.sendStatus(200)
       return
     }
 
     try {
-      console.log('Webhook update received:', req.body)
+      logger.debug('Webhook update received:', req.body)
       await bot.handleUpdate(req.body, res)
     } catch (error) {
       next(error)
@@ -497,31 +506,31 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
   try {
     await bot.telegram.deleteWebhook()
   } catch (error) {
-    console.log('Could not delete webhook:', error)
+    logger.warn('Could not delete webhook:', error)
   }
 
   if (useWebhooks) {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-    console.log('Setting webhook to:', { webhookUrl })
+    logger.info('Setting webhook to:', { webhookUrl })
     while (true) {
       try {
         await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
         break
       } catch (error) {
-        console.log('Could not set webhook, retrying...', error)
+        logger.warn('Could not set webhook, retrying...', error)
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
 
-    console.log(
+    logger.info(
       `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
       await bot.telegram.getWebhookInfo()
     )
   } else {
     await bot.launch()
 
-    console.log('Telegram bot is running')
+    logger.info('Telegram bot is running')
   }
 })()

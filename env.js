@@ -1,7 +1,8 @@
 import dotenv from 'dotenv'
+import { logger } from './logger.js'
 
 if (process.env.USE_NATIVE_ENV !== 'true') {
-  console.log('Using .env file')
+  logger.warn('Using .env file')
   dotenv.config()
 }
 

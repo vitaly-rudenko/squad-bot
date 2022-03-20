@@ -9,6 +9,7 @@ import { MembershipManager } from '../app/chats/MembershipManager.js'
 import { MembershipCache } from '../app/chats/MembershipCache.js'
 import { TelegramErrorLogger } from '../app/shared/TelegramErrorLogger.js'
 import { createRedisCacheFactory } from '../app/utils/createRedisCacheFactory.js'
+import { logger } from '../logger.js'
 
 (async () => {
   const pgClient = new pg.Client(process.env.DATABASE_URL)
@@ -31,10 +32,10 @@ import { createRedisCacheFactory } from '../app/utils/createRedisCacheFactory.js
   })
 
   const memberships = await membershipStorage.findOldest({ limit: 10 })
-  console.log(`Found ${memberships.length} memberships to refresh`)
+  logger.info(`Found ${memberships.length} memberships to refresh`)
 
   for (const { userId, chatId } of memberships) {
-    console.log(`Refreshing membership of user ${userId} in chat: ${chatId}`)
+    logger.info(`Refreshing membership of user ${userId} in chat: ${chatId}`)
 
     try {
       await membershipManager.refreshLink(userId, chatId)
@@ -43,6 +44,6 @@ import { createRedisCacheFactory } from '../app/utils/createRedisCacheFactory.js
     }
   }
 })().then(() => {
-  console.log('Done!')
+  logger.info('Done!')
   process.exit(0)
 })

@@ -1,3 +1,5 @@
+import { logger } from '../../logger.js'
+
 export class MembershipManager {
   constructor({ telegram, membershipCache, membershipStorage }) {
     this._telegram = telegram
@@ -18,14 +20,13 @@ export class MembershipManager {
 
   async _storeLink(userId, chatId) {
     await this._membershipStorage.store(userId, chatId)
-    console.log(`User ${userId} is now linked to the chat: ${chatId}`)
+    logger.debug(`User ${userId} is now linked to the chat: ${chatId}`)
   }
 
   async unlink(userId, chatId) {
     await this._membershipCache.delete(userId, chatId)
     await this._membershipStorage.delete(userId, chatId)
-
-    console.log(`User ${userId} is now unlinked from the chat: ${chatId}`)
+    logger.debug(`User ${userId} is now unlinked from the chat: ${chatId}`)
   }
 
   async refreshLink(userId, chatId) {

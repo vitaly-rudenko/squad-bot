@@ -1,3 +1,5 @@
+import { logger } from '../../logger.js'
+
 export class UserManager {
   constructor({ userCache, usersStorage }) {
     this._usersStorage = usersStorage
@@ -13,14 +15,14 @@ export class UserManager {
         await this._usersStorage.update(user)
         await this.clearCache(user.id)
 
-        console.log(`User is now complete: ${user.name} (${user.id}, @${user.username})`)
+        logger.debug(`User is now complete: ${user.name} (${user.id}, @${user.username})`)
       }
     } else {
       try {
         await this._usersStorage.create(user)
         await this.clearCache(user.id)
 
-        console.log(`User has been registered: ${user.name} (${user.id}, @${user.username}, complete: ${user.isComplete})`)
+        logger.debug(`User has been registered: ${user.name} (${user.id}, @${user.username}, complete: ${user.isComplete})`)
       } catch (error) {
         if (error.code !== 'ALREADY_EXISTS') {
           throw error
