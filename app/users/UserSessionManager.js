@@ -1,29 +1,27 @@
-import { Cache } from '../utils/Cache.js'
-
 export class UserSessionManager {
-  constructor() {
-    this._phases = new Cache(30 * 60_000)
-    this._contexts = new Cache(30 * 60_000)
+  constructor({ phasesCache, contextsCache }) {
+    this._phases = phasesCache
+    this._contexts = contextsCache
   }
 
-  setPhase(userId, phase) {
-    this._phases.set(userId, { phase })
+  async setPhase(userId, phase) {
+    await this._phases.set(userId, phase)
   }
 
-  getPhase(userId) {
-    return this._phases.get(userId)?.phase ?? null
+  async getPhase(userId) {
+    return await this._phases.get(userId)
   }
 
-  context(userId) {
-    if (!this._contexts.get(userId)) {
-      this._contexts.set(userId, {})
-    }
-
-    return this._contexts.get(userId)
+  async getContext(userId) {
+    return await this._contexts.get(userId)
   }
 
-  clear(userId) {
-    this._phases.delete(userId)
-    this._contexts.delete(userId)
+  async setContext(userId, context) {
+    await this._contexts.set(userId, context)
+  }
+
+  async clear(userId) {
+    await this._phases.delete(userId)
+    await this._contexts.delete(userId)
   }
 }

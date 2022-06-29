@@ -1,23 +1,68 @@
-import { Cache } from '../utils/Cache.js'
+import { logger } from '../../logger.js'
 
 export class UserManager {
-  constructor({ usersStorage }) {
+  constructor({ userCache, usersStorage }) {
     this._usersStorage = usersStorage
-    this._userCache = new Cache(60 * 60_000)
+    this._userCache = userCache
   }
 
-  clearCache(userId) {
-    this._userCache.delete(userId)
+  /** @param {import('./User').User} user */
+  async softRegister(user) {
+    const existingUser = await this.getCachedUser(user.id)
+
+    if (existingUser) {
+      if (!existingUser.isComplete && user.isComplete) {
+        await this._usersStorage.update(user)
+        await this.clearCache(user.id)
+
+        logger.debug(`User is now complete: ${user.name} (${user.id}, @${user.username})`)
+      }
+    } else {
+      try {
+        await this._usersStorage.create(user)
+        await this.clearCache(user.id)
+
+        logger.debug(`User has been registered: ${user.name} (${user.id}, @${user.username}, complete: ${user.isComplete})`)
+      } catch (error) {
+        if (error.code !== 'ALREADY_EXISTS') {
+          throw error
+        }
+      }
+    }
+  }
+
+  /** @param {import('./User').User} user */
+  async hardRegister(user) {
+    let isNew = false
+
+    try {
+      await this._usersStorage.create(user)
+      isNew = true
+    } catch (error) {
+      if (error.code === 'ALREADY_EXISTS') {
+        await this._usersStorage.update(user)
+      } else {
+        throw error
+      }
+    }
+
+    await this.clearCache(user.id)
+    return isNew
+  }
+
+  async clearCache(userId) {
+    await this._userCache.delete(userId)
   }
 
   async getCachedUser(userId) {
-    if (this._userCache.has(userId)) {
-      return this._userCache.get(userId)
+    const cachedUser = await this._userCache.get(userId)
+    if (cachedUser) {
+      return cachedUser
     }
 
     const user = await this._usersStorage.findById(userId)
     if (user) {
-      this._userCache.set(userId, user)
+      await this._userCache.cache(user)
     }
 
     return user

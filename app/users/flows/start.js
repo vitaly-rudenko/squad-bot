@@ -1,29 +1,13 @@
 import { User } from '../../users/User.js'
+import { fromTelegramUser } from '../fromTelegramUser.js'
 
-export function startCommand({ userManager, usersStorage }) {
+export function startCommand({ userManager }) {
   return async (context) => {
-    const { userId, localize } = context.state
-    const { first_name: name, username } = context.from
+    const { localize } = context.state
 
-    const user = new User({
-      id: userId,
-      name,
-      username: username || null,
-      isComplete: true,
-    })
+    const user = fromTelegramUser(context.from, { isPrivateChat: true })
+    const isNew = await userManager.hardRegister(user)
 
-    try {
-      await usersStorage.create(user)
-      await context.reply(localize('command.start.signedUp'), { parse_mode: 'MarkdownV2' })
-    } catch (error) {
-      if (error.code === 'ALREADY_EXISTS') {
-        await usersStorage.update(user)
-        await context.reply(localize('command.start.updated'), { parse_mode: 'MarkdownV2' })
-      } else {
-        throw error
-      }
-    }
-
-    userManager.clearCache(userId)
+    await context.reply(localize(isNew ? 'command.start.signedUp' : 'command.start.updated'), { parse_mode: 'MarkdownV2' })
   }
 }

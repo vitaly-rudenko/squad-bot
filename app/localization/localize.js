@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { logger } from '../../logger.js'
 
 const cachedLocalizations = {}
 function loadLocalization(name) {
@@ -22,7 +23,7 @@ export function get(messageKey, locale) {
   }
 
   if (!result) {
-    console.log(`Could not find localization key for "${messageKey}"`)
+    logger.warn(`Could not find localization key for "${messageKey}"`)
   }
 
   return result ?? messageKey

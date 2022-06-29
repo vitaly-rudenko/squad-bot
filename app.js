@@ -5,26 +5,25 @@ import pg from 'pg'
 import express from 'express'
 import ejs from 'ejs'
 import jwt from 'jsonwebtoken'
-import dotenv from 'dotenv'
 import multer from 'multer'
+import Redis from 'ioredis'
 
-import { Cache } from './app/utils/Cache.js'
 import { versionCommand } from './app/shared/flows/version.js'
 
 import { startCommand } from './app/users/flows/start.js'
 import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
-import { withPhaseFactory } from './app/shared/middlewares/withPhaseFactory.js'
+import { withPhaseFactory } from './app/shared/middlewares/phase.js'
 import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
-import { withUserId } from './app/users/middlewares/withUserId.js'
+import { withUserId } from './app/users/middlewares/userId.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
-import { withLocalization } from './app/localization/middlewares/withLocalization.js'
-import { withPrivateChat } from './app/shared/middlewares/withPrivateChat.js'
+import { withLocalization } from './app/localization/middlewares/localization.js'
+import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
@@ -40,20 +39,41 @@ import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
 import { DebtManager } from './app/debts/DebtManager.js'
-import { withRegisteredUser } from './app/users/middlewares/withRegisteredUser.js'
+import { MembershipManager } from './app/chats/MembershipManager.js'
+import { MembershipCache } from './app/chats/MembershipCache.js'
+import { MembershipPostgresStorage } from './app/chats/MembershipPostgresStorage.js'
+import { registerUser } from './app/users/middlewares/registeredUser.js'
 import { UserManager } from './app/users/UserManager.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
-
-if (process.env.USE_NATIVE_ENV !== 'true') {
-  console.log('Using .env file')
-  dotenv.config()
-}
+import { withGroupChat } from './app/shared/middlewares/groupChat.js'
+import { UserCache } from './app/users/UserCache.js'
+import { withChatId } from './app/shared/middlewares/chatId.js'
+import { fromTelegramUser } from './app/users/fromTelegramUser.js'
+import { wrap } from './app/shared/middlewares/wrap.js'
+import { useTestMode } from './env.js'
+import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
+import { logger } from './logger.js'
 
 (async () => {
+  if (useTestMode) {
+    logger.warn('Test mode is enabled')
+  }
+
   const upload = multer()
+
+  const redis = new Redis(process.env.REDIS_URL)
+  const createRedisCache = createRedisCacheFactory(redis)
 
   const pgClient = new pg.Client(process.env.DATABASE_URL)
   await pgClient.connect()
+
+  if (process.env.LOG_DATABASE_QUERIES === 'true') {
+    const query = pgClient.query.bind(pgClient)
+    pgClient.query = (...args) => {
+      logger.debug('Database query:', ...args)
+      return query(...args)
+    }
+  }
 
   const usersStorage = new UsersPostgresStorage(pgClient)
   const cardsStorage = new CardsPostgresStorage(pgClient)
@@ -61,6 +81,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   const paymentsStorage = new PaymentsPostgresStorage(pgClient)
   const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
 
+  const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
 
   const debugChatId = process.env.DEBUG_CHAT_ID
@@ -106,7 +127,17 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     paymentsStorage,
   })
 
-  const userManager = new UserManager({ usersStorage })
+  const membershipStorage = new MembershipPostgresStorage(pgClient)
+  const membershipManager = new MembershipManager({
+    membershipCache: new MembershipCache(createRedisCache('memberships', useTestMode ? 60_000 : 60 * 60_000)),
+    membershipStorage,
+    telegram: bot.telegram,
+  })
+
+  const userManager = new UserManager({
+    usersStorage,
+    userCache: new UserCache(createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)),
+  })
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
@@ -124,33 +155,77 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     errorLogger.log(error)
   })
 
-  const userSessionManager = new UserSessionManager()
+  const userSessionManager = new UserSessionManager({
+    contextsCache: createRedisCache('contexts', 5 * 60_000),
+    phasesCache: createRedisCache('phases', 5 * 60_000),
+  })
   const withPhase = withPhaseFactory(userSessionManager)
 
-  bot.use((context, next) => {
-    if (!context.from.is_bot) {
+  if (!useWebhooks) {
+    bot.use((context, next) => {
+      logger.debug('Direct update received:', context.update)
       return next()
+    })
+  }
+
+  bot.use((context, next) => {
+    if (!useTestMode && context.from.is_bot) return
+    return next()
+  })
+
+  bot.command('version', versionCommand())
+
+  bot.use(withUserId())
+  bot.use(withChatId())
+  bot.use(withLocalization({ userManager }))
+
+  bot.on('new_chat_members', async (context) => {
+    const { chatId } = context.state
+
+    for (const chatMember of context.message.new_chat_members) {
+      if (!useTestMode && chatMember.is_bot) continue
+
+      const user = fromTelegramUser(chatMember)
+
+      try {
+        await userManager.softRegister(user)
+        await membershipManager.hardLink(user.id, chatId)
+      } catch (error) {
+        errorLogger.log(error, 'Could not register new chat member', { user })
+      }
     }
   })
 
-  bot.use(withUserId())
-  bot.use(withLocalization({ userManager }))
+  bot.on('left_chat_member', async (context) => {
+    const user = context.message.left_chat_member
+    if (!useTestMode && user.is_bot) return
 
-  bot.command('version', versionCommand())
-  bot.command('start', withPrivateChat(), startCommand({ userManager, usersStorage }))
+    const { chatId } = context.state
+    const userId = String(user.id)
 
-  bot.use(withRegisteredUser({ userManager, usersStorage }))
+    await membershipManager.unlink(userId, chatId)
+  })
 
-  bot.command('users', withPrivateChat(), usersCommand({ usersStorage }))
+  bot.command('start', requirePrivateChat(), startCommand({ userManager }))
+
+  bot.use(registerUser({ userManager }))
+  bot.use(wrap(withGroupChat(), async (context, next) => {
+    const { userId, chatId } = context.state
+    await membershipManager.softLink(userId, chatId)
+
+    return next()
+  }))
+
+  bot.command('users', usersCommand({ usersStorage, membershipStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
   bot.command('receipts', receiptsGetCommand({ usersStorage }))
   bot.command('payments', paymentsGetCommand({ usersStorage }))
 
-  bot.command('addcard', cardsAddCommand({ userSessionManager }))
+  bot.command('addcard', cardsAddCommand())
   bot.action(/cards:add:bank:(.+)/, cardsAddBankAction({ userSessionManager }))
 
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id, cardsDeleteIdAction({ cardsStorage, userSessionManager })))
+  bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage, userSessionManager }))
 
   bot.command('cards', cardsGet({ usersStorage, userSessionManager }))
   bot.action(/cards:get:user-id:(.+)/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
@@ -162,7 +237,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
       return next()
     },
     // cards
-    withPhase(Phases.addCard.number, cardsAddNumberMessage({ cardsStorage, userSessionManager }))
+    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage, userSessionManager }))
   )
 
   bot.catch((error) => errorLogger.log(error))
@@ -195,26 +270,24 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   // --- Telegram
 
-  const handledBotUpdates = new Cache(60_000)
+  const handledBotUpdates = createRedisCache('updates', 60_000)
 
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
     if (!updateId) {
-      console.log('Invalid update:', req.body)
+      logger.warn('Invalid webhook update:', req.body)
       res.sendStatus(500)
       return
     }
 
-    if (handledBotUpdates.has(updateId)) {
-      console.log('Update is already handled:', req.body)
+    if (!(await handledBotUpdates.set(updateId))) {
+      logger.debug('Webhook update is already handled:', req.body)
       res.sendStatus(200)
       return
     }
 
-    handledBotUpdates.set(updateId)
-    console.log('Update received:', req.body)
-
     try {
+      logger.debug('Webhook update received:', req.body)
       await bot.handleUpdate(req.body, res)
     } catch (error) {
       next(error)
@@ -223,11 +296,11 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
 
   // --- API
 
-  const temporaryAuthTokenCache = new Cache(5 * 60_000)
+  const temporaryAuthTokenCache = createRedisCache('tokens', useTestMode ? 60_000 : 5 * 60_000)
 
   app.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']
-    if (temporaryAuthTokenCache.has(temporaryAuthToken)) {
+    if (!(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
       res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
       return
     }
@@ -256,7 +329,6 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
         username: user.username,
       }
     }, process.env.TOKEN_SECRET))
-    temporaryAuthTokenCache.set(temporaryAuthToken)
   })
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {
@@ -295,6 +367,7 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
     try {
       const user = new User({ id, name, username })
       await usersStorage.create(user)
+
       res.json({
         id: user.id,
         name: user.name,
@@ -433,31 +506,31 @@ if (process.env.USE_NATIVE_ENV !== 'true') {
   try {
     await bot.telegram.deleteWebhook()
   } catch (error) {
-    console.log('Could not delete webhook:', error)
+    logger.warn('Could not delete webhook:', error)
   }
 
-  if (process.env.USE_WEBHOOKS === 'true') {
+  if (useWebhooks) {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-    console.log('Setting webhook to:', { webhookUrl })
+    logger.info('Setting webhook to:', { webhookUrl })
     while (true) {
       try {
         await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
         break
       } catch (error) {
-        console.log('Could not set webhook, retrying...', error)
+        logger.warn('Could not set webhook, retrying...', error)
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
 
-    console.log(
+    logger.info(
       `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
       await bot.telegram.getWebhookInfo()
     )
   } else {
     await bot.launch()
 
-    console.log('Telegram bot is running')
+    logger.info('Telegram bot is running')
   }
 })()
