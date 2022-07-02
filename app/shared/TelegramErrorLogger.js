@@ -6,8 +6,8 @@ export class TelegramErrorLogger {
     this._telegram = telegram
   }
 
-  log(error, message = 'Unexpected error:', context = {}) {
-    logger.error(`${message}:`, error, context)
+  log(error, message = 'Unexpected error', context = {}) {
+    logger.error({ error, context }, message)
 
     this._telegram.sendMessage(
       this._debugChatId,
@@ -17,6 +17,6 @@ export class TelegramErrorLogger {
         `Context:`,
         `${JSON.stringify(context)}`
       ].join('\n')
-    ).catch(error => logger.warn('Could not log to the debug chat:', error))
+    ).catch(error => logger.warn({ error }, 'Could not log to the debug chat'))
   }
 }
