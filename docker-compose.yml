@@ -1,33 +1,5 @@
 version: '3.7'
 services:
-  squadbot:
-    container_name: squadbot
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - serveo
-    environment:
-      USE_NATIVE_ENV: "true"
-      TOKEN_SECRET: "test_token"
-      DATABASE_URL: "postgres://squadbot:p4ssw0rd@postgres:5432/squadbot"
-      REDIS_URL: "redis://redis:6379"
-      TELEGRAM_BOT_TOKEN: "<your telegram bot token>"
-      DEBUG_CHAT_ID: "-123456789"
-      DOMAIN: "<webhook domain>"
-      PORT: "1234"
-      USE_WEBHOOKS: "false"
-    volumes:
-      - .:/squadbot
-    ports:
-      - 3001:1234
-    command: |
-      ./wait-for-it.sh postgres:5432 -t 120 --
-      ./wait-for-it.sh redis:6379 -t 120 --
-      npm start
-
   postgres:
     container_name: postgres
     image: postgres:13-alpine
@@ -35,7 +7,10 @@ services:
       POSTGRES_DB: "squadbot"
       POSTGRES_USER: "squadbot"
       POSTGRES_PASSWORD: "p4ssw0rd"
-
+    ports:
+      - 5432:5432
   redis:
     container_name: redis
     image: redis
+    ports:
+      - 6379:6379
