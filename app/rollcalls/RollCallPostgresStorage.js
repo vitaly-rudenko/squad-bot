@@ -1,4 +1,4 @@
-import { RollCall } from './RollCall'
+import { RollCall } from './RollCall.js'
 
 export class RollCallPostgresStorage {
   /** @param {import('pg').Client} client */
@@ -9,10 +9,10 @@ export class RollCallPostgresStorage {
   /** @param {RollCall} rollCall */
   async create(rollCall) {
     const response = await this._client.query(`
-      INSERT INTO roll_calls (chat_id, message_pattern, users_pattern, exclude_sender)
+      INSERT INTO roll_calls (chat_id, message_pattern, users_pattern, exclude_sender, poll_options)
       VALUES ($1, $2, $3, $4)
       RETURNING id;
-    `, [rollCall.chatId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender])
+    `, [rollCall.chatId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender, rollCall.pollOptions])
 
     return this.findById(response.rows[0]['id'])
   }
@@ -77,7 +77,7 @@ export class RollCallPostgresStorage {
     ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
-      SELECT rc.id, rc.chat_id, rc.message_pattern, rc.users_pattern, rc.exclude_sender
+      SELECT rc.id, rc.chat_id, rc.message_pattern, rc.users_pattern, rc.exclude_sender, rc.poll_options
       FROM roll_calls rc ${whereClause} ${paginationClause};
     `, variables)
 
@@ -91,6 +91,7 @@ export class RollCallPostgresStorage {
       messagePattern: row['message_pattern'],
       usersPattern: row['users_pattern'],
       excludeSender: row['exclude_sender'],
+      pollOptions: row['poll_options'],
     })
   }
 }
