@@ -83,6 +83,7 @@ import { logger } from './logger.js'
 
   const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
+  const tokenSecret = process.env.TOKEN_SECRET
 
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
@@ -307,7 +308,7 @@ import { logger } from './logger.js'
 
     let userId
     try {
-      ({ userId } = jwt.verify(temporaryAuthToken, process.env.TOKEN_SECRET))
+      ({ userId } = jwt.verify(temporaryAuthToken, tokenSecret))
       if (!userId) {
         throw new Error('Temporary token does not contain user ID')
       }
@@ -328,7 +329,7 @@ import { logger } from './logger.js'
         name: user.name,
         username: user.username,
       }
-    }, process.env.TOKEN_SECRET))
+    }, tokenSecret))
   })
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {
@@ -347,7 +348,7 @@ import { logger } from './logger.js'
 
     if (token) {
       try {
-        const { user } = jwt.verify(token, process.env.TOKEN_SECRET)
+        const { user } = jwt.verify(token, tokenSecret)
         if (!user.id || !user.username || !user.name) {
           throw new Error('Token does not contain user ID, username and name')
         }
