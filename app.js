@@ -70,7 +70,7 @@ import { logger } from './logger.js'
   if (process.env.LOG_DATABASE_QUERIES === 'true') {
     const query = pgClient.query.bind(pgClient)
     pgClient.query = (...args) => {
-      logger.debug('Database query:', ...args)
+      logger.debug({ args }, 'Database query')
       return query(...args)
     }
   }
@@ -164,7 +164,7 @@ import { logger } from './logger.js'
 
   if (!useWebhooks) {
     bot.use((context, next) => {
-      logger.debug('Direct update received:', context.update)
+      logger.debug({ update: context.update }, 'Direct update received')
       return next()
     })
   }
@@ -276,19 +276,19 @@ import { logger } from './logger.js'
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
     if (!updateId) {
-      logger.warn('Invalid webhook update:', req.body)
+      logger.warn({ body: req.body }, 'Invalid webhook update')
       res.sendStatus(500)
       return
     }
 
     if (!(await handledBotUpdates.set(updateId))) {
-      logger.debug('Webhook update is already handled:', req.body)
+      logger.debug({ body: req.body }, 'Webhook update is already handled')
       res.sendStatus(200)
       return
     }
 
     try {
-      logger.debug('Webhook update received:', req.body)
+      logger.debug({ body: req.body }, 'Webhook update received')
       await bot.handleUpdate(req.body, res)
     } catch (error) {
       next(error)
@@ -507,27 +507,27 @@ import { logger } from './logger.js'
   try {
     await bot.telegram.deleteWebhook()
   } catch (error) {
-    logger.warn('Could not delete webhook:', error)
+    logger.warn({ error }, 'Could not delete webhook:')
   }
 
   if (useWebhooks) {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-    logger.info('Setting webhook to:', { webhookUrl })
+    logger.info({ webhookUrl }, 'Setting webhook')
     while (true) {
       try {
         await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
         break
       } catch (error) {
-        logger.warn('Could not set webhook, retrying...', error)
+        logger.warn({ error }, 'Could not set webhook, retrying...')
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
 
     logger.info(
-      `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
-      await bot.telegram.getWebhookInfo()
+      { webhookInfo: await bot.telegram.getWebhookInfo() },
+      `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}`,
     )
   } else {
     await bot.launch()
