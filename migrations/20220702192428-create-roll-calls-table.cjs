@@ -8,7 +8,8 @@ module.exports = {
         message_pattern VARCHAR,
         users_pattern VARCHAR,
         exclude_sender BOOLEAN,
-        poll_options VARCHAR ARRAY
+        poll_options VARCHAR ARRAY,
+        deleted_at TIMESTAMPTZ
       )
     `)
   },
