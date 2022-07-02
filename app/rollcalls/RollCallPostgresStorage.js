@@ -33,7 +33,7 @@ export class RollCallPostgresStorage {
 
   /** @param {string} chatId */
   async findByChatId(chatId) {
-    return this._find({ chatIds: [chatId], limit: 1 })
+    return this._find({ chatIds: [chatId] })
   }
 
   /**

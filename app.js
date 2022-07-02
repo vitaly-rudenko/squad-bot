@@ -26,6 +26,7 @@ import { withLocalization } from './app/localization/middlewares/localization.js
 import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
+import { RollCallPostgresStorage } from './app/rollcalls/RollCallPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
@@ -80,6 +81,7 @@ import { logger } from './logger.js'
   const debtsStorage = new DebtsPostgresStorage(pgClient)
   const paymentsStorage = new PaymentsPostgresStorage(pgClient)
   const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
+  const rollCallStorage = new RollCallPostgresStorage(pgClient)
 
   const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
@@ -147,6 +149,7 @@ import { logger } from './logger.js'
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
+    { command: 'rollcalls', description: 'Керувати перекличками' },
     { command: 'start', description: 'Зареєструватись' },
     { command: 'users', description: 'Список користувачів' },
     { command: 'version', description: 'Версія' },
@@ -343,6 +346,13 @@ import { logger } from './logger.js'
     }
   })
 
+  if (useTestMode) {
+    app.post('/memberships', async (req, res) => {
+      await membershipManager.hardLink(req.body.userId, req.body.chatId)
+      res.json('ok')
+    })
+  }
+
   app.use((req, res, next) => {
     const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
 
@@ -498,6 +508,11 @@ import { logger } from './logger.js'
       })),
       ...incompleteReceiptIds.length > 0 && { incompleteReceiptIds }
     })
+  })
+
+  app.get('/rollcalls', async (req, res) => {
+    const rollCalls = await rollCallStorage.findByChatId(req.query['chat_id'])
+    res.json(rollCalls)
   })
 
   const port = Number(process.env.PORT) || 3001

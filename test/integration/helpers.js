@@ -205,4 +205,27 @@ export async function getDebts(userId) {
   return await response.json()
 }
 
+export async function getRollCalls(chatId, userId) {
+  const response = await fetch(`${TEST_API_URL}/rollcalls?chat_id=${chatId}`, {
+    headers: createAuthorizationHeader({ userId }),
+  })
+
+  validateResponse(response)
+
+  return await response.json()
+}
+
+// --- TEST MODE
+export async function createMembership(userId, chatId) {
+  const response = await fetch(`${TEST_API_URL}/memberships`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, chatId })
+  })
+
+  validateResponse(response)
+
+  return await response.json()
+}
+
 export const NO_DEBTS = { ingoingDebts: [], outgoingDebts: [] }
