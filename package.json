@@ -6,11 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "npm run umzug db:migrate && node app.js",
-    "start:dev": "npm run umzug db:migrate && nodemon --legacy-watch --ignore integration-test/ app.js",
+    "start:dev": "npm run umzug db:migrate && nodemon --legacy-watch --ignore test/ app.js",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "mocha --recursive test",
+    "test:unit": "mocha --recursive test/unit",
     "test:unit:dev": "nodemon --delay 0.5 --exec 'npm run test:unit'",
-    "test:integration": "mocha --recursive integration-test",
+    "test:integration": "mocha --recursive test/integration",
     "test:integration:dev": "nodemon --delay 1 --exec 'npm run test:integration'",
     "job:refresh-memberships": "node jobs/refresh-memberships.js",
     "umzug": "node ./umzug/cli.js"
