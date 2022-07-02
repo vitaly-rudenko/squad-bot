@@ -1,5 +1,5 @@
 import { Chance } from 'chance'
-import { User } from '../../app/users/User.js'
+import { User } from '../../../app/users/User.js'
 
 const chance = new Chance()
 

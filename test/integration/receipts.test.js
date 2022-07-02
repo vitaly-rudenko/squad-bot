@@ -8,11 +8,11 @@ import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getRece
 chai.use(deepEqualInAnyOrder)
 
 const receiptPhotoBuffer = fs.readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), './receipt.png')
+  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt.png')
 )
 
 const updatedReceiptPhotoBuffer = fs.readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), './receipt_updated.jpeg')
+  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt_updated.jpeg')
 )
 
 describe('[receipts]', () => {
@@ -150,17 +150,17 @@ describe('[receipts]', () => {
   describe('GET /receipts', () => {
     it('should returns receipts by user ID', async () => {
       const [user1, user2, user3, user4] = await createUsers(4)
-  
+
       expect(await getReceipts(user1.id)).to.deep.equalInAnyOrder([])
       expect(await getReceipts(user2.id)).to.deep.equalInAnyOrder([])
       expect(await getReceipts(user3.id)).to.deep.equalInAnyOrder([])
       expect(await getReceipts(user4.id)).to.deep.equalInAnyOrder([])
-  
+
       await createReceipt(user1.id, {
         [user1.id]: 5,
         [user2.id]: 15,
       }, { photo: Buffer.from('hello world') })
-  
+
       const receipt1 = {
         payerId: user1.id,
         amount: 20,
@@ -174,17 +174,17 @@ describe('[receipts]', () => {
           amount: 15,
         }]
       }
-  
+
       expectReceiptsToEqual(await getReceipts(user1.id), [receipt1])
-  
+
       expect(await getReceipts(user2.id)).to.deep.equalInAnyOrder(await getReceipts(user1.id))
       expect(await getReceipts(user3.id)).to.deep.equalInAnyOrder([])
-  
+
       await createReceipt(user3.id, {
         [user1.id]: 50,
         [user3.id]: 50,
       }, { description: 'hello world' })
-  
+
       const receipt2 = {
         payerId: user3.id,
         hasPhoto: false,
@@ -198,7 +198,7 @@ describe('[receipts]', () => {
           amount: 50,
         }]
       }
-  
+
       expectReceiptsToEqual(await getReceipts(user1.id), [receipt2, receipt1])
       expectReceiptsToEqual(await getReceipts(user2.id), [receipt1])
       expectReceiptsToEqual(await getReceipts(user3.id), [receipt2])
@@ -214,7 +214,7 @@ describe('[receipts]', () => {
         [user1.id]: 10,
         [user2.id]: 10,
       })
-      
+
       await deleteReceipt(receiptId, user1.id)
 
       expect(await getReceipts(user1.id)).to.deep.equal([])
@@ -238,7 +238,7 @@ describe('[receipts]', () => {
       const { id: receipt3Id } = await createReceipt(user1.id, {
         [user2.id]: null,
       }, { description: 'hello world' })
-      
+
       await deleteReceipt(receipt2Id, user2.id)
 
       expect((await getReceipts(user1.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])

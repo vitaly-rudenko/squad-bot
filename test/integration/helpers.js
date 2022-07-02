@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import { uniqueNamesGenerator, names } from 'unique-names-generator'
 import { TOKEN_SECRET } from './env.js'
 
+const TEST_API_URL = 'http://localhost:3001'
 const nameConfig = {
   dictionaries: [names],
   style: 'lowerCase',
@@ -23,7 +24,7 @@ export function validateResponse(response) {
 export async function createUser(index = null) {
   const userId = [index, generateUserId()].filter(Boolean).join('_')
 
-  const response = await fetch('http://localhost:3001/users', {
+  const response = await fetch(`${TEST_API_URL}/users`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -62,7 +63,7 @@ export async function createReceipt(payerId, debts, {
   body.set('payer_id', payerId)
   body.set('amount', amount)
   body.set('debts', JSON.stringify(debts))
-  
+
   if (receiptId) {
     body.set('id', receiptId)
   }
@@ -78,7 +79,7 @@ export async function createReceipt(payerId, debts, {
     body.set('photo', photoFile, 'photo.jpg')
   }
 
-  const response = await fetch('http://localhost:3001/receipts', {
+  const response = await fetch(`${TEST_API_URL}/receipts`, {
     method: 'POST',
     headers: createAuthorizationHeader({ userId: payerId }),
     body,
@@ -90,7 +91,7 @@ export async function createReceipt(payerId, debts, {
 }
 
 export async function getReceipts(userId) {
-  const response = await fetch('http://localhost:3001/receipts', {
+  const response = await fetch(`${TEST_API_URL}/receipts`, {
     headers: createAuthorizationHeader({ userId })
   })
 
@@ -100,13 +101,13 @@ export async function getReceipts(userId) {
 }
 
 export async function getAuthToken(temporaryAuthToken) {
-  const response = await fetch(`http://localhost:3001/authenticate?token=${temporaryAuthToken}`)
+  const response = await fetch(`${TEST_API_URL}/authenticate?token=${temporaryAuthToken}`)
 
   return await response.json()
 }
 
 export async function getReceipt(receiptId, userId) {
-  const response = await fetch(`http://localhost:3001/receipts/${receiptId}`, {
+  const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}`, {
     headers: createAuthorizationHeader({ userId }),
   })
 
@@ -116,7 +117,7 @@ export async function getReceipt(receiptId, userId) {
 }
 
 export async function deleteReceipt(receiptId, userId) {
-  const response = await fetch(`http://localhost:3001/receipts/${receiptId}`, {
+  const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}`, {
     headers: createAuthorizationHeader({ userId }),
     method: 'DELETE',
   })
@@ -125,7 +126,7 @@ export async function deleteReceipt(receiptId, userId) {
 }
 
 export async function getReceiptPhoto(receiptId) {
-  const response = await fetch(`http://localhost:3001/receipts/${receiptId}/photo`)
+  const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}/photo`)
 
   if (response.status !== 200) {
     return response
@@ -170,8 +171,8 @@ export function createToken({ userId, username, name }) {
 
 export async function createPayment(fromUserId, toUserId, amount) {
   const payment = { fromUserId, toUserId, amount }
-  
-  const response = await fetch('http://localhost:3001/payments', {
+
+  const response = await fetch(`${TEST_API_URL}/payments`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -186,7 +187,7 @@ export async function createPayment(fromUserId, toUserId, amount) {
 }
 
 export async function deletePayment(paymentId, userId) {
-  const response = await fetch(`http://localhost:3001/payments/${paymentId}`, {
+  const response = await fetch(`${TEST_API_URL}/payments/${paymentId}`, {
     method: 'DELETE',
     headers: createAuthorizationHeader({ userId }),
   })
@@ -195,7 +196,7 @@ export async function deletePayment(paymentId, userId) {
 }
 
 export async function getDebts(userId) {
-  const response = await fetch(`http://localhost:3001/debts`, {
+  const response = await fetch(`${TEST_API_URL}/debts`, {
     headers: createAuthorizationHeader({ userId }),
   })
 
