@@ -10,7 +10,7 @@ export class RollCallPostgresStorage {
   async create(rollCall) {
     const response = await this._client.query(`
       INSERT INTO roll_calls (chat_id, message_pattern, users_pattern, exclude_sender, poll_options)
-      VALUES ($1, $2, $3, $4)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING id;
     `, [rollCall.chatId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender, rollCall.pollOptions])
 

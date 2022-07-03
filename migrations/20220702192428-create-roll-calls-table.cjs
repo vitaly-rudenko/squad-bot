@@ -3,7 +3,7 @@ module.exports = {
   async up({ context: db }) {
     await db.query(`
       CREATE TABLE roll_calls (
-        id VARCHAR PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         chat_id VARCHAR,
         message_pattern VARCHAR,
         users_pattern VARCHAR,
