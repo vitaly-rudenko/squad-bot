@@ -77,15 +77,17 @@ export function rollCallsCommand({ rollCallsStorage, usersStorage, userSessionMa
   }
 }
 
+// --- DELETE ROLL CALL
+
 export function rollCallsDeleteAction({ userSessionManager, rollCallsStorage }) {
   return async (context) => {
     const { userId, chatId, localize } = context.state
 
     await context.answerCbQuery()
-    await context.deleteMessage()
 
     const rollCalls = await rollCallsStorage.findByChatId(chatId)
 
+    await context.deleteMessage()
     await context.reply(localize('command.rollCalls.delete.choose'), {
       parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard(
@@ -131,6 +133,8 @@ export function rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }
   }
 }
 
+// --- ADD ROLL CALL
+
 export function rollCallsAddAction({ userSessionManager }) {
   return async (context) => {
     const { userId, localize } = context.state
@@ -175,6 +179,7 @@ export function rollCallsAddUsersPatternAllAction({ userSessionManager }) {
   return async (context) => {
     await context.answerCbQuery()
 
+    await context.deleteMessage()
     await handleUsersPattern(context, '*', userSessionManager)
   }
 }
@@ -183,14 +188,36 @@ export function rollCallsAddUsersPatternMessage({ userSessionManager, membership
   return async (context) => {
     if (!('text' in context.message)) return
 
-    const { chatId } = context.state
+    const { chatId, localize } = context.state
 
     const chatUserIds = await membershipStorage.findUserIdsByChatId(chatId)
     const chatUsers = await usersStorage.findByIds(chatUserIds)
 
-    const users = context.message.text.split('\n')
-      .map(input => chatUsers.find(u => u.username === input.slice(1) || u.username === input || u.id === input || u.name === input))
-      .filter(Boolean)
+    function equalsIgnoreCase(str1, str2) {
+      return str1.toLowerCase() === str2.toLowerCase()
+    }
+
+    const users = []
+    for (const input of context.message.text.split('\n').filter(Boolean)) {
+      const chatUser = chatUsers.find(u => (
+        (u.username && (
+          equalsIgnoreCase(u.username, input.slice(1)) ||
+          equalsIgnoreCase(u.username, input)
+        )) ||
+        equalsIgnoreCase(u.id, input) ||
+        equalsIgnoreCase(u.name, input)
+      ))
+
+      if (!chatUser) {
+        await context.reply(
+          localize('command.rollCalls.add.unknownUser', { input: escapeMd(input) }),
+          { parse_mode: 'MarkdownV2' }
+        )
+        return
+      }
+
+      users.push(chatUser)
+    }
 
     await handleUsersPattern(context, users.map(u => u.id).join(','), userSessionManager)
   }
@@ -227,6 +254,7 @@ export function rollCallsAddExcludeSenderAction({ userSessionManager }) {
       excludeSender: context.match[1] === 'yes',
     })
 
+    await context.deleteMessage()
     await context.reply(
       localize('command.rollCalls.add.sendPollOptions'),
       {
@@ -245,6 +273,7 @@ export function rollCallsAddPollOptionsSkipAction({ userSessionManager, rollCall
   return async (context) => {
     await context.answerCbQuery()
 
+    await context.deleteMessage()
     await handlePollOptions(context, [], userSessionManager, rollCallsStorage)
   }
 }
