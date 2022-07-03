@@ -46,7 +46,7 @@ import { MembershipPostgresStorage } from './app/memberships/MembershipPostgresS
 import { registerUser } from './app/users/middlewares/registeredUser.js'
 import { UserManager } from './app/users/UserManager.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
-import { withGroupChat } from './app/shared/middlewares/groupChat.js'
+import { requireGroupChat, withGroupChat } from './app/shared/middlewares/groupChat.js'
 import { UserCache } from './app/users/UserCache.js'
 import { withChatId } from './app/shared/middlewares/chatId.js'
 import { fromTelegramUser } from './app/users/fromTelegramUser.js'
@@ -238,7 +238,7 @@ import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessag
   bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
   bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage, userSessionManager }))
 
-  bot.command('rollcalls', rollCallsCommand({ rollCallsStorage, usersStorage, userSessionManager }))
+  bot.command('rollcalls', requireGroupChat(), rollCallsCommand({ rollCallsStorage, usersStorage, userSessionManager }))
   bot.action(/^rollcalls:delete$/, withPhase(Phases.rollCalls), rollCallsDeleteAction({ userSessionManager, rollCallsStorage }))
   bot.action(/^rollcalls:delete:cancel$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteCancelAction({ userSessionManager }))
   bot.action(/^rollcalls:delete:id:(.+)$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }))
