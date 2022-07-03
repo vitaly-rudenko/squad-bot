@@ -110,7 +110,7 @@ describe('PaymentTelegramNotifier', () => {
               senderUsername: ${escapeMd(sender.username)}
               receiverName: ${escapeMd(receiver.name)}
               receiverUsername: ${escapeMd(receiver.username)}
-              amount: 12.30 грн
+              amount: 12\\.30 грн
               action: notifications.paymentStored.actions.updated(${sender.locale})
           `],
           [receiver.id, stripIndent`
@@ -121,7 +121,7 @@ describe('PaymentTelegramNotifier', () => {
               senderUsername: ${escapeMd(sender.username)}
               receiverName: ${escapeMd(receiver.name)}
               receiverUsername: ${escapeMd(receiver.username)}
-              amount: 12.30 грн
+              amount: 12\\.30 грн
               action: notifications.paymentStored.actions.updated(${receiver.locale})
           `]
         ])
@@ -155,7 +155,7 @@ describe('PaymentTelegramNotifier', () => {
               senderUsername: ${escapeMd(sender.username)}
               receiverName: ${escapeMd(receiver.name)}
               receiverUsername: ${escapeMd(receiver.username)}
-              amount: 12.34 грн
+              amount: 12\\.34 грн
           `],
           [receiver.id, stripIndent`
             notifications.paymentDeleted.message(${receiver.locale}):
@@ -165,7 +165,7 @@ describe('PaymentTelegramNotifier', () => {
               senderUsername: ${escapeMd(sender.username)}
               receiverName: ${escapeMd(receiver.name)}
               receiverUsername: ${escapeMd(receiver.username)}
-              amount: 12.34 грн
+              amount: 12\\.34 грн
           `]
         ])
     })
