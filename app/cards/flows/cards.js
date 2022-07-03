@@ -134,7 +134,7 @@ export function cardsDeleteIdAction({ cardsStorage, userSessionManager }) {
   }
 }
 
-export function cardsGet({ usersStorage, userSessionManager }) {
+export function cardsCommand({ usersStorage, userSessionManager }) {
   return async (context) => {
     const { userId, localize } = context.state
     const users = await usersStorage.findAll()

@@ -17,7 +17,7 @@ import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
 import { withPhaseFactory } from './app/shared/middlewares/phase.js'
 import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
-import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
+import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsCommand, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
 import { withUserId } from './app/users/middlewares/userId.js'
 import { User } from './app/users/User.js'
@@ -232,7 +232,7 @@ import { escapeMd } from './app/utils/escapeMd.js'
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
   bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage, userSessionManager }))
 
-  bot.command('cards', cardsGet({ usersStorage, userSessionManager }))
+  bot.command('cards', cardsCommand({ usersStorage, userSessionManager }))
   bot.action(/cards:get:user-id:(.+)/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
   bot.action(/cards:get:id:(.+)/, cardsGetIdAction({ cardsStorage, userSessionManager }))
 
