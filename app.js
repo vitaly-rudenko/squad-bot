@@ -56,7 +56,7 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
 import { RollCall } from './app/rollcalls/RollCall.js'
 import { escapeMd } from './app/utils/escapeMd.js'
-import { rollCallsCommand, rollCallsDeleteAction, rollCallsDeleteCancelAction, rollCallsDeleteIdAction } from './app/rollcalls/flows/rollcalls.js'
+import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessagePatternMessage, rollCallsAddPollOptionsMessage, rollCallsAddPollOptionsSkipAction, rollCallsAddUsersPatternAllAction, rollCallsAddUsersPatternMessage, rollCallsCommand, rollCallsDeleteAction, rollCallsDeleteCancelAction, rollCallsDeleteIdAction, rollCallsMessage } from './app/rollcalls/flows/rollcalls.js'
 
 (async () => {
   if (useTestMode) {
@@ -242,6 +242,10 @@ import { rollCallsCommand, rollCallsDeleteAction, rollCallsDeleteCancelAction, r
   bot.action(/^rollcalls:delete$/, withPhase(Phases.rollCalls), rollCallsDeleteAction({ userSessionManager, rollCallsStorage }))
   bot.action(/^rollcalls:delete:cancel$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteCancelAction({ userSessionManager }))
   bot.action(/^rollcalls:delete:id:(.+)$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }))
+  bot.action(/^rollcalls:add$/, withPhase(Phases.rollCalls), rollCallsAddAction({ userSessionManager }))
+  bot.action(/^rollcalls:add:users-pattern:all$/, withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternAllAction({ userSessionManager }))
+  bot.action(/^rollcalls:add:exclude-sender:(.+)$/, withPhase(Phases.addRollCall.excludeSender), rollCallsAddExcludeSenderAction({ userSessionManager }))
+  bot.action(/^rollcalls:add:poll-options:skip$/, withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsSkipAction({ userSessionManager, rollCallsStorage }))
 
   bot.on('message',
     async (context, next) => {
@@ -251,57 +255,10 @@ import { rollCallsCommand, rollCallsDeleteAction, rollCallsDeleteCancelAction, r
     // cards
     wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage, userSessionManager })),
     // roll calls
-    wrap(withGroupChat(), async (context, next) => {
-      if (!('text' in context.message)) return next()
-
-      const { userId, chatId, localize } = context.state
-      const rollCalls = await rollCallsStorage.findByChatId(chatId)
-
-      const rollCall = rollCalls.find(rc => rc.messagePattern === context.message.text)
-      if (!rollCall) return next()
-
-      let userIdsToNotify
-
-      if (rollCall.usersPattern === '*') {
-        userIdsToNotify = await membershipStorage.findUserIdsByChatId(chatId)
-      } else {
-        userIdsToNotify = rollCall.usersPattern.split(',')
-      }
-
-      if (rollCall.excludeSender) {
-        userIdsToNotify = userIdsToNotify.filter(id => id !== userId)
-      }
-
-      if (userIdsToNotify.length === 0) {
-        await context.reply(localize('rollCalls.noOneToMention'))
-        return
-      }
-
-      function formatMention(user) {
-        if (user.username) {
-          return localize('rollCalls.mention.withUsername', { username: escapeMd(user.username) })
-        } else {
-          return localize('rollCalls.mention.withoutUsername', {
-            name: escapeMd(user.name),
-            profileUrl: escapeMd(`tg://user?id=${user.id}`),
-          })
-        }
-      }
-
-      const usersToNotify = await usersStorage.findByIds(userIdsToNotify)
-      const mentions = usersToNotify.map(formatMention).join(' ')
-      const message = localize('rollCalls.message.withoutText', { mentions })
-
-      await context.reply(message, { parse_mode: 'MarkdownV2' })
-
-      if (rollCall.pollOptions.length > 0) {
-        await context.replyWithPoll(
-          'Poll',
-          rollCall.pollOptions,
-          { is_anonymous: false }
-        )
-      }
-    })
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.messagePattern), rollCallsAddMessagePatternMessage({ userSessionManager })),
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternMessage({ userSessionManager, membershipStorage, usersStorage })),
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsMessage({ userSessionManager, rollCallsStorage })),
+    wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
   )
 
   bot.catch((error) => errorLogger.log(error))
