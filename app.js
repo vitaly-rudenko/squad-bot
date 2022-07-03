@@ -56,6 +56,7 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
 import { RollCall } from './app/rollcalls/RollCall.js'
 import { escapeMd } from './app/utils/escapeMd.js'
+import { rollCallsCommand } from './app/rollcalls/flows/rollcalls.js'
 
 (async () => {
   if (useTestMode) {
@@ -151,6 +152,7 @@ import { escapeMd } from './app/utils/escapeMd.js'
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
+    { command: 'rollcalls', description: 'Керування перекличками' },
     { command: 'start', description: 'Зареєструватись' },
     { command: 'users', description: 'Список користувачів' },
     { command: 'version', description: 'Версія' },
@@ -235,6 +237,8 @@ import { escapeMd } from './app/utils/escapeMd.js'
   bot.command('cards', cardsCommand({ usersStorage, userSessionManager }))
   bot.action(/cards:get:user-id:(.+)/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
   bot.action(/cards:get:id:(.+)/, cardsGetIdAction({ cardsStorage, userSessionManager }))
+
+  bot.command('rollcalls', rollCallsCommand({ rollCallsStorage, usersStorage }))
 
   bot.on('message',
     async (context, next) => {
