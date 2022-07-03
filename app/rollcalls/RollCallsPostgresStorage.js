@@ -1,6 +1,6 @@
 import { RollCall } from './RollCall.js'
 
-export class RollCallPostgresStorage {
+export class RollCallsPostgresStorage {
   /** @param {import('pg').Client} client */
   constructor(client) {
     this._client = client

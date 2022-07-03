@@ -26,7 +26,7 @@ import { withLocalization } from './app/localization/middlewares/localization.js
 import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
-import { RollCallPostgresStorage } from './app/rollcalls/RollCallPostgresStorage.js'
+import { RollCallsPostgresStorage } from './app/rollcalls/RollCallsPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
@@ -83,7 +83,7 @@ import { escapeMd } from './app/utils/escapeMd.js'
   const debtsStorage = new DebtsPostgresStorage(pgClient)
   const paymentsStorage = new PaymentsPostgresStorage(pgClient)
   const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
-  const rollCallStorage = new RollCallPostgresStorage(pgClient)
+  const rollCallsStorage = new RollCallsPostgresStorage(pgClient)
 
   const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
@@ -248,9 +248,7 @@ import { escapeMd } from './app/utils/escapeMd.js'
       if (!('text' in context.message)) return next()
 
       const { userId, chatId, localize } = context.state
-      const rollCalls = await rollCallStorage.findByChatId(chatId)
-
-      console.log('Chat roll calls:', rollCalls)
+      const rollCalls = await rollCallsStorage.findByChatId(chatId)
 
       const rollCall = rollCalls.find(rc => rc.messagePattern === context.message.text)
       if (!rollCall) return next()
@@ -578,7 +576,7 @@ import { escapeMd } from './app/utils/escapeMd.js'
     const excludeSender = req.body.excludeSender
     const pollOptions = req.body.pollOptions
 
-    const storedRollCall = await rollCallStorage.create(
+    const storedRollCall = await rollCallsStorage.create(
       new RollCall({
         chatId,
         excludeSender,
@@ -592,12 +590,12 @@ import { escapeMd } from './app/utils/escapeMd.js'
   })
 
   app.get('/rollcalls', async (req, res) => {
-    const rollCalls = await rollCallStorage.findByChatId(req.query['chat_id'])
+    const rollCalls = await rollCallsStorage.findByChatId(req.query['chat_id'])
     res.json(rollCalls)
   })
 
   app.delete('/rollcalls/:rollCallId', async (req, res) => {
-    const rollCall = await rollCallStorage.findById(req.params.rollCallId)
+    const rollCall = await rollCallsStorage.findById(req.params.rollCallId)
     if (!rollCall) {
       res.sendStatus(404)
       return
@@ -608,7 +606,7 @@ import { escapeMd } from './app/utils/escapeMd.js'
       return
     }
 
-    await rollCallStorage.deleteById(req.params.rollCallId)
+    await rollCallsStorage.deleteById(req.params.rollCallId)
     res.sendStatus(204)
   })
 
