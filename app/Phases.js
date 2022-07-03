@@ -4,6 +4,10 @@ export const Phases = organizeValues({
   },
   deleteCard: {
     id: '',
+  },
+  rollCalls: '',
+  deleteRollCall: {
+    id: ''
   }
 })
 

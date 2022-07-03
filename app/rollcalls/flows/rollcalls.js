@@ -1,10 +1,10 @@
 import { Markup } from 'telegraf'
+import { Phases } from '../../Phases.js'
 import { escapeMd } from '../../utils/escapeMd.js'
-import { RollCall } from '../RollCall.js'
 
-export function rollCallsCommand({ rollCallsStorage, usersStorage }) {
+export function rollCallsCommand({ rollCallsStorage, usersStorage, userSessionManager }) {
   return async (context) => {
-    const { chatId, localize } = context.state
+    const { userId, chatId, localize } = context.state
 
     const rollCalls = await rollCallsStorage.findByChatId(chatId)
 
@@ -54,6 +54,7 @@ export function rollCallsCommand({ rollCallsStorage, usersStorage }) {
       return formatted
     }
 
+    await context.deleteMessage()
     await context.reply(
       rollCalls.length > 0
         ? rollCalls.map(formatRollCall).join('\n')
@@ -68,6 +69,62 @@ export function rollCallsCommand({ rollCallsStorage, usersStorage }) {
           { columns: 1 },
         ).reply_markup
       }
+    )
+
+    await userSessionManager.setPhase(userId, Phases.rollCalls)
+  }
+}
+
+export function rollCallsDeleteAction({ userSessionManager, rollCallsStorage }) {
+  return async (context) => {
+    const { userId, chatId, localize } = context.state
+
+    await context.answerCbQuery()
+    await context.deleteMessage()
+
+    const rollCalls = await rollCallsStorage.findByChatId(chatId)
+
+    await context.reply(localize('command.rollCalls.delete.choose'), {
+      parse_mode: 'MarkdownV2',
+      reply_markup: Markup.inlineKeyboard(
+        rollCalls
+          .map(rc => Markup.button.callback(rc.messagePattern, `rollcalls:delete:id:${rc.id}`))
+          .concat(Markup.button.callback(localize('command.rollCalls.delete.cancel'), 'rollcalls:delete:cancel')),
+        { columns: 1 }
+      ).reply_markup
+    })
+
+    await userSessionManager.setPhase(userId, Phases.deleteRollCall.id)
+  }
+}
+
+export function rollCallsDeleteCancelAction({ userSessionManager }) {
+  return async (context) => {
+    const { userId } = context.state
+
+    await context.answerCbQuery()
+
+    await userSessionManager.clear(userId)
+
+    await context.deleteMessage()
+  }
+}
+
+export function rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }) {
+  return async (context) => {
+    const { userId, localize } = context.state
+
+    await context.answerCbQuery()
+
+    const rollCallId = context.match[1]
+    await rollCallsStorage.deleteById(rollCallId)
+
+    await userSessionManager.clear(userId)
+
+    await context.deleteMessage()
+    await context.reply(
+      localize('command.rollCalls.delete.deleted'),
+      { parse_mode: 'MarkdownV2' }
     )
   }
 }

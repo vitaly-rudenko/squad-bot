@@ -56,7 +56,7 @@ import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
 import { RollCall } from './app/rollcalls/RollCall.js'
 import { escapeMd } from './app/utils/escapeMd.js'
-import { rollCallsCommand } from './app/rollcalls/flows/rollcalls.js'
+import { rollCallsCommand, rollCallsDeleteAction, rollCallsDeleteCancelAction, rollCallsDeleteIdAction } from './app/rollcalls/flows/rollcalls.js'
 
 (async () => {
   if (useTestMode) {
@@ -229,16 +229,19 @@ import { rollCallsCommand } from './app/rollcalls/flows/rollcalls.js'
   bot.command('payments', paymentsGetCommand({ usersStorage }))
 
   bot.command('addcard', cardsAddCommand())
-  bot.action(/cards:add:bank:(.+)/, cardsAddBankAction({ userSessionManager }))
+  bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction({ userSessionManager }))
 
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage, userSessionManager }))
+  bot.action(/^cards:delete:id:(.+)$/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage, userSessionManager }))
 
   bot.command('cards', cardsCommand({ usersStorage, userSessionManager }))
-  bot.action(/cards:get:user-id:(.+)/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
-  bot.action(/cards:get:id:(.+)/, cardsGetIdAction({ cardsStorage, userSessionManager }))
+  bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
+  bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage, userSessionManager }))
 
-  bot.command('rollcalls', rollCallsCommand({ rollCallsStorage, usersStorage }))
+  bot.command('rollcalls', rollCallsCommand({ rollCallsStorage, usersStorage, userSessionManager }))
+  bot.action(/^rollcalls:delete$/, withPhase(Phases.rollCalls), rollCallsDeleteAction({ userSessionManager, rollCallsStorage }))
+  bot.action(/^rollcalls:delete:cancel$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteCancelAction({ userSessionManager }))
+  bot.action(/^rollcalls:delete:id:(.+)$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }))
 
   bot.on('message',
     async (context, next) => {
