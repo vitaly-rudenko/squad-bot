@@ -7,6 +7,10 @@ export class MembershipManager {
     this._membershipStorage = membershipStorage
   }
 
+  async isHardLinked(userId, chatId) {
+    return this._membershipStorage.exists(userId, chatId)
+  }
+
   async hardLink(userId, chatId) {
     await this._membershipCache.cache(userId, chatId)
     await this._storeLink(userId, chatId)

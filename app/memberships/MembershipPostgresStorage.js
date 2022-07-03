@@ -13,6 +13,18 @@ export class MembershipPostgresStorage {
     `, [userId, chatId, new Date()])
   }
 
+  async exists(userId, chatId) {
+    const response = await this._client.query(`
+      SELECT COUNT(*) as count
+      FROM memberships
+      WHERE user_id = $1
+        AND chat_id = $2
+      LIMIT 1;
+    `, [userId, chatId])
+
+    return response.rows[0].count === '1'
+  }
+
   async delete(userId, chatId) {
     await this._client.query(`
       DELETE FROM memberships
