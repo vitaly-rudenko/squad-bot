@@ -10,7 +10,7 @@ export class PaymentTelegramNotifier {
 
   async deleted(payment, { editorId }) {
     const { fromUserId, toUserId, amount } = payment
-    
+
     const editor = await this._usersStorage.findById(editorId)
     const sender = await this._usersStorage.findById(fromUserId)
     const receiver = await this._usersStorage.findById(toUserId)
@@ -27,9 +27,9 @@ export class PaymentTelegramNotifier {
         senderUsername: escapeMd(sender.username),
         receiverName: escapeMd(receiver.name),
         receiverUsername: escapeMd(receiver.username),
-        amount: renderMoney(amount),
+        amount: escapeMd(renderMoney(amount)),
       })
-  
+
       massNotification.add(user.id, notification)
     }
 
@@ -49,7 +49,7 @@ export class PaymentTelegramNotifier {
   /** @param {import('../Payment').Payment} payment */
   async _stored(payment, { editorId, isNew }) {
     const { fromUserId, toUserId, amount } = payment
-    
+
     const editor = await this._usersStorage.findById(editorId)
     const sender = await this._usersStorage.findById(fromUserId)
     const receiver = await this._usersStorage.findById(toUserId)
@@ -66,7 +66,7 @@ export class PaymentTelegramNotifier {
         senderUsername: escapeMd(sender.username),
         receiverName: escapeMd(receiver.name),
         receiverUsername: escapeMd(receiver.username),
-        amount: renderMoney(amount),
+        amount: escapeMd(renderMoney(amount)),
         action: this._localize(
           user.locale,
           isNew
@@ -74,7 +74,7 @@ export class PaymentTelegramNotifier {
             : 'notifications.paymentStored.actions.updated',
         ),
       })
-  
+
       massNotification.add(user.id, notification)
     }
 
