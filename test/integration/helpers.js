@@ -11,6 +11,10 @@ const nameConfig = {
   style: 'lowerCase',
 }
 
+export const generateChatId = () => {
+  return `chat_${crypto.randomBytes(3).toString('hex')}`
+}
+
 export const generateUserId = () => {
   return `${uniqueNamesGenerator(nameConfig)}_${crypto.randomBytes(3).toString('hex')}`
 }
@@ -198,6 +202,32 @@ export async function deletePayment(paymentId, userId) {
 export async function getDebts(userId) {
   const response = await fetch(`${TEST_API_URL}/debts`, {
     headers: createAuthorizationHeader({ userId }),
+  })
+
+  validateResponse(response)
+
+  return await response.json()
+}
+
+export async function createRollCall(userId, chatId, {
+  messagePattern = '@channel',
+  usersPattern = '*',
+  excludeSender = true,
+  pollOptions = [],
+} = {}) {
+  const response = await fetch(`${TEST_API_URL}/rollcalls`, {
+    method: 'POST',
+    headers: {
+      ...createAuthorizationHeader({ userId }),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      chatId,
+      messagePattern,
+      usersPattern,
+      excludeSender,
+      pollOptions,
+    })
   })
 
   validateResponse(response)

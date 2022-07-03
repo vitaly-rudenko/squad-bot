@@ -54,6 +54,7 @@ import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
+import { RollCall } from './app/rollcalls/RollCall.js'
 
 (async () => {
   if (useTestMode) {
@@ -508,6 +509,32 @@ import { logger } from './logger.js'
       })),
       ...incompleteReceiptIds.length > 0 && { incompleteReceiptIds }
     })
+  })
+
+  app.post('/rollcalls', async (req, res) => {
+    const chatId = req.body.chatId
+
+    if (!(await membershipManager.isHardLinked(req.user.id, chatId))) {
+      res.sendStatus(403)
+      return
+    }
+
+    const messagePattern = req.body.messagePattern
+    const usersPattern = req.body.usersPattern
+    const excludeSender = req.body.excludeSender
+    const pollOptions = req.body.pollOptions
+
+    const storedRollCall = await rollCallStorage.create(
+      new RollCall({
+        chatId,
+        excludeSender,
+        messagePattern,
+        usersPattern,
+        pollOptions,
+      })
+    )
+
+    res.json(storedRollCall)
   })
 
   app.get('/rollcalls', async (req, res) => {
