@@ -158,7 +158,7 @@ export function rollCallsAddMessagePatternMessage({ userSessionManager }) {
     const { userId, localize } = context.state
 
     await userSessionManager.setContext(userId, {
-      messagePattern: context.message.text,
+      messagePattern: context.message.text.trim(),
     })
 
     await context.reply(
@@ -197,8 +197,9 @@ export function rollCallsAddUsersPatternMessage({ userSessionManager, membership
       return str1.toLowerCase() === str2.toLowerCase()
     }
 
+    const inputs = context.message.text.split('\n').map(s => s.trim()).filter(Boolean)
     const users = []
-    for (const input of context.message.text.split('\n').filter(Boolean)) {
+    for (const input of inputs) {
       const chatUser = chatUsers.find(u => (
         (u.username && (
           equalsIgnoreCase(u.username, input.slice(1)) ||
@@ -284,7 +285,7 @@ export function rollCallsAddPollOptionsMessage({ userSessionManager, rollCallsSt
 
     const { localize } = context.state
 
-    const pollOptions = context.message.text.split('\n').filter(Boolean)
+    const pollOptions = context.message.text.split('\n').map(s => s.trim()).filter(Boolean)
 
     if (pollOptions.length < 2) {
       await context.reply(localize('command.rollCalls.add.tooFewPollOptions'))
