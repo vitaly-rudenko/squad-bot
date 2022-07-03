@@ -14,6 +14,7 @@ export function rollCallsCommand({ rollCallsStorage, usersStorage, userSessionMa
       rollCalls
         .filter(rc => rc.usersPattern !== '*')
         .map(rc => rc.usersPattern.split(','))
+        .reduce((acc, curr) => [...acc, ...curr], [])
     )]
 
     const users = await usersStorage.findByIds(userIds)
