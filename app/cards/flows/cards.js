@@ -204,12 +204,6 @@ export function cardsGetIdAction({ cardsStorage, userSessionManager }) {
     const card = await cardsStorage.findById(cardId)
 
     await userSessionManager.clear(userId)
-    const message = await context.reply(card.number)
-
-    if (context.chat.type !== 'private') {
-      setTimeout(async () => {
-        await context.deleteMessage(message.message_id).catch(() => { })
-      }, 60_000)
-    }
+    await context.reply(card.number)
   }
 }
