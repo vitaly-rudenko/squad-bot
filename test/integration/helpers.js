@@ -245,6 +245,15 @@ export async function getRollCalls(chatId, userId) {
   return await response.json()
 }
 
+export async function deleteRollCall(id, userId) {
+  const response = await fetch(`${TEST_API_URL}/rollcalls/${id}`, {
+    method: 'DELETE',
+    headers: createAuthorizationHeader({ userId }),
+  })
+
+  validateResponse(response)
+}
+
 // --- TEST MODE
 export async function createMembership(userId, chatId) {
   const response = await fetch(`${TEST_API_URL}/memberships`, {

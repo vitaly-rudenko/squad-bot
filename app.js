@@ -542,6 +542,22 @@ import { RollCall } from './app/rollcalls/RollCall.js'
     res.json(rollCalls)
   })
 
+  app.delete('/rollcalls/:rollCallId', async (req, res) => {
+    const rollCall = await rollCallStorage.findById(req.params.rollCallId)
+    if (!rollCall) {
+      res.sendStatus(404)
+      return
+    }
+
+    if (!(await membershipManager.isHardLinked(req.user.id, rollCall.chatId))) {
+      res.sendStatus(403)
+      return
+    }
+
+    await rollCallStorage.deleteById(req.params.rollCallId)
+    res.sendStatus(204)
+  })
+
   const port = Number(process.env.PORT) || 3001
 
   await new Promise(resolve => app.listen(port, () => resolve()))
