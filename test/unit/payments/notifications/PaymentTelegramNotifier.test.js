@@ -1,15 +1,14 @@
 import chai, { expect } from 'chai'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { spy } from 'sinon'
-import { Debt } from '../../../app/debts/Debt.js'
-import { PaymentTelegramNotifier } from '../../../app/payments/notifications/PaymentTelegramNotifier.js'
+import { PaymentTelegramNotifier } from '../../../../app/payments/notifications/PaymentTelegramNotifier.js'
 import { stripIndent } from 'common-tags'
 import { localizeMock } from '../../helpers/localizeMock.js'
 import { UsersMockStorage } from '../../helpers/UsersMockStorage.js'
 import { createUser } from '../../helpers/createUser.js'
-import { MassTelegramNotificationFactory } from '../../../app/shared/notifications/MassTelegramNotification.js'
-import { Payment } from '../../../app/payments/Payment.js'
-import { escapeMd } from '../../../app/utils/escapeMd.js'
+import { MassTelegramNotificationFactory } from '../../../../app/shared/notifications/MassTelegramNotification.js'
+import { Payment } from '../../../../app/payments/Payment.js'
+import { escapeMd } from '../../../../app/utils/escapeMd.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -111,7 +110,7 @@ describe('PaymentTelegramNotifier', () => {
               senderUsername: ${escapeMd(sender.username)}
               receiverName: ${escapeMd(receiver.name)}
               receiverUsername: ${escapeMd(receiver.username)}
-              amount: 12.30 грн
+              amount: 12\\.30 грн
               action: notifications.paymentStored.actions.updated(${sender.locale})
           `],
           [receiver.id, stripIndent`
@@ -122,7 +121,7 @@ describe('PaymentTelegramNotifier', () => {
               senderUsername: ${escapeMd(sender.username)}
               receiverName: ${escapeMd(receiver.name)}
               receiverUsername: ${escapeMd(receiver.username)}
-              amount: 12.30 грн
+              amount: 12\\.30 грн
               action: notifications.paymentStored.actions.updated(${receiver.locale})
           `]
         ])
@@ -156,7 +155,7 @@ describe('PaymentTelegramNotifier', () => {
               senderUsername: ${escapeMd(sender.username)}
               receiverName: ${escapeMd(receiver.name)}
               receiverUsername: ${escapeMd(receiver.username)}
-              amount: 12.34 грн
+              amount: 12\\.34 грн
           `],
           [receiver.id, stripIndent`
             notifications.paymentDeleted.message(${receiver.locale}):
@@ -166,7 +165,7 @@ describe('PaymentTelegramNotifier', () => {
               senderUsername: ${escapeMd(sender.username)}
               receiverName: ${escapeMd(receiver.name)}
               receiverUsername: ${escapeMd(receiver.username)}
-              amount: 12.34 грн
+              amount: 12\\.34 грн
           `]
         ])
     })

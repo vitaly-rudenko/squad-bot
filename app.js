@@ -17,7 +17,7 @@ import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
 import { withPhaseFactory } from './app/shared/middlewares/phase.js'
 import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
-import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsGet, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
+import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsCommand, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
 import { withUserId } from './app/users/middlewares/userId.js'
 import { User } from './app/users/User.js'
@@ -26,6 +26,7 @@ import { withLocalization } from './app/localization/middlewares/localization.js
 import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
+import { RollCallsPostgresStorage } from './app/rollcalls/RollCallsPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
@@ -39,9 +40,9 @@ import { ReceiptPhoto } from './app/receipts/ReceiptPhoto.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
 import { DebtManager } from './app/debts/DebtManager.js'
-import { MembershipManager } from './app/chats/MembershipManager.js'
-import { MembershipCache } from './app/chats/MembershipCache.js'
-import { MembershipPostgresStorage } from './app/chats/MembershipPostgresStorage.js'
+import { MembershipManager } from './app/memberships/MembershipManager.js'
+import { MembershipCache } from './app/memberships/MembershipCache.js'
+import { MembershipPostgresStorage } from './app/memberships/MembershipPostgresStorage.js'
 import { registerUser } from './app/users/middlewares/registeredUser.js'
 import { UserManager } from './app/users/UserManager.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
@@ -53,6 +54,9 @@ import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
+import { RollCall } from './app/rollcalls/RollCall.js'
+import { escapeMd } from './app/utils/escapeMd.js'
+import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessagePatternMessage, rollCallsAddPollOptionsMessage, rollCallsAddPollOptionsSkipAction, rollCallsAddUsersPatternAllAction, rollCallsAddUsersPatternMessage, rollCallsCommand, rollCallsDeleteAction, rollCallsDeleteCancelAction, rollCallsDeleteIdAction, rollCallsMessage } from './app/rollcalls/flows/rollcalls.js'
 
 (async () => {
   if (useTestMode) {
@@ -70,7 +74,7 @@ import { logger } from './logger.js'
   if (process.env.LOG_DATABASE_QUERIES === 'true') {
     const query = pgClient.query.bind(pgClient)
     pgClient.query = (...args) => {
-      logger.debug('Database query:', ...args)
+      logger.debug({ args }, 'Database query')
       return query(...args)
     }
   }
@@ -80,9 +84,11 @@ import { logger } from './logger.js'
   const debtsStorage = new DebtsPostgresStorage(pgClient)
   const paymentsStorage = new PaymentsPostgresStorage(pgClient)
   const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
+  const rollCallsStorage = new RollCallsPostgresStorage(pgClient)
 
   const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
+  const tokenSecret = process.env.TOKEN_SECRET
 
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
@@ -146,6 +152,7 @@ import { logger } from './logger.js'
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
+    { command: 'rollcalls', description: 'Керування перекличками' },
     { command: 'start', description: 'Зареєструватись' },
     { command: 'users', description: 'Список користувачів' },
     { command: 'version', description: 'Версія' },
@@ -163,7 +170,7 @@ import { logger } from './logger.js'
 
   if (!useWebhooks) {
     bot.use((context, next) => {
-      logger.debug('Direct update received:', context.update)
+      logger.debug({ update: context.update }, 'Direct update received')
       return next()
     })
   }
@@ -222,14 +229,23 @@ import { logger } from './logger.js'
   bot.command('payments', paymentsGetCommand({ usersStorage }))
 
   bot.command('addcard', cardsAddCommand())
-  bot.action(/cards:add:bank:(.+)/, cardsAddBankAction({ userSessionManager }))
+  bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction({ userSessionManager }))
 
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
-  bot.action(/cards:delete:id:(.+)/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage, userSessionManager }))
+  bot.action(/^cards:delete:id:(.+)$/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage, userSessionManager }))
 
-  bot.command('cards', cardsGet({ usersStorage, userSessionManager }))
-  bot.action(/cards:get:user-id:(.+)/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
-  bot.action(/cards:get:id:(.+)/, cardsGetIdAction({ cardsStorage, userSessionManager }))
+  bot.command('cards', cardsCommand({ usersStorage, userSessionManager }))
+  bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
+  bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage, userSessionManager }))
+
+  bot.command('rollcalls', rollCallsCommand({ rollCallsStorage, usersStorage, userSessionManager }))
+  bot.action(/^rollcalls:delete$/, withPhase(Phases.rollCalls), rollCallsDeleteAction({ userSessionManager, rollCallsStorage }))
+  bot.action(/^rollcalls:delete:cancel$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteCancelAction({ userSessionManager }))
+  bot.action(/^rollcalls:delete:id:(.+)$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }))
+  bot.action(/^rollcalls:add$/, withPhase(Phases.rollCalls), rollCallsAddAction({ userSessionManager }))
+  bot.action(/^rollcalls:add:users-pattern:all$/, withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternAllAction({ userSessionManager }))
+  bot.action(/^rollcalls:add:exclude-sender:(.+)$/, withPhase(Phases.addRollCall.excludeSender), rollCallsAddExcludeSenderAction({ userSessionManager }))
+  bot.action(/^rollcalls:add:poll-options:skip$/, withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsSkipAction({ userSessionManager, rollCallsStorage }))
 
   bot.on('message',
     async (context, next) => {
@@ -237,7 +253,12 @@ import { logger } from './logger.js'
       return next()
     },
     // cards
-    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage, userSessionManager }))
+    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage, userSessionManager })),
+    // roll calls
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.messagePattern), rollCallsAddMessagePatternMessage({ userSessionManager })),
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternMessage({ userSessionManager, membershipStorage, usersStorage })),
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsMessage({ userSessionManager, rollCallsStorage })),
+    wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
   )
 
   bot.catch((error) => errorLogger.log(error))
@@ -275,19 +296,19 @@ import { logger } from './logger.js'
   app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
     const updateId = req.body['update_id']
     if (!updateId) {
-      logger.warn('Invalid webhook update:', req.body)
+      logger.warn({ body: req.body }, 'Invalid webhook update')
       res.sendStatus(500)
       return
     }
 
     if (!(await handledBotUpdates.set(updateId))) {
-      logger.debug('Webhook update is already handled:', req.body)
+      logger.debug({ body: req.body }, 'Webhook update is already handled')
       res.sendStatus(200)
       return
     }
 
     try {
-      logger.debug('Webhook update received:', req.body)
+      logger.debug({ body: req.body }, 'Webhook update received')
       await bot.handleUpdate(req.body, res)
     } catch (error) {
       next(error)
@@ -307,7 +328,7 @@ import { logger } from './logger.js'
 
     let userId
     try {
-      ({ userId } = jwt.verify(temporaryAuthToken, process.env.TOKEN_SECRET))
+      ({ userId } = jwt.verify(temporaryAuthToken, tokenSecret))
       if (!userId) {
         throw new Error('Temporary token does not contain user ID')
       }
@@ -328,7 +349,7 @@ import { logger } from './logger.js'
         name: user.name,
         username: user.username,
       }
-    }, process.env.TOKEN_SECRET))
+    }, tokenSecret))
   })
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {
@@ -342,12 +363,19 @@ import { logger } from './logger.js'
     }
   })
 
+  if (useTestMode) {
+    app.post('/memberships', async (req, res) => {
+      await membershipManager.hardLink(req.body.userId, req.body.chatId)
+      res.json('ok')
+    })
+  }
+
   app.use((req, res, next) => {
     const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
 
     if (token) {
       try {
-        const { user } = jwt.verify(token, process.env.TOKEN_SECRET)
+        const { user } = jwt.verify(token, tokenSecret)
         if (!user.id || !user.username || !user.name) {
           throw new Error('Token does not contain user ID, username and name')
         }
@@ -499,6 +527,53 @@ import { logger } from './logger.js'
     })
   })
 
+  app.post('/rollcalls', async (req, res) => {
+    const chatId = req.body.chatId
+
+    if (!(await membershipManager.isHardLinked(req.user.id, chatId))) {
+      res.sendStatus(403)
+      return
+    }
+
+    const messagePattern = req.body.messagePattern
+    const usersPattern = req.body.usersPattern
+    const excludeSender = req.body.excludeSender
+    const pollOptions = req.body.pollOptions
+
+    const storedRollCall = await rollCallsStorage.create(
+      new RollCall({
+        chatId,
+        excludeSender,
+        messagePattern,
+        usersPattern,
+        pollOptions,
+      })
+    )
+
+    res.json(storedRollCall)
+  })
+
+  app.get('/rollcalls', async (req, res) => {
+    const rollCalls = await rollCallsStorage.findByChatId(req.query['chat_id'])
+    res.json(rollCalls)
+  })
+
+  app.delete('/rollcalls/:rollCallId', async (req, res) => {
+    const rollCall = await rollCallsStorage.findById(req.params.rollCallId)
+    if (!rollCall) {
+      res.sendStatus(404)
+      return
+    }
+
+    if (!(await membershipManager.isHardLinked(req.user.id, rollCall.chatId))) {
+      res.sendStatus(403)
+      return
+    }
+
+    await rollCallsStorage.deleteById(req.params.rollCallId)
+    res.sendStatus(204)
+  })
+
   const port = Number(process.env.PORT) || 3001
 
   await new Promise(resolve => app.listen(port, () => resolve()))
@@ -506,27 +581,27 @@ import { logger } from './logger.js'
   try {
     await bot.telegram.deleteWebhook()
   } catch (error) {
-    logger.warn('Could not delete webhook:', error)
+    logger.warn({ error }, 'Could not delete webhook:')
   }
 
   if (useWebhooks) {
     const domain = process.env.DOMAIN
     const webhookUrl = `${domain}/bot${telegramBotToken}`
 
-    logger.info('Setting webhook to:', { webhookUrl })
+    logger.info({ webhookUrl }, 'Setting webhook')
     while (true) {
       try {
         await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
         break
       } catch (error) {
-        logger.warn('Could not set webhook, retrying...', error)
+        logger.warn({ error }, 'Could not set webhook, retrying...')
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }
 
     logger.info(
-      `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}:`,
-      await bot.telegram.getWebhookInfo()
+      { webhookInfo: await bot.telegram.getWebhookInfo() },
+      `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}`,
     )
   } else {
     await bot.launch()

@@ -66,7 +66,7 @@ export function debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debt
 
     const isIncomplete = !user.isComplete && localize('command.debts.incompleteUser')
 
-    const message = await context.reply(
+    await context.reply(
       [
         outgoingDebtsFormatted,
         ingoingDebtsFormatted,
@@ -75,14 +75,5 @@ export function debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debt
       ].filter(Boolean).map(s => s.trim()).join('\n\n'),
       { parse_mode: 'MarkdownV2' }
     )
-
-    if (context.chat.type !== 'private') {
-      setTimeout(async () => {
-        await Promise.all([
-          context.deleteMessage(context.message.message_id).catch(() => {}),
-          context.deleteMessage(message.message_id).catch(() => {}),
-        ])
-      }, 60_000)
-    }
   }
 }

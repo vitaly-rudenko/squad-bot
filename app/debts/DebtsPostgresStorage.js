@@ -46,11 +46,10 @@ export class DebtsPostgresStorage {
    *   ids?: string[],
    *   receiptIds?: string[],
    *   limit?: number,
-   *   offset?: number,
-   *   allowDeprecatedNoConditions?: boolean
+   *   offset?: number
    * }} options
    */
-  async _find({ ids, receiptIds, limit, offset, allowDeprecatedNoConditions = false } = {}) {
+  async _find({ ids, receiptIds, limit, offset } = {}) {
     const conditions = [
       'd.deleted_at IS NULL',
       'r.deleted_at IS NULL',
@@ -75,7 +74,7 @@ export class DebtsPostgresStorage {
       variables.push(...receiptIds)
     }
 
-    if (conditions.length === 0 && !allowDeprecatedNoConditions) {
+    if (conditions.length === 0) {
       throw new Error('No conditions were provided for the search')
     }
 

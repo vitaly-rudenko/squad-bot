@@ -8,16 +8,16 @@ export class ReceiptManager {
   }
 
   /**
-   * @param {object} data
-   * @param {import('./Receipt').Receipt} data.receipt
-   * @param {import('./ReceiptPhoto').ReceiptPhoto} data.receiptPhoto
-   * @param {{ debtorId: string, amount: number }[]} data.debts
-   * @param {object} meta
-   * @param {string} meta.editorId
+   * @param {{
+   *   receipt: import('./Receipt').Receipt,
+   *   receiptPhoto: import('./ReceiptPhoto').ReceiptPhoto | null,
+   *   debts: { debtorId: string, amount: number | null }[]
+   * }} data
+   * @param {{ editorId: string }} meta
    */
   async store({ receipt, receiptPhoto, debts }, { editorId }) {
     const isNew = !receipt.id
-    
+
     let storedReceipt
     if (isNew) {
       storedReceipt = await this._receiptsStorage.create(receipt, receiptPhoto)

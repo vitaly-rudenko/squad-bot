@@ -1,15 +1,15 @@
 import chai, { expect } from 'chai'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { spy } from 'sinon'
-import { Debt } from '../../../app/debts/Debt.js'
-import { ReceiptTelegramNotifier } from '../../../app/receipts/notifications/ReceiptTelegramNotifier.js'
+import { Debt } from '../../../../app/debts/Debt.js'
+import { ReceiptTelegramNotifier } from '../../../../app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { stripIndent } from 'common-tags'
 import { localizeMock } from '../../helpers/localizeMock.js'
 import { UsersMockStorage } from '../../helpers/UsersMockStorage.js'
 import { createUser } from '../../helpers/createUser.js'
 import { DebtsMockStorage } from '../../helpers/DebtsMockStorage.js'
-import { MassTelegramNotificationFactory } from '../../../app/shared/notifications/MassTelegramNotification.js'
-import { escapeMd } from '../../../app/utils/escapeMd.js'
+import { MassTelegramNotificationFactory } from '../../../../app/shared/notifications/MassTelegramNotification.js'
+import { escapeMd } from '../../../../app/utils/escapeMd.js'
 
 chai.use(deepEqualInAnyOrder)
 

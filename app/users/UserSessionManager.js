@@ -20,6 +20,13 @@ export class UserSessionManager {
     await this._contexts.set(userId, context)
   }
 
+  async amendContext(userId, context) {
+    await this._contexts.set(userId, {
+      ...await this.getContext(userId),
+      ...context,
+    })
+  }
+
   async clear(userId) {
     await this._phases.delete(userId)
     await this._contexts.delete(userId)

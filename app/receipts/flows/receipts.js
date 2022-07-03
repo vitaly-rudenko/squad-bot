@@ -14,7 +14,7 @@ export function receiptsGetCommand({ usersStorage }) {
 
     const user = await usersStorage.findById(userId)
 
-    const message = await context.reply(
+    await context.reply(
       localize(
         isPrivateChat
           ? 'command.receipts.chooseAction'
@@ -28,14 +28,5 @@ export function receiptsGetCommand({ usersStorage }) {
         ], { columns: 1 }).reply_markup
       }
     )
-
-    if (context.chat.type !== 'private') {
-      setTimeout(async () => {
-        await Promise.all([
-          context.deleteMessage(context.message.message_id).catch(() => {}),
-          context.deleteMessage(message.message_id).catch(() => {}),
-        ])
-      }, 60_000)
-    }
   }
 }
