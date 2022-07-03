@@ -33,10 +33,10 @@ export function localize(locale, messageKey, replacements = null) {
   let result = get(messageKey, locale)
 
   if (Array.isArray(result)) {
-    result = result.map(item => (
+    result = result.map((item, index, array) => (
       item.endsWith('\\')
         ? item.slice(0, -1)
-        : `${item}\n`
+        : (index === array.length - 1) ? item : `${item}\n`
     )).join('')
   }
 
