@@ -55,6 +55,7 @@ import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
 import { RollCall } from './app/rollcalls/RollCall.js'
+import { escapeMd } from './app/utils/escapeMd.js'
 
 (async () => {
   if (useTestMode) {
@@ -150,7 +151,6 @@ import { RollCall } from './app/rollcalls/RollCall.js'
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
-    { command: 'rollcalls', description: 'Керувати перекличками' },
     { command: 'start', description: 'Зареєструватись' },
     { command: 'users', description: 'Список користувачів' },
     { command: 'version', description: 'Версія' },
@@ -242,7 +242,61 @@ import { RollCall } from './app/rollcalls/RollCall.js'
       return next()
     },
     // cards
-    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage, userSessionManager }))
+    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage, userSessionManager })),
+    // roll calls
+    wrap(withGroupChat(), async (context, next) => {
+      if (!('text' in context.message)) return next()
+
+      const { userId, chatId, localize } = context.state
+      const rollCalls = await rollCallStorage.findByChatId(chatId)
+
+      console.log('Chat roll calls:', rollCalls)
+
+      const rollCall = rollCalls.find(rc => rc.messagePattern === context.message.text)
+      if (!rollCall) return next()
+
+      let userIdsToNotify
+
+      if (rollCall.usersPattern === '*') {
+        userIdsToNotify = await membershipStorage.findUserIdsByChatId(chatId)
+      } else {
+        userIdsToNotify = rollCall.usersPattern.split(',')
+      }
+
+      if (rollCall.excludeSender) {
+        userIdsToNotify = userIdsToNotify.filter(id => id !== userId)
+      }
+
+      if (userIdsToNotify.length === 0) {
+        await context.reply(localize('rollCalls.noOneToMention'))
+        return
+      }
+
+      function formatMention(user) {
+        if (user.username) {
+          return localize('rollCalls.mention.withUsername', { username: escapeMd(user.username) })
+        } else {
+          return localize('rollCalls.mention.withoutUsername', {
+            name: escapeMd(user.name),
+            profileUrl: escapeMd(`tg://user?id=${user.id}`),
+          })
+        }
+      }
+
+      const usersToNotify = await usersStorage.findByIds(userIdsToNotify)
+      const mentions = usersToNotify.map(formatMention).join(' ')
+      const message = localize('rollCalls.message.withoutText', { mentions })
+
+      await context.reply(message, { parse_mode: 'MarkdownV2' })
+
+      if (rollCall.pollOptions.length > 0) {
+        await context.replyWithPoll(
+          'Poll',
+          rollCall.pollOptions,
+          { is_anonymous: false }
+        )
+      }
+    })
   )
 
   bot.catch((error) => errorLogger.log(error))

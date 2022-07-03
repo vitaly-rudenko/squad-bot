@@ -102,6 +102,21 @@
   },
   "groupChatOnly": "❌ Цю команду можна виконати лише у груповому чаті",
   "privateChatOnly": "❌ Цю команду можна виконати лише в особистому чаті з ботом",
+  "rollCalls": {
+    "noOneToMention": "❌ Немає кого пінганути чи у бота недостатньо даних про цей чат",
+    "message": {
+      "withText": [
+        "*{text}*",
+        "",
+        "{mentions}"
+      ],
+      "withoutText": "{mentions}"
+    },
+    "mention": {
+      "withUsername": "@{username}",
+      "withoutUsername": "[{name}]({profileUrl})"
+    }
+  },
   "notifications": {
     "receiptStored": {
       "message": [
