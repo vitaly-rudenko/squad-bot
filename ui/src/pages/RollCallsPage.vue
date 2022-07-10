@@ -74,6 +74,7 @@
 </template>
 
 <script>
+import router from 'src/router'
 import { defineComponent } from 'vue'
 
 export default defineComponent({
@@ -88,10 +89,11 @@ export default defineComponent({
     this.load()
   },
   methods: {
-    onEdit: (id) => {
+    onEdit(id) {
       console.log('edit', id)
+      this.$router.push({ path: `/rollcalls/${id}` })
     },
-    onDelete: (id) => {
+    onDelete(id) {
       console.log('delete', id)
     },
     parseUsers(usersPattern) {
