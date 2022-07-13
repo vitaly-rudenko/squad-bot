@@ -57,6 +57,9 @@ import { logger } from './logger.js'
 import { RollCall } from './app/rollcalls/RollCall.js'
 import { escapeMd } from './app/utils/escapeMd.js'
 import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessagePatternMessage, rollCallsAddPollOptionsMessage, rollCallsAddPollOptionsSkipAction, rollCallsAddUsersPatternAllAction, rollCallsAddUsersPatternMessage, rollCallsCommand, rollCallsDeleteAction, rollCallsDeleteCancelAction, rollCallsDeleteIdAction, rollCallsMessage } from './app/rollcalls/flows/rollcalls.js'
+import { Group } from './app/groups/Group.js'
+import { GroupManager } from './app/groups/GroupManager.js'
+import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 
 (async () => {
   if (useTestMode) {
@@ -140,6 +143,12 @@ import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessag
     telegram: bot.telegram,
   })
 
+  const groupStorage = new GroupsPostgresStorage(pgClient)
+  const groupManager = new GroupManager(
+    groupStorage,
+    createRedisCache('groups', useTestMode ? 60_000 : 60 * 60_000)
+  )
+
   const userManager = new UserManager({
     usersStorage,
     userCache: new UserCache(createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)),
@@ -218,6 +227,8 @@ import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessag
   bot.use(registerUser({ userManager }))
   bot.use(wrap(withGroupChat(), async (context, next) => {
     const { userId, chatId } = context.state
+
+    await groupManager.store(new Group({ id: chatId, title: context.chat?.title || null }))
     await membershipManager.softLink(userId, chatId)
 
     return next()
@@ -572,6 +583,10 @@ import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessag
 
     await rollCallsStorage.deleteById(req.params.rollCallId)
     res.sendStatus(204)
+  })
+
+  app.get('/groups', async (req, res) => {
+    res.json(await groupStorage.findByMemberUserId(req.user.id))
   })
 
   const port = Number(process.env.PORT) || 3001
