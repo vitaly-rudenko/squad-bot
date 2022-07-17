@@ -254,12 +254,22 @@ export async function deleteRollCall(id, userId) {
   validateResponse(response)
 }
 
+export async function getGroups(userId) {
+  const response = await fetch(`${TEST_API_URL}/groups`, {
+    headers: createAuthorizationHeader({ userId }),
+  })
+
+  validateResponse(response)
+
+  return await response.json()
+}
+
 // --- TEST MODE
-export async function createMembership(userId, chatId) {
+export async function createMembership(userId, chatId, title = 'Fake chat') {
   const response = await fetch(`${TEST_API_URL}/memberships`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, chatId })
+    body: JSON.stringify({ userId, chatId, title })
   })
 
   validateResponse(response)

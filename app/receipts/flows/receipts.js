@@ -1,5 +1,6 @@
 import { Markup } from 'telegraf'
 import { generateTemporaryAuthToken } from '../../auth/generateTemporaryAuthToken.js'
+import { escapeMd } from '../../utils/escapeMd.js'
 
 export function receiptsGetCommand({ usersStorage }) {
   return async (context) => {
@@ -19,9 +20,10 @@ export function receiptsGetCommand({ usersStorage }) {
         isPrivateChat
           ? 'command.receipts.chooseAction'
           : 'command.receipts.chooseActionWithoutToken',
-        { name: user.name }
+        { name: escapeMd(user.name) }
       ),
       {
+        parse_mode: 'MarkdownV2',
         reply_markup: Markup.inlineKeyboard([
           Markup.button.url(localize('command.receipts.actions.add'), addUrl),
           Markup.button.url(localize('command.receipts.actions.view'), viewUrl),
