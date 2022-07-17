@@ -29,21 +29,23 @@ describe('[roll calls]', () => {
     const excludeSender = true
     const pollOptions = ['yes', 'no']
 
-    const response = await createRollCall(user.id, chatId, {
+    const rollCall = await createRollCall(user.id, chatId, {
       messagePattern,
       usersPattern,
       excludeSender,
       pollOptions,
     })
 
-    expect(response.id).to.be.a.string
-    expect(response).to.containSubset({
+    expect(rollCall.id).to.be.a.string
+    expect(rollCall).to.containSubset({
       chatId,
       messagePattern,
       usersPattern,
       excludeSender,
       pollOptions,
     })
+
+    expect(await getRollCalls(chatId, user.id)).to.deep.equalInAnyOrder([rollCall])
   })
 
   it('should allow creating multiple roll calls', async () => {
