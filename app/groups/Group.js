@@ -1,7 +1,6 @@
 export class Group {
-  constructor({ id, title, updatedAt = undefined }) {
+  constructor({ id, title }) {
     this.id = id
     this.title = title
-    this.updatedAt = updatedAt
   }
 }

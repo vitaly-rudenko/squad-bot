@@ -376,7 +376,16 @@ import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 
   if (useTestMode) {
     app.post('/memberships', async (req, res) => {
-      await membershipManager.hardLink(req.body.userId, req.body.chatId)
+      const { userId, chatId, title } = req.body
+
+      await membershipManager.hardLink(userId, chatId)
+      await groupManager.store(
+        new Group({
+          id: chatId,
+          title,
+        })
+      )
+
       res.json('ok')
     })
   }
