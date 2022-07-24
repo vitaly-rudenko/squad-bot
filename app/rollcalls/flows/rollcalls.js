@@ -8,7 +8,7 @@ export function rollCallsCommand({ rollCallsStorage, usersStorage, userSessionMa
   return async (context) => {
     const { userId, chatId, localize } = context.state
 
-    const rollCalls = await rollCallsStorage.findByChatId(chatId)
+    const rollCalls = await rollCallsStorage.findByGroupId(chatId)
 
     const userIds = [...new Set(
       rollCalls
@@ -86,7 +86,7 @@ export function rollCallsDeleteAction({ userSessionManager, rollCallsStorage }) 
 
     await context.answerCbQuery()
 
-    const rollCalls = await rollCallsStorage.findByChatId(chatId)
+    const rollCalls = await rollCallsStorage.findByGroupId(chatId)
 
     await context.deleteMessage()
     await context.reply(localize('command.rollCalls.delete.choose'), {
@@ -191,7 +191,7 @@ export function rollCallsAddUsersPatternMessage({ userSessionManager, membership
 
     const { chatId, localize } = context.state
 
-    const chatUserIds = await membershipStorage.findUserIdsByChatId(chatId)
+    const chatUserIds = await membershipStorage.findUserIdsByGroupId(chatId)
     const chatUsers = await usersStorage.findByIds(chatUserIds)
 
     function equalsIgnoreCase(str1, str2) {
@@ -302,13 +302,15 @@ async function handlePollOptions(context, pollOptions, userSessionManager, rollC
 
   const { messagePattern, usersPattern, excludeSender } = await userSessionManager.getContext(userId)
 
+  const existingRollCalls = await rollCallsStorage.findByGroupId(chatId)
   await rollCallsStorage.create(
     new RollCall({
-      chatId,
+      groupId: chatId,
       messagePattern,
       usersPattern,
       excludeSender,
       pollOptions,
+      sortOrder: existingRollCalls.length + 1,
     })
   )
 
@@ -325,8 +327,7 @@ export function rollCallsMessage({ rollCallsStorage, membershipStorage, usersSto
 
     const { userId, chatId, localize } = context.state
 
-    const rollCalls = await rollCallsStorage.findByChatId(chatId)
-    rollCalls.sort((a, b) => b.messagePattern.length - a.messagePattern.length)
+    const rollCalls = await rollCallsStorage.findByGroupId(chatId)
 
     const patternMatcher = new PatternMatcher()
     const entryMatchers = new EntryMatchers()
@@ -350,7 +351,7 @@ export function rollCallsMessage({ rollCallsStorage, membershipStorage, usersSto
 
     let userIdsToNotify
     if (matchedRollCall.usersPattern === '*') {
-      userIdsToNotify = await membershipStorage.findUserIdsByChatId(chatId)
+      userIdsToNotify = await membershipStorage.findUserIdsByGroupId(chatId)
     } else {
       userIdsToNotify = matchedRollCall.usersPattern.split(',')
     }

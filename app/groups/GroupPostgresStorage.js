@@ -49,7 +49,7 @@ export class GroupsPostgresStorage {
       }
 
       const userIdsSql = `(${memberUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`
-      conditions.push(`id IN (SELECT m.chat_id FROM memberships m WHERE m.user_id IN ${userIdsSql})`)
+      conditions.push(`id IN (SELECT m.group_id FROM memberships m WHERE m.user_id IN ${userIdsSql})`)
       variables.push(...memberUserIds)
     }
 

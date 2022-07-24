@@ -34,13 +34,13 @@ import { logger } from '../logger.js'
   const memberships = await membershipStorage.findOldest({ limit: 10 })
   logger.info(`Found ${memberships.length} memberships to refresh`)
 
-  for (const { userId, chatId } of memberships) {
-    logger.info(`Refreshing membership of user ${userId} in chat: ${chatId}`)
+  for (const { userId, groupId } of memberships) {
+    logger.info(`Refreshing membership of user ${userId} in chat: ${groupId}`)
 
     try {
-      await membershipManager.refreshLink(userId, chatId)
+      await membershipManager.refreshLink(userId, groupId)
     } catch (error) {
-      errorLogger.log(error, 'Could not refresh membership link', { userId, chatId })
+      errorLogger.log(error, 'Could not refresh membership link', { userId, groupId })
     }
   }
 })().then(() => {

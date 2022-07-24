@@ -7,43 +7,43 @@ export class MembershipManager {
     this._membershipStorage = membershipStorage
   }
 
-  async isHardLinked(userId, chatId) {
-    return this._membershipStorage.exists(userId, chatId)
+  async isHardLinked(userId, groupId) {
+    return this._membershipStorage.exists(userId, groupId)
   }
 
-  async hardLink(userId, chatId) {
-    await this._membershipCache.cache(userId, chatId)
-    await this._storeLink(userId, chatId)
+  async hardLink(userId, groupId) {
+    await this._membershipCache.cache(userId, groupId)
+    await this._storeLink(userId, groupId)
   }
 
-  async softLink(userId, chatId) {
-    if (await this._membershipCache.cache(userId, chatId)) {
-      await this._storeLink(userId, chatId)
+  async softLink(userId, groupId) {
+    if (await this._membershipCache.cache(userId, groupId)) {
+      await this._storeLink(userId, groupId)
     }
   }
 
-  async _storeLink(userId, chatId) {
-    await this._membershipStorage.store(userId, chatId)
-    logger.debug(`User ${userId} is now linked to the chat: ${chatId}`)
+  async _storeLink(userId, groupId) {
+    await this._membershipStorage.store(userId, groupId)
+    logger.debug(`User ${userId} is now linked to the group: ${groupId}`)
   }
 
-  async unlink(userId, chatId) {
-    await this._membershipCache.delete(userId, chatId)
-    await this._membershipStorage.delete(userId, chatId)
-    logger.debug(`User ${userId} is now unlinked from the chat: ${chatId}`)
+  async unlink(userId, groupId) {
+    await this._membershipCache.delete(userId, groupId)
+    await this._membershipStorage.delete(userId, groupId)
+    logger.debug(`User ${userId} is now unlinked from the group: ${groupId}`)
   }
 
-  async refreshLink(userId, chatId) {
-    if (await this.isChatMember(userId, chatId)) {
-      await this.hardLink(userId, chatId)
+  async refreshLink(userId, groupId) {
+    if (await this.isChatMember(userId, groupId)) {
+      await this.hardLink(userId, groupId)
     } else {
-      await this.unlink(userId, chatId)
+      await this.unlink(userId, groupId)
     }
   }
 
-  async isChatMember(userId, chatId) {
+  async isChatMember(userId, groupId) {
     try {
-      await this._telegram.getChatMember(chatId, userId)
+      await this._telegram.getChatMember(groupId, userId)
     } catch (error) {
       if (error.code === 400) {
         return false

@@ -9,7 +9,7 @@ export function usersCommand({ usersStorage, membershipStorage }) {
     if (isPrivateChat) {
       users = await usersStorage.findAll()
     } else {
-      const userIds = await membershipStorage.findUserIdsByChatId(chatId)
+      const userIds = await membershipStorage.findUserIdsByGroupId(chatId)
       users = await usersStorage.findByIds(userIds)
     }
 

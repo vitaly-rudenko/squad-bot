@@ -11,8 +11,8 @@ const nameConfig = {
   style: 'lowerCase',
 }
 
-export const generateChatId = () => {
-  return `chat_${crypto.randomBytes(3).toString('hex')}`
+export const generateGroupId = () => {
+  return `group_${crypto.randomBytes(3).toString('hex')}`
 }
 
 export const generateUserId = () => {
@@ -209,7 +209,7 @@ export async function getDebts(userId) {
   return await response.json()
 }
 
-export async function createRollCall(userId, chatId, {
+export async function createRollCall(userId, groupId, sortOrder = 1, {
   messagePattern = '@channel',
   usersPattern = '*',
   excludeSender = true,
@@ -222,11 +222,12 @@ export async function createRollCall(userId, chatId, {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      chatId,
+      groupId,
       messagePattern,
       usersPattern,
       excludeSender,
       pollOptions,
+      sortOrder,
     })
   })
 
@@ -235,8 +236,8 @@ export async function createRollCall(userId, chatId, {
   return await response.json()
 }
 
-export async function getRollCalls(chatId, userId) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls?chat_id=${chatId}`, {
+export async function getRollCalls(groupId, userId) {
+  const response = await fetch(`${TEST_API_URL}/rollcalls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),
   })
 
@@ -265,11 +266,11 @@ export async function getGroups(userId) {
 }
 
 // --- TEST MODE
-export async function createMembership(userId, chatId, title = 'Fake chat') {
+export async function createMembership(userId, groupId, title = 'Fake chat') {
   const response = await fetch(`${TEST_API_URL}/memberships`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, chatId, title })
+    body: JSON.stringify({ userId, groupId, title })
   })
 
   validateResponse(response)

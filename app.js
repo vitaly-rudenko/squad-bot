@@ -375,12 +375,12 @@ import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 
   if (useTestMode) {
     app.post('/memberships', async (req, res) => {
-      const { userId, chatId, title } = req.body
+      const { userId, groupId, title } = req.body
 
-      await membershipManager.hardLink(userId, chatId)
+      await membershipManager.hardLink(userId, groupId)
       await groupManager.store(
         new Group({
-          id: chatId,
+          id: groupId,
           title,
         })
       )
@@ -547,9 +547,9 @@ import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
   })
 
   app.post('/rollcalls', async (req, res) => {
-    const chatId = req.body.chatId
+    const groupId = req.body.groupId
 
-    if (!(await membershipManager.isHardLinked(req.user.id, chatId))) {
+    if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
       res.sendStatus(403)
       return
     }
@@ -558,14 +558,16 @@ import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
     const usersPattern = req.body.usersPattern
     const excludeSender = req.body.excludeSender
     const pollOptions = req.body.pollOptions
+    const sortOrder = req.body.sortOrder
 
     const storedRollCall = await rollCallsStorage.create(
       new RollCall({
-        chatId,
+        groupId,
         excludeSender,
         messagePattern,
         usersPattern,
         pollOptions,
+        sortOrder,
       })
     )
 
@@ -573,7 +575,7 @@ import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
   })
 
   app.get('/rollcalls', async (req, res) => {
-    const rollCalls = await rollCallsStorage.findByChatId(req.query['chat_id'])
+    const rollCalls = await rollCallsStorage.findByGroupId(req.query['group_id'])
     res.json(rollCalls)
   })
 
@@ -584,7 +586,7 @@ import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
       return
     }
 
-    if (!(await membershipManager.isHardLinked(req.user.id, rollCall.chatId))) {
+    if (!(await membershipManager.isHardLinked(req.user.id, rollCall.groupId))) {
       res.sendStatus(403)
       return
     }
