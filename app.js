@@ -59,6 +59,7 @@ import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessag
 import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
+import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
 
 (async () => {
   if (useTestMode) {
@@ -546,7 +547,7 @@ import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
     })
   })
 
-  app.post('/rollcalls', async (req, res) => {
+  app.post('/rollcalls', async (req, res, error) => {
     const groupId = req.body.groupId
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
@@ -560,18 +561,26 @@ import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
     const pollOptions = req.body.pollOptions
     const sortOrder = req.body.sortOrder
 
-    const storedRollCall = await rollCallsStorage.create(
-      new RollCall({
-        groupId,
-        excludeSender,
-        messagePattern,
-        usersPattern,
-        pollOptions,
-        sortOrder,
-      })
-    )
+    try {
+      const storedRollCall = await rollCallsStorage.create(
+        new RollCall({
+          groupId,
+          excludeSender,
+          messagePattern,
+          usersPattern,
+          pollOptions,
+          sortOrder,
+        })
+      )
 
-    res.json(storedRollCall)
+      res.json(storedRollCall)
+    } catch (error) {
+      if (error instanceof AlreadyExistsError) {
+        res.sendStatus(409)
+      } else {
+        next(error)
+      }
+    }
   })
 
   app.get('/rollcalls', async (req, res) => {

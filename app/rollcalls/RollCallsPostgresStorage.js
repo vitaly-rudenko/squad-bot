@@ -1,3 +1,4 @@
+import { AlreadyExistsError } from '../errors/AlreadyExistsError.js'
 import { RollCall } from './RollCall.js'
 
 export class RollCallsPostgresStorage {
@@ -8,13 +9,21 @@ export class RollCallsPostgresStorage {
 
   /** @param {RollCall} rollCall */
   async create(rollCall) {
-    const response = await this._client.query(`
-      INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, sort_order)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id;
-    `, [rollCall.groupId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender, rollCall.pollOptions, rollCall.sortOrder])
+    try {
+      const response = await this._client.query(`
+        INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, sort_order)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id;
+      `, [rollCall.groupId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender, rollCall.pollOptions, rollCall.sortOrder])
 
-    return this.findById(response.rows[0]['id'])
+      return this.findById(response.rows[0]['id'])
+    } catch (error) {
+      if (String(error.code) === '23505') {
+        throw new AlreadyExistsError()
+      } else {
+        throw error
+      }
+    }
   }
 
   /** @param {string} id */

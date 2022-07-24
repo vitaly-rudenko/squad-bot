@@ -19,6 +19,36 @@ describe('[roll calls]', () => {
       .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden)')
   })
 
+  it('should not allow creating roll calls with the same sort order values', async () => {
+    const groupId = generateGroupId()
+    const user = await createUser()
+    await createMembership(user.id, groupId)
+
+    await createRollCall(user.id, groupId, 1)
+    await createRollCall(user.id, groupId, 2)
+
+    await expect(createRollCall(user.id, groupId, 1))
+      .to.eventually.be.rejectedWith('Invalid response: 409 (Conflict)')
+    await expect(createRollCall(user.id, groupId, 2))
+      .to.eventually.be.rejectedWith('Invalid response: 409 (Conflict)')
+  })
+
+  it('should sort roll calls by sort order values', async () => {
+    const groupId = generateGroupId()
+    const user = await createUser()
+    await createMembership(user.id, groupId)
+
+    const rollCall1 = await createRollCall(user.id, groupId, 2)
+    const rollCall2 = await createRollCall(user.id, groupId, 1)
+    const rollCall3 = await createRollCall(user.id, groupId, 3)
+    const rollCall4 = await createRollCall(user.id, groupId, 4)
+
+    const rollCalls = await getRollCalls(groupId, user.id)
+
+    expect(rollCalls.map(rc => rc.id)).to.deep.eq([rollCall4.id, rollCall3.id, rollCall1.id, rollCall2.id])
+    expect(rollCalls.map(rc => rc.sortOrder)).to.deep.eq([4, 3, 2, 1])
+  })
+
   it('should create a basic roll call', async () => {
     const groupId = generateGroupId()
     const user = await createUser()
