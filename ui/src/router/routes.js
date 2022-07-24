@@ -25,8 +25,9 @@ const routes = [
     path: '/rollcalls',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: ':id', component: () => import('pages/RollCallEditorPage.vue') },
-      { path: '', component: () => import('pages/RollCallsPage.vue') },
+      { path: 'edit/:id', component: () => import('pages/rollcalls/RollCallEditorPage.vue') },
+      { path: 'create', component: () => import('pages/rollcalls/RollCallEditorPage.vue') },
+      { path: '', component: () => import('pages/rollcalls/RollCallsPage.vue') },
     ]
   },
 
