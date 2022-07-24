@@ -164,4 +164,8 @@ describe('[roll calls]', () => {
     await expect(deleteRollCall(rollCall2.id, user1.id))
       .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden)')
   })
+
+  it('should allow updating roll calls')
+
+  it('should keep correct sort order for updated roll calls')
 })
