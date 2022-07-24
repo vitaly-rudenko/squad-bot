@@ -1,3 +1,4 @@
+import { AlreadyExistsError } from '../errors/AlreadyExistsError.js'
 import { RollCall } from './RollCall.js'
 
 export class RollCallsPostgresStorage {
@@ -8,13 +9,21 @@ export class RollCallsPostgresStorage {
 
   /** @param {RollCall} rollCall */
   async create(rollCall) {
-    const response = await this._client.query(`
-      INSERT INTO roll_calls (chat_id, message_pattern, users_pattern, exclude_sender, poll_options)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id;
-    `, [rollCall.chatId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender, rollCall.pollOptions])
+    try {
+      const response = await this._client.query(`
+        INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, sort_order)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id;
+      `, [rollCall.groupId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender, rollCall.pollOptions, rollCall.sortOrder])
 
-    return this.findById(response.rows[0]['id'])
+      return this.findById(response.rows[0]['id'])
+    } catch (error) {
+      if (String(error.code) === '23505') {
+        throw new AlreadyExistsError()
+      } else {
+        throw error
+      }
+    }
   }
 
   /** @param {string} id */
@@ -31,20 +40,20 @@ export class RollCallsPostgresStorage {
     return debts.length > 0 ? debts[0] : null
   }
 
-  /** @param {string} chatId */
-  async findByChatId(chatId) {
-    return this._find({ chatIds: [chatId] })
+  /** @param {string} groupId */
+  async findByGroupId(groupId) {
+    return this._find({ groupIds: [groupId] })
   }
 
   /**
    * @param {{
    *   ids?: string[],
-   *   chatIds?: string[],
+   *   groupIds?: string[],
    *   limit?: number,
    *   offset?: number
    * }} options
    */
-  async _find({ ids, chatIds, limit, offset } = {}) {
+  async _find({ ids, groupIds, limit, offset } = {}) {
     const conditions = ['rc.deleted_at IS NULL']
     const variables = []
 
@@ -57,13 +66,13 @@ export class RollCallsPostgresStorage {
       variables.push(...ids)
     }
 
-    if (chatIds && Array.isArray(chatIds)) {
-      if (chatIds.length === 0) {
-        throw new Error('"chatIds" cannot be empty')
+    if (groupIds && Array.isArray(groupIds)) {
+      if (groupIds.length === 0) {
+        throw new Error('"groupIds" cannot be empty')
       }
 
-      conditions.push(`rc.chat_id IN (${chatIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...chatIds)
+      conditions.push(`rc.group_id IN (${groupIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
+      variables.push(...groupIds)
     }
 
     if (conditions.length === 0) {
@@ -77,8 +86,9 @@ export class RollCallsPostgresStorage {
     ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
-      SELECT rc.id, rc.chat_id, rc.message_pattern, rc.users_pattern, rc.exclude_sender, rc.poll_options
-      FROM roll_calls rc ${whereClause} ${paginationClause};
+      SELECT rc.id, rc.group_id, rc.message_pattern, rc.users_pattern, rc.exclude_sender, rc.poll_options, rc.sort_order
+      FROM roll_calls rc ${whereClause}
+      ORDER BY sort_order DESC ${paginationClause};
     `, variables)
 
     return response.rows.map(row => this.deserializeRollCall(row))
@@ -87,11 +97,12 @@ export class RollCallsPostgresStorage {
   deserializeRollCall(row) {
     return new RollCall({
       id: row['id'],
-      chatId: row['chat_id'],
+      groupId: row['group_id'],
       messagePattern: row['message_pattern'],
       usersPattern: row['users_pattern'],
       excludeSender: row['exclude_sender'],
       pollOptions: row['poll_options'],
+      sortOrder: row['sort_order'],
     })
   }
 }

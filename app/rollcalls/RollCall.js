@@ -1,10 +1,11 @@
 export class RollCall {
-  constructor({ id = undefined, chatId, messagePattern, usersPattern, excludeSender, pollOptions }) {
+  constructor({ id = undefined, groupId, messagePattern, usersPattern, excludeSender, pollOptions, sortOrder }) {
     this.id = id
-    this.chatId = chatId
+    this.groupId = groupId
     this.messagePattern = messagePattern
     this.usersPattern = usersPattern
     this.excludeSender = excludeSender
     this.pollOptions = pollOptions
+    this.sortOrder = sortOrder
   }
 }

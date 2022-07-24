@@ -3,11 +3,11 @@ export class MembershipCache {
     this._cache = cache
   }
 
-  async cache(userId, chatId) {
-    return await this._cache.set(`${userId}_${chatId}`)
+  async cache(userId, groupId) {
+    return await this._cache.set(`${userId}_${groupId}`)
   }
 
-  async delete(userId, chatId) {
-    await this._cache.delete(`${userId}_${chatId}`)
+  async delete(userId, groupId) {
+    await this._cache.delete(`${userId}_${groupId}`)
   }
 }
