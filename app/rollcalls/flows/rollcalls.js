@@ -310,7 +310,7 @@ async function handlePollOptions(context, pollOptions, userSessionManager, rollC
       usersPattern,
       excludeSender,
       pollOptions,
-      sortOrder: existingRollCalls.length + 1,
+      sortOrder: Math.max(0, ...existingRollCalls.map(rc => rc.sortOrder)) + 1,
     })
   )
 
@@ -341,11 +341,10 @@ export function rollCallsMessage({ rollCallsStorage, membershipStorage, usersSto
         { returnCombination: true }
       )
 
-      if (result) {
-        matchedRollCall = rollCall
-        text = result.fields[0]?.value
-      }
+      if (!result) continue
 
+      matchedRollCall = rollCall
+      text = result.fields[0]?.value
       break
     }
 
