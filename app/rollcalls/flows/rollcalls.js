@@ -341,10 +341,12 @@ export function rollCallsMessage({ rollCallsStorage, membershipStorage, usersSto
         { returnCombination: true }
       )
 
-      if (!result) continue;
+      if (result) {
+        matchedRollCall = rollCall
+        text = result.fields[0]?.value
+      }
 
-      matchedRollCall = rollCall
-      text = result.fields[0]?.value
+      break
     }
 
     if (!matchedRollCall) return next()
