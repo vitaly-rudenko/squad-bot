@@ -547,7 +547,7 @@ import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
     })
   })
 
-  app.post('/rollcalls', async (req, res, error) => {
+  app.post('/rollcalls', async (req, res, next) => {
     const groupId = req.body.groupId
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
@@ -581,6 +581,42 @@ import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
         next(error)
       }
     }
+  })
+
+  app.patch('/rollcalls/:id', async (req, res, next) => {
+    const rollCallId = req.params.id
+
+    const rollCall = await rollCallsStorage.findById(rollCallId)
+    if (!rollCall) {
+      res.sendStatus(404)
+      return
+    }
+
+    const groupId = rollCall.groupId
+
+    if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
+      res.sendStatus(403)
+      return
+    }
+
+    const messagePattern = req.body.messagePattern
+    const usersPattern = req.body.usersPattern
+    const excludeSender = req.body.excludeSender
+    const pollOptions = req.body.pollOptions
+    const sortOrder = req.body.sortOrder
+
+    const updatedRollCall = await rollCallsStorage.update(
+      rollCallId,
+      {
+        excludeSender,
+        messagePattern,
+        usersPattern,
+        pollOptions,
+        sortOrder,
+      }
+    )
+
+    res.json(updatedRollCall)
   })
 
   app.get('/rollcalls', async (req, res) => {

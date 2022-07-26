@@ -20,12 +20,12 @@ describe('[groups]', () => {
     await createMembership(user2.id, group2Id, 'Group 2')
     await createMembership(user2.id, group3Id, 'Group 3')
 
-    expect(await getGroups(user1.id)).to.deep.eq([
+    expect(await getGroups(user1.id)).to.deep.equalInAnyOrder([
       { id: group1Id, title: 'Group 1' },
       { id: group2Id, title: 'Group 2' },
     ])
 
-    expect(await getGroups(user2.id)).to.deep.eq([
+    expect(await getGroups(user2.id)).to.deep.equalInAnyOrder([
       { id: group2Id, title: 'Group 2' },
       { id: group3Id, title: 'Group 3' },
     ])
