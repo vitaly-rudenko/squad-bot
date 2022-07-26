@@ -26,6 +26,24 @@ export class RollCallsPostgresStorage {
     }
   }
 
+  async update(id, { messagePattern, usersPattern, excludeSender, pollOptions, sortOrder }) {
+    const fields = [
+      ['message_pattern', messagePattern],
+      ['users_pattern', usersPattern],
+      ['exclude_sender', excludeSender],
+      ['poll_options', pollOptions],
+      ['sort_order', sortOrder],
+    ].filter(([key, value]) => key && value !== undefined)
+
+    await this._client.query(`
+      UPDATE roll_calls
+      SET ${fields.map(([key], i) => `${key} = $${i + 2}`).join(', ')}
+      WHERE id = $1;
+    `, [id, ...fields.map(field => field[1])])
+
+    return this.findById(id)
+  }
+
   /** @param {string} id */
   async deleteById(id) {
     await this._client.query(`

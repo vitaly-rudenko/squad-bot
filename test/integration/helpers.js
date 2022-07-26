@@ -236,6 +236,33 @@ export async function createRollCall(userId, groupId, sortOrder = 1, {
   return await response.json()
 }
 
+export async function updateRollCall(userId, rollCallId, {
+  messagePattern = undefined,
+  usersPattern = undefined,
+  excludeSender = undefined,
+  pollOptions = undefined,
+  sortOrder = undefined,
+} = {}) {
+  const response = await fetch(`${TEST_API_URL}/rollcalls/${rollCallId}`, {
+    method: 'PATCH',
+    headers: {
+      ...createAuthorizationHeader({ userId }),
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      messagePattern,
+      usersPattern,
+      excludeSender,
+      pollOptions,
+      sortOrder,
+    })
+  })
+
+  validateResponse(response)
+
+  return await response.json()
+}
+
 export async function getRollCalls(groupId, userId) {
   const response = await fetch(`${TEST_API_URL}/rollcalls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),
