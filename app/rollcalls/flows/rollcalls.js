@@ -4,9 +4,9 @@ import { Phases } from '../../Phases.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 import { RollCall } from '../RollCall.js'
 
-export function rollCallsCommand({ rollCallsStorage, usersStorage, userSessionManager }) {
+export function rollCallsCommand({ rollCallsStorage, usersStorage }) {
   return async (context) => {
-    const { userId, chatId, localize } = context.state
+    const { userSession, chatId, localize } = context.state
 
     const rollCalls = await rollCallsStorage.findByGroupId(chatId)
 
@@ -74,15 +74,15 @@ export function rollCallsCommand({ rollCallsStorage, usersStorage, userSessionMa
       }
     )
 
-    await userSessionManager.setPhase(userId, Phases.rollCalls)
+    await userSession.setPhase(Phases.rollCalls)
   }
 }
 
 // --- DELETE ROLL CALL
 
-export function rollCallsDeleteAction({ userSessionManager, rollCallsStorage }) {
+export function rollCallsDeleteAction({ rollCallsStorage }) {
   return async (context) => {
-    const { userId, chatId, localize } = context.state
+    const { userSession, chatId, localize } = context.state
 
     await context.answerCbQuery()
 
@@ -99,32 +99,32 @@ export function rollCallsDeleteAction({ userSessionManager, rollCallsStorage }) 
       ).reply_markup
     })
 
-    await userSessionManager.setPhase(userId, Phases.deleteRollCall.id)
+    await userSession.setPhase(Phases.deleteRollCall.id)
   }
 }
 
-export function rollCallsDeleteCancelAction({ userSessionManager }) {
+export function rollCallsDeleteCancelAction() {
   return async (context) => {
-    const { userId } = context.state
+    const { userSession } = context.state
 
     await context.answerCbQuery()
 
-    await userSessionManager.clear(userId)
+    await userSession.clear()
 
     await context.deleteMessage()
   }
 }
 
-export function rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }) {
+export function rollCallsDeleteIdAction({ rollCallsStorage }) {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { userSession, localize } = context.state
 
     await context.answerCbQuery()
 
     const rollCallId = context.match[1]
     await rollCallsStorage.deleteById(rollCallId)
 
-    await userSessionManager.clear(userId)
+    await userSession.clear()
 
     await context.deleteMessage()
     await context.reply(
@@ -136,9 +136,9 @@ export function rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }
 
 // --- ADD ROLL CALL
 
-export function rollCallsAddAction({ userSessionManager }) {
+export function rollCallsAddAction() {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { userSession, localize } = context.state
 
     await context.answerCbQuery()
 
@@ -148,17 +148,17 @@ export function rollCallsAddAction({ userSessionManager }) {
       { parse_mode: 'MarkdownV2' }
     )
 
-    await userSessionManager.setPhase(userId, Phases.addRollCall.messagePattern)
+    await userSession.setPhase(Phases.addRollCall.messagePattern)
   }
 }
 
-export function rollCallsAddMessagePatternMessage({ userSessionManager }) {
+export function rollCallsAddMessagePatternMessage() {
   return async (context) => {
     if (!('text' in context.message)) return
 
-    const { userId, localize } = context.state
+    const { userSession, localize } = context.state
 
-    await userSessionManager.setContext(userId, {
+    await userSession.setContext({
       messagePattern: context.message.text.trim(),
     })
 
@@ -172,24 +172,26 @@ export function rollCallsAddMessagePatternMessage({ userSessionManager }) {
       }
     )
 
-    await userSessionManager.setPhase(userId, Phases.addRollCall.usersPattern)
+    await userSession.setPhase(Phases.addRollCall.usersPattern)
   }
 }
 
-export function rollCallsAddUsersPatternAllAction({ userSessionManager }) {
+export function rollCallsAddUsersPatternAllAction() {
   return async (context) => {
+    const { userSession } = context.state
+
     await context.answerCbQuery()
 
     await context.deleteMessage()
-    await handleUsersPattern(context, '*', userSessionManager)
+    await handleUsersPattern(context, '*')
   }
 }
 
-export function rollCallsAddUsersPatternMessage({ userSessionManager, membershipStorage, usersStorage }) {
+export function rollCallsAddUsersPatternMessage({ membershipStorage, usersStorage }) {
   return async (context) => {
     if (!('text' in context.message)) return
 
-    const { chatId, localize } = context.state
+    const { userSession, chatId, localize } = context.state
 
     const chatUserIds = await membershipStorage.findUserIdsByGroupId(chatId)
     const chatUsers = await usersStorage.findByIds(chatUserIds)
@@ -221,14 +223,14 @@ export function rollCallsAddUsersPatternMessage({ userSessionManager, membership
       users.push(chatUser)
     }
 
-    await handleUsersPattern(context, users.map(u => u.id).join(','), userSessionManager)
+    await handleUsersPattern(context, users.map(u => u.id).join(','))
   }
 }
 
-async function handleUsersPattern(context, usersPattern, userSessionManager) {
-  const { userId, localize } = context.state
+async function handleUsersPattern(context, usersPattern) {
+  const { userSession, localize } = context.state
 
-  await userSessionManager.amendContext(userId, {
+  await userSession.amendContext({
     usersPattern,
   })
 
@@ -243,16 +245,16 @@ async function handleUsersPattern(context, usersPattern, userSessionManager) {
     }
   )
 
-  await userSessionManager.setPhase(userId, Phases.addRollCall.excludeSender)
+  await userSession.setPhase(Phases.addRollCall.excludeSender)
 }
 
-export function rollCallsAddExcludeSenderAction({ userSessionManager }) {
+export function rollCallsAddExcludeSenderAction() {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { userSession, localize } = context.state
 
     await context.answerCbQuery()
 
-    await userSessionManager.amendContext(userId, {
+    await userSession.amendContext({
       excludeSender: context.match[1] === 'yes',
     })
 
@@ -267,20 +269,20 @@ export function rollCallsAddExcludeSenderAction({ userSessionManager }) {
       }
     )
 
-    await userSessionManager.setPhase(userId, Phases.addRollCall.pollOptions)
+    await userSession.setPhase(Phases.addRollCall.pollOptions)
   }
 }
 
-export function rollCallsAddPollOptionsSkipAction({ userSessionManager, rollCallsStorage }) {
+export function rollCallsAddPollOptionsSkipAction({ rollCallsStorage }) {
   return async (context) => {
     await context.answerCbQuery()
 
     await context.deleteMessage()
-    await handlePollOptions(context, [], userSessionManager, rollCallsStorage)
+    await handlePollOptions(context, [], rollCallsStorage)
   }
 }
 
-export function rollCallsAddPollOptionsMessage({ userSessionManager, rollCallsStorage }) {
+export function rollCallsAddPollOptionsMessage({ rollCallsStorage }) {
   return async (context) => {
     if (!('text' in context.message)) return
 
@@ -293,14 +295,14 @@ export function rollCallsAddPollOptionsMessage({ userSessionManager, rollCallsSt
       return
     }
 
-    await handlePollOptions(context, pollOptions, userSessionManager, rollCallsStorage)
+    await handlePollOptions(context, pollOptions, rollCallsStorage)
   }
 }
 
-async function handlePollOptions(context, pollOptions, userSessionManager, rollCallsStorage) {
-  const { chatId, userId, localize } = context.state
+async function handlePollOptions(context, pollOptions, rollCallsStorage) {
+  const { userSession, chatId, localize } = context.state
 
-  const { messagePattern, usersPattern, excludeSender } = await userSessionManager.getContext(userId)
+  const { messagePattern, usersPattern, excludeSender } = await userSession.getContext()
 
   const existingRollCalls = await rollCallsStorage.findByGroupId(chatId)
   await rollCallsStorage.create(
@@ -314,7 +316,7 @@ async function handlePollOptions(context, pollOptions, userSessionManager, rollC
     })
   )
 
-  await userSessionManager.clear(userId)
+  await userSession.clear()
 
   await context.reply(localize('command.rollCalls.add.added'))
 }

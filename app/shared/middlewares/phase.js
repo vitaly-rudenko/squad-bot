@@ -1,12 +1,11 @@
-/** @param {import('../../users/UserSessionManager').UserSessionManager} userSessionManager */
-export const withPhaseFactory = (userSessionManager) => {
+export const withPhaseFactory = () => {
   /** @param {string | null} phase */
   return (phase) => {
     /** @param {import('telegraf').Context} context @param {Function} next */
     return async (context, next) => {
-      const { userId } = context.state
+      const { userSession } = context.state
 
-      if ((await userSessionManager.getPhase(userId)) === phase) {
+      if ((await userSession.getPhase()) === phase) {
         return next()
       }
     }

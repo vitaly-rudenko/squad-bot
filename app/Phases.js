@@ -14,6 +14,12 @@ export const Phases = organizeValues({
     usersPattern: '',
     excludeSender: '',
     pollOptions: ''
+  },
+  title: {
+    set: {
+      chooseUser: '',
+      sendTitle: '',
+    }
   }
 })
 
