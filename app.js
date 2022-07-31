@@ -278,7 +278,7 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
     wrap(withGroupChat(), withPhase(Phases.addRollCall.messagePattern), rollCallsAddMessagePatternMessage()),
     wrap(withGroupChat(), withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternMessage({ membershipStorage, usersStorage })),
     wrap(withGroupChat(), withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsMessage({ rollCallsStorage })),
-    wrap(withGroupChat(), withPhase(Phases.title.set.sendTitle), titleSetMessage({ bot, usersStorage })),
+    wrap(withGroupChat(), withPhase(Phases.title.set.sendTitle), titleSetMessage({ bot, membershipStorage, usersStorage })),
     wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
   )
 
