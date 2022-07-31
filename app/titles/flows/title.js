@@ -24,15 +24,16 @@ export function titleSetCommand({ bot, membershipStorage, usersStorage }) {
 
     await context.reply(localize('command.title.set.chooseUser'), {
       parse_mode: 'MarkdownV2',
-      reply_markup: Markup.inlineKeyboard(
-        users.map(user => Markup.button.callback(
-          localize('command.title.set.user', {
-            name: user.name,
-            username: user.username,
-          }),
-          `title:set:user-id:${user.id}`
-        )),
-        { columns: 2 }
+      reply_markup: Markup.inlineKeyboard([
+          ...users.map(user => Markup.button.callback(
+            localize('command.title.set.user', {
+              name: user.name,
+              username: user.username,
+            }),
+            `title:set:user-id:${user.id}`
+          )),
+          Markup.button.callback(localize('command.title.set.cancel'), 'title:set:cancel'),
+        ]
       ).reply_markup
     })
 
@@ -54,11 +55,30 @@ export function titleSetUserIdAction({ usersStorage }) {
       localize('command.title.set.sendTitle', {
         name: escapeMd(subjectUser.name),
       }),
-      { parse_mode: 'MarkdownV2' }
+      {
+        parse_mode: 'MarkdownV2',
+        reply_markup: Markup.inlineKeyboard([
+          Markup.button.callback(localize('command.title.set.cancel'), 'title:set:cancel'),
+        ],
+        { columns: 2 }
+      ).reply_markup
+      }
     )
 
     await userSession.setContext({ subjectUserId })
     await userSession.setPhase(Phases.title.set.sendTitle)
+  }
+}
+
+export function titleSetCancelAction() {
+  return async (context) => {
+    const { userSession, localize } = context.state
+
+    await context.answerCbQuery()
+    await context.deleteMessage()
+    await userSession.clear()
+
+    await context.reply(localize('command.title.set.canceled'), { parse_mode: 'MarkdownV2' })
   }
 }
 

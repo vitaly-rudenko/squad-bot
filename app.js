@@ -59,7 +59,7 @@ import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
-import { titleSetCommand, titleSetMessage, titleSetUserIdAction } from './app/titles/flows/title.js'
+import { titleSetCancelAction, titleSetCommand, titleSetMessage, titleSetUserIdAction } from './app/titles/flows/title.js'
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 
@@ -265,6 +265,7 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
 
   bot.command('title', requireGroupChat(), titleSetCommand({ bot, membershipStorage, usersStorage }))
   bot.action(/^title:set:user-id:(.+)$/, withPhase(Phases.title.set.chooseUser), titleSetUserIdAction({ usersStorage }))
+  bot.action(/^title:set:cancel$/, withPhase(Phases.title.set.chooseUser, Phases.title.set.sendTitle), titleSetCancelAction())
 
   bot.on('message',
     async (context, next) => {
