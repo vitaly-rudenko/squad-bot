@@ -70,10 +70,10 @@ export function titleSetMessage({ bot, usersStorage }) {
     const { userSession, chatId, localize } = context.state
     const title = context.message.text
 
-    await userSession.clear()
-
     const { subjectUserId } = await userSession.getContext()
     const subjectUser = await usersStorage.findById(subjectUserId)
+
+    await userSession.clear()
 
     try {
       await bot.telegram.promoteChatMember(chatId, subjectUserId, {
