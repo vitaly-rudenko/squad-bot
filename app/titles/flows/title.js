@@ -57,6 +57,8 @@ export function titleSetMessage({ bot, usersStorage }) {
     const { userSession, chatId, localize } = context.state
     const title = context.message.text
 
+    await userSession.clear()
+
     const { subjectUserId } = await userSession.getContext()
     const subjectUser = await usersStorage.findById(subjectUserId)
 
@@ -80,7 +82,6 @@ export function titleSetMessage({ bot, usersStorage }) {
       return
     }
 
-    await userSession.clear()
     await context.reply(
       localize('command.title.set.done', {
         name: escapeMd(subjectUser.name),
