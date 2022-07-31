@@ -49,6 +49,7 @@ export function titleSetUserIdAction({ usersStorage }) {
   }
 }
 
+/** @param {{ bot: import('telegraf').Telegraf, usersStorage }} opts */
 export function titleSetMessage({ bot, usersStorage }) {
   return async (context) => {
     if (!('text' in context.message)) return
@@ -60,13 +61,26 @@ export function titleSetMessage({ bot, usersStorage }) {
     const subjectUser = await usersStorage.findById(subjectUserId)
 
     try {
-      await bot.telegram.promoteChatMember(chatId, subjectUserId, { is_anonymous: true })
+      await bot.telegram.promoteChatMember(chatId, subjectUserId, {
+        can_change_info: true,
+        can_invite_users: true,
+        can_manage_chat: true,
+        can_manage_voice_chats: true,
+        can_pin_messages: true,
+      })
+    } catch (error) {
+      console.log('Could not promote:', error)
+    }
+
+    try {
       await bot.telegram.setChatAdministratorCustomTitle(chatId, subjectUserId, title)
     } catch (error) {
+      console.log('Could not update title:', error)
       await context.reply(localize('command.title.set.failed'), { parse_mode: 'MarkdownV2' })
       return
     }
 
+    await userSession.clear()
     await context.reply(
       localize('command.title.set.done', {
         name: escapeMd(subjectUser.name),

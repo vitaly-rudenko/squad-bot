@@ -59,7 +59,7 @@ import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
-import { titleSetCommand, titleSetMessage, titleSetUserIdAction } from './app/titles/flows/titles.js'
+import { titleSetCommand, titleSetMessage, titleSetUserIdAction } from './app/titles/flows/title.js'
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 
