@@ -1,13 +1,26 @@
 import { Markup } from 'telegraf'
+import { logger } from '../../../logger.js'
 import { Phases } from '../../Phases.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function titleSetCommand({ membershipStorage, usersStorage }) {
+/** @param {{ bot: import('telegraf').Telegraf, membershipStorage, usersStorage }} opts */
+export function titleSetCommand({ bot, membershipStorage, usersStorage }) {
   return async (context) => {
     const { userSession, chatId, localize } = context.state
 
+    const administrators = await bot.telegram.getChatAdministrators(chatId)
+    const creator = administrators.find(a => a.status === 'creator')
+    const creatorUserId = String(creator?.user.id)
+
     const memberUserIds = await membershipStorage.findUserIdsByGroupId(chatId)
-    const users = await usersStorage.findByIds(memberUserIds)
+    const applicableUserIds = memberUserIds.filter(userId => userId !== creatorUserId)
+
+    if (applicableUserIds.length === 0) {
+      await context.reply(localize('command.title.set.noOneToChooseFrom'), { parse_mode: 'MarkdownV2' })
+      return
+    }
+
+    const users = await usersStorage.findByIds(applicableUserIds)
 
     await context.reply(localize('command.title.set.chooseUser'), {
       parse_mode: 'MarkdownV2',
@@ -71,13 +84,13 @@ export function titleSetMessage({ bot, usersStorage }) {
         can_pin_messages: true,
       })
     } catch (error) {
-      console.log('Could not promote:', error)
+      logger.warn({ error, chatId, subjectUser }, 'Cloud not promote a user')
     }
 
     try {
       await bot.telegram.setChatAdministratorCustomTitle(chatId, subjectUserId, title)
     } catch (error) {
-      console.log('Could not update title:', error)
+      logger.warn({ error, chatId, subjectUser, title }, 'Cloud not promote user\'s title')
       await context.reply(localize('command.title.set.failed'), { parse_mode: 'MarkdownV2' })
       return
     }

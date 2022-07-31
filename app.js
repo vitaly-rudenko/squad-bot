@@ -263,7 +263,7 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
   bot.action(/^rollcalls:add:exclude-sender:(.+)$/, withPhase(Phases.addRollCall.excludeSender), rollCallsAddExcludeSenderAction())
   bot.action(/^rollcalls:add:poll-options:skip$/, withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsSkipAction({ rollCallsStorage }))
 
-  bot.command('title', requireGroupChat(), titleSetCommand({ membershipStorage, usersStorage }))
+  bot.command('title', requireGroupChat(), titleSetCommand({ bot, membershipStorage, usersStorage }))
   bot.action(/^title:set:user-id:(.+)$/, withPhase(Phases.title.set.chooseUser), titleSetUserIdAction({ usersStorage }))
 
   bot.on('message',
