@@ -15,7 +15,6 @@ import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
 import { withPhaseFactory } from './app/shared/middlewares/phase.js'
-import { UserSessionManager } from './app/users/UserSessionManager.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsCommand, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
 import { paymentsGetCommand } from './app/payments/flows/payments.js'
@@ -60,6 +59,9 @@ import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
+import { titleSetCommand, titleSetMessage, titleSetUserIdAction } from './app/titles/flows/title.js'
+import { withUserSession } from './app/users/middlewares/userSession.js'
+import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 
 (async () => {
   if (useTestMode) {
@@ -161,6 +163,7 @@ import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
     { command: 'addcard', description: 'Додати банківську картку' },
     { command: 'deletecard', description: 'Видалити банківську картку' },
+    { command: 'title', description: 'Швидко встановити підпис' },
     { command: 'rollcalls', description: 'Керування перекличками' },
     { command: 'start', description: 'Зареєструватись' },
     { command: 'users', description: 'Список користувачів' },
@@ -171,11 +174,7 @@ import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
     errorLogger.log(error)
   })
 
-  const userSessionManager = new UserSessionManager({
-    contextsCache: createRedisCache('contexts', 5 * 60_000),
-    phasesCache: createRedisCache('phases', 5 * 60_000),
-  })
-  const withPhase = withPhaseFactory(userSessionManager)
+  const withPhase = withPhaseFactory()
 
   if (!useWebhooks) {
     bot.use((context, next) => {
@@ -194,6 +193,12 @@ import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
   bot.use(withUserId())
   bot.use(withChatId())
   bot.use(withLocalization({ userManager }))
+  bot.use(withUserSession({
+    createUserSession: createUserSessionFactory({
+      contextsCache: createRedisCache('contexts', 5 * 60_000),
+      phasesCache: createRedisCache('phases', 5 * 60_000),
+    })
+  }))
 
   bot.on('new_chat_members', async (context) => {
     const { chatId } = context.state
@@ -240,23 +245,26 @@ import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
   bot.command('payments', paymentsGetCommand({ usersStorage }))
 
   bot.command('addcard', cardsAddCommand())
-  bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction({ userSessionManager }))
+  bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction())
 
-  bot.command('deletecard', cardsDeleteCommand({ cardsStorage, userSessionManager }))
-  bot.action(/^cards:delete:id:(.+)$/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage, userSessionManager }))
+  bot.command('deletecard', cardsDeleteCommand({ cardsStorage }))
+  bot.action(/^cards:delete:id:(.+)$/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage }))
 
-  bot.command('cards', cardsCommand({ usersStorage, userSessionManager }))
-  bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }))
-  bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage, userSessionManager }))
+  bot.command('cards', cardsCommand({ usersStorage }))
+  bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage }))
+  bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage }))
 
-  bot.command('rollcalls', requireGroupChat(), rollCallsCommand({ rollCallsStorage, usersStorage, userSessionManager }))
-  bot.action(/^rollcalls:delete$/, withPhase(Phases.rollCalls), rollCallsDeleteAction({ userSessionManager, rollCallsStorage }))
-  bot.action(/^rollcalls:delete:cancel$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteCancelAction({ userSessionManager }))
-  bot.action(/^rollcalls:delete:id:(.+)$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteIdAction({ userSessionManager, rollCallsStorage }))
-  bot.action(/^rollcalls:add$/, withPhase(Phases.rollCalls), rollCallsAddAction({ userSessionManager }))
-  bot.action(/^rollcalls:add:users-pattern:all$/, withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternAllAction({ userSessionManager }))
-  bot.action(/^rollcalls:add:exclude-sender:(.+)$/, withPhase(Phases.addRollCall.excludeSender), rollCallsAddExcludeSenderAction({ userSessionManager }))
-  bot.action(/^rollcalls:add:poll-options:skip$/, withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsSkipAction({ userSessionManager, rollCallsStorage }))
+  bot.command('rollcalls', requireGroupChat(), rollCallsCommand({ rollCallsStorage, usersStorage }))
+  bot.action(/^rollcalls:delete$/, withPhase(Phases.rollCalls), rollCallsDeleteAction({ rollCallsStorage }))
+  bot.action(/^rollcalls:delete:cancel$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteCancelAction())
+  bot.action(/^rollcalls:delete:id:(.+)$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteIdAction({ rollCallsStorage }))
+  bot.action(/^rollcalls:add$/, withPhase(Phases.rollCalls), rollCallsAddAction())
+  bot.action(/^rollcalls:add:users-pattern:all$/, withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternAllAction())
+  bot.action(/^rollcalls:add:exclude-sender:(.+)$/, withPhase(Phases.addRollCall.excludeSender), rollCallsAddExcludeSenderAction())
+  bot.action(/^rollcalls:add:poll-options:skip$/, withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsSkipAction({ rollCallsStorage }))
+
+  bot.command('title', requireGroupChat(), titleSetCommand({ membershipStorage, usersStorage }))
+  bot.action(/^title:set:user-id:(.+)$/, withPhase(Phases.title.set.chooseUser), titleSetUserIdAction({ usersStorage }))
 
   bot.on('message',
     async (context, next) => {
@@ -264,11 +272,12 @@ import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
       return next()
     },
     // cards
-    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage, userSessionManager })),
+    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage })),
     // roll calls
-    wrap(withGroupChat(), withPhase(Phases.addRollCall.messagePattern), rollCallsAddMessagePatternMessage({ userSessionManager })),
-    wrap(withGroupChat(), withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternMessage({ userSessionManager, membershipStorage, usersStorage })),
-    wrap(withGroupChat(), withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsMessage({ userSessionManager, rollCallsStorage })),
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.messagePattern), rollCallsAddMessagePatternMessage()),
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternMessage({ membershipStorage, usersStorage })),
+    wrap(withGroupChat(), withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsMessage({ rollCallsStorage })),
+    wrap(withGroupChat(), withPhase(Phases.title.set.sendTitle), titleSetMessage({ bot, usersStorage })),
     wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
   )
 

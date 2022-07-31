@@ -20,9 +20,9 @@ export function cardsAddCommand() {
   }
 }
 
-export function cardsAddBankAction({ userSessionManager }) {
+export function cardsAddBankAction() {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { userSession, localize } = context.state
 
     await context.answerCbQuery()
     await context.deleteMessage()
@@ -32,24 +32,24 @@ export function cardsAddBankAction({ userSessionManager }) {
       { parse_mode: 'MarkdownV2' }
     )
 
-    await userSessionManager.setContext(userId, {
+    await userSession.setContext({
       bank: context.match[1],
       messageId: message.message_id,
     })
 
-    await userSessionManager.setPhase(userId, Phases.addCard.number)
+    await userSession.setPhase(Phases.addCard.number)
   }
 }
 
-export function cardsAddNumberMessage({ cardsStorage, userSessionManager }) {
+export function cardsAddNumberMessage({ cardsStorage }) {
   return async (context) => {
     if (!('text' in context.message)) return
 
-    const { userId, localize } = context.state
-    const { bank, messageId } = await userSessionManager.getContext(userId)
+    const { userSession, userId, localize } = context.state
+    const { bank, messageId } = await userSession.getContext(userId)
 
     if (!/^[\d\s]+$/.test(context.message.text)) {
-      await userSessionManager.clear(userId)
+      await userSession.clear()
       await context.reply(
         localize('command.cards.add.invalidCardNumber'),
         { parse_mode: 'MarkdownV2' },
@@ -58,7 +58,7 @@ export function cardsAddNumberMessage({ cardsStorage, userSessionManager }) {
     }
 
     if (context.message.text.split(/\d/).length - 1 !== 16) {
-      await userSessionManager.clear(userId)
+      await userSession.clear()
       await context.reply(
         localize('command.cards.add.invalidCardNumberLength'),
         { parse_mode: 'MarkdownV2' },
@@ -77,7 +77,7 @@ export function cardsAddNumberMessage({ cardsStorage, userSessionManager }) {
 
     await cardsStorage.create(card)
 
-    await userSessionManager.clear(userId)
+    await userSession.clear()
     await context.reply(
       localize('command.cards.add.saved', {
         number: escapeMd(number),
@@ -88,9 +88,9 @@ export function cardsAddNumberMessage({ cardsStorage, userSessionManager }) {
   }
 }
 
-export function cardsDeleteCommand({ cardsStorage, userSessionManager }) {
+export function cardsDeleteCommand({ cardsStorage }) {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { userSession, userId, localize } = context.state
     const cards = await cardsStorage.findByUserId(userId)
 
     if (cards.length === 0) {
@@ -115,13 +115,13 @@ export function cardsDeleteCommand({ cardsStorage, userSessionManager }) {
       ).reply_markup
     })
 
-    await userSessionManager.setPhase(userId, Phases.deleteCard.id)
+    await userSession.setPhase(Phases.deleteCard.id)
   }
 }
 
-export function cardsDeleteIdAction({ cardsStorage, userSessionManager }) {
+export function cardsDeleteIdAction({ cardsStorage }) {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { userSession, localize } = context.state
 
     await context.answerCbQuery()
     await context.deleteMessage()
@@ -129,17 +129,17 @@ export function cardsDeleteIdAction({ cardsStorage, userSessionManager }) {
     const cardId = context.match[1]
     await cardsStorage.deleteById(cardId)
 
-    await userSessionManager.clear(userId)
+    await userSession.clear()
     await context.reply(localize('command.cards.delete.deleted'), { parse_mode: 'MarkdownV2' })
   }
 }
 
-export function cardsCommand({ usersStorage, userSessionManager }) {
+export function cardsCommand({ usersStorage }) {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { userSession, localize } = context.state
     const users = await usersStorage.findAll()
 
-    await userSessionManager.clear(userId)
+    await userSession.clear()
     await context.reply(localize('command.cards.get.chooseUser'), {
       parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard(
@@ -156,9 +156,9 @@ export function cardsCommand({ usersStorage, userSessionManager }) {
   }
 }
 
-export function cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionManager }) {
+export function cardsGetUserIdAction({ cardsStorage, usersStorage }) {
   return async (context) => {
-    const { userId, localize } = context.state
+    const { userSession, userId, localize } = context.state
 
     await context.answerCbQuery()
     await context.deleteMessage()
@@ -176,7 +176,7 @@ export function cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionMa
       return
     }
 
-    await userSessionManager.clear(userId)
+    await userSession.clear()
     await context.reply(localize(`command.cards.get.chooseCard.${userType}`, { name: escapeMd(user.name) }), {
       parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard(
@@ -193,9 +193,9 @@ export function cardsGetUserIdAction({ cardsStorage, usersStorage, userSessionMa
   }
 }
 
-export function cardsGetIdAction({ cardsStorage, userSessionManager }) {
+export function cardsGetIdAction({ cardsStorage }) {
   return async (context) => {
-    const { userId } = context.state
+    const { userSession } = context.state
 
     await context.answerCbQuery()
     await context.deleteMessage()
@@ -203,7 +203,7 @@ export function cardsGetIdAction({ cardsStorage, userSessionManager }) {
     const cardId = context.match[1]
     const card = await cardsStorage.findById(cardId)
 
-    await userSessionManager.clear(userId)
+    await userSession.clear()
     await context.reply(card.number)
   }
 }
