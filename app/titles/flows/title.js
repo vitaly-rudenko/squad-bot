@@ -104,6 +104,11 @@ export function titleSetMessage({ bot, membershipStorage, usersStorage }) {
     let { subjectUserId } = await userSession.getContext()
     await userSession.clear()
 
+    if (title.length > 16) {
+      await context.reply(localize('command.title.set.invalidTitle'), { parse_mode: 'MarkdownV2' })
+      return
+    }
+
     if (subjectUserId === 'random') {
       const applicableUserIds = await getApplicableUsers(chatId, { bot, membershipStorage })
       if (applicableUserIds.length === 0) {

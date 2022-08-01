@@ -20,7 +20,7 @@ export class RedisCache {
 
   async get(key) {
     const result = await this._redis.get(this._key(key))
-    return result && JSON.parse(result)
+    return result ? JSON.parse(result) : null
   }
 
   async has(key) {
