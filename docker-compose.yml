@@ -15,7 +15,7 @@ services:
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
       USE_NATIVE_ENV: "true"
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
-      REDIS_URL: "redis://sb_redis:5379"
+      REDIS_URL: "redis://sb_redis:6379"
 
   sb_postgres:
     container_name: sb_postgres
