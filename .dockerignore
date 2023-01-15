@@ -1,7 +1,4 @@
-# node
-node_modules
-
-# docker
-.dockerignore
 Dockerfile
-*docker-compose*
+.dockerignore
+node_modules
+.git

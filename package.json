@@ -1,6 +1,6 @@
 {
   "name": "squad-bot",
-  "version": "2.6.2",
+  "version": "3.0.0",
   "description": "Telegram bot assistant for squads",
   "main": "app.js",
   "type": "module",
@@ -12,7 +12,6 @@
     "test:unit:dev": "nodemon --delay 0.5 --exec 'npm run test:unit'",
     "test:integration": "mocha --recursive test/integration",
     "test:integration:dev": "nodemon --delay 1 --exec 'npm run test:integration'",
-    "job:refresh-memberships": "node jobs/refresh-memberships.js",
     "umzug": "node ./umzug/cli.js"
   },
   "repository": {
