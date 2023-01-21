@@ -8,11 +8,13 @@ export class RefreshMembershipsUseCase {
   }
 
   async run() {
+    logger.debug('Running "refreshMemberships" use case')
+
     const memberships = await this._membershipStorage.findOldest({ limit: 10 })
-    logger.info(`Found ${memberships.length} memberships to refresh`)
+    logger.info(`Found ${memberships.length} memberships to refresh, starting`)
 
     for (const { userId, groupId } of memberships) {
-      logger.info(`Refreshing membership of user ${userId} in chat: ${groupId}`)
+      logger.debug(`Refreshing membership of user ${userId} in chat: ${groupId}`)
 
       try {
         await this._membershipManager.refreshLink(userId, groupId)
