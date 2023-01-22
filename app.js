@@ -621,7 +621,7 @@ async function start() {
     res.json(await groupStorage.findByMemberUserId(req.user.id))
   })
 
-  const port = Number(process.env.PORT) || 3001
+  const port = Number(process.env.PORT) || 3000
 
   await new Promise(resolve => app.listen(port, () => resolve()))
 

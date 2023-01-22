@@ -16,4 +16,6 @@ RUN set -ex; \
   chmod +x ./docker/wait-for; \
   chmod +x ./docker/entrypoint
 
+EXPOSE 3000
+
 ENTRYPOINT ["./docker/entrypoint"]
