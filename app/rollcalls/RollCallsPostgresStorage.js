@@ -54,8 +54,8 @@ export class RollCallsPostgresStorage {
 
   /** @param {string} id */
   async findById(id) {
-    const debts = await this._find({ ids: [id], limit: 1 })
-    return debts.length > 0 ? debts[0] : null
+    const results = await this._find({ ids: [id], limit: 1 })
+    return results.length > 0 ? results[0] : null
   }
 
   /** @param {string} groupId */

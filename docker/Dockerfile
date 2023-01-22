@@ -1,18 +1,21 @@
-FROM node:16-alpine3.11
+FROM node:16-alpine3.12
 
-WORKDIR /squadbot
+ENV LANG=en_US.UTF-8 \
+    LANGUAGE=en_US.UTF-8
 
-RUN apk add --no-cache tini
+WORKDIR /app
 
-COPY package*.json ./
+RUN apk add --no-cache npm
+
+COPY package*.json .
 RUN npm ci --no-optional
 
 COPY . .
 
 RUN set -ex; \
-    chmod +x wait-for-it.sh;
+  chmod +x ./docker/wait-for; \
+  chmod +x ./docker/entrypoint
 
-VOLUME ["/squadbot/node_modules"]
+EXPOSE 3000
 
-ENTRYPOINT ["tini", "--"]
-CMD ["npm", "start"]
+ENTRYPOINT ["./docker/entrypoint"]

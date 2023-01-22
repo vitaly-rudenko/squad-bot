@@ -62,8 +62,9 @@ import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
 import { titleSetCancelAction, titleSetCommand, titleSetMessage, titleSetUserIdAction } from './app/titles/flows/title.js'
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
+import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
 
-(async () => {
+async function start() {
   if (useTestMode) {
     logger.warn('Test mode is enabled')
   }
@@ -91,7 +92,6 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
   const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
   const rollCallsStorage = new RollCallsPostgresStorage(pgClient)
 
-  const useWebhooks = process.env.USE_WEBHOOKS === 'true'
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
   const tokenSecret = process.env.TOKEN_SECRET
 
@@ -175,13 +175,6 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
   })
 
   const withPhase = withPhaseFactory()
-
-  if (!useWebhooks) {
-    bot.use((context, next) => {
-      logger.debug({ update: context.update }, 'Direct update received')
-      return next()
-    })
-  }
 
   bot.use((context, next) => {
     if (!useTestMode && context.from.is_bot) return
@@ -308,32 +301,6 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
 
   app.get('/receiptslist', async (req, res) => {
     res.render('receipts_list')
-  })
-
-  // --- Telegram
-
-  const handledBotUpdates = createRedisCache('updates', 60_000)
-
-  app.post(`/bot${telegramBotToken}`, async (req, res, next) => {
-    const updateId = req.body['update_id']
-    if (!updateId) {
-      logger.warn({ body: req.body }, 'Invalid webhook update')
-      res.sendStatus(500)
-      return
-    }
-
-    if (!(await handledBotUpdates.set(updateId))) {
-      logger.debug({ body: req.body }, 'Webhook update is already handled')
-      res.sendStatus(200)
-      return
-    }
-
-    try {
-      logger.debug({ body: req.body }, 'Webhook update received')
-      await bot.handleUpdate(req.body, res)
-    } catch (error) {
-      next(error)
-    }
   })
 
   // --- API
@@ -654,38 +621,47 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
     res.json(await groupStorage.findByMemberUserId(req.user.id))
   })
 
-  const port = Number(process.env.PORT) || 3001
+  const port = Number(process.env.PORT) || 3000
 
   await new Promise(resolve => app.listen(port, () => resolve()))
 
-  try {
-    await bot.telegram.deleteWebhook()
-  } catch (error) {
-    logger.warn({ error }, 'Could not delete webhook:')
-  }
+  bot.catch((error) => errorLogger.log(error))
 
-  if (useWebhooks) {
-    const domain = process.env.DOMAIN
-    const webhookUrl = `${domain}/bot${telegramBotToken}`
+  logger.info({}, 'Starting telegram bot')
+  bot.launch().catch((error) => {
+    logger.error(error, 'Could not launch telegram bot')
+    process.exit(1)
+  })
 
-    logger.info({ webhookUrl }, 'Setting webhook')
-    while (true) {
+  const refreshMembershipsJobIntervalMs = 5 * 60_000
+  const refreshMembershipsUseCase = new RefreshMembershipsUseCase({
+    errorLogger,
+    membershipManager,
+    membershipStorage,
+  })
+
+  if (Number.isInteger(refreshMembershipsJobIntervalMs)) {
+    async function runRefreshMembershipsJob() {
       try {
-        await bot.telegram.setWebhook(webhookUrl, { allowed_updates: ['message', 'callback_query'] })
-        break
+        await refreshMembershipsUseCase.run()
       } catch (error) {
-        logger.warn({ error }, 'Could not set webhook, retrying...')
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        logger.error(error, 'Could not refresh memberships')
+      } finally {
+        logger.debug(
+          { refreshMembershipsJobIntervalMs },
+          'Scheduling next automatic memberships refresh job'
+        )
+        setTimeout(runRefreshMembershipsJob, refreshMembershipsJobIntervalMs)
       }
     }
 
-    logger.info(
-      { webhookInfo: await bot.telegram.getWebhookInfo() },
-      `Webhook 0.0.0.0:${port} is listening at ${webhookUrl}`,
-    )
-  } else {
-    await bot.launch()
-
-    logger.info('Telegram bot is running')
+    await runRefreshMembershipsJob()
   }
-})()
+}
+
+start()
+  .then(() => logger.info({}, 'Started!'))
+  .catch((error) => {
+    logger.error(error, 'Unexpected starting error')
+    process.exit(1)
+  })

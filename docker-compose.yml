@@ -1,16 +1,40 @@
 version: '3.7'
 services:
-  postgres:
-    container_name: postgres
+  sb_app:
+    container_name: sb_app
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - sb_postgres
+      - sb_redis
+    environment:
+      LOG_LEVEL: "$LOG_LEVEL"
+      DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
+      TOKEN_SECRET: "$TOKEN_SECRET"
+      TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
+      DOMAIN: "$DOMAIN"
+      PORT: "$PORT"
+      USE_NATIVE_ENV: "true"
+      DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
+      REDIS_URL: "redis://sb_redis:6379"
+    ports:
+      - "3000:3000"
+
+  sb_postgres:
+    container_name: sb_postgres
     image: postgres:13-alpine
     environment:
       POSTGRES_DB: "squadbot"
       POSTGRES_USER: "squadbot"
       POSTGRES_PASSWORD: "p4ssw0rd"
-    ports:
-      - 5432:5432
-  redis:
-    container_name: redis
+    volumes:
+      - "sb_postgres_data:/var/lib/postgresql/data"
+
+  sb_redis:
+    container_name: sb_redis
     image: redis
-    ports:
-      - 6379:6379
+
+volumes:
+  sb_postgres_data:
+    driver: local
