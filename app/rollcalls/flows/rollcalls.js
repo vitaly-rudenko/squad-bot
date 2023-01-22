@@ -57,7 +57,7 @@ export function rollCallsCommand({ rollCallsStorage, usersStorage }) {
       return formatted
     }
 
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
     await context.reply(
       rollCalls.length > 0
         ? rollCalls.map(formatRollCall).join('\n')
@@ -88,7 +88,7 @@ export function rollCallsDeleteAction({ rollCallsStorage }) {
 
     const rollCalls = await rollCallsStorage.findByGroupId(chatId)
 
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
     await context.reply(localize('command.rollCalls.delete.choose'), {
       parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard(
@@ -111,7 +111,7 @@ export function rollCallsDeleteCancelAction() {
 
     await userSession.clear()
 
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
   }
 }
 
@@ -126,7 +126,7 @@ export function rollCallsDeleteIdAction({ rollCallsStorage }) {
 
     await userSession.clear()
 
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
     await context.reply(
       localize('command.rollCalls.delete.deleted'),
       { parse_mode: 'MarkdownV2' }
@@ -142,7 +142,7 @@ export function rollCallsAddAction() {
 
     await context.answerCbQuery()
 
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
     await context.reply(
       localize('command.rollCalls.add.sendMessagePattern'),
       { parse_mode: 'MarkdownV2' }
@@ -182,7 +182,7 @@ export function rollCallsAddUsersPatternAllAction() {
 
     await context.answerCbQuery()
 
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
     await handleUsersPattern(context, '*')
   }
 }
@@ -258,7 +258,7 @@ export function rollCallsAddExcludeSenderAction() {
       excludeSender: context.match[1] === 'yes',
     })
 
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
     await context.reply(
       localize('command.rollCalls.add.sendPollOptions'),
       {
@@ -277,7 +277,7 @@ export function rollCallsAddPollOptionsSkipAction({ rollCallsStorage }) {
   return async (context) => {
     await context.answerCbQuery()
 
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
     await handlePollOptions(context, [], rollCallsStorage)
   }
 }

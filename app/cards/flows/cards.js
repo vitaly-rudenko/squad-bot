@@ -25,7 +25,7 @@ export function cardsAddBankAction() {
     const { userSession, localize } = context.state
 
     await context.answerCbQuery()
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
 
     const message = await context.reply(
       localize('command.cards.add.sendCardNumber'),
@@ -69,8 +69,8 @@ export function cardsAddNumberMessage({ cardsStorage }) {
     const number = formatCardNumber(context.message.text)
 
     await Promise.all([
-      context.deleteMessage(),
-      context.deleteMessage(messageId),
+      context.deleteMessage().catch(() => {}),
+      context.deleteMessage(messageId).catch(() => {}),
     ])
 
     const card = new Card({ userId, bank, number })
@@ -124,7 +124,7 @@ export function cardsDeleteIdAction({ cardsStorage }) {
     const { userSession, localize } = context.state
 
     await context.answerCbQuery()
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
 
     const cardId = context.match[1]
     await cardsStorage.deleteById(cardId)
@@ -161,7 +161,7 @@ export function cardsGetUserIdAction({ cardsStorage, usersStorage }) {
     const { userSession, userId, localize } = context.state
 
     await context.answerCbQuery()
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
 
     const cardUserId = context.match[1]
     const user = await usersStorage.findById(cardUserId)
@@ -198,7 +198,7 @@ export function cardsGetIdAction({ cardsStorage }) {
     const { userSession } = context.state
 
     await context.answerCbQuery()
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
 
     const cardId = context.match[1]
     const card = await cardsStorage.findById(cardId)

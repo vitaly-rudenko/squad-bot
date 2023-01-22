@@ -55,7 +55,7 @@ export function titleSetUserIdAction({ usersStorage }) {
     const { userSession, localize } = context.state
 
     await context.answerCbQuery()
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
 
     const subjectUserId = context.match[1]
     const subjectUser = subjectUserId !== 'random' && await usersStorage.findById(subjectUserId)
@@ -86,7 +86,7 @@ export function titleSetCancelAction() {
     const { userSession, localize } = context.state
 
     await context.answerCbQuery()
-    await context.deleteMessage()
+    await context.deleteMessage().catch(() => {})
     await userSession.clear()
 
     await context.reply(localize('command.title.set.canceled'), { parse_mode: 'MarkdownV2' })
