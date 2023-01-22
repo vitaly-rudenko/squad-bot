@@ -28,7 +28,13 @@ services:
       POSTGRES_DB: "squadbot"
       POSTGRES_USER: "squadbot"
       POSTGRES_PASSWORD: "p4ssw0rd"
+    volumes:
+      - "sb_postgres_data:/var/lib/postgresql/data"
 
   sb_redis:
     container_name: sb_redis
     image: redis
+
+volumes:
+  sb_postgres_data:
+    driver: local
