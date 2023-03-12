@@ -19,7 +19,12 @@ export class RefreshMembershipsUseCase {
       try {
         await this._membershipManager.refreshLink(userId, groupId)
       } catch (error) {
-        this._errorLogger.log(error, 'Could not refresh membership link', { userId, groupId })
+        this._errorLogger.log(error, 'Could not refresh membership link, unlinking', { userId, groupId })
+        try {
+          await this._membershipManager.unlink(userId, groupId)
+        } catch (error) {
+          this._errorLogger.log(error, 'Could not unlink membership', { userId, groupId })
+        }
       }
     }
   }
