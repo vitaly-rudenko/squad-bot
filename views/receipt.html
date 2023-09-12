@@ -37,8 +37,18 @@
         </div>
 
         <div class="form_input">
-            <label>* Сума, грн</label>
+            <label>* Сума без чайових, грн</label>
             <input id="receipts_amount_input" type="number" placeholder="0.00">
+        </div>
+
+        <div id="receipts_tip" class="hidden">
+            <div class="form_input">
+                <label>Чайові, грн</label>
+                <input id="receipts_tip_amount_input" type="number" placeholder="0.00">
+            </div>
+            <div class="receipts_tip_note">
+                Чайові будуть поділені порівну між учасниками та збережені в окремому чеку.
+            </div>
         </div>
 
         <div class="form_input">

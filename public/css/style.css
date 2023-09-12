@@ -310,7 +310,13 @@ button {
     color: #d20d0d;
 }
 
-
+.receipts_tip_note {
+    color: #616161;
+    font-size: 12px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    padding: 0px 5px;
+}
 
 /* payments list */
 

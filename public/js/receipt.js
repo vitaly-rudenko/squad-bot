@@ -1,5 +1,7 @@
 const receiptsPayerSelect = document.getElementById("receipts_payer_select")
 const receiptsAmountInput = document.getElementById("receipts_amount_input")
+const receiptsTip = document.getElementById('receipts_tip')
+const receiptsTipAmountInput = document.getElementById('receipts_tip_amount_input')
 const receiptsPhotoInput = document.getElementById("receipts_photo_input")
 const receiptsAddPhotoButton = document.getElementById("receipts_add_photo_button")
 const receiptsDeletePhotoButton = document.getElementById("receipts_delete_photo_button")
@@ -87,6 +89,7 @@ async function init() {
             console.error(error)
         }
     } else {
+        receiptsTip.classList.remove('hidden')
         setDebts([{
             debtorId: currentUser.id,
             amount: null,
@@ -195,6 +198,60 @@ function saveReceipt() {
     const amount = moneyToCoins(rawAmount)
     const description = receiptsDescriptionInput.value
 
+    let promise = Promise.resolve()
+    promise = promise.then(() => sendCreateReceiptRequest({
+        payerId,
+        amount,
+        debts,
+        description,
+        photo,
+        leavePhoto: hasPhoto,
+    }))
+
+    const rawTipAmount = receiptsTipAmountInput.value
+    if (rawTipAmount && Number(rawTipAmount) > 0) {
+        const debtorIds = Object.keys(debts)
+        const tipAmount = moneyToCoins(rawTipAmount)
+        const tipAmountPerDebtor = Math.floor(tipAmount / debtorIds.length)
+
+        const tipDebts = {}
+        for (const debtorId of debtorIds) {
+            tipDebts[debtorId] = tipAmountPerDebtor
+        }
+
+        promise.then(() => sendCreateReceiptRequest({
+            payerId,
+            amount: tipAmount,
+            debts: tipDebts,
+            description: description ? `${description} (чай)` : `Чай`,
+            photo: null,
+            leavePhoto: false,
+        }))
+    }
+
+    promise
+        .then((response) => {
+            return response.json()
+        })
+        .then((data) => {
+            if (!data.id) {
+                console.log('response:', data)
+                throw new Error('Response does not contain receipt ID!')
+            }
+
+            localStorage.setItem('success', 'true')
+            window.history.replaceState(null, null, window.location.pathname + '?success')
+
+            if (receiptId) {
+                window.open('/receiptslist', '_self')
+            } else {
+                location.reload()
+            }
+        })
+        .catch(e => console.error(e))
+}
+
+function sendCreateReceiptRequest({ payerId, amount, debts, description, photo, leavePhoto }) {
     const body = new FormData()
     body.set('payer_id', payerId)
     body.set('amount', amount)
@@ -210,34 +267,15 @@ function saveReceipt() {
 
     if (photo) {
         body.set('photo', photo, photo.name)
-    } else if (hasPhoto) {
+    } else if (leavePhoto) {
         body.set('leave_photo', 'true')
     }
 
-    fetch('/receipts', {
+    return fetch('/receipts', {
         method: 'POST',
         headers: createAuthorizationHeader(),
         body,
     })
-    .then((response) => {
-        return response.json()
-    })
-    .then((data) => {
-        if (!data.id) {
-            console.log('response:', data)
-            throw new Error('Response does not contain receipt ID!')
-        }
-
-        localStorage.setItem('success', 'true')
-        window.history.replaceState(null, null, window.location.pathname + '?success')
-
-        if (receiptId) {
-            window.open('/receiptslist', '_self')
-        } else {
-            location.reload()
-        }
-    })
-    .catch(e => console.error(e))
 }
 
 function divideMoneyAmongUsers() {
@@ -245,12 +283,12 @@ function divideMoneyAmongUsers() {
     if(!amount) return
     amount = Math.floor(amount * 100)
 
-    const debtors = getCheckeduserIds()
+    const debtors = getCheckedUserIds()
     const debtorAmount = amount / debtors.length
     setDebts(debtors.map(debtorId => ({ debtorId, amount: debtorAmount })))
 }
 
-function getCheckeduserIds() {
+function getCheckedUserIds() {
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor")
     return [...debtors]
         .filter(debtor => debtor.querySelector(".debtor_checkbox").checked)
@@ -273,6 +311,8 @@ function setDebts(debts) {
             debtorCheckbox.checked = false
             debtors[i].querySelector(".debt_amount").value = ''
         }
+
+        debtors[i].querySelector(".debt_amount").placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
     }
     calculateReceiptRemainBalance()
 }
