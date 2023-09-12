@@ -29,8 +29,12 @@ receiptsOpenPhotoLink.addEventListener('click', () => {
 init()
 async function init() {
     await waitForAuth()
+    const currentUser = getCurrentUser()
+
     users = await getUsers()
-    renderUsersSelect(receiptsPayerSelect, getCurrentUser().id)
+    users = users.sort((a) => a.id === currentUser.id ? -1 : 1)
+
+    renderUsersSelect(receiptsPayerSelect, currentUser.id)
     renderDebtors()
 
     const query = new URLSearchParams(location.search)
@@ -63,6 +67,11 @@ async function init() {
         } catch (error) {
             console.error(error)
         }
+    } else {
+        setDebts([{
+            debtorId: currentUser.id,
+            amount: null,
+        }])
     }
 
     refreshPhoto()
@@ -218,7 +227,7 @@ function setDebts(debts) {
         const debtorCheckbox = debtors[i].querySelector(".debtor_checkbox")
         const debtorId = debtorCheckbox.value
         const debt = debts.find(debt => debt.debtorId === debtorId)
-        
+
         if (debt) {
             debtorCheckbox.checked = true
             if (debt.amount) {
@@ -233,13 +242,13 @@ function setDebts(debts) {
 }
 
 function calculateReceiptRemainBalance() {
-
     const amount = receiptsAmountInput.value
     if(!amount) {
         errorMessage.innerHTML = 'Залишок: 0 грн'
         errorMessage.classList.remove('red_color')
         return
-    } 
+    }
+
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor input:checked")
     let debtorsSum = 0
     for (let i = 0; i < debtors.length; i++) {
