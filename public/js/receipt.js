@@ -1,5 +1,7 @@
 const receiptsPayerSelect = document.getElementById("receipts_payer_select")
 const receiptsAmountInput = document.getElementById("receipts_amount_input")
+const receiptsTip = document.getElementById('receipts_tip')
+const receiptsTipAmountInput = document.getElementById('receipts_tip_amount_input')
 const receiptsPhotoInput = document.getElementById("receipts_photo_input")
 const receiptsAddPhotoButton = document.getElementById("receipts_add_photo_button")
 const receiptsDeletePhotoButton = document.getElementById("receipts_delete_photo_button")
@@ -10,6 +12,8 @@ const addReceiptButton = document.getElementById("add_receipt_button")
 const divideMoneyButton = document.getElementById('divide_money_button')
 const errorMessage = document.getElementById('error_message')
 const pageTitle = document.getElementById('page_title')
+const photoPopup = document.getElementById('photo_popup')
+const photoPopupImage = document.getElementById('photo_popup_image')
 
 let users = []
 let receiptId = null
@@ -22,15 +26,36 @@ receiptsAmountInput.addEventListener('input', calculateReceiptRemainBalance)
 receiptsPhotoInput.addEventListener('change', photoChange)
 receiptsAddPhotoButton.addEventListener('click', addPhoto)
 receiptsDeletePhotoButton.addEventListener('click', deletePhoto)
+photoPopup.addEventListener('click', () => {
+    photoPopup.classList.add('hidden')
+})
 receiptsOpenPhotoLink.addEventListener('click', () => {
-    window.open(`/receipts/${receiptId}/photo`, '_blank')
+    if (receiptId && !hasPhotoBeenChanged) {
+        photoPopupImage.src = `/receipts/${receiptId}/photo`
+        photoPopup.classList.remove('hidden')
+    } else {
+        const selectedFile = receiptsPhotoInput.files[0]
+        const fileReader = new FileReader()
+
+        fileReader.addEventListener('load', () => {
+            const dataUrl = fileReader.result
+            photoPopupImage.src = dataUrl
+            photoPopup.classList.remove('hidden')
+        })
+
+        fileReader.readAsDataURL(selectedFile)
+    }
 })
 
 init()
 async function init() {
     await waitForAuth()
+    const currentUser = getCurrentUser()
+
     users = await getUsers()
-    renderUsersSelect(receiptsPayerSelect, getCurrentUser().id)
+    users = users.sort((a) => a.id === currentUser.id ? -1 : 1)
+
+    renderUsersSelect(receiptsPayerSelect, currentUser.id)
     renderDebtors()
 
     const query = new URLSearchParams(location.search)
@@ -63,6 +88,12 @@ async function init() {
         } catch (error) {
             console.error(error)
         }
+    } else {
+        receiptsTip.classList.remove('hidden')
+        setDebts([{
+            debtorId: currentUser.id,
+            amount: null,
+        }])
     }
 
     refreshPhoto()
@@ -79,6 +110,8 @@ function addPhoto() {
 }
 
 function deletePhoto() {
+    if (!confirm("Видалити фото?")) return
+
     receiptsPhotoInput.value = ''
     hasPhoto = false
     hasPhotoBeenChanged = true
@@ -89,10 +122,7 @@ function refreshPhoto() {
     if (hasPhoto) {
         receiptsAddPhotoButton.classList.add('hidden')
         receiptsDeletePhotoButton.classList.remove('hidden')
-        
-        if (!hasPhotoBeenChanged && receiptId) {
-            receiptsOpenPhotoLink.classList.remove('hidden')
-        }
+        receiptsOpenPhotoLink.classList.remove('hidden')
     } else {
         receiptsAddPhotoButton.classList.remove('hidden')
         receiptsDeletePhotoButton.classList.add('hidden')
@@ -111,18 +141,36 @@ function renderDebtors() {
     }
     receiptDebtorsContainer.innerHTML = debtorsHtml
 
-    const debtors = document.querySelectorAll('.debtor input[type="number"]')
+    const debtors = document.querySelectorAll('.debtor')
     for (const debtor of debtors) {
-        debtor.placeholder = '0.00 (заповнити пізніше)'
+        const debtorCheckbox = debtor.querySelector(".debtor_checkbox")
+        const debtorInput = debtor.querySelector('input[type="number"]')
 
-        debtor.addEventListener('focus', () => {
-            debtor.placeholder = '0.00'
+        debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
+
+        debtorInput.addEventListener('focus', () => {
+            if (!debtorCheckbox.checked) {
+                debtorInput.blur()
+                return
+            }
+
+            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox, focused: true })
         })
 
-        debtor.addEventListener('blur', () => {
-            debtor.placeholder = '0.00 (заповнити пізніше)'
+        debtorInput.addEventListener('blur', () => {
+            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
+        })
+
+        debtorCheckbox.addEventListener('change', () => {
+            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
         })
     }
+}
+
+function generateDebtorInputPlaceholder({ debtorCheckbox, focused = false }) {
+    if (!debtorCheckbox.checked) return ''
+    if (focused) return '0.00'
+    return '0.00 (заповнити пізніше)'
 }
 
 function saveReceipt() {
@@ -150,6 +198,60 @@ function saveReceipt() {
     const amount = moneyToCoins(rawAmount)
     const description = receiptsDescriptionInput.value
 
+    let promise = Promise.resolve()
+    promise = promise.then(() => sendCreateReceiptRequest({
+        payerId,
+        amount,
+        debts,
+        description,
+        photo,
+        leavePhoto: hasPhoto,
+    }))
+
+    const rawTipAmount = receiptsTipAmountInput.value
+    if (rawTipAmount && Number(rawTipAmount) > 0) {
+        const debtorIds = Object.keys(debts)
+        const tipAmount = moneyToCoins(rawTipAmount)
+        const tipAmountPerDebtor = Math.floor(tipAmount / debtorIds.length)
+
+        const tipDebts = {}
+        for (const debtorId of debtorIds) {
+            tipDebts[debtorId] = tipAmountPerDebtor
+        }
+
+        promise.then(() => sendCreateReceiptRequest({
+            payerId,
+            amount: tipAmount,
+            debts: tipDebts,
+            description: description ? `${description} (чай)` : `Чай`,
+            photo: null,
+            leavePhoto: false,
+        }))
+    }
+
+    promise
+        .then((response) => {
+            return response.json()
+        })
+        .then((data) => {
+            if (!data.id) {
+                console.log('response:', data)
+                throw new Error('Response does not contain receipt ID!')
+            }
+
+            localStorage.setItem('success', 'true')
+            window.history.replaceState(null, null, window.location.pathname + '?success')
+
+            if (receiptId) {
+                window.open('/receiptslist', '_self')
+            } else {
+                location.reload()
+            }
+        })
+        .catch(e => console.error(e))
+}
+
+function sendCreateReceiptRequest({ payerId, amount, debts, description, photo, leavePhoto }) {
     const body = new FormData()
     body.set('payer_id', payerId)
     body.set('amount', amount)
@@ -165,34 +267,15 @@ function saveReceipt() {
 
     if (photo) {
         body.set('photo', photo, photo.name)
-    } else if (hasPhoto) {
+    } else if (leavePhoto) {
         body.set('leave_photo', 'true')
     }
 
-    fetch('/receipts', {
+    return fetch('/receipts', {
         method: 'POST',
         headers: createAuthorizationHeader(),
         body,
     })
-    .then((response) => {
-        return response.json()
-    })
-    .then((data) => {
-        if (!data.id) {
-            console.log('response:', data)
-            throw new Error('Response does not contain receipt ID!')
-        }
-
-        localStorage.setItem('success', 'true')
-        window.history.replaceState(null, null, window.location.pathname + '?success')
-
-        if (receiptId) {
-            window.open('/receiptslist', '_self')
-        } else {
-            location.reload()
-        }
-    })
-    .catch(e => console.error(e))
 }
 
 function divideMoneyAmongUsers() {
@@ -200,12 +283,12 @@ function divideMoneyAmongUsers() {
     if(!amount) return
     amount = Math.floor(amount * 100)
 
-    const debtors = getCheckeduserIds()
+    const debtors = getCheckedUserIds()
     const debtorAmount = amount / debtors.length
     setDebts(debtors.map(debtorId => ({ debtorId, amount: debtorAmount })))
 }
 
-function getCheckeduserIds() {
+function getCheckedUserIds() {
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor")
     return [...debtors]
         .filter(debtor => debtor.querySelector(".debtor_checkbox").checked)
@@ -218,7 +301,7 @@ function setDebts(debts) {
         const debtorCheckbox = debtors[i].querySelector(".debtor_checkbox")
         const debtorId = debtorCheckbox.value
         const debt = debts.find(debt => debt.debtorId === debtorId)
-        
+
         if (debt) {
             debtorCheckbox.checked = true
             if (debt.amount) {
@@ -228,24 +311,26 @@ function setDebts(debts) {
             debtorCheckbox.checked = false
             debtors[i].querySelector(".debt_amount").value = ''
         }
+
+        debtors[i].querySelector(".debt_amount").placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
     }
     calculateReceiptRemainBalance()
 }
 
 function calculateReceiptRemainBalance() {
-
     const amount = receiptsAmountInput.value
     if(!amount) {
         errorMessage.innerHTML = 'Залишок: 0 грн'
         errorMessage.classList.remove('red_color')
         return
-    } 
+    }
+
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor input:checked")
     let debtorsSum = 0
     for (let i = 0; i < debtors.length; i++) {
         debtorsSum += Number(debtors[i].parentElement.parentElement.querySelector(".debt_amount").value)
     }
-    if(debtorsSum != amount) {
+    if (Math.abs(debtorsSum - amount) > 0.01) {
         errorMessage.innerHTML = `Залишок: ${(amount - debtorsSum).toFixed(2)} грн`
         errorMessage.classList.add('red_color')
     } else {
