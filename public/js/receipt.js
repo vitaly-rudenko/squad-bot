@@ -290,7 +290,7 @@ function calculateReceiptRemainBalance() {
     for (let i = 0; i < debtors.length; i++) {
         debtorsSum += Number(debtors[i].parentElement.parentElement.querySelector(".debt_amount").value)
     }
-    if(debtorsSum != amount) {
+    if (Math.abs(debtorsSum - amount) > 0.01) {
         errorMessage.innerHTML = `Залишок: ${(amount - debtorsSum).toFixed(2)} грн`
         errorMessage.classList.add('red_color')
     } else {
