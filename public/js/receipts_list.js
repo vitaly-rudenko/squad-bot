@@ -35,7 +35,7 @@ function showReceipts() {
             <div>${isIncomplete ? '⚠️ ' : (isSumMismatched ? '❗️ ' : '')}${getUserNameById(receipt.payerId)}</div>
             <div>${renderAmount(receipt.amount)} грн</div>
         </div>`
-        
+
 
         receiptsHtml += '<div class="debtor_list">'
         for (let j = 0; j < receipt.debts.length; j++) {
@@ -63,8 +63,8 @@ function showReceipts() {
                             </svg>
                             <div onclick="updateReceiptById('${receipt.id}')">Редактировать</div>
                         </div>
-                        ${receipt.hasPhoto ? `<div class="yellow_color">
-                            <div onclick="openReceiptPhoto('${receipt.id}')">Открыть фото чека</div>
+                        ${receipt.hasPhoto ? `<div class="blue_color">
+                            <div onclick="openReceiptPhoto('${receipt.id}')">Фото чека</div>
                         </div>` : ''}
                         <div class="red_color">
                             <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"

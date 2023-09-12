@@ -16,7 +16,7 @@ a {
     cursor: pointer;
 }
 
-.hidden { 
+.hidden {
     display: none;
 }
 
@@ -267,6 +267,9 @@ button {
 .yellow_color {
     color: #e0830f;
 }
+.blue_color {
+    color: #1f657b;
+}
 .red_color {
     color: #d20d0d;
 }
@@ -389,12 +392,12 @@ button {
     from {
         left: 35vw;
         top: 102vh;
-        transform:rotate(0deg); 
+        transform:rotate(0deg);
     }
     to {
         left: 35vw;
         top: -20vh;
-        transform:rotate(360deg); 
+        transform:rotate(360deg);
     }
 }
 
@@ -414,36 +417,36 @@ button {
     from {
         left: 40vw;
         top: 102vh;
-        transform:rotate(0deg); 
+        transform:rotate(0deg);
     }
     to {
         left: -30vw;
         top: -60vh;
-        transform:rotate(1220deg); 
+        transform:rotate(1220deg);
     }
 }
 @keyframes animation4 {
     from {
         left: 8vw;
         top: 152vh;
-        transform:rotate(0deg); 
+        transform:rotate(0deg);
     }
     to {
         left: 130vw;
         top: -20vh;
-        transform:rotate(1000deg); 
+        transform:rotate(1000deg);
     }
 }
 @keyframes animation5 {
     from {
         left: -60vw;
         top: 140vh;
-        transform:rotate(0deg); 
+        transform:rotate(0deg);
     }
     to {
         left: 130vw;
         top: 30vh;
-        transform:rotate(3000deg); 
+        transform:rotate(3000deg);
     }
 }
 /* успешно */
@@ -451,12 +454,12 @@ button {
     from {
         left: -20vw;
         top: 120vh;
-        transform:rotate(-70deg); 
+        transform:rotate(-70deg);
     }
     to {
         left: 120vw;
         top: -20vh;
-        transform:rotate(70deg); 
+        transform:rotate(70deg);
     }
 }
 /* платеж добавлен */
@@ -464,12 +467,12 @@ button {
     from {
         left: 140vw;
         top: 140vh;
-        transform:rotate(50deg); 
+        transform:rotate(50deg);
     }
     to {
         left: -20vw;
         top: -20vh;
-        transform:rotate(-50deg); 
+        transform:rotate(-50deg);
     }
 }
 /* women with bunny ears */
