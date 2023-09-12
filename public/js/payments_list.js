@@ -67,7 +67,7 @@ function showPayments() {
 }
 
 async function deletePaymentById(paymentId) {
-    if (!confirm("Видалити переказ?")) return
+    if (!confirm("Видалити платіж?")) return
 
     const response = await fetch(`/payments/${paymentId}`, {
         method: 'DELETE',

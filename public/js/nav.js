@@ -7,9 +7,9 @@ const navHtml = `<input id="toggle" type="checkbox">
 
 <nav class="nav">
     <a rel="nofollow" rel="noreferrer" class="nav-item" href="/">Додати чек</a>
-    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/paymentview">Додати переказ</a>
+    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/paymentview">Додати платіж</a>
     <a rel="nofollow" rel="noreferrer" class="nav-item" href="/receiptslist">Усі чеки</a>
-    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/paymentslist">Усі перекази</a>
+    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/paymentslist">Усі платежі</a>
 </nav>`
 
 navContainer.innerHTML = navHtml

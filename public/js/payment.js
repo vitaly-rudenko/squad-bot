@@ -45,7 +45,7 @@ function savePayment() {
 		console.log('add new payment: ', data)
         playSuccessAnimation()
         savePaymentButton.disabled = false
-	    savePaymentButton.innerHTML = "Створити переказ"
+	    savePaymentButton.innerHTML = "Створити платіж"
         savePaymentButton.classList.remove('disabled')
         paymentsAmountInput.value = null
     })
