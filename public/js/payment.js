@@ -21,7 +21,7 @@ function savePayment() {
     if(paymentsFromUserSelect.value == paymentsToUserSelect.value) return
 
     savePaymentButton.disabled = true
-	savePaymentButton.innerHTML = "Обработка..."
+	savePaymentButton.innerHTML = "Обробка..."
     savePaymentButton.classList.add('disabled')
 
     const payment = {
@@ -45,7 +45,7 @@ function savePayment() {
 		console.log('add new payment: ', data)
         playSuccessAnimation()
         savePaymentButton.disabled = false
-	    savePaymentButton.innerHTML = "Добавить перевод"
+	    savePaymentButton.innerHTML = "Створити переказ"
         savePaymentButton.classList.remove('disabled')
         paymentsAmountInput.value = null
     })

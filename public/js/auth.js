@@ -27,7 +27,7 @@ async function init() {
 
     console.log('Could not exchange token:', response)
   }
-  
+
   if (localToken) {
     console.log('Using local authentication token')
     completeAuth(localToken)
@@ -44,18 +44,18 @@ function completeAuth(token) {
   console.log('Current user:', getCurrentUser())
 
 
-  
+
 
   const authInfo = document.createElement('div')
   authInfo.id = 'auth-info'
 
   const authInfoText = document.createElement('p')
-  authInfoText.innerText= `Авторизован как: ${getCurrentUser().name} (@${getCurrentUser().username})`
+  authInfoText.innerText= `Авторизований як: ${getCurrentUser().name} (@${getCurrentUser().username})`
 
   authInfo.appendChild(authInfoText)
 
   authInfoText.addEventListener('click', () => {
-    if(confirm(`Выйти из аккаунта "${getCurrentUser().name}"?`)) {
+    if(confirm(`Вийти з акаунту "${getCurrentUser().name}"?`)) {
       logOut()
     }
   })

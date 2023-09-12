@@ -6,10 +6,10 @@ const navHtml = `<input id="toggle" type="checkbox">
 </label>
 
 <nav class="nav">
-    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/">Добавить чек</a>
-    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/paymentview">Добавить перевод</a>
-    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/receiptslist">Все чеки</a>
-    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/paymentslist">Все переводы</a>
+    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/">Додати чек</a>
+    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/paymentview">Додати переказ</a>
+    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/receiptslist">Усі чеки</a>
+    <a rel="nofollow" rel="noreferrer" class="nav-item" href="/paymentslist">Усі перекази</a>
 </nav>`
 
 navContainer.innerHTML = navHtml
