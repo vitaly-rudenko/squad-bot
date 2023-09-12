@@ -138,18 +138,36 @@ function renderDebtors() {
     }
     receiptDebtorsContainer.innerHTML = debtorsHtml
 
-    const debtors = document.querySelectorAll('.debtor input[type="number"]')
+    const debtors = document.querySelectorAll('.debtor')
     for (const debtor of debtors) {
-        debtor.placeholder = '0.00 (заповнити пізніше)'
+        const debtorCheckbox = debtor.querySelector(".debtor_checkbox")
+        const debtorInput = debtor.querySelector('input[type="number"]')
 
-        debtor.addEventListener('focus', () => {
-            debtor.placeholder = '0.00'
+        debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
+
+        debtorInput.addEventListener('focus', () => {
+            if (!debtorCheckbox.checked) {
+                debtorInput.blur()
+                return
+            }
+
+            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox, focused: true })
         })
 
-        debtor.addEventListener('blur', () => {
-            debtor.placeholder = '0.00 (заповнити пізніше)'
+        debtorInput.addEventListener('blur', () => {
+            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
+        })
+
+        debtorCheckbox.addEventListener('change', () => {
+            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
         })
     }
+}
+
+function generateDebtorInputPlaceholder({ debtorCheckbox, focused = false }) {
+    if (!debtorCheckbox.checked) return ''
+    if (focused) return '0.00'
+    return '0.00 (заповнити пізніше)'
 }
 
 function saveReceipt() {
