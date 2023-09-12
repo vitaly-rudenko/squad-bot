@@ -225,7 +225,7 @@ function saveReceipt() {
             payerId,
             amount: tipAmount,
             debts: tipDebts,
-            description: description ? `${description} (чай)` : `Чай`,
+            description: description ? `${description} (чайові)` : `Чайові`,
             photo: null,
             leavePhoto: false,
         }))
