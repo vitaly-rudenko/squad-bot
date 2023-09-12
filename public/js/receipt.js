@@ -10,6 +10,8 @@ const addReceiptButton = document.getElementById("add_receipt_button")
 const divideMoneyButton = document.getElementById('divide_money_button')
 const errorMessage = document.getElementById('error_message')
 const pageTitle = document.getElementById('page_title')
+const photoPopup = document.getElementById('photo_popup')
+const photoPopupImage = document.getElementById('photo_popup_image')
 
 let users = []
 let receiptId = null
@@ -22,8 +24,25 @@ receiptsAmountInput.addEventListener('input', calculateReceiptRemainBalance)
 receiptsPhotoInput.addEventListener('change', photoChange)
 receiptsAddPhotoButton.addEventListener('click', addPhoto)
 receiptsDeletePhotoButton.addEventListener('click', deletePhoto)
+photoPopup.addEventListener('click', () => {
+    photoPopup.classList.add('hidden')
+})
 receiptsOpenPhotoLink.addEventListener('click', () => {
-    window.open(`/receipts/${receiptId}/photo`, '_blank')
+    if (receiptId && !hasPhotoBeenChanged) {
+        photoPopupImage.src = `/receipts/${receiptId}/photo`
+        photoPopup.classList.remove('hidden')
+    } else {
+        const selectedFile = receiptsPhotoInput.files[0]
+        const fileReader = new FileReader()
+
+        fileReader.addEventListener('load', () => {
+            const dataUrl = fileReader.result
+            photoPopupImage.src = dataUrl
+            photoPopup.classList.remove('hidden')
+        })
+
+        fileReader.readAsDataURL(selectedFile)
+    }
 })
 
 init()
@@ -88,6 +107,8 @@ function addPhoto() {
 }
 
 function deletePhoto() {
+    if (!confirm("Видалити фото?")) return
+
     receiptsPhotoInput.value = ''
     hasPhoto = false
     hasPhotoBeenChanged = true
@@ -98,10 +119,7 @@ function refreshPhoto() {
     if (hasPhoto) {
         receiptsAddPhotoButton.classList.add('hidden')
         receiptsDeletePhotoButton.classList.remove('hidden')
-        
-        if (!hasPhotoBeenChanged && receiptId) {
-            receiptsOpenPhotoLink.classList.remove('hidden')
-        }
+        receiptsOpenPhotoLink.classList.remove('hidden')
     } else {
         receiptsAddPhotoButton.classList.remove('hidden')
         receiptsDeletePhotoButton.classList.add('hidden')
