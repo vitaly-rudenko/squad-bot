@@ -1,5 +1,6 @@
 const receiptsPayerSelect = document.getElementById("receipts_payer_select")
 const receiptsAmountInput = document.getElementById("receipts_amount_input")
+const receiptsAmountInputLabel = document.getElementById("receipts_amount_input_label")
 const receiptsTip = document.getElementById('receipts_tip')
 const receiptsTipAmountInput = document.getElementById('receipts_tip_amount_input')
 const receiptsPhotoInput = document.getElementById("receipts_photo_input")
@@ -85,6 +86,7 @@ async function init() {
 
             pageTitle.innerText = 'Редагувати чек'
             addReceiptButton.innerText = 'Редагувати чек'
+            receiptsAmountInputLabel.innerText = '* Сума, грн'
         } catch (error) {
             console.error(error)
         }
