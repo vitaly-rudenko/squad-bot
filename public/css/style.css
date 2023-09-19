@@ -120,6 +120,13 @@ button {
     margin-top: 5px !important;
 }
 
+#receipts_total_sum {
+    text-align: right;
+    padding: 10px;
+    border-top: 1px solid rgb(75, 75, 75);
+    color: rgb(75, 75, 75);
+}
+
 .debtor {
     margin-bottom: 6px;
     display: flex;
@@ -313,7 +320,7 @@ button {
 .receipts_tip_note {
     color: #616161;
     font-size: 12px;
-    margin-top: -10px;
+    margin-top: -5px;
     margin-bottom: 10px;
     padding: 0px 5px;
 }

@@ -1,6 +1,7 @@
 const receiptsPayerSelect = document.getElementById("receipts_payer_select")
 const receiptsAmountInput = document.getElementById("receipts_amount_input")
 const receiptsAmountInputLabel = document.getElementById("receipts_amount_input_label")
+const receiptsTotalSum = document.getElementById('receipts_total_sum')
 const receiptsTip = document.getElementById('receipts_tip')
 const receiptsTipAmountInput = document.getElementById('receipts_tip_amount_input')
 const receiptsPhotoInput = document.getElementById("receipts_photo_input")
@@ -91,6 +92,8 @@ async function init() {
             console.error(error)
         }
     } else {
+        setInterval(() => updateTotalSum(), 500)
+        receiptsTotalSum.classList.remove('hidden')
         receiptsTip.classList.remove('hidden')
         setDebts([{
             debtorId: currentUser.id,
@@ -99,6 +102,14 @@ async function init() {
     }
 
     refreshPhoto()
+}
+
+function updateTotalSum() {
+    const amount = Number(moneyToCoins(receiptsAmountInput.value || '0'))
+    const tipAmount = Number(moneyToCoins(receiptsTipAmountInput.value || '0'))
+    const total = (Number(amount) + Number(tipAmount)) / 100
+
+    receiptsTotalSum.innerText = `${total} грн`
 }
 
 function photoChange() {
