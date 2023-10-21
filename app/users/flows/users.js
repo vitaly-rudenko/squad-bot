@@ -17,7 +17,7 @@ export function usersCommand({ usersStorage, membershipStorage }) {
       return localize('command.users.user', {
         id: escapeMd(user.id),
         name: escapeMd(user.name),
-        username: escapeMd(user.username),
+        username: escapeMd(user.username ?? '???'),
         profileUrl: escapeMd(`tg://user?id=${user.id}`),
         completenessStatus: localize(
           user.isComplete
