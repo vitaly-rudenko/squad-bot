@@ -45,7 +45,7 @@ export class ReceiptTelegramNotifier {
 
     return massNotification
   }
-  
+
   /** @param {import('../Receipt').Receipt} receipt */
   async created(receipt, { editorId }) {
     return this._stored(receipt, { editorId, isNew: true })
@@ -73,6 +73,7 @@ export class ReceiptTelegramNotifier {
 
       const debt = debts.find(debt => debt.debtorId === user.id)
       const hideDebt = user.id === payerId || (!isNew && debt?.amount !== null)
+      const hidePhoto = !receipt.hasPhoto
 
       const notification = this._localize(user.locale, 'notifications.receiptStored.message', {
         editorName: escapeMd(editor.name),
@@ -99,6 +100,11 @@ export class ReceiptTelegramNotifier {
             ? 'notifications.receiptStored.debt.new'
             : 'notifications.receiptStored.debt.incomplete',
           { debtAmount: debt && escapeMd(renderDebtAmount(debt)) },
+        ),
+        photo: hidePhoto ? '' : this._localize(
+          user.locale,
+          'notifications.receiptStored.photo',
+          { photoUrl: `${process.env.DOMAIN}/receipts/${receipt.id}/photo` }
         )
       })
 
