@@ -72,7 +72,7 @@ async function getReceipts() {
 }
 
 async function getRecentlyInteractedUserIds() {
-    const recentReceipts = (await getReceipts()).slice(0, 100)
+    const recentReceipts = (await getReceipts()).slice(0, 50)
 
     const users = new Map()
     for (const receipt of recentReceipts) {
