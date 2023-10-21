@@ -147,14 +147,36 @@ function refreshPhoto() {
 
 function renderDebtors() {
     let debtorsHtml = ``
-    for (let i = 0; i < users.length; i++) {
-        debtorsHtml += `<div class="debtor"><div>
-        <input class="debtor_checkbox" type="checkbox" id="debtor${i}" name="debtor${i}" value="${users[i].id}">
-        <label for="debtor${i}">${users[i].name}</label></div>
-        <input class="debt_amount" type="number" placeholder="" oninput="calculateReceiptRemainBalance()">
-    </div>`
+    debtorsHtml += renderDebtor(users.find(u => u.id === currentUser.id))
+    for (const userId of recentlyInteractedUserIds) {
+        if (userId !== currentUser.id) {
+            debtorsHtml += renderDebtor(users.find(u => u.id === userId))
+        }
+    }
+    const remainingUsers = users.filter(user => user.id !== currentUser.id && !recentlyInteractedUserIds.includes(user.id))
+    if (remainingUsers.length > 0) {
+        debtorsHtml += `<button class="toggle_debtors_hidden_container">Показати всіх користувачів</button>`
+        debtorsHtml += `<div class="receipt_debtors_container__hidden hidden">`
+        for (const user of remainingUsers) {
+            debtorsHtml += renderDebtor(user)
+        }
+        debtorsHtml += `</div>`
     }
     receiptDebtorsContainer.innerHTML = debtorsHtml
+
+    const toggleDebtorsHiddenContainer = document.querySelector('.toggle_debtors_hidden_container')
+    const hiddenDebtorsContainer = document.querySelector('.receipt_debtors_container__hidden')
+    if (toggleDebtorsHiddenContainer) {
+        toggleDebtorsHiddenContainer.addEventListener('click', () => {
+            if (hiddenDebtorsContainer?.classList.contains('hidden')) {
+                hiddenDebtorsContainer.classList.remove('hidden')
+                toggleDebtorsHiddenContainer.innerHTML = 'Приховати інших користувачів'
+            } else {
+                hiddenDebtorsContainer.classList.add('hidden')
+                toggleDebtorsHiddenContainer.innerHTML = 'Показати інших користувачів'
+            }
+        })
+    }
 
     const debtors = document.querySelectorAll('.debtor')
     for (const debtor of debtors) {
@@ -180,6 +202,14 @@ function renderDebtors() {
             debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
         })
     }
+}
+
+function renderDebtor(debtor) {
+    return `<div class="debtor"><div>
+        <input class="debtor_checkbox" type="checkbox" id="debtor_${debtor.id}" name="debtor_${debtor.id}" value="${debtor.id}">
+        <label for="debtor_${debtor.id}">${debtor.name}</label></div>
+        <input class="debt_amount" type="number" inputmode="decimal" placeholder="" oninput="calculateReceiptRemainBalance()">
+    </div>`
 }
 
 function generateDebtorInputPlaceholder({ debtorCheckbox, focused = false }) {
