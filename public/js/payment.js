@@ -11,8 +11,8 @@ init()
 async function init() {
     await waitForAuth()
     users = await getUsers()
-    renderUsersSelect(paymentsFromUserSelect, getCurrentUser().id)
-    renderUsersSelect(paymentsToUserSelect)
+    renderUsersSelect(users, paymentsFromUserSelect, getCurrentUser().id)
+    renderUsersSelect(users, paymentsToUserSelect)
 }
 
 function savePayment() {

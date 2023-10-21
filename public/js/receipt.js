@@ -57,7 +57,7 @@ async function init() {
     users = await getUsers()
     users = users.sort((a) => a.id === currentUser.id ? -1 : 1)
 
-    renderUsersSelect(receiptsPayerSelect, currentUser.id)
+    renderUsersSelect(users, receiptsPayerSelect, currentUser.id)
     renderDebtors()
 
     const query = new URLSearchParams(location.search)

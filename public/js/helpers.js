@@ -1,6 +1,6 @@
 const fullscreenAnimationContainer = document.getElementById('fullscreen_animation_container')
 
-function renderUsersSelect(selectElement, selectedUserId = null) {
+function renderUsersSelect(users, selectElement, selectedUserId = null) {
     const selectedIndex = selectedUserId && users.findIndex(u => u.id === selectedUserId) || 0
 
     let selectHtml = ``
