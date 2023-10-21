@@ -71,6 +71,20 @@ async function getReceipts() {
     return response.json()
 }
 
+async function getRecentlyInteractedUserIds() {
+    const recentReceipts = (await getReceipts()).slice(0, 100)
+
+    const users = new Map()
+    for (const receipt of recentReceipts) {
+        for (const debt of receipt.debts) {
+            users.set(debt.debtorId, users.get(debt.debtorId) ?? 0 + 1)
+        }
+    }
+
+    return [...users.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([userId]) => userId)
+}
 
 function renderDate(myDate) {
     const day = myDate.getDate()
