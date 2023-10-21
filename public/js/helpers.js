@@ -60,6 +60,18 @@ async function getUsers() {
     return usersData
 }
 
+async function getReceipts() {
+    const response = await fetch('/receipts', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            ...createAuthorizationHeader(),
+        }
+    })
+    return response.json()
+}
+
+
 function renderDate(myDate) {
     const day = myDate.getDate()
     const year = myDate.getFullYear()

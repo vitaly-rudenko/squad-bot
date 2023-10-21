@@ -11,17 +11,6 @@ async function init() {
     showReceipts()
 }
 
-async function getReceipts() {
-    const response = await fetch('/receipts', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            ...createAuthorizationHeader(),
-        }
-    })
-    return response.json()
-}
-
 function showReceipts() {
     let receiptsHtml = ``
     for (let i = 0; i < receipts.length; i++) {
