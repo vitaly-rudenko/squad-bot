@@ -1,5 +1,25 @@
 const fullscreenAnimationContainer = document.getElementById('fullscreen_animation_container')
 
+function sortUsers(users, currentUser, recentlyInteractedUserIds) {
+    const sortedUsers = []
+
+    sortedUsers.push(users.find(u => u.id === currentUser.id))
+
+    for (const userId of recentlyInteractedUserIds) {
+        if (userId !== currentUser.id) {
+            sortedUsers.push(users.find(u => u.id === userId))
+        }
+    }
+
+    for (const user of users) {
+        if (user.id !== currentUser.id && !recentlyInteractedUserIds.includes(user.id)) {
+            sortedUsers.push(users.find(u => u.id === user.id))
+        }
+    }
+
+    return sortedUsers
+}
+
 function renderUsersSelect(users, selectElement, selectedUserId = null) {
     const selectedIndex = selectedUserId && users.findIndex(u => u.id === selectedUserId) || 0
 

@@ -17,6 +17,8 @@ const pageTitle = document.getElementById('page_title')
 const photoPopup = document.getElementById('photo_popup')
 const photoPopupImage = document.getElementById('photo_popup_image')
 
+let currentUser
+let recentlyInteractedUserIds = []
 let users = []
 let receiptId = null
 let hasPhoto = false
@@ -52,10 +54,10 @@ receiptsOpenPhotoLink.addEventListener('click', () => {
 init()
 async function init() {
     await waitForAuth()
-    const currentUser = getCurrentUser()
+    currentUser = getCurrentUser()
+    recentlyInteractedUserIds = await getRecentlyInteractedUserIds()
 
-    users = await getUsers()
-    users = users.sort((a) => a.id === currentUser.id ? -1 : 1)
+    users = sortUsers(await getUsers(), currentUser, recentlyInteractedUserIds)
 
     renderUsersSelect(users, receiptsPayerSelect, currentUser.id)
     renderDebtors()
