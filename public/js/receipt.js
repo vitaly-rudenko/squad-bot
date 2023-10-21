@@ -17,6 +17,8 @@ const pageTitle = document.getElementById('page_title')
 const photoPopup = document.getElementById('photo_popup')
 const photoPopupImage = document.getElementById('photo_popup_image')
 
+let currentUser
+let recentlyInteractedUserIds = []
 let users = []
 let receiptId = null
 let hasPhoto = false
@@ -52,13 +54,12 @@ receiptsOpenPhotoLink.addEventListener('click', () => {
 init()
 async function init() {
     await waitForAuth()
-    const currentUser = getCurrentUser()
+    currentUser = getCurrentUser()
+    recentlyInteractedUserIds = await getRecentlyInteractedUserIds()
 
-    users = await getUsers()
-    users = users.sort((a) => a.id === currentUser.id ? -1 : 1)
+    users = sortUsers(await getUsers(), currentUser, recentlyInteractedUserIds)
 
-    renderUsersSelect(receiptsPayerSelect, currentUser.id)
-    renderDebtors()
+    renderUsersSelect(users, receiptsPayerSelect, currentUser.id)
 
     const query = new URLSearchParams(location.search)
 
@@ -83,11 +84,13 @@ async function init() {
             receiptsPayerSelect.value = receipt.payerId
             receiptsAmountInput.value = (receipt.amount / 100).toFixed(2)
             receiptsDescriptionInput.value = receipt.description
-            setDebts(receipt.debts)
 
             pageTitle.innerText = 'Редагувати чек'
             addReceiptButton.innerText = 'Редагувати чек'
             receiptsAmountInputLabel.innerText = '* Сума, грн'
+
+            renderDebtors(receipt.debts)
+            setDebts(receipt.debts)
         } catch (error) {
             console.error(error)
         }
@@ -95,10 +98,13 @@ async function init() {
         setInterval(() => updateTotalSum(), 500)
         receiptsTotalSum.classList.remove('hidden')
         receiptsTip.classList.remove('hidden')
-        setDebts([{
+
+        const debts = [{
             debtorId: currentUser.id,
             amount: null,
-        }])
+        }]
+        renderDebtors(debts)
+        setDebts(debts)
     }
 
     refreshPhoto()
@@ -143,16 +149,51 @@ function refreshPhoto() {
     }
 }
 
-function renderDebtors() {
+function renderDebtors(debts) {
+    const shownUsers = new Set()
+    const hiddenUsers = new Set()
+    shownUsers.add(users.find(u => u.id === currentUser.id))
+    for (const debt of debts) {
+        const user = users.find(u => u.id === debt.debtorId)
+        if (user) shownUsers.add(user)
+    }
+    for (const userId of recentlyInteractedUserIds) {
+        const user = users.find(u => u.id === userId)
+        if (user) shownUsers.add(user)
+    }
+    for (const user of users) {
+        if (!shownUsers.has(user)) {
+            hiddenUsers.add(user)
+        }
+    }
+
     let debtorsHtml = ``
-    for (let i = 0; i < users.length; i++) {
-        debtorsHtml += `<div class="debtor"><div>
-        <input class="debtor_checkbox" type="checkbox" id="debtor${i}" name="debtor${i}" value="${users[i].id}">
-        <label for="debtor${i}">${users[i].name}</label></div>
-        <input class="debt_amount" type="number" placeholder="" oninput="calculateReceiptRemainBalance()">
-    </div>`
+    for (const user of shownUsers) {
+        debtorsHtml += renderDebtor(user)
+    }
+    if (hiddenUsers.size > 0) {
+        debtorsHtml += `<button class="toggle_debtors_hidden_container">Показати всіх користувачів</button>`
+        debtorsHtml += `<div class="receipt_debtors_container__hidden hidden">`
+        for (const user of hiddenUsers) {
+            debtorsHtml += renderDebtor(user)
+        }
+        debtorsHtml += `</div>`
     }
     receiptDebtorsContainer.innerHTML = debtorsHtml
+
+    const toggleDebtorsHiddenContainer = document.querySelector('.toggle_debtors_hidden_container')
+    const hiddenDebtorsContainer = document.querySelector('.receipt_debtors_container__hidden')
+    if (toggleDebtorsHiddenContainer) {
+        toggleDebtorsHiddenContainer.addEventListener('click', () => {
+            if (hiddenDebtorsContainer?.classList.contains('hidden')) {
+                hiddenDebtorsContainer.classList.remove('hidden')
+                toggleDebtorsHiddenContainer.innerHTML = 'Приховати інших користувачів'
+            } else {
+                hiddenDebtorsContainer.classList.add('hidden')
+                toggleDebtorsHiddenContainer.innerHTML = 'Показати інших користувачів'
+            }
+        })
+    }
 
     const debtors = document.querySelectorAll('.debtor')
     for (const debtor of debtors) {
@@ -178,6 +219,14 @@ function renderDebtors() {
             debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
         })
     }
+}
+
+function renderDebtor(debtor) {
+    return `<div class="debtor"><div>
+        <input class="debtor_checkbox" type="checkbox" id="debtor_${debtor.id}" name="debtor_${debtor.id}" value="${debtor.id}">
+        <label for="debtor_${debtor.id}">${debtor.name}</label></div>
+        <input class="debt_amount" type="number" inputmode="decimal" placeholder="" oninput="calculateReceiptRemainBalance()">
+    </div>`
 }
 
 function generateDebtorInputPlaceholder({ debtorCheckbox, focused = false }) {

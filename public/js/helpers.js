@@ -1,6 +1,26 @@
 const fullscreenAnimationContainer = document.getElementById('fullscreen_animation_container')
 
-function renderUsersSelect(selectElement, selectedUserId = null) {
+function sortUsers(users, currentUser, recentlyInteractedUserIds) {
+    const sortedUsers = []
+
+    sortedUsers.push(users.find(u => u.id === currentUser.id))
+
+    for (const userId of recentlyInteractedUserIds) {
+        if (userId !== currentUser.id) {
+            sortedUsers.push(users.find(u => u.id === userId))
+        }
+    }
+
+    for (const user of users) {
+        if (user.id !== currentUser.id && !recentlyInteractedUserIds.includes(user.id)) {
+            sortedUsers.push(users.find(u => u.id === user.id))
+        }
+    }
+
+    return sortedUsers
+}
+
+function renderUsersSelect(users, selectElement, selectedUserId = null) {
     const selectedIndex = selectedUserId && users.findIndex(u => u.id === selectedUserId) || 0
 
     let selectHtml = ``
@@ -38,6 +58,32 @@ async function getUsers() {
     })
     const usersData = await response.json()
     return usersData
+}
+
+async function getReceipts() {
+    const response = await fetch('/receipts', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            ...createAuthorizationHeader(),
+        }
+    })
+    return response.json()
+}
+
+async function getRecentlyInteractedUserIds() {
+    const recentReceipts = (await getReceipts()).slice(0, 50)
+
+    const users = new Map()
+    for (const receipt of recentReceipts) {
+        for (const debt of receipt.debts) {
+            users.set(debt.debtorId, users.get(debt.debtorId) ?? 0 + 1)
+        }
+    }
+
+    return [...users.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .map(([userId]) => userId)
 }
 
 function renderDate(myDate) {

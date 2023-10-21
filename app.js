@@ -166,8 +166,6 @@ async function start() {
     { command: 'title', description: 'Швидко встановити підпис' },
     { command: 'rollcalls', description: 'Керування перекличками' },
     { command: 'start', description: 'Зареєструватись' },
-    { command: 'users', description: 'Список користувачів' },
-    { command: 'version', description: 'Версія' },
   ])
 
   process.on('unhandledRejection', (error) => {

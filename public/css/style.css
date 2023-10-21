@@ -153,7 +153,6 @@ button {
     white-space: nowrap;
 }
 
-
 .debtor>div {
     display: flex;
     align-items: center;
@@ -165,6 +164,19 @@ button {
     border: none;
     outline: none;
     text-align: right;
+}
+
+button.toggle_debtors_hidden_container {
+    height: 37px;
+    font-weight: normal;
+    color: rgb(110, 110, 110);
+    border: 2px solid rgb(190, 190, 190);
+    background-color: white;
+    margin-bottom: 10px;
+}
+
+#add_receipt_button {
+    margin-bottom: 40px;
 }
 
 #error_message {
