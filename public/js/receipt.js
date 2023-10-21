@@ -60,7 +60,6 @@ async function init() {
     users = sortUsers(await getUsers(), currentUser, recentlyInteractedUserIds)
 
     renderUsersSelect(users, receiptsPayerSelect, currentUser.id)
-    renderDebtors()
 
     const query = new URLSearchParams(location.search)
 
@@ -85,11 +84,13 @@ async function init() {
             receiptsPayerSelect.value = receipt.payerId
             receiptsAmountInput.value = (receipt.amount / 100).toFixed(2)
             receiptsDescriptionInput.value = receipt.description
-            setDebts(receipt.debts)
 
             pageTitle.innerText = 'Редагувати чек'
             addReceiptButton.innerText = 'Редагувати чек'
             receiptsAmountInputLabel.innerText = '* Сума, грн'
+
+            renderDebtors(receipt.debts)
+            setDebts(receipt.debts)
         } catch (error) {
             console.error(error)
         }
@@ -97,10 +98,13 @@ async function init() {
         setInterval(() => updateTotalSum(), 500)
         receiptsTotalSum.classList.remove('hidden')
         receiptsTip.classList.remove('hidden')
-        setDebts([{
+
+        const debts = [{
             debtorId: currentUser.id,
             amount: null,
-        }])
+        }]
+        renderDebtors(debts)
+        setDebts(debts)
     }
 
     refreshPhoto()
@@ -145,19 +149,32 @@ function refreshPhoto() {
     }
 }
 
-function renderDebtors() {
-    let debtorsHtml = ``
-    debtorsHtml += renderDebtor(users.find(u => u.id === currentUser.id))
+function renderDebtors(debts) {
+    const shownUsers = new Set()
+    const hiddenUsers = new Set()
+    shownUsers.add(users.find(u => u.id === currentUser.id))
+    for (const debt of debts) {
+        const user = users.find(u => u.id === debt.debtorId)
+        if (user) shownUsers.add(user)
+    }
     for (const userId of recentlyInteractedUserIds) {
-        if (userId !== currentUser.id) {
-            debtorsHtml += renderDebtor(users.find(u => u.id === userId))
+        const user = users.find(u => u.id === userId)
+        if (user) shownUsers.add(user)
+    }
+    for (const user of users) {
+        if (!shownUsers.has(user)) {
+            hiddenUsers.add(user)
         }
     }
-    const remainingUsers = users.filter(user => user.id !== currentUser.id && !recentlyInteractedUserIds.includes(user.id))
-    if (remainingUsers.length > 0) {
+
+    let debtorsHtml = ``
+    for (const user of shownUsers) {
+        debtorsHtml += renderDebtor(user)
+    }
+    if (hiddenUsers.size > 0) {
         debtorsHtml += `<button class="toggle_debtors_hidden_container">Показати всіх користувачів</button>`
         debtorsHtml += `<div class="receipt_debtors_container__hidden hidden">`
-        for (const user of remainingUsers) {
+        for (const user of hiddenUsers) {
             debtorsHtml += renderDebtor(user)
         }
         debtorsHtml += `</div>`
