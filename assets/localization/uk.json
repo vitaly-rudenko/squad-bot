@@ -190,7 +190,7 @@
   "notifications": {
     "receiptStored": {
       "message": [
-        "📝 Користувач {editorName} \\(@{editorUsername}\\) {action} чек {receiptDescription} на суму {receiptAmount}\\.",
+        "📝 Користувач {editorName} \\(@{editorUsername}\\) {action} [чек {receiptDescription}]({receiptUrl}) на суму {receiptAmount}\\.",
         "👤 Оплатив: {payerName} \\(@{payerUsername}\\)",
         "{debt}\\",
         "{photo}\\",
