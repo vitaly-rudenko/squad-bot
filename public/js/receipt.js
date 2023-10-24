@@ -26,7 +26,9 @@ let hasPhotoBeenChanged = false
 
 addReceiptButton.addEventListener('click', saveReceipt)
 divideMoneyButton.addEventListener('click', divideMoneyAmongUsers)
+receiptsAmountInput.addEventListener('focus', () => receiptsAmountInput.select())
 receiptsAmountInput.addEventListener('input', calculateReceiptRemainBalance)
+receiptsTipAmountInput.addEventListener('focus', () => receiptsTipAmountInput.select())
 receiptsPhotoInput.addEventListener('change', photoChange)
 receiptsAddPhotoButton.addEventListener('click', addPhoto)
 receiptsDeletePhotoButton.addEventListener('click', deletePhoto)
@@ -208,6 +210,7 @@ function renderDebtors(debts) {
                 return
             }
 
+            debtorInput.select()
             debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox, focused: true })
         })
 
