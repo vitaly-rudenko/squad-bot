@@ -383,6 +383,8 @@ function setDebts(debts) {
 }
 
 function updateReceiptRemainBalance() {
+    const leftoverAmount = getLeftoverAmount()
+
     const amount = receiptsAmountInput.value
     if(!amount) {
         errorMessage.innerHTML = 'Залишок: 0 грн'
@@ -395,7 +397,7 @@ function updateReceiptRemainBalance() {
     for (let i = 0; i < debtors.length; i++) {
         debtorsSum += Number(debtors[i].parentElement.parentElement.querySelector(".debt_amount").value)
     }
-    if (Math.abs(debtorsSum - amount) > 0.01) {
+    if (Math.abs(debtorsSum - amount) > 0.01 && !leftoverAmount) {
         errorMessage.innerHTML = `Залишок: ${(amount - debtorsSum).toFixed(2)} грн`
         errorMessage.classList.add('red_color')
     } else {
