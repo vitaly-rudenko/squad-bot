@@ -248,13 +248,14 @@ function saveReceipt() {
     addReceiptButton.classList.add('disabled')
 
     const debts = {}
+    const leftoverAmount = getLeftoverAmount()
 
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor")
     for (let i = 0; i < debtors.length; i++) {
         const debtorCheckbox = debtors[i].querySelector(".debtor_checkbox")
-        if(debtorCheckbox.checked) {
+        if (debtorCheckbox.checked) {
             const value = debtors[i].querySelector(".debt_amount").value
-            debts[debtorCheckbox.value] = value ? moneyToCoins(value) : null
+            debts[debtorCheckbox.value] = (value ? moneyToCoins(value) : leftoverAmount) || null
         }
     }
 
