@@ -27,7 +27,7 @@ let hasPhotoBeenChanged = false
 addReceiptButton.addEventListener('click', saveReceipt)
 divideMoneyButton.addEventListener('click', divideMoneyAmongUsers)
 receiptsAmountInput.addEventListener('focus', () => receiptsAmountInput.select())
-receiptsAmountInput.addEventListener('input', calculateReceiptRemainBalance)
+receiptsAmountInput.addEventListener('input', updateReceiptRemainBalance)
 receiptsTipAmountInput.addEventListener('focus', () => receiptsTipAmountInput.select())
 receiptsPhotoInput.addEventListener('change', photoChange)
 receiptsAddPhotoButton.addEventListener('click', addPhoto)
@@ -377,10 +377,10 @@ function setDebts(debts) {
 
         debtors[i].querySelector(".debt_amount").placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
     }
-    calculateReceiptRemainBalance()
+    updateReceiptRemainBalance()
 }
 
-function calculateReceiptRemainBalance() {
+function updateReceiptRemainBalance() {
     const amount = receiptsAmountInput.value
     if(!amount) {
         errorMessage.innerHTML = 'Залишок: 0 грн'
