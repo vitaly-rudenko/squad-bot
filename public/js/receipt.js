@@ -80,8 +80,6 @@ async function init() {
             })).json()
             receiptId = queryReceiptId
 
-            console.log('Editing receipt:', receipt)
-
             hasPhoto = receipt.hasPhoto
             receiptsPayerSelect.value = receipt.payerId
             receiptsAmountInput.value = renderAmount(receipt.amount)
@@ -301,7 +299,6 @@ function saveReceipt() {
         })
         .then((data) => {
             if (!data.id) {
-                console.log('response:', data)
                 throw new Error('Response does not contain receipt ID!')
             }
 

@@ -42,7 +42,6 @@ function savePayment() {
         return response.json()
     })
     .then((data) => {
-		console.log('add new payment: ', data)
         playSuccessAnimation()
         savePaymentButton.disabled = false
 	    savePaymentButton.innerHTML = "Створити платіж"
