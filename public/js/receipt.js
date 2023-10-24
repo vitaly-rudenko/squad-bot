@@ -215,6 +215,7 @@ function renderDebtors(debts) {
         })
 
         debtorInput.addEventListener('blur', () => {
+            if (Number(debtorInput.value) <= 0) debtorInput.value = ''
             debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
         })
 
