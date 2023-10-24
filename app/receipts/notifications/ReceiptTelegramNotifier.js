@@ -94,6 +94,7 @@ export class ReceiptTelegramNotifier {
         receiptAmount: escapeMd(renderMoney(amount)),
         payerName: escapeMd(payer.name),
         payerUsername: escapeMd(payer.username),
+        receiptUrl: escapeMd(`${process.env.DOMAIN}/?receipt_id=${receipt.id}`),
         debt: hideDebt ? '' : this._localize(
           user.locale,
           isNew
@@ -104,8 +105,8 @@ export class ReceiptTelegramNotifier {
         photo: hidePhoto ? '' : this._localize(
           user.locale,
           'notifications.receiptStored.photo',
-          { photoUrl: `${process.env.DOMAIN}/receipts/${receipt.id}/photo` }
-        )
+          { photoUrl: escapeMd(`${process.env.DOMAIN}/receipts/${receipt.id}/photo`) }
+        ),
       })
 
       massNotification.add(user.id, notification)

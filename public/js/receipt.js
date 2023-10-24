@@ -26,7 +26,9 @@ let hasPhotoBeenChanged = false
 
 addReceiptButton.addEventListener('click', saveReceipt)
 divideMoneyButton.addEventListener('click', divideMoneyAmongUsers)
+receiptsAmountInput.addEventListener('focus', () => receiptsAmountInput.select())
 receiptsAmountInput.addEventListener('input', calculateReceiptRemainBalance)
+receiptsTipAmountInput.addEventListener('focus', () => receiptsTipAmountInput.select())
 receiptsPhotoInput.addEventListener('change', photoChange)
 receiptsAddPhotoButton.addEventListener('click', addPhoto)
 receiptsDeletePhotoButton.addEventListener('click', deletePhoto)
@@ -82,7 +84,7 @@ async function init() {
 
             hasPhoto = receipt.hasPhoto
             receiptsPayerSelect.value = receipt.payerId
-            receiptsAmountInput.value = (receipt.amount / 100).toFixed(2)
+            receiptsAmountInput.value = renderAmount(receipt.amount)
             receiptsDescriptionInput.value = receipt.description
 
             pageTitle.innerText = 'Редагувати чек'
@@ -208,6 +210,7 @@ function renderDebtors(debts) {
                 return
             }
 
+            debtorInput.select()
             debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox, focused: true })
         })
 
@@ -225,7 +228,7 @@ function renderDebtor(debtor) {
     return `<div class="debtor"><div>
         <input class="debtor_checkbox" type="checkbox" id="debtor_${debtor.id}" name="debtor_${debtor.id}" value="${debtor.id}">
         <label for="debtor_${debtor.id}">${debtor.name}</label></div>
-        <input class="debt_amount" type="number" inputmode="decimal" placeholder="" oninput="calculateReceiptRemainBalance()">
+        <input class="debt_amount" type="number" placeholder="" oninput="calculateReceiptRemainBalance()">
     </div>`
 }
 
@@ -367,7 +370,7 @@ function setDebts(debts) {
         if (debt) {
             debtorCheckbox.checked = true
             if (debt.amount) {
-                debtors[i].querySelector(".debt_amount").value = (debt.amount / 100).toFixed(2)
+                debtors[i].querySelector(".debt_amount").value = renderAmount(debt.amount)
             }
         } else {
             debtorCheckbox.checked = false
