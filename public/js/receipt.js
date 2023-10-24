@@ -200,8 +200,6 @@ function renderDebtors(debts) {
         const debtorCheckbox = debtor.querySelector(".debtor_checkbox")
         const debtorInput = debtor.querySelector('input[type="number"]')
 
-        debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
-
         debtorInput.addEventListener('focus', () => {
             if (!debtorCheckbox.checked) {
                 debtorInput.blur()
@@ -209,18 +207,21 @@ function renderDebtors(debts) {
             }
 
             debtorInput.select()
-            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox, focused: true })
+            updateDebtInputPlaceholders()
         })
 
         debtorInput.addEventListener('blur', () => {
             if (Number(debtorInput.value) <= 0) debtorInput.value = ''
-            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
+            updateDebtInputPlaceholders()
         })
 
         debtorCheckbox.addEventListener('change', () => {
-            debtorInput.placeholder = generateDebtorInputPlaceholder({ debtorCheckbox })
+            updateDebtInputPlaceholders()
+            updateReceiptRemainBalance()
         })
     }
+
+    updateDebtInputPlaceholders()
 }
 
 function renderDebtor(debtor) {
@@ -400,6 +401,23 @@ function updateReceiptRemainBalance() {
     } else {
         errorMessage.innerHTML = 'Залишок: 0 грн'
         errorMessage.classList.remove('red_color')
+    }
+}
+
+function updateDebtInputPlaceholders() {
+    const leftoverAmount = getLeftoverAmount()
+
+    const debtors = receiptDebtorsContainer.querySelectorAll(".debtor")
+
+    for (const debtor of debtors) {
+        const debtorCheckbox = debtor.querySelector(".debtor_checkbox")
+        const debtorInput = debtor.querySelector('input[type="number"]')
+
+        debtorInput.placeholder = generateDebtorInputPlaceholder({
+            debtorCheckbox,
+            focused: document.activeElement === debtorInput,
+            leftoverAmount,
+        })
     }
 }
 
