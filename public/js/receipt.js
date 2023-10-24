@@ -95,7 +95,6 @@ async function init() {
             console.error(error)
         }
     } else {
-        setInterval(() => updateTotalSum(), 500)
         receiptsTotalSum.classList.remove('hidden')
         receiptsTip.classList.remove('hidden')
 
@@ -107,7 +106,14 @@ async function init() {
         setDebts(debts)
     }
 
+    setInterval(() => update(), 500)
     refreshPhoto()
+}
+
+function update() {
+    updateTotalSum()
+    updateDebtInputPlaceholders()
+    updateReceiptRemainBalance()
 }
 
 function updateTotalSum() {
