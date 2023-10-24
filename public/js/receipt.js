@@ -82,7 +82,7 @@ async function init() {
 
             hasPhoto = receipt.hasPhoto
             receiptsPayerSelect.value = receipt.payerId
-            receiptsAmountInput.value = (receipt.amount / 100).toFixed(2)
+            receiptsAmountInput.value = renderAmount(receipt.amount)
             receiptsDescriptionInput.value = receipt.description
 
             pageTitle.innerText = 'Редагувати чек'
@@ -367,7 +367,7 @@ function setDebts(debts) {
         if (debt) {
             debtorCheckbox.checked = true
             if (debt.amount) {
-                debtors[i].querySelector(".debt_amount").value = (debt.amount / 100).toFixed(2)
+                debtors[i].querySelector(".debt_amount").value = renderAmount(debt.amount)
             }
         } else {
             debtorCheckbox.checked = false
