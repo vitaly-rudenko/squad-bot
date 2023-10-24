@@ -212,7 +212,7 @@
       "message": [
         "❌ 📝 Користувач {editorName} \\(@{editorUsername}\\) видалив чек {receiptDescription} на суму {receiptAmount}\\.",
         "👤 Оплатив: {payerName} \\(@{payerUsername}\\)",
-        "📑 Борги: /debts, платежі: /payments"
+        "📑 Борги: /debts, чеки: /receipts"
       ],
       "description": "\"{description}\"",
       "noDescription": "без опису"
