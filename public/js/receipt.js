@@ -401,3 +401,31 @@ function updateReceiptRemainBalance() {
         errorMessage.classList.remove('red_color')
     }
 }
+
+function getLeftoverAmount() {
+    const amount = receiptsAmountInput.value
+    if (amount) {
+        const debtors = receiptDebtorsContainer.querySelectorAll(".debtor input:checked")
+        let debtorsSum = 0
+        let unfilledDebtors = 0
+        for (let i = 0; i < debtors.length; i++) {
+            const debtorInput = debtors[i].parentElement.parentElement.querySelector(".debt_amount")
+            const amount = Number(debtorInput.value)
+
+            if (amount > 0) {
+                debtorsSum += amount
+            } else {
+                unfilledDebtors++
+            }
+        }
+
+        const isRemaining = Math.abs(debtorsSum - amount) > 0.01
+        const remainBalance = isRemaining ? (amount - debtorsSum).toFixed(2) : '0'
+
+        if (unfilledDebtors === 1) {
+            return moneyToCoins(remainBalance)
+        }
+    }
+
+    return undefined
+}
