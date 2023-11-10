@@ -6,8 +6,8 @@ export async function compressImage(input) {
     return await sharp(input)
       .sharpen({ sigma: 0.5 })
       .resize({
-        width: 1024,
-        height: 1024,
+        width: 1536,
+        height: 1536,
         fit: sharp.fit.inside,
         withoutEnlargement: true,
       })
