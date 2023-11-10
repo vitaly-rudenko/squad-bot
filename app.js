@@ -63,6 +63,7 @@ import { titleSetCancelAction, titleSetCommand, titleSetMessage, titleSetUserIdA
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
+import { compressImage } from './app/utils/compressImage.js'
 
 async function start() {
   if (useTestMode) {
@@ -445,9 +446,20 @@ async function start() {
 
     const receipt = new Receipt({ id, payerId, amount, description })
 
-    let receiptPhoto = binary && mime
-      ? new ReceiptPhoto({ binary, mime })
-      : null
+    let receiptPhoto = null
+    if (binary && mime) {
+      try {
+        receiptPhoto = new ReceiptPhoto({
+          binary: await compressImage(binary),
+          mime: 'image/jpeg',
+        })
+      } catch (error) {
+        console.warn('Could not compress receipt photo:', error)
+        return res
+          .status(400)
+          .json({ error: { code: 'COULD_NOT_COMPRESS_PHOTO', message: error.message } })
+      }
+    }
 
     if (id && !receiptPhoto && req.body.leave_photo === 'true') {
       receiptPhoto = await receiptsStorage.getReceiptPhoto(id)
