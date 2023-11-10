@@ -18,8 +18,8 @@ export class ReceiptsPostgresStorage {
     const { binary = null, mime = null } = receiptPhoto || {}
 
     const response = await this._client.query(`
-      INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime, is_photo_optimized)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
       RETURNING id;
     `, [uuid(), new Date().toISOString(), payerId, amount, description, binary, mime])
 
