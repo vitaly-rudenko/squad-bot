@@ -3,11 +3,12 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
 export class ReceiptTelegramNotifier {
-  constructor({ massTelegramNotificationFactory, usersStorage, debtsStorage, localize }) {
+  constructor({ massTelegramNotificationFactory, usersStorage, debtsStorage, localize, domain = process.env.DOMAIN }) {
     this._usersStorage = usersStorage
     this._debtsStorage = debtsStorage
     this._massTelegramNotificationFactory = massTelegramNotificationFactory
     this._localize = localize
+    this._domain = domain
   }
 
   /** @param {import('../Receipt').Receipt} receipt */
@@ -94,7 +95,7 @@ export class ReceiptTelegramNotifier {
         receiptAmount: escapeMd(renderMoney(amount)),
         payerName: escapeMd(payer.name),
         payerUsername: escapeMd(payer.username),
-        receiptUrl: escapeMd(`${process.env.DOMAIN}/?receipt_id=${receipt.id}`),
+        receiptUrl: escapeMd(`${this._domain}/?receipt_id=${receipt.id}`),
         debt: hideDebt ? '' : this._localize(
           user.locale,
           isNew
@@ -105,7 +106,7 @@ export class ReceiptTelegramNotifier {
         photo: hidePhoto ? '' : this._localize(
           user.locale,
           'notifications.receiptStored.photo',
-          { photoUrl: escapeMd(`${process.env.DOMAIN}/receipts/${receipt.id}/photo`) }
+          { photoUrl: escapeMd(`${this._domain}/receipts/${receipt.id}/photo`) }
         ),
       })
 

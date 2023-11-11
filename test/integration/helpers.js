@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken'
 import { uniqueNamesGenerator, names } from 'unique-names-generator'
 import { TOKEN_SECRET } from './env.js'
 
-const TEST_API_URL = 'http://localhost:3001'
+const TEST_API_URL = 'http://localhost:3000'
 const nameConfig = {
   dictionaries: [names],
   style: 'lowerCase',

@@ -17,7 +17,7 @@ const updatedReceiptPhotoBuffer = fs.readFileSync(
 
 describe('[receipts]', () => {
   describe('POST /receipts', () => {
-    it('should upload & return receipt photo', async () => {
+    it('should upload & compress receipt photo', async () => {
       const [user] = await createUsers(1)
 
       await createReceipt(user.id, {
@@ -28,8 +28,7 @@ describe('[receipts]', () => {
 
       const { photo, mime } = await getReceiptPhoto(receipt.id)
 
-      expect(mime).to.equal('image/png')
-      expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
+      expect(mime).to.equal('image/jpeg')
     })
 
     it('should return 404 when there is no receipt photo', async () => {
@@ -71,6 +70,8 @@ describe('[receipts]', () => {
 
       const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
 
+      const photo1 = await getReceiptPhoto(receiptId)
+
       await createReceipt(user2.id, { [user1.id]: 10, [user3.id]: 20 }, { leavePhoto: true, description: 'hello world', receiptId })
 
       const receipt = await getReceipt(receiptId, user2.id)
@@ -89,10 +90,10 @@ describe('[receipts]', () => {
         }]
       })
 
-      const { photo, mime } = await getReceiptPhoto(receiptId)
+      const photo2 = await getReceiptPhoto(receiptId)
 
-      expect(mime).to.equal('image/png')
-      expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
+      expect(photo1.mime).to.equal(photo2.mime)
+      expect(photo1.photo).to.deep.equal(photo2.photo)
     })
 
     it('should update the receipt (delete photo)', async () => {
@@ -125,6 +126,8 @@ describe('[receipts]', () => {
 
       const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
 
+      const photo1 = await getReceiptPhoto(receiptId)
+
       await createReceipt(user1.id, { [user2.id]: 5 }, { photo: updatedReceiptPhotoBuffer, mime: 'image/jpeg', receiptId })
 
       const receipt = await getReceipt(receiptId, user1.id)
@@ -140,10 +143,10 @@ describe('[receipts]', () => {
         }]
       })
 
-      const { photo, mime } = await getReceiptPhoto(receiptId)
+      const photo2 = await getReceiptPhoto(receiptId)
 
-      expect(mime).to.equal('image/jpeg')
-      expect(photo).to.deep.equal(updatedReceiptPhotoBuffer.buffer)
+      expect(photo2.mime).to.equal('image/jpeg')
+      expect(photo2.photo).not.to.deep.equal(photo1.buffer)
     })
   })
 
@@ -159,7 +162,7 @@ describe('[receipts]', () => {
       await createReceipt(user1.id, {
         [user1.id]: 5,
         [user2.id]: 15,
-      }, { photo: Buffer.from('hello world') })
+      }, { photo: receiptPhotoBuffer, mime: 'image/jpeg' })
 
       const receipt1 = {
         payerId: user1.id,

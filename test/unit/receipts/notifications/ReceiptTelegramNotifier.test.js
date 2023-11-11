@@ -40,6 +40,7 @@ describe('ReceiptTelegramNotifier', () => {
       usersStorage,
       debtsStorage,
       localize: localizeMock,
+      domain: 'http://example.com',
     })
   })
 
@@ -86,7 +87,9 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
+              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               debt: ''
+              photo: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -98,8 +101,10 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
+              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               debt: notifications.receiptStored.debt.new(${debtor.locale}):
                 debtAmount: 12 грн
+              photo: ''
           `]
         ])
     })
@@ -144,7 +149,9 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.30 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
+              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               debt: ''
+              photo: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -155,8 +162,10 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.30 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
+              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               debt: notifications.receiptStored.debt.new(${debtor.locale}):
                 debtAmount: \\? грн
+              photo: ''
           `]
         ])
     })
@@ -205,7 +214,9 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
+              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               debt: ''
+              photo: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -217,7 +228,9 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
+              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               debt: ''
+              photo: ''
           `]
         ])
     })
@@ -262,7 +275,9 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.34 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
+              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               debt: ''
+              photo: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -273,8 +288,10 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.34 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
+              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               debt: notifications.receiptStored.debt.incomplete(${debtor.locale}):
                 debtAmount: \\? грн
+              photo: ''
           `]
         ])
     })
