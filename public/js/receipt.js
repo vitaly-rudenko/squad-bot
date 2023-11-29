@@ -64,8 +64,13 @@ async function init() {
     renderUsersSelect(users, receiptsPayerSelect, currentUser.id)
 
     const query = new URLSearchParams(location.search)
-
     if (query.has('success')) {
+        query.delete('success')
+
+        const url = new URL(window.location.href)
+        url.search = query.toString()
+        history.pushState({}, '', url.toString())
+
         playSuccessAnimation()
     }
 
