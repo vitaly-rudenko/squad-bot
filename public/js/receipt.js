@@ -227,6 +227,10 @@ function renderDebtors(debts) {
         })
 
         debtorCheckbox.addEventListener('change', () => {
+            if (!debtorCheckbox.checked) {
+                debtorInput.value = ''
+            }
+
             updateDebtInputPlaceholders()
             updateReceiptRemainBalance()
         })
