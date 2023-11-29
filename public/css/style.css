@@ -179,14 +179,39 @@ button.toggle_debtors_hidden_container {
     margin-bottom: 40px;
 }
 
-#error_message {
-    font-weight: 700;
-    font-size: 15px;
-    color: #12a30f;
+.remaining_balance_container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    margin: 4px 0px 8px 0px;
 }
 
-#error_message.red_color {
-    color: red;
+#remaining_balance {
+    flex-grow: 1;
+    font-weight: 600;
+    color: rgb(9, 135, 9);
+    padding: 8px 0px;
+}
+
+#remaining_balance.remaining_balance_warning {
+    color: #d20d0d;
+}
+
+#split_remaining_balance_equally_container {
+    display: flex;
+    flex-direction: row;
+}
+
+#split_remaining_balance_equally_container,
+#split_remaining_balance_equally_container * {
+    cursor: pointer;
+}
+
+#split_remaining_balance_equally_container label {
+    padding: 8px 0px;
+    padding-left: 6px;
 }
 
 #divide_money_button {

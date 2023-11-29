@@ -64,9 +64,13 @@
 
         <div id="receipt_debtors_container"></div>
 
-        <button id="divide_money_button">Розподілити порівну</button>
-
-        <p id="error_message">Залишок: 0 грн</p>
+        <div class="remaining_balance_container">
+            <div id="remaining_balance">Залишок: 0 грн</div>
+            <div id="split_remaining_balance_equally_container">
+                <input type="checkbox" id="split_remaining_balance_equally" name="split_remaining_balance_equally">
+                <label for="split_remaining_balance_equally">Розділити залишок порівну</label>
+            </div>
+        </div>
         <button id="add_receipt_button">Зберегти чек</button>
     </div>
 
