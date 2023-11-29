@@ -1,14 +1,14 @@
-const receiptsPayerSelect = document.getElementById("receipts_payer_select")
-const receiptsAmountInput = document.getElementById("receipts_amount_input")
-const receiptsAmountInputLabel = document.getElementById("receipts_amount_input_label")
-const receiptsTotalSum = document.getElementById('receipts_total_sum')
-const receiptsTip = document.getElementById('receipts_tip')
-const receiptsTipAmountInput = document.getElementById('receipts_tip_amount_input')
-const receiptsPhotoInput = document.getElementById("receipts_photo_input")
-const receiptsAddPhotoButton = document.getElementById("receipts_add_photo_button")
-const receiptsDeletePhotoButton = document.getElementById("receipts_delete_photo_button")
-const receiptsOpenPhotoLink = document.getElementById("open_photo_link")
-const receiptsDescriptionInput = document.getElementById("receipts_description_input")
+const receiptPayerSelect = document.getElementById("receipts_payer_select")
+const receiptAmountInput = document.getElementById("receipts_amount_input")
+const receiptAmountInputLabel = document.getElementById("receipts_amount_input_label")
+const receiptTotalSum = document.getElementById('receipts_total_sum')
+const receiptTip = document.getElementById('receipts_tip')
+const receiptTipAmountInput = document.getElementById('receipts_tip_amount_input')
+const receiptPhotoInput = document.getElementById("receipts_photo_input")
+const receiptAddPhotoButton = document.getElementById("receipts_add_photo_button")
+const receiptDeletePhotoButton = document.getElementById("receipts_delete_photo_button")
+const receiptOpenPhotoLink = document.getElementById("open_photo_link")
+const receiptDescriptionInput = document.getElementById("receipts_description_input")
 const receiptDebtorsContainer = document.getElementById("receipt_debtors_container")
 const addReceiptButton = document.getElementById("add_receipt_button")
 const remainingBalanceLabel = document.getElementById('remaining_balance')
@@ -31,21 +31,21 @@ splitRemainingBalanceEquallyInput.addEventListener('change', () => {
     updateReceiptRemainingBalance()
 })
 addReceiptButton.addEventListener('click', saveReceipt)
-receiptsAmountInput.addEventListener('focus', () => receiptsAmountInput.select())
-receiptsAmountInput.addEventListener('input', updateReceiptRemainingBalance)
-receiptsTipAmountInput.addEventListener('focus', () => receiptsTipAmountInput.select())
-receiptsPhotoInput.addEventListener('change', photoChange)
-receiptsAddPhotoButton.addEventListener('click', addPhoto)
-receiptsDeletePhotoButton.addEventListener('click', deletePhoto)
+receiptAmountInput.addEventListener('focus', () => receiptAmountInput.select())
+receiptAmountInput.addEventListener('input', updateReceiptRemainingBalance)
+receiptTipAmountInput.addEventListener('focus', () => receiptTipAmountInput.select())
+receiptPhotoInput.addEventListener('change', photoChange)
+receiptAddPhotoButton.addEventListener('click', addPhoto)
+receiptDeletePhotoButton.addEventListener('click', deletePhoto)
 photoPopup.addEventListener('click', () => {
     photoPopup.classList.add('hidden')
 })
-receiptsOpenPhotoLink.addEventListener('click', () => {
+receiptOpenPhotoLink.addEventListener('click', () => {
     if (receiptId && !hasPhotoBeenChanged) {
         photoPopupImage.src = `/receipts/${receiptId}/photo`
         photoPopup.classList.remove('hidden')
     } else {
-        const selectedFile = receiptsPhotoInput.files[0]
+        const selectedFile = receiptPhotoInput.files[0]
         const fileReader = new FileReader()
 
         fileReader.addEventListener('load', () => {
@@ -66,7 +66,7 @@ async function init() {
 
     users = sortUsers(await getUsers(), currentUser, recentlyInteractedUserIds)
 
-    renderUsersSelect(users, receiptsPayerSelect, currentUser.id)
+    renderUsersSelect(users, receiptPayerSelect, currentUser.id)
 
     const query = new URLSearchParams(location.search)
     if (query.has('success')) {
@@ -91,13 +91,13 @@ async function init() {
             receiptId = queryReceiptId
 
             hasPhoto = receipt.hasPhoto
-            receiptsPayerSelect.value = receipt.payerId
-            receiptsAmountInput.value = renderAmount(receipt.amount)
-            receiptsDescriptionInput.value = receipt.description
+            receiptPayerSelect.value = receipt.payerId
+            receiptAmountInput.value = renderAmount(receipt.amount)
+            receiptDescriptionInput.value = receipt.description
 
             pageTitle.innerText = 'Редагувати чек'
             addReceiptButton.innerText = 'Редагувати чек'
-            receiptsAmountInputLabel.innerText = '* Сума, грн'
+            receiptAmountInputLabel.innerText = '* Сума, грн'
 
             renderDebtors(receipt.debts)
             setDebts(receipt.debts)
@@ -105,8 +105,8 @@ async function init() {
             console.error(error)
         }
     } else {
-        receiptsTotalSum.classList.remove('hidden')
-        receiptsTip.classList.remove('hidden')
+        receiptTotalSum.classList.remove('hidden')
+        receiptTip.classList.remove('hidden')
 
         const debts = [{
             debtorId: currentUser.id,
@@ -127,27 +127,27 @@ function update() {
 }
 
 function updateTotalSum() {
-    const amount = Number(moneyToCoins(receiptsAmountInput.value || '0'))
-    const tipAmount = Number(moneyToCoins(receiptsTipAmountInput.value || '0'))
+    const amount = Number(moneyToCoins(receiptAmountInput.value || '0'))
+    const tipAmount = Number(moneyToCoins(receiptTipAmountInput.value || '0'))
     const total = (Number(amount) + Number(tipAmount)) / 100
 
-    receiptsTotalSum.innerText = `${total} грн`
+    receiptTotalSum.innerText = `${total} грн`
 }
 
 function photoChange() {
-    hasPhoto = Boolean(receiptsPhotoInput.value)
+    hasPhoto = Boolean(receiptPhotoInput.value)
     hasPhotoBeenChanged = true
     refreshPhoto()
 }
 
 function addPhoto() {
-    receiptsPhotoInput.click()
+    receiptPhotoInput.click()
 }
 
 function deletePhoto() {
     if (!confirm("Видалити фото?")) return
 
-    receiptsPhotoInput.value = ''
+    receiptPhotoInput.value = ''
     hasPhoto = false
     hasPhotoBeenChanged = true
     refreshPhoto()
@@ -155,13 +155,13 @@ function deletePhoto() {
 
 function refreshPhoto() {
     if (hasPhoto) {
-        receiptsAddPhotoButton.classList.add('hidden')
-        receiptsDeletePhotoButton.classList.remove('hidden')
-        receiptsOpenPhotoLink.classList.remove('hidden')
+        receiptAddPhotoButton.classList.add('hidden')
+        receiptDeletePhotoButton.classList.remove('hidden')
+        receiptOpenPhotoLink.classList.remove('hidden')
     } else {
-        receiptsAddPhotoButton.classList.remove('hidden')
-        receiptsDeletePhotoButton.classList.add('hidden')
-        receiptsOpenPhotoLink.classList.add('hidden')
+        receiptAddPhotoButton.classList.remove('hidden')
+        receiptDeletePhotoButton.classList.add('hidden')
+        receiptOpenPhotoLink.classList.add('hidden')
     }
 }
 
@@ -258,13 +258,13 @@ function generateDebtorInputPlaceholder({ leftoverAmount = undefined, debtorChec
     if (debtorCheckbox !== true && !debtorCheckbox.checked) return ''
     if (leftoverAmount) return renderAmount(leftoverAmount)
     if (splitRemainingBalanceEqually) return ''
-    if (!receiptsAmountInput.value) return ''
+    if (!receiptAmountInput.value) return ''
     if (focused) return '0.00'
     return '0.00 (заповнити пізніше)'
 }
 
 function saveReceipt() {
-    const rawAmount = receiptsAmountInput.value
+    const rawAmount = receiptAmountInput.value
     if(!rawAmount) return
 
     addReceiptButton.disabled = true
@@ -298,11 +298,11 @@ function saveReceipt() {
         }
     }
 
-    const photo = receiptsPhotoInput.files[0]
+    const photo = receiptPhotoInput.files[0]
 
-    const payerId = receiptsPayerSelect.value
+    const payerId = receiptPayerSelect.value
     const amount = moneyToCoins(rawAmount)
-    const description = receiptsDescriptionInput.value
+    const description = receiptDescriptionInput.value
 
     let promise = Promise.resolve()
     promise = promise.then(() => sendCreateReceiptRequest({
@@ -314,7 +314,7 @@ function saveReceipt() {
         leavePhoto: hasPhoto,
     }))
 
-    const rawTipAmount = receiptsTipAmountInput.value
+    const rawTipAmount = receiptTipAmountInput.value
     if (rawTipAmount && Number(rawTipAmount) > 0) {
         const debtorIds = Object.keys(debts)
         const tipAmount = moneyToCoins(rawTipAmount)
@@ -447,7 +447,7 @@ function updateDebtInputPlaceholders() {
 }
 
 function calculateRemainingBalance() {
-    const amount = receiptsAmountInput.value
+    const amount = receiptAmountInput.value
     if (!amount) return {}
 
     const debtors = receiptDebtorsContainer.querySelectorAll(".debtor input:checked")
