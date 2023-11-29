@@ -312,7 +312,7 @@ button.toggle_debtors_hidden_container {
 }
 .receipt_list_item .payer {
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: 12px;
     padding-bottom: 12px;
     border-bottom: 1px solid #444444;
@@ -327,7 +327,6 @@ button.toggle_debtors_hidden_container {
     margin-bottom: 10px;
     font-size: 16px;
     font-weight: 600;
-
 }
 
 .receipt_list_item .comment_item--description {
