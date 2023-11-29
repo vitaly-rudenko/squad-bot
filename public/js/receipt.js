@@ -258,6 +258,7 @@ function generateDebtorInputPlaceholder({ leftoverAmount = undefined, debtorChec
     if (debtorCheckbox !== true && !debtorCheckbox.checked) return ''
     if (leftoverAmount) return renderAmount(leftoverAmount)
     if (splitRemainingBalanceEqually) return ''
+    if (!receiptsAmountInput.value) return ''
     if (focused) return '0.00'
     return '0.00 (заповнити пізніше)'
 }
