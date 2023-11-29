@@ -20,11 +20,15 @@ function showReceipts() {
         const isSumMismatched = Math.abs(receipt.amount - receipt.debts.reduce((sum, debt) => sum + debt.amount, 0)) > 100
 
         receiptsHtml += `<div class="receipt_list_item" onclick="toggleActiveItem(this)">
-        <div class="payer">
-            <div>${isIncomplete ? '⚠️ ' : (isSumMismatched ? '❗️ ' : '')}${getUserNameById(receipt.payerId)}</div>
-            <div>${renderAmount(receipt.amount)} грн</div>
-        </div>`
+        <div class="comment_item">
+            <div class="comment_item--description">${[receipt.hasPhoto && '📸 ', receipt.description || ''].filter(Boolean).join(' ')}</div>
+            <div class="comment_item--date">${renderDate(new Date(receipt.createdAt))}</div>
+        </div>
 
+        <div class="payer">
+            <div>${isIncomplete ? '⚠️ ' : (isSumMismatched ? '❗️ ' : '')}Оплатив: ${getUserNameById(receipt.payerId)}</div>
+            <div>Сума: ${renderAmount(receipt.amount)} грн</div>
+        </div>`
 
         receiptsHtml += '<div class="debtor_list">'
         for (let j = 0; j < receipt.debts.length; j++) {
@@ -36,24 +40,19 @@ function showReceipts() {
             </div>`
         }
         receiptsHtml+='</div>'
-        receiptsHtml += `<div class="comment_item">
-            <div>${receipt.description || ''}</div>
-            <div>${renderDate(new Date(receipt.createdAt))}</div>
-        </div>
-        ${receipt.hasPhoto ? `<div class="comment_item"><div>+ фото чека</div></div>` : ''}
-        <div class="action_buttons_container">
+        receiptsHtml += `<div class="action_buttons_container">
                     <div class="action_buttons">
-                        <div class="yellow_color">
+                        <div>
                             <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
                                 width="18" height="18"
                                 viewBox="0 0 24 24"
-                                style=" fill:#f5a300;">
+                                style=" fill:#0;">
                                 <path d="M 18 2 L 15.585938 4.4140625 L 19.585938 8.4140625 L 22 6 L 18 2 z M 14.076172 5.9238281 L 3 17 L 3 21 L 7 21 L 18.076172 9.9238281 L 14.076172 5.9238281 z"></path>
                             </svg>
                             <div onclick="updateReceiptById('${receipt.id}')">Редагувати</div>
                         </div>
-                        ${receipt.hasPhoto ? `<div class="blue_color">
-                            <div onclick="openReceiptPhoto('${receipt.id}')">Фото чека</div>
+                        ${receipt.hasPhoto ? `<div>
+                            <div onclick="openReceiptPhoto('${receipt.id}')">📸 Фото</div>
                         </div>` : ''}
                         <div class="red_color">
                             <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
@@ -101,4 +100,8 @@ function getUserNameById(userId) {
 
 function toggleActiveItem(clickedElement) {
     clickedElement.classList.toggle("active")
+}
+
+function createNewItem() {
+    location.assign(`/`)
 }

@@ -329,7 +329,7 @@ function saveReceipt() {
             payerId,
             amount: tipAmount,
             debts: tipDebts,
-            description: description ? `${description} (чайові)` : `Чайові`,
+            description: description ? `🍵 ${description}` : `🍵`,
             photo: null,
             leavePhoto: false,
         }))
@@ -344,14 +344,7 @@ function saveReceipt() {
                 throw new Error('Response does not contain receipt ID!')
             }
 
-            localStorage.setItem('success', 'true')
-            window.history.replaceState(null, null, window.location.pathname + '?success')
-
-            if (receiptId) {
-                window.open('/receiptslist', '_self')
-            } else {
-                location.reload()
-            }
+            window.open('/receiptslist', '_self')
         })
         .catch(e => console.error(e))
 }

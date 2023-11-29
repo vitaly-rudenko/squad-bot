@@ -89,3 +89,7 @@ function getUserNameById(userId) {
 function toggleActiveItem(clickedElement) {
     clickedElement.classList.toggle("active")
 }
+
+function createNewItem() {
+    location.assign(`/paymentview`)
+}

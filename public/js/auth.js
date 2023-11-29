@@ -43,9 +43,6 @@ function completeAuth(token) {
   authToken = token
   console.log('Current user:', getCurrentUser())
 
-
-
-
   const authInfo = document.createElement('div')
   authInfo.id = 'auth-info'
 
