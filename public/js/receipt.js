@@ -450,7 +450,7 @@ function calculateRemainingBalance() {
     const isRemaining = Math.abs(debtorsSum - amount) >= 0.01
     const remainingAmount = isRemaining ? (amount - debtorsSum).toFixed(2) : '0'
 
-    if (unfilledDebtors === 1) {
+    if (unfilledDebtors === 1 && Number(remainingAmount) >= 0) {
         return { leftoverAmount: moneyToCoins(remainingAmount) }
     }
 
