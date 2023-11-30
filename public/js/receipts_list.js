@@ -16,7 +16,7 @@ function showReceipts() {
     for (let i = 0; i < receipts.length; i++) {
         const receipt = receipts[i]
 
-        const isIncomplete = receipt.debts.some(debt => debt.amount === null && debt.debtorId !== receipt.payerId)
+        const isIncomplete = receipt.debts.some(debt => debt.amount === null)
         const isSumMismatched = Math.abs(receipt.amount - receipt.debts.reduce((sum, debt) => sum + debt.amount, 0)) > 100
 
         receiptsHtml += `<div class="receipt_list_item" onclick="toggleActiveItem(this)">
