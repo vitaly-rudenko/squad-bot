@@ -62,7 +62,7 @@
       "noOutgoingDebts": "➡️ Ти нікому нічого не винен",
       "debt": "\\- *{name}*: {amount}",
       "incompleteReceipts": [
-        "⚠️ Будь ласка, заповни ці чеки:",
+        "⚠️ Незаповнені чеки:",
         "{incompleteReceipts}"
       ],
       "incompleteReceipt": [
