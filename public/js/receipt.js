@@ -423,11 +423,25 @@ function updateDebtInputPlaceholders() {
         const debtorCheckbox = debtor.querySelector(".debtor_checkbox")
         const debtorInput = debtor.querySelector('input[type="number"]')
 
-        debtorInput.placeholder = generateDebtorInputPlaceholder({
+        const placeholder = generateDebtorInputPlaceholder({
             debtorCheckbox,
             focused: document.activeElement === debtorInput,
             leftoverAmount,
         })
+
+        debtorInput.placeholder = placeholder
+
+        if (debtorCheckbox.checked) {
+            debtor.classList.add('debtor--active')
+        } else {
+            debtor.classList.remove('debtor--active')
+        }
+
+        if (!debtorInput.value && placeholder === '?') {
+            debtor.classList.add('debtor--warning')
+        } else {
+            debtor.classList.remove('debtor--warning')
+        }
     }
 }
 

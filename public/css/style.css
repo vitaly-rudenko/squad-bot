@@ -145,7 +145,6 @@ button {
     padding: 5px 0px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
 }
 
 .debtor:not(:first-child) {
@@ -153,8 +152,10 @@ button {
 }
 
 .debtor > div {
-    width: 100%;
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 0px;
 }
 
 .receipt_list_item .debtor > div {
@@ -164,7 +165,9 @@ button {
 .debtor label {
     padding: 6px;
     cursor: pointer;
-    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .debtor .debtor_username {
@@ -172,18 +175,22 @@ button {
     opacity: 0.5;
 }
 
-.debtor>div {
-    display: flex;
-    align-items: center;
-}
-
 .debtor .debt_amount {
     padding: 10px;
-    min-width: 150px;
+    width: 100px;
     border: none;
     outline: none;
     text-align: right;
     font-size: 16px;
+    border-radius: 10px;
+}
+
+.debtor.debtor--active .debt_amount {
+    background-color: rgb(238, 243, 245);
+}
+
+.debtor.debtor--warning .debt_amount {
+    background-color: rgb(245, 238, 238);
 }
 
 button.create_new_item {
@@ -204,7 +211,7 @@ button.toggle_debtors_hidden_container {
     color: rgb(110, 110, 110);
     border: 2px solid rgb(190, 190, 190);
     background-color: white;
-    margin-bottom: 10px;
+    margin: 10px 0px;
 }
 
 #add_receipt_button {
