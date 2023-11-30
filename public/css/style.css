@@ -141,28 +141,24 @@ button {
     color: rgb(75, 75, 75);
 }
 
-.debtor {
+#receipt_debtors_container .debtor {
     padding: 5px 0px;
     display: flex;
     align-items: center;
 }
 
-.debtor:not(:first-child) {
+#receipt_debtors_container .debtor:not(:first-child) {
     border-top: 1px solid #ebebeb;
 }
 
-.debtor > div {
+#receipt_debtors_container .debtor > div {
     display: flex;
     align-items: center;
     flex-grow: 1;
     min-width: 0px;
 }
 
-.receipt_list_item .debtor > div {
-    width: auto;
-}
-
-.debtor label {
+#receipt_debtors_container .debtor label {
     padding: 6px;
     cursor: pointer;
     white-space: nowrap;
@@ -170,12 +166,12 @@ button {
     text-overflow: ellipsis;
 }
 
-.debtor .debtor_username {
+#receipt_debtors_container .debtor .debtor_username {
     font-size: 12px;
     opacity: 0.5;
 }
 
-.debtor .debt_amount {
+#receipt_debtors_container .debtor .debt_amount {
     padding: 10px;
     width: 100px;
     border: none;
@@ -185,11 +181,11 @@ button {
     border-radius: 10px;
 }
 
-.debtor.debtor--active .debt_amount {
+#receipt_debtors_container .debtor.debtor--active .debt_amount {
     background-color: rgb(238, 243, 245);
 }
 
-.debtor.debtor--warning .debt_amount {
+#receipt_debtors_container .debtor.debtor--warning .debt_amount {
     background-color: rgb(245, 238, 238);
 }
 
