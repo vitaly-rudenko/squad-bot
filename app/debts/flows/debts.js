@@ -15,8 +15,7 @@ export function debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debt
       .filter(receipt => incompleteReceiptDebts.some(debt =>
         debt.receiptId === receipt.id &&
         debt.amount === null &&
-        debt.debtorId === userId &&
-        debt.debtorId !== receipt.payerId
+        debt.debtorId === userId
       ))
 
     function getUserName(id) {

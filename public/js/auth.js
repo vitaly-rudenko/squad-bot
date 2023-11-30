@@ -43,14 +43,11 @@ function completeAuth(token) {
   authToken = token
   console.log('Current user:', getCurrentUser())
 
-
-
-
   const authInfo = document.createElement('div')
   authInfo.id = 'auth-info'
 
   const authInfoText = document.createElement('p')
-  authInfoText.innerText= `Авторизований як: ${getCurrentUser().name} (@${getCurrentUser().username})`
+  authInfoText.innerHTML = `Авторизований як: <b>${getCurrentUser().name} (@${getCurrentUser().username})</b>`
 
   authInfo.appendChild(authInfoText)
 

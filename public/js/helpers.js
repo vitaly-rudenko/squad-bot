@@ -25,7 +25,7 @@ function renderUsersSelect(users, selectElement, selectedUserId = null) {
 
     let selectHtml = ``
     for (let i = 0; i < users.length; i++) {
-        selectHtml += `<option ${i == selectedIndex ? 'selected': ''} value="${users[i].id}">${users[i].name}</option>`
+        selectHtml += `<option ${i == selectedIndex ? 'selected': ''} value="${users[i].id}">${users[i].name}${users[i].username ? ` (@${users[i].username})`: ''}</option>`
     }
     selectElement.innerHTML = selectHtml
 }

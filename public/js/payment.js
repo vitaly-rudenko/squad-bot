@@ -42,11 +42,7 @@ function savePayment() {
         return response.json()
     })
     .then((data) => {
-        playSuccessAnimation()
-        savePaymentButton.disabled = false
-	    savePaymentButton.innerHTML = "Створити платіж"
-        savePaymentButton.classList.remove('disabled')
-        paymentsAmountInput.value = null
+        window.open('/paymentslist?success', '_self')
     })
     .catch(e => console.error(e))
 }

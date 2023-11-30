@@ -23,17 +23,21 @@ a {
 #auth-info {
     z-index: 9999;
     position: fixed;
-    top: 10px;
+    top: 0px;
     left: 0px;
-    opacity: 0.5;
     width: 100vw;
+    height: 30px;
     display: flex;
+    align-items: center;
     justify-content: center;
+    background-color: white;
+    box-shadow: 0px 5px 10px 5px white;
 }
 
 #auth-info p {
     text-align: center;
-    font-size: 12px;
+    font-size: 14px;
+    opacity: 0.75;
     cursor: pointer;
     margin: 0px;
 }
@@ -49,8 +53,18 @@ button {
 }
 
 .container h1 {
+    display: flex;
+    align-items: center;
     font-size: 25px;
     font-weight: 700;
+}
+
+.container h1 span {
+    flex-grow: 1;
+}
+
+.container h3 {
+    margin: 20px 0px 5px 0px;
 }
 
 .container h5 {
@@ -128,18 +142,19 @@ button {
 }
 
 .debtor {
-    margin-bottom: 6px;
+    padding: 5px 0px;
     display: flex;
     align-items: center;
     justify-content: space-between;
 }
 
-.debtor:not(:last-child) {
-    border-bottom: 1px solid #ebebeb;
+.debtor:not(:first-child) {
+    border-top: 1px solid #ebebeb;
 }
 
 .debtor > div {
     width: 100%;
+    overflow: hidden;
 }
 
 .receipt_list_item .debtor > div {
@@ -150,7 +165,11 @@ button {
     padding: 6px;
     cursor: pointer;
     width: 100%;
-    white-space: nowrap;
+}
+
+.debtor .debtor_username {
+    font-size: 12px;
+    opacity: 0.5;
 }
 
 .debtor>div {
@@ -160,10 +179,23 @@ button {
 
 .debtor .debt_amount {
     padding: 10px;
-    min-width: 200px;
+    min-width: 150px;
     border: none;
     outline: none;
     text-align: right;
+    font-size: 16px;
+}
+
+button.create_new_item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 10px;
+    font-size: 30px;
+    font-weight: normal;
+    border-radius: 100%;
 }
 
 button.toggle_debtors_hidden_container {
@@ -179,23 +211,39 @@ button.toggle_debtors_hidden_container {
     margin-bottom: 40px;
 }
 
-#error_message {
-    font-weight: 700;
-    font-size: 15px;
-    color: #12a30f;
+.remaining_balance_container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    margin: 4px 0px 8px 0px;
 }
 
-#error_message.red_color {
-    color: red;
+#remaining_balance {
+    flex-grow: 1;
+    font-weight: 600;
+    color: rgb(9, 135, 9);
+    padding: 8px 0px;
 }
 
-#divide_money_button {
-    background: none;
-    font-size: 15px;
-    color: rgb(226 152 17);
-    border: 2px solid rgb(226 152 17);
-    height: 37px;
-    margin: 0px 0 5px 0;
+#remaining_balance.remaining_balance_warning {
+    color: #d20d0d;
+}
+
+#split_remaining_balance_equally_container {
+    display: flex;
+    flex-direction: row;
+}
+
+#split_remaining_balance_equally_container,
+#split_remaining_balance_equally_container * {
+    cursor: pointer;
+}
+
+#split_remaining_balance_equally_container label {
+    padding: 8px 0px;
+    padding-left: 6px;
 }
 
 #receipts_delete_photo_button {
@@ -220,10 +268,6 @@ button.toggle_debtors_hidden_container {
 #receipts_add_photo_button {
     height: 37px;
     margin: 0px 0 5px 0;
-}
-
-.grey_background {
-    background: #e8e8e8;
 }
 
 .photo_popup {
@@ -256,7 +300,7 @@ button.toggle_debtors_hidden_container {
 
 .receipt_list_item {
     padding: 15px;
-    background: #fff;
+    background: rgb(238, 243, 245);
     margin-bottom: 16px;
     border-radius: 10px;
     flex-direction: column;
@@ -266,9 +310,14 @@ button.toggle_debtors_hidden_container {
     grid-template-rows: 1fr;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
     grid-gap: 0.6vw;
-    box-shadow: 0px 2px 11px -5px #999999;
+    cursor: pointer;
 }
-
+.receipt_list_item.active {
+    cursor: unset;
+}
+.receipt_list_item .debtor_list {
+    opacity: 0.75;
+}
 .receipt_list_item .payer, .receipt_list_item .debtor, .receipt_list_item .comment_item, .receipt_list_item .action_buttons, .payment_list_item .action_buttons {
     display: flex;
     justify-content: space-between;
@@ -277,17 +326,26 @@ button.toggle_debtors_hidden_container {
     border: none;
 }
 .receipt_list_item .payer {
-    font-size: 19px;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: #098709;
+    font-size: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.5);
 }
 .receipt_list_item .comment_item {
-    color: grey;
-    margin-top: 14px;
-    margin-bottom: 0;
-    align-items: flex-end;
-    font-size: 13px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+
+    color: rgb(1, 1, 1);
+    margin-top: 0px;
+    margin-bottom: 10px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.receipt_list_item .comment_item--description {
+    color: #098709;
+    flex-grow: 1;
 }
 
 .receipt_list_item.active .action_buttons_container, .payment_list_item.active .action_buttons_container {
@@ -341,13 +399,19 @@ button.toggle_debtors_hidden_container {
 
 .payment_list_item {
     padding: 15px;
-    background: #fff;
+    background: rgb(238, 243, 245);
     margin-bottom: 16px;
     border-radius: 10px;
     border: none;
     width: 100%;
-    box-shadow: 0px 2px 11px -5px #999999;
     position: relative;
+    cursor: pointer;
+}
+.payment_list_item .action_buttons {
+    justify-content: flex-end;
+}
+.payment_list_item.active {
+    cursor: unset;
 }
 .payment_list_item .main {
     display: flex;
