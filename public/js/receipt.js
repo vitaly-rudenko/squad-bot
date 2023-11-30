@@ -191,12 +191,16 @@ function renderDebtors(debts) {
     const hiddenDebtorsContainer = document.querySelector('.receipt_debtors_container__hidden')
     if (toggleDebtorsHiddenContainer) {
         toggleDebtorsHiddenContainer.addEventListener('click', () => {
+            const hiddenDebtorsCount = [...hiddenUsers]
+                .filter(user => document.querySelector(`.debtor[data-debtor-id="${user.id}"] .debtor_checkbox:checked`))
+                .length
+
             if (hiddenDebtorsContainer?.classList.contains('hidden')) {
                 hiddenDebtorsContainer.classList.remove('hidden')
-                toggleDebtorsHiddenContainer.innerHTML = 'Приховати інших користувачів'
+                toggleDebtorsHiddenContainer.innerHTML = 'Приховати всіх користувачів'
             } else {
                 hiddenDebtorsContainer.classList.add('hidden')
-                toggleDebtorsHiddenContainer.innerHTML = 'Показати інших користувачів'
+                toggleDebtorsHiddenContainer.innerHTML = `Показати всіх користувачів${hiddenDebtorsCount > 0 ? ` (${hiddenDebtorsCount} обрано)` : ''}`
             }
         })
     }
