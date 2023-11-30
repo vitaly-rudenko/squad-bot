@@ -150,6 +150,7 @@ button {
 
 .debtor > div {
     width: 100%;
+    overflow: hidden;
 }
 
 .receipt_list_item .debtor > div {
@@ -160,7 +161,11 @@ button {
     padding: 6px;
     cursor: pointer;
     width: 100%;
-    white-space: nowrap;
+}
+
+.debtor .debtor_username {
+    font-size: 12px;
+    opacity: 0.5;
 }
 
 .debtor>div {
@@ -170,7 +175,7 @@ button {
 
 .debtor .debt_amount {
     padding: 10px;
-    min-width: 200px;
+    min-width: 150px;
     border: none;
     outline: none;
     text-align: right;

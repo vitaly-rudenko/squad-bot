@@ -238,7 +238,9 @@ function renderDebtor(debtor) {
     return `<div class="debtor" data-debtor-id="${debtor.id}">
         <div>
             <input class="debtor_checkbox" type="checkbox" id="debtor_${debtor.id}" name="debtor_${debtor.id}" value="${debtor.id}">
-            <label for="debtor_${debtor.id}">${debtor.name}</label>
+            <label for="debtor_${debtor.id}">${debtor.name}${
+                debtor.username ? ` <span class="debtor_username">@${debtor.username}</span>` : ''
+            }</label>
         </div>
         <input class="debt_amount" type="number" placeholder="" oninput="updateReceiptRemainingBalance()">
     </div>`
