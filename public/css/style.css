@@ -356,11 +356,11 @@ button.toggle_debtors_hidden_container {
 
 .receipt_list_item.active .action_buttons_container, .payment_list_item.active .action_buttons_container {
     max-height: 100px;
-    transition: max-height 0.5s linear;
+    transition: max-height 0.25s ease-out;
 }
 .receipt_list_item .action_buttons_container, .payment_list_item .action_buttons_container {
     max-height: 0px;
-    transition: max-height 0.5s linear;
+    transition: max-height 0.25s ease-out;
     overflow: hidden;
 }
 
