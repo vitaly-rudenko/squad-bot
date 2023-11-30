@@ -346,6 +346,12 @@ button.toggle_debtors_hidden_container {
 .receipt_list_item .comment_item--description {
     color: #098709;
     flex-grow: 1;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.receipt_list_item .comment_item--date {
+    flex-shrink: 0;
 }
 
 .receipt_list_item.active .action_buttons_container, .payment_list_item.active .action_buttons_container {
