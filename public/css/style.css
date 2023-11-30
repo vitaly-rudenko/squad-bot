@@ -237,6 +237,7 @@ button.toggle_debtors_hidden_container {
 #split_remaining_balance_equally_container {
     display: flex;
     flex-direction: row;
+    align-items: center;
 }
 
 #split_remaining_balance_equally_container,
