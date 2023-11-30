@@ -71,6 +71,7 @@ async function init() {
     pageTitle.innerText = 'Створити чек'
     addReceiptButton.innerText = 'Створити чек'
 
+    const query = new URLSearchParams(location.search)
     if (query.has('receipt_id')) {
         try {
             const queryReceiptId = query.get('receipt_id')
