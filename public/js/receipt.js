@@ -68,17 +68,6 @@ async function init() {
 
     renderUsersSelect(users, receiptPayerSelect, currentUser.id)
 
-    const query = new URLSearchParams(location.search)
-    if (query.has('success')) {
-        query.delete('success')
-
-        const url = new URL(window.location.href)
-        url.search = query.toString()
-        history.pushState({}, '', url.toString())
-
-        playSuccessAnimation()
-    }
-
     pageTitle.innerText = 'Створити чек'
     addReceiptButton.innerText = 'Створити чек'
 
@@ -344,7 +333,7 @@ function saveReceipt() {
                 throw new Error('Response does not contain receipt ID!')
             }
 
-            window.open('/receiptslist', '_self')
+            window.open('/receiptslist?success', '_self')
         })
         .catch(e => console.error(e))
 }

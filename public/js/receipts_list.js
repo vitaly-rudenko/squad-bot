@@ -9,6 +9,17 @@ async function init() {
     users = await getUsers()
     receipts = await getReceipts()
     showReceipts()
+
+    const query = new URLSearchParams(location.search)
+    if (query.has('success')) {
+        query.delete('success')
+
+        const url = new URL(window.location.href)
+        url.search = query.toString()
+        history.pushState({}, '', url.toString())
+
+        playSuccessAnimation()
+    }
 }
 
 function showReceipts() {

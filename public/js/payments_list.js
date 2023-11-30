@@ -9,6 +9,17 @@ async function init() {
     users = await getUsers()
     payments = await getPayments()
     showPayments()
+
+    const query = new URLSearchParams(location.search)
+    if (query.has('success')) {
+        query.delete('success')
+
+        const url = new URL(window.location.href)
+        url.search = query.toString()
+        history.pushState({}, '', url.toString())
+
+        playSuccessAnimation()
+    }
 }
 
 async function getPayments() {
