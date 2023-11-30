@@ -101,7 +101,7 @@ export class ReceiptTelegramNotifier {
           isComplete
             ? 'notifications.receiptStored.part.complete'
             : 'notifications.receiptStored.part.incomplete',
-          isComplete ? { partAmount: escapeMd(renderDebtAmount(debt)) } : {},
+          isComplete ? { partAmount: escapeMd(renderDebtAmount(debt)) } : null,
         ),
         photo: hidePhoto ? '' : this._localize(
           user.locale,
