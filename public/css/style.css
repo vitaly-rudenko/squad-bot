@@ -63,6 +63,10 @@ button {
     flex-grow: 1;
 }
 
+.container h3 {
+    margin: 20px 0px 5px 0px;
+}
+
 .container h5 {
     margin-top: 0px;
     font-size: 15px;
@@ -138,7 +142,7 @@ button {
 }
 
 .debtor {
-    margin: 3px 0px;
+    padding: 5px 0px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -179,6 +183,7 @@ button {
     border: none;
     outline: none;
     text-align: right;
+    font-size: 16px;
 }
 
 button.create_new_item {
