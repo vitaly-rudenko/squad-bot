@@ -138,7 +138,7 @@ button {
 }
 
 .debtor {
-    margin-bottom: 6px;
+    margin: 3px 0px;
     display: flex;
     align-items: center;
     justify-content: space-between;
