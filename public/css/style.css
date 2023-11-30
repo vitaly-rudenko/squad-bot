@@ -144,8 +144,8 @@ button {
     justify-content: space-between;
 }
 
-.debtor:not(:last-child) {
-    border-bottom: 1px solid #ebebeb;
+.debtor:not(:first-child) {
+    border-top: 1px solid #ebebeb;
 }
 
 .debtor > div {
@@ -290,7 +290,7 @@ button.toggle_debtors_hidden_container {
 
 .receipt_list_item {
     padding: 15px;
-    background: #f9f9f9;
+    background: rgb(238, 243, 245);
     margin-bottom: 16px;
     border-radius: 10px;
     flex-direction: column;
@@ -300,9 +300,14 @@ button.toggle_debtors_hidden_container {
     grid-template-rows: 1fr;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
     grid-gap: 0.6vw;
-    border: 2px solid #999999;
+    cursor: pointer;
 }
-
+.receipt_list_item.active {
+    cursor: unset;
+}
+.receipt_list_item .debtor_list {
+    opacity: 0.75;
+}
 .receipt_list_item .payer, .receipt_list_item .debtor, .receipt_list_item .comment_item, .receipt_list_item .action_buttons, .payment_list_item .action_buttons {
     display: flex;
     justify-content: space-between;
@@ -312,10 +317,9 @@ button.toggle_debtors_hidden_container {
 }
 .receipt_list_item .payer {
     font-size: 16px;
-    font-weight: 600;
     margin-bottom: 12px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #444444;
+    border-bottom: 1px solid rgba(127, 127, 127, 0.5);
 }
 .receipt_list_item .comment_item {
     display: flex;
@@ -385,13 +389,19 @@ button.toggle_debtors_hidden_container {
 
 .payment_list_item {
     padding: 15px;
-    background: #f9f9f9;
+    background: rgb(238, 243, 245);
     margin-bottom: 16px;
     border-radius: 10px;
     border: none;
     width: 100%;
-    border: 2px solid #999999;
     position: relative;
+    cursor: pointer;
+}
+.payment_list_item .action_buttons {
+    justify-content: flex-end;
+}
+.payment_list_item.active {
+    cursor: unset;
 }
 .payment_list_item .main {
     display: flex;

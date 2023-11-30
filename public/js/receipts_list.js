@@ -21,12 +21,12 @@ function showReceipts() {
 
         receiptsHtml += `<div class="receipt_list_item" onclick="toggleActiveItem(this)">
         <div class="comment_item">
-            <div class="comment_item--description">${[receipt.hasPhoto && '📸 ', receipt.description || ''].filter(Boolean).join(' ')}</div>
+            <div class="comment_item--description">${isIncomplete ? '⚠️ ' : (isSumMismatched ? '❗️ ' : '')}${[receipt.hasPhoto && '📸 ', receipt.description || '(без опису)'].filter(Boolean).join(' ')}</div>
             <div class="comment_item--date">${renderDate(new Date(receipt.createdAt))}</div>
         </div>
 
         <div class="payer">
-            <div>${isIncomplete ? '⚠️ ' : (isSumMismatched ? '❗️ ' : '')}Оплатив: ${getUserNameById(receipt.payerId)}</div>
+            <div>Оплатив: ${getUserNameById(receipt.payerId)}</div>
             <div>Сума: ${renderAmount(receipt.amount)} грн</div>
         </div>`
 
