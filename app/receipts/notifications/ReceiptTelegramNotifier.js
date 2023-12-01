@@ -60,6 +60,7 @@ export class ReceiptTelegramNotifier {
   /** @param {import('../Receipt').Receipt} receipt */
   async _stored(receipt, { editorId, isNew }) {
     const { payerId, amount, description } = receipt
+    const receiptUrl = `${this._domain}/?receipt_id=${receipt.id}`
     const debts = await this._debtsStorage.findByReceiptId(receipt.id)
 
     const editor = await this._usersStorage.findById(editorId)
@@ -95,13 +96,17 @@ export class ReceiptTelegramNotifier {
         receiptAmount: escapeMd(renderMoney(amount)),
         payerName: escapeMd(payer.name),
         payerUsername: escapeMd(payer.username),
-        receiptUrl: escapeMd(`${this._domain}/?receipt_id=${receipt.id}`),
+        receiptUrl: escapeMd(receiptUrl),
         part: this._localize(
           user.locale,
           isComplete
             ? 'notifications.receiptStored.part.complete'
             : 'notifications.receiptStored.part.incomplete',
-          isComplete ? { partAmount: escapeMd(renderDebtAmount(debt)) } : null,
+          isComplete ? {
+            partAmount: escapeMd(renderDebtAmount(debt)),
+          } : {
+            receiptUrl: escapeMd(receiptUrl),
+          },
         ),
         photo: hidePhoto ? '' : this._localize(
           user.locale,

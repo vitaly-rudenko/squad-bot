@@ -88,7 +88,8 @@ describe('ReceiptTelegramNotifier', () => {
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${payer.locale})
+              part: notifications.receiptStored.part.incomplete(${payer.locale}):
+                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               photo: ''
           `],
           [debtor.id, stripIndent`
@@ -150,7 +151,8 @@ describe('ReceiptTelegramNotifier', () => {
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${payer.locale})
+              part: notifications.receiptStored.part.incomplete(${payer.locale}):
+                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               photo: ''
           `],
           [debtor.id, stripIndent`
@@ -163,7 +165,8 @@ describe('ReceiptTelegramNotifier', () => {
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${debtor.locale})
+              part: notifications.receiptStored.part.incomplete(${debtor.locale}):
+                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               photo: ''
           `]
         ])
@@ -214,7 +217,8 @@ describe('ReceiptTelegramNotifier', () => {
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${payer.locale})
+              part: notifications.receiptStored.part.incomplete(${payer.locale}):
+                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               photo: ''
           `],
           [debtor.id, stripIndent`
@@ -276,7 +280,8 @@ describe('ReceiptTelegramNotifier', () => {
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${payer.locale})
+              part: notifications.receiptStored.part.incomplete(${payer.locale}):
+                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               photo: ''
           `],
           [debtor.id, stripIndent`
@@ -289,7 +294,8 @@ describe('ReceiptTelegramNotifier', () => {
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${debtor.locale})
+              part: notifications.receiptStored.part.incomplete(${debtor.locale}):
+                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
               photo: ''
           `]
         ])

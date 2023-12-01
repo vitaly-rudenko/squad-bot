@@ -107,4 +107,4 @@ docker-compose.override.yml
 .DS_Store
 .vscode
 
-dump.sql
+dump*.sql
