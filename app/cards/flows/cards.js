@@ -212,6 +212,6 @@ export function cardsGetIdAction({ cardsStorage }) {
     const card = await cardsStorage.findById(cardId)
 
     await userSession.clear()
-    await context.reply(card.number)
+    await context.reply(`\`${escapeMd(card.number)}\``, { parse_mode: 'MarkdownV2' })
   }
 }
