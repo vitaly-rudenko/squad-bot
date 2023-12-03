@@ -242,7 +242,7 @@ async function start() {
   bot.command('deletecard', cardsDeleteCommand({ cardsStorage }))
   bot.action(/^cards:delete:id:(.+)$/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage }))
 
-  bot.command('cards', cardsCommand({ usersStorage }))
+  bot.command('cards', cardsCommand({ usersStorage, cardsStorage }))
   bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage }))
   bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage }))
 

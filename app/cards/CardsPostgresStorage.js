@@ -36,6 +36,11 @@ export class CardsPostgresStorage {
     return this._find({ userIds: [userId] })
   }
 
+  /** @param {string[]} userIds */
+  async findByUserIds(userIds) {
+    return this._find({ userIds })
+  }
+
   /**
    * @param {{
    *   ids?: string[],

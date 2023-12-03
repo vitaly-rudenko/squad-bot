@@ -134,16 +134,24 @@ export function cardsDeleteIdAction({ cardsStorage }) {
   }
 }
 
-export function cardsCommand({ usersStorage }) {
+export function cardsCommand({ usersStorage, cardsStorage }) {
   return async (context) => {
     const { userSession, localize } = context.state
     const users = await usersStorage.findAll()
+    const cards = await cardsStorage.findByUserIds(users.map(u => u.id))
+    const userIds = new Set(cards.map(c => c.userId))
+    const usersToShow = users.filter(u => userIds.has(u.id))
 
     await userSession.clear()
+    if (usersToShow.length === 0) {
+      await context.reply(localize('command.cards.get.empty'))
+      return
+    }
+
     await context.reply(localize('command.cards.get.chooseUser'), {
       parse_mode: 'MarkdownV2',
       reply_markup: Markup.inlineKeyboard(
-        users.map(user => Markup.button.callback(
+        usersToShow.map(user => Markup.button.callback(
           localize('command.cards.get.user', {
             name: user.name,
             username: user.username,

@@ -2,5 +2,6 @@
 
 docker-compose down -v
 docker-compose up -d sb_postgres sb_redis
+sleep 5
 docker cp dump.sql sb_postgres:/dump.sql
 docker exec -i sb_postgres psql -U squadbot -d squadbot -a -f /dump.sql
