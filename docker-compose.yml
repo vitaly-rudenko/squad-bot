@@ -17,6 +17,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    networks:
+      - "sb_network"
 
   sb_app:
     container_name: sb_app
@@ -38,6 +40,8 @@ services:
       USE_NATIVE_ENV: "true"
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
       REDIS_URL: "redis://sb_redis:6379"
+    networks:
+      - "sb_network"
 
   sb_postgres:
     container_name: sb_postgres
@@ -49,11 +53,15 @@ services:
       POSTGRES_PASSWORD: "p4ssw0rd"
     volumes:
       - "sb_postgres_data:/var/lib/postgresql/data"
+    networks:
+      - "sb_network"
 
   sb_redis:
     container_name: sb_redis
     restart: unless-stopped
     image: redis
+    networks:
+      - "sb_network"
 
   sb_certbot:
     container_name: certbot
@@ -66,3 +74,7 @@ services:
 volumes:
   sb_postgres_data:
     driver: local
+
+networks:
+  sb_network:
+    driver: bridge
