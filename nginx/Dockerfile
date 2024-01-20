@@ -1,5 +1,9 @@
 FROM nginx:alpine
 
+ARG DOMAIN
+ARG SUBDOMAIN
+ARG APP_URL
+
 WORKDIR /website
 
 RUN set -ex; \
@@ -8,7 +12,11 @@ RUN set -ex; \
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > nginx/ssl-dhparams.pem;
 
 RUN rm -f /etc/nginx/conf.d/default.conf
-COPY ./templates /etc/nginx/templates
+COPY ./templates ./templates
+
+RUN set -ex; \
+  mkdir -p /etc/nginx/templates; \
+  envsubst < ./templates/default.conf.template > /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
 EXPOSE 443

@@ -6,12 +6,12 @@ services:
     build:
       context: nginx
       dockerfile: Dockerfile
+      args:
+        APP_URL: "http://sb_app:3000"
+        DOMAIN: "$DOMAIN"
+        SUBDOMAIN: "$SUBDOMAIN"
     depends_on:
       - sb_app
-    environment:
-      APP_URL: "http://sb_app:3000"
-      DOMAIN: "$DOMAIN"
-      SUBDOMAIN: "$SUBDOMAIN"
     volumes:
       - "./nginx/certificates/letsencrypt:/etc/letsencrypt:ro"
     ports:
