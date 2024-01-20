@@ -33,6 +33,7 @@ services:
       TOKEN_SECRET: "$TOKEN_SECRET"
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
       WEB_APP_URL: "$WEB_APP_URL"
+      CORS_ORIGIN: "$CORS_ORIGIN"
       PORT: "$PORT"
       USE_NATIVE_ENV: "true"
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
