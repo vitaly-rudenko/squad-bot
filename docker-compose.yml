@@ -1,5 +1,23 @@
 version: '3.7'
 services:
+  sb_nginx:
+    container_name: nginx
+    restart: unless-stopped
+    build:
+      context: nginx
+      dockerfile: Dockerfile
+    depends_on:
+      - sb_app
+    environment:
+      APP_URL: "http://sb_app:3000"
+      DOMAIN: "$DOMAIN"
+      SUBDOMAIN: "$SUBDOMAIN"
+    volumes:
+      - "./nginx/certificates/letsencrypt:/etc/letsencrypt:ro"
+    ports:
+      - "80:80"
+      - "443:443"
+
   sb_app:
     container_name: sb_app
     restart: unless-stopped
@@ -35,22 +53,6 @@ services:
     container_name: sb_redis
     restart: unless-stopped
     image: redis
-
-  sb_nginx:
-    container_name: nginx
-    restart: unless-stopped
-    build:
-      context: nginx
-      dockerfile: Dockerfile
-    environment:
-      APP_URL: "http://sb_app:3000"
-      DOMAIN: "$DOMAIN"
-      SUBDOMAIN: "$SUBDOMAIN"
-    volumes:
-      - "./nginx/certificates/letsencrypt:/etc/letsencrypt:ro"
-    ports:
-      - "80:80"
-      - "443:443"
 
   sb_certbot:
     container_name: certbot
