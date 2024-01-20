@@ -2,7 +2,7 @@
 
 set -o allexport && source .env && set +o allexport
 
-docker-compose run --rm --entrypoint "\
+sudo docker compose run --rm --entrypoint "\
   certbot certonly \
     -w /var/www/certbot \
     --manual \
