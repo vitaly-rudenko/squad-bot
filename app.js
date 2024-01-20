@@ -1,6 +1,7 @@
 import './env.js'
 
 import { Telegraf } from 'telegraf'
+import cors from 'cors'
 import pg from 'pg'
 import express from 'express'
 import ejs from 'ejs'
@@ -278,6 +279,17 @@ async function start() {
 
   const app = express()
   app.use(express.json())
+  app.use(cors({
+    ...process.env.USE_TEST_MODE !== 'true' && {
+      origin: [
+        'http://vitaly-rudenko.com',
+        'http://vitaly-rudenko.com:3000',
+        'https://vitaly-rudenko.com',
+        'https://vitaly-rudenko.com:3000',
+        'https://vitaly-rudenko.github.io',
+      ]
+    }
+  }))
   app.use('/static', express.static('./public'))
   app.engine('html', ejs.renderFile)
   app.set('view engine', 'html')
