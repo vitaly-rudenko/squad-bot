@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   sb_nginx:
-    container_name: nginx
+    container_name: sb_nginx
     restart: unless-stopped
     build:
       context: nginx
