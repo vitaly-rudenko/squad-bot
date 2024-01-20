@@ -277,19 +277,14 @@ async function start() {
 
   bot.catch((error) => errorLogger.log(error))
 
+  const corsOrigin = process.env.CORS_ORIGIN?.split(',')
+  if (process.env.USE_TEST_MODE !== 'true' && !corsOrigin || corsOrigin?.length === 0) {
+    throw new Error('CORS origin is not set up properly')
+  }
+
   const app = express()
   app.use(express.json())
-  app.use(cors({
-    ...process.env.USE_TEST_MODE !== 'true' && {
-      origin: [
-        'http://vitaly-rudenko.com',
-        'http://vitaly-rudenko.com:3000',
-        'https://vitaly-rudenko.com',
-        'https://vitaly-rudenko.com:3000',
-        'https://vitaly-rudenko.github.io',
-      ]
-    }
-  }))
+  app.use(cors({ ...corsOrigin && { origin: corsOrigin } }))
   app.use('/static', express.static('./public'))
   app.engine('html', ejs.renderFile)
   app.set('view engine', 'html')

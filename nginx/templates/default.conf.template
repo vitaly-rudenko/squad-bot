@@ -1,0 +1,28 @@
+server {
+    listen 80;
+    server_tokens off;
+    server_name $SUBDOMAIN.${DOMAIN};
+    return 301 https://$SUBDOMAIN.$DOMAIN$request_uri;
+}
+
+server {
+    listen 443 ssl default_server;
+    server_tokens off;
+    server_name $SUBDOMAIN.$DOMAIN;
+
+    ## Server certificate and key.
+    ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
+
+    ## Recommended TLS options
+    include /website/nginx/options-ssl-nginx.conf;
+    ssl_dhparam /website/nginx/ssl-dhparams.pem;
+
+    ## Strict Transport Security header for enhanced security. See
+    ## http://www.chromium.org/sts. Value: 2 hours
+    add_header Strict-Transport-Security "max-age=7200; includeSubDomains";
+
+    location / {
+        proxy_pass $APP_URL;
+    }
+}

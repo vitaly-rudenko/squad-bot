@@ -1,7 +1,28 @@
 version: '3.7'
 services:
+  sb_nginx:
+    container_name: sb_nginx
+    restart: unless-stopped
+    build:
+      context: nginx
+      dockerfile: Dockerfile
+      args:
+        APP_URL: "http://sb_app:3000"
+        DOMAIN: "$DOMAIN"
+        SUBDOMAIN: "$SUBDOMAIN"
+    depends_on:
+      - sb_app
+    volumes:
+      - "./nginx/certificates/letsencrypt:/etc/letsencrypt:ro"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - "sb_network"
+
   sb_app:
     container_name: sb_app
+    restart: unless-stopped
     build:
       context: .
       dockerfile: docker/Dockerfile
@@ -13,28 +34,47 @@ services:
       DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
       TOKEN_SECRET: "$TOKEN_SECRET"
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
-      DOMAIN: "$DOMAIN"
+      WEB_APP_URL: "$WEB_APP_URL"
+      CORS_ORIGIN: "$CORS_ORIGIN"
       PORT: "$PORT"
       USE_NATIVE_ENV: "true"
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
       REDIS_URL: "redis://sb_redis:6379"
-    ports:
-      - "3000:3000"
+    networks:
+      - "sb_network"
 
   sb_postgres:
     container_name: sb_postgres
     image: postgres:13-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: "squadbot"
       POSTGRES_USER: "squadbot"
       POSTGRES_PASSWORD: "p4ssw0rd"
     volumes:
       - "sb_postgres_data:/var/lib/postgresql/data"
+    networks:
+      - "sb_network"
 
   sb_redis:
     container_name: sb_redis
+    restart: unless-stopped
     image: redis
+    networks:
+      - "sb_network"
+
+  sb_certbot:
+    container_name: certbot
+    image: certbot/certbot
+    volumes:
+      - "./nginx/certificates/letsencrypt:/etc/letsencrypt:delegated"
+      - "./nginx/certificates/certbot/www:/var/www/certbot:delegated"
+      - "./nginx/logs/misc/letsencrypt:/var/log/letsencrypt:delegated"
 
 volumes:
   sb_postgres_data:
     driver: local
+
+networks:
+  sb_network:
+    driver: bridge

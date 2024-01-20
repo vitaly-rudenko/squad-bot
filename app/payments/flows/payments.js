@@ -11,8 +11,8 @@ export function paymentsGetCommand({ usersStorage }) {
     const token = generateTemporaryAuthToken(userId)
 
     const queryString = isPrivateChat ? `?token=${token}`: ''
-    const addUrl = `${process.env.DOMAIN}/paymentview${queryString}`
-    const viewUrl = `${process.env.DOMAIN}/paymentslist${queryString}`
+    const addUrl = `${process.env.WEB_APP_URL}/paymentview${queryString}`
+    const viewUrl = `${process.env.WEB_APP_URL}/paymentslist${queryString}`
 
     const user = await usersStorage.findById(userId)
 
