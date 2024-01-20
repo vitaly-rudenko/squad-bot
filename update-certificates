@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -o allexport && source .env && set +o allexport
+
+docker-compose run --rm --entrypoint "\
+  certbot certonly \
+    -w /var/www/certbot \
+    --manual \
+    --email $EMAIL \
+    -d $DOMAIN \
+    -d *.$DOMAIN \
+    --rsa-key-size 4096 \
+    --agree-tos \
+    --force-renewal \
+    --preferred-challenges=dns" sb_certbot

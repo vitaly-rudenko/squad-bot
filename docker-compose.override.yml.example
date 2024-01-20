@@ -1,8 +1,10 @@
 version: '3.7'
 services:
   sb_app:
-    profiles:
-      - donotstart
+  #   profiles:
+  #     - donotstart
+    ports:
+      - "3000:3000"
 
   sb_postgres:
     ports:
