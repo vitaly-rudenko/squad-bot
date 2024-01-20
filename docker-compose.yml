@@ -32,7 +32,7 @@ services:
       DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
       TOKEN_SECRET: "$TOKEN_SECRET"
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
-      DOMAIN: "$DOMAIN"
+      WEB_APP_URL: "$WEB_APP_URL"
       PORT: "$PORT"
       USE_NATIVE_ENV: "true"
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"

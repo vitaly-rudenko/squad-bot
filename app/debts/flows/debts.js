@@ -39,7 +39,7 @@ export function debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debt
         photo: receipt.hasPhoto
           ? localize('command.debts.withPhoto')
           : localize('command.debts.withoutPhoto'),
-        receiptUrl: escapeMd(`${process.env.DOMAIN}/?receipt_id=${receipt.id}`)
+        receiptUrl: escapeMd(`${process.env.WEB_APP_URL}/?receipt_id=${receipt.id}`)
       })
     }
 

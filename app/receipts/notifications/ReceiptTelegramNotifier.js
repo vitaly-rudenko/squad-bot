@@ -3,7 +3,7 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
 export class ReceiptTelegramNotifier {
-  constructor({ massTelegramNotificationFactory, usersStorage, debtsStorage, localize, domain = process.env.DOMAIN }) {
+  constructor({ massTelegramNotificationFactory, usersStorage, debtsStorage, localize, domain = process.env.WEB_APP_URL }) {
     this._usersStorage = usersStorage
     this._debtsStorage = debtsStorage
     this._massTelegramNotificationFactory = massTelegramNotificationFactory

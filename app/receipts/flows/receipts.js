@@ -10,8 +10,8 @@ export function receiptsGetCommand({ usersStorage }) {
     const token = generateTemporaryAuthToken(userId)
 
     const queryString = isPrivateChat ? `?token=${token}`: ''
-    const addUrl = `${process.env.DOMAIN}/${queryString}`
-    const viewUrl = `${process.env.DOMAIN}/receiptslist${queryString}`
+    const addUrl = `${process.env.WEB_APP_URL}/${queryString}`
+    const viewUrl = `${process.env.WEB_APP_URL}/receiptslist${queryString}`
 
     const user = await usersStorage.findById(userId)
 
