@@ -289,11 +289,6 @@ async function start() {
   }
 
   const app = express()
-
-  // https://stackoverflow.com/a/69743888
-  const key = fs.readFileSync('./.cert/key.pem', 'utf-8')
-  const cert = fs.readFileSync('./.cert/cert.pem', 'utf-8')
-
   app.use(express.json())
   app.use(cors({ origin: corsOrigin }))
   app.use('/static', express.static('./public'))
@@ -723,9 +718,19 @@ async function start() {
   })
 
   const port = Number(process.env.PORT) || 3000
-  await new Promise(resolve => {
-    https.createServer({ key, cert }, app).listen(port, () => resolve())
-  })
+
+  if (process.env.USE_TEST_MODE === 'true') {
+    // https://stackoverflow.com/a/69743888
+    const key = fs.readFileSync('./.cert/key.pem', 'utf-8')
+    const cert = fs.readFileSync('./.cert/cert.pem', 'utf-8')
+    await new Promise(resolve => {
+      https.createServer({ key, cert }, app).listen(port, () => resolve())
+    })
+  } else {
+    await new Promise(resolve => {
+      app.listen(port, () => resolve())
+    })
+  }
 
   bot.catch((error) => errorLogger.log(error))
 
