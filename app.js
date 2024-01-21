@@ -2,6 +2,9 @@ import './env.js'
 
 import { Telegraf } from 'telegraf'
 import cors from 'cors'
+import fs from 'fs'
+import https from 'https'
+import crypto from 'crypto'
 import pg from 'pg'
 import express from 'express'
 import ejs from 'ejs'
@@ -96,6 +99,9 @@ async function start() {
 
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
   const tokenSecret = process.env.TOKEN_SECRET
+  if (!telegramBotToken || !tokenSecret) {
+    throw new Error('Telegram bot token is not defined')
+  }
 
   const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
@@ -278,13 +284,18 @@ async function start() {
   bot.catch((error) => errorLogger.log(error))
 
   const corsOrigin = process.env.CORS_ORIGIN?.split(',')
-  if (process.env.USE_TEST_MODE !== 'true' && !corsOrigin || corsOrigin?.length === 0) {
+  if (!corsOrigin || corsOrigin?.length === 0) {
     throw new Error('CORS origin is not set up properly')
   }
 
   const app = express()
+
+  // https://stackoverflow.com/a/69743888
+  const key = fs.readFileSync('./.cert/key.pem', 'utf-8')
+  const cert = fs.readFileSync('./.cert/cert.pem', 'utf-8')
+
   app.use(express.json())
-  app.use(cors({ ...corsOrigin && { origin: corsOrigin } }))
+  app.use(cors({ origin: corsOrigin }))
   app.use('/static', express.static('./public'))
   app.engine('html', ejs.renderFile)
   app.set('view engine', 'html')
@@ -344,6 +355,79 @@ async function start() {
         username: user.username,
       }
     }, tokenSecret))
+  })
+
+  // https://stackoverflow.com/a/72985407
+  function checkWebAppSignature(botToken, initData) {
+    const query = new URLSearchParams(initData)
+    const hash = query.get('hash')
+    if (!hash) return false
+    query.delete('hash')
+
+    const sorted = [...query.entries()].sort(([key1], [key2]) => key1.localeCompare(key2))
+    const dataCheckString = sorted.map(([key, value]) => `${key}=${value}`).join('\n')
+
+    const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest('hex')
+    const computedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex')
+
+    return computedHash === hash
+  }
+
+  // https://gist.github.com/konstantin24121/49da5d8023532d66cc4db1136435a885?permalink_comment_id=4574538#gistcomment-4574538
+  function checkWebAppSignature(botToken, initData) {
+    const urlParams = new URLSearchParams(initData)
+
+    const hash = urlParams.get('hash')
+    urlParams.delete('hash')
+    urlParams.sort()
+
+    let dataCheckString = ''
+    for (const [key, value] of urlParams.entries()) {
+        dataCheckString += `${key}=${value}\n`
+    }
+    dataCheckString = dataCheckString.slice(0, -1)
+
+    const secret = crypto.createHmac('sha256', 'WebAppData').update(botToken)
+    const calculatedHash = crypto.createHmac('sha256', secret.digest()).update(dataCheckString).digest('hex')
+
+    return calculatedHash === hash
+}
+
+  app.post('/authenticate-web-app', async (req, res, next) => {
+    try {
+      const { initData } = req.body
+
+      if (typeof initData !== 'string') {
+        res.status(400).json({ error: { code: 'VALIDATION_ERROR' } })
+        return
+      }
+
+      if (!checkWebAppSignature(telegramBotToken, initData)) {
+        res.status(400).json({ error: { code: 'INVALID_SIGNATURE' } })
+        return
+      }
+
+      const parsedInitData = new URLSearchParams(initData)
+      const telegramUser = JSON.parse(parsedInitData.get('user') ?? '')
+      const userId = String(telegramUser.id)
+
+      const user = await usersStorage.findById(userId)
+      if (!user) {
+        res.status(404).json({ error: { code: 'USER_NOT_FOUND' } })
+        return
+      }
+
+      res.json(jwt.sign({
+        user: {
+          id: user.id,
+          name: user.name,
+          username: user.username,
+        }
+      }, tokenSecret))
+    } catch (error) {
+      console.warn(error)
+      next(error)
+    }
   })
 
   app.get('/receipts/:receiptId/photo', async (req, res) => {
@@ -639,8 +723,9 @@ async function start() {
   })
 
   const port = Number(process.env.PORT) || 3000
-
-  await new Promise(resolve => app.listen(port, () => resolve()))
+  await new Promise(resolve => {
+    https.createServer({ key, cert }, app).listen(port, () => resolve())
+  })
 
   bot.catch((error) => errorLogger.log(error))
 

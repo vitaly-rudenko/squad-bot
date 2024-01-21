@@ -111,3 +111,4 @@ dump*.sql
 
 certificates/
 logs/
+.cert/
