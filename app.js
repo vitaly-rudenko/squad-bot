@@ -7,6 +7,7 @@ import https from 'https'
 import crypto from 'crypto'
 import pg from 'pg'
 import express from 'express'
+import Router from 'express-promise-router'
 import ejs from 'ejs'
 import jwt from 'jsonwebtoken'
 import multer from 'multer'
@@ -67,7 +68,6 @@ import { titleSetCancelAction, titleSetCommand, titleSetMessage, titleSetUserIdA
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
-import { compressImage } from './app/utils/compressImage.js'
 
 async function start() {
   if (useTestMode) {
@@ -295,23 +295,25 @@ async function start() {
   app.engine('html', ejs.renderFile)
   app.set('view engine', 'html')
 
-  app.get('/', async (req, res) => {
+  const router = Router()
+
+  router.get('/', async (req, res) => {
     res.render('receipt')
   })
 
-  app.get('/authpage', async (req, res) => {
+  router.get('/authpage', async (req, res) => {
     res.render('auth')
   })
 
-  app.get('/paymentview', async (req, res) => {
+  router.get('/paymentview', async (req, res) => {
     res.render('payment')
   })
 
-  app.get('/paymentslist', async (req, res) => {
+  router.get('/paymentslist', async (req, res) => {
     res.render('payments_list')
   })
 
-  app.get('/receiptslist', async (req, res) => {
+  router.get('/receiptslist', async (req, res) => {
     res.render('receipts_list')
   })
 
@@ -319,7 +321,7 @@ async function start() {
 
   const temporaryAuthTokenCache = createRedisCache('tokens', useTestMode ? 60_000 : 5 * 60_000)
 
-  app.get('/authenticate', async (req, res, next) => {
+  router.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']
     if (!(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
       res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
@@ -388,7 +390,7 @@ async function start() {
     return calculatedHash === hash
 }
 
-  app.post('/authenticate-web-app', async (req, res, next) => {
+  router.post('/authenticate-web-app', async (req, res, next) => {
     try {
       const { initData } = req.body
 
@@ -425,7 +427,7 @@ async function start() {
     }
   })
 
-  app.get('/receipts/:receiptId/photo', async (req, res) => {
+  router.get('/receipts/:receiptId/photo', async (req, res) => {
     const receiptId = req.params.receiptId
     const receiptPhoto = await receiptsStorage.getReceiptPhoto(receiptId)
 
@@ -437,7 +439,7 @@ async function start() {
   })
 
   if (useTestMode) {
-    app.post('/memberships', async (req, res) => {
+    router.post('/memberships', async (req, res) => {
       const { userId, groupId, title } = req.body
 
       await membershipManager.hardLink(userId, groupId)
@@ -452,7 +454,7 @@ async function start() {
     })
   }
 
-  app.use((req, res, next) => {
+  router.use((req, res, next) => {
     const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
 
     if (token) {
@@ -471,7 +473,7 @@ async function start() {
     }
   })
 
-  app.post('/users', async (req, res) => {
+  router.post('/users', async (req, res) => {
     const { id, username, name } = req.user
 
     try {
@@ -488,7 +490,7 @@ async function start() {
     }
   })
 
-  app.get('/users', async (req, res) => {
+  router.get('/users', async (req, res) => {
     const users = await usersStorage.findAll()
     res.json(users)
   })
@@ -510,8 +512,8 @@ async function start() {
     }
   }
 
-  app.post('/receipts', upload.single('photo'), async (req, res) => {
-    if (req.file && req.file.size > 10_000_000) { // 10 mb
+  router.post('/receipts', upload.single('photo'), async (req, res) => {
+    if (req.file && req.file.size > 300_000) { // 300 kb
       res.sendStatus(413)
       return
     }
@@ -532,20 +534,9 @@ async function start() {
 
     const receipt = new Receipt({ id, payerId, amount, description })
 
-    let receiptPhoto = null
-    if (binary && mime) {
-      try {
-        receiptPhoto = new ReceiptPhoto({
-          binary: await compressImage(binary),
-          mime: 'image/jpeg',
-        })
-      } catch (error) {
-        console.warn('Could not compress receipt photo:', error)
-        return res
-          .status(400)
-          .json({ error: { code: 'COULD_NOT_COMPRESS_PHOTO', message: error.message } })
-      }
-    }
+    let receiptPhoto = binary && mime
+      ? new ReceiptPhoto({ binary, mime })
+      : null
 
     if (id && !receiptPhoto && req.body.leave_photo === 'true') {
       receiptPhoto = await receiptsStorage.getReceiptPhoto(id)
@@ -556,7 +547,7 @@ async function start() {
     res.json(await formatReceipt(storedReceipt))
   })
 
-  app.get('/receipts', async (req, res) => {
+  router.get('/receipts', async (req, res) => {
     const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
 
     const formattedReceipts = []
@@ -569,7 +560,7 @@ async function start() {
     res.json(formattedReceipts)
   })
 
-  app.get('/receipts/:receiptId', async (req, res) => {
+  router.get('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
     const receipt = await receiptsStorage.findById(receiptId)
 
@@ -580,29 +571,29 @@ async function start() {
     res.json(await formatReceipt(receipt))
   })
 
-  app.delete('/receipts/:receiptId', async (req, res) => {
+  router.delete('/receipts/:receiptId', async (req, res) => {
     await receiptManager.delete(req.params.receiptId, { editorId: req.user.id })
     res.sendStatus(204)
   })
 
-  app.post('/payments', async (req, res) => {
+  router.post('/payments', async (req, res) => {
     const { fromUserId, toUserId, amount } = req.body
     const payment = new Payment({ fromUserId, toUserId, amount })
     const storedPayment = await paymentManager.store(payment, { editorId: req.user.id })
     res.json(storedPayment)
   })
 
-  app.delete('/payments/:paymentId', async (req, res) => {
+  router.delete('/payments/:paymentId', async (req, res) => {
     await paymentManager.delete(req.params.paymentId, { editorId: req.user.id })
     res.sendStatus(204)
   })
 
-  app.get('/payments', async (req, res) => {
+  router.get('/payments', async (req, res) => {
     const payments = await paymentsStorage.findByParticipantUserId(req.user.id)
     res.json(payments)
   })
 
-  app.get('/debts', async (req, res) => {
+  router.get('/debts', async (req, res) => {
     const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await debtManager.aggregateByUserId(req.user.id)
 
     res.json({
@@ -620,7 +611,7 @@ async function start() {
     })
   })
 
-  app.post('/rollcalls', async (req, res, next) => {
+  router.post('/rollcalls', async (req, res, next) => {
     const groupId = req.body.groupId
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
@@ -656,7 +647,7 @@ async function start() {
     }
   })
 
-  app.patch('/rollcalls/:id', async (req, res, next) => {
+  router.patch('/rollcalls/:id', async (req, res, next) => {
     const rollCallId = req.params.id
 
     const rollCall = await rollCallsStorage.findById(rollCallId)
@@ -692,12 +683,12 @@ async function start() {
     res.json(updatedRollCall)
   })
 
-  app.get('/rollcalls', async (req, res) => {
+  router.get('/rollcalls', async (req, res) => {
     const rollCalls = await rollCallsStorage.findByGroupId(req.query['group_id'])
     res.json(rollCalls)
   })
 
-  app.delete('/rollcalls/:rollCallId', async (req, res) => {
+  router.delete('/rollcalls/:rollCallId', async (req, res) => {
     const rollCall = await rollCallsStorage.findById(req.params.rollCallId)
     if (!rollCall) {
       res.sendStatus(404)
@@ -713,9 +704,11 @@ async function start() {
     res.sendStatus(204)
   })
 
-  app.get('/groups', async (req, res) => {
+  router.get('/groups', async (req, res) => {
     res.json(await groupStorage.findByMemberUserId(req.user.id))
   })
+
+  app.use(router)
 
   const port = Number(process.env.PORT) || 3000
 
