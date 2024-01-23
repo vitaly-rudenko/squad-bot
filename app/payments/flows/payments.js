@@ -34,7 +34,8 @@ export function paymentsGetCommand({ usersStorage, bot }) {
         reply_markup: Markup.inlineKeyboard([
           Markup.button.url(localize('command.payments.actions.add'), addUrl),
           Markup.button.url(localize('command.payments.actions.view'), viewUrl),
-        ], { columns: 1 }).reply_markup
+        ], { columns: 1 }).reply_markup,
+        disable_web_page_preview: true,
       }
     )
   }
