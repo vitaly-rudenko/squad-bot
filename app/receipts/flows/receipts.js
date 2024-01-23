@@ -15,7 +15,7 @@ export function receiptsGetCommand({ usersStorage, bot }) {
     const queryString = isPrivateChat ? `?token=${token}`: ''
     const addUrl = `${process.env.WEB_APP_URL}/${queryString}`
     const viewUrl = `${process.env.WEB_APP_URL}/receiptslist${queryString}`
-    const openInWebApp = `https://t.me/${bot.botInfo.username}/${process.env.WEB_APP_NAME}?startapp=receipts`
+    const webAppUrl = `https://t.me/${bot.botInfo.username}/${process.env.WEB_APP_NAME}?startapp=receipts`
 
     const user = await usersStorage.findById(userId)
 
@@ -24,15 +24,18 @@ export function receiptsGetCommand({ usersStorage, bot }) {
         isPrivateChat
           ? 'command.receipts.chooseAction'
           : 'command.receipts.chooseActionWithoutToken',
-        { name: escapeMd(user.name) }
+        {
+          name: escapeMd(user.name),
+          webAppUrl: escapeMd(webAppUrl),
+        }
       ),
       {
         parse_mode: 'MarkdownV2',
         reply_markup: Markup.inlineKeyboard([
           Markup.button.url(localize('command.receipts.actions.add'), addUrl),
           Markup.button.url(localize('command.receipts.actions.view'), viewUrl),
-          Markup.button.url(localize('command.receipts.actions.openInWebApp'), openInWebApp),
-        ], { columns: 1 }).reply_markup
+        ], { columns: 1 }).reply_markup,
+        disable_web_page_preview: true,
       }
     )
   }

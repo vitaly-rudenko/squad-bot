@@ -15,7 +15,7 @@ export function paymentsGetCommand({ usersStorage, bot }) {
     const queryString = isPrivateChat ? `?token=${token}`: ''
     const addUrl = `${process.env.WEB_APP_URL}/paymentview${queryString}`
     const viewUrl = `${process.env.WEB_APP_URL}/paymentslist${queryString}`
-    const openInWebApp = `https://t.me/${bot.botInfo.username}/${process.env.WEB_APP_NAME}?startapp=payments`
+    const webAppUrl = `https://t.me/${bot.botInfo.username}/${process.env.WEB_APP_NAME}?startapp=payments`
 
     const user = await usersStorage.findById(userId)
 
@@ -24,14 +24,16 @@ export function paymentsGetCommand({ usersStorage, bot }) {
         isPrivateChat
           ? 'command.payments.chooseAction'
           : 'command.payments.chooseActionWithoutToken',
-        { name: escapeMd(user.name) }
+        {
+          name: escapeMd(user.name),
+          webAppUrl: escapeMd(webAppUrl),
+        }
       ),
       {
         parse_mode: 'MarkdownV2',
         reply_markup: Markup.inlineKeyboard([
           Markup.button.url(localize('command.payments.actions.add'), addUrl),
           Markup.button.url(localize('command.payments.actions.view'), viewUrl),
-          Markup.button.url(localize('command.payments.actions.openInWebApp'), openInWebApp),
         ], { columns: 1 }).reply_markup
       }
     )
