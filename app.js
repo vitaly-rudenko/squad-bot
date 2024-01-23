@@ -240,8 +240,8 @@ async function start() {
 
   bot.command('users', usersCommand({ usersStorage, membershipStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
-  bot.command('receipts', receiptsGetCommand({ usersStorage }))
-  bot.command('payments', paymentsGetCommand({ usersStorage }))
+  bot.command('receipts', receiptsGetCommand({ usersStorage, bot }))
+  bot.command('payments', paymentsGetCommand({ usersStorage, bot }))
 
   bot.command('addcard', cardsAddCommand())
   bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction())
