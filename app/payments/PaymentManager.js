@@ -13,18 +13,18 @@ export class PaymentManager {
 
     const storedPayment = await this._paymentsStorage.create(payment)
 
-    const notification = await this._paymentNotifier.created(storedPayment, { editorId })
-    await notification.send()
+    const notification = await this._paymentNotifier.created(storedPayment, { editorId }).catch(() => undefined)
+    await notification?.send()
 
     return storedPayment
   }
 
   async delete(paymentId, { editorId }) {
     const payment = await this._paymentsStorage.findById(paymentId)
-    const notification = await this._paymentNotifier.deleted(payment, { editorId })
+    const notification = await this._paymentNotifier.deleted(payment, { editorId }).catch(() => undefined)
 
     await this._paymentsStorage.deleteById(paymentId)
 
-    await notification.send()
+    await notification?.send()
   }
 }
