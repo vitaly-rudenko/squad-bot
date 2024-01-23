@@ -17,7 +17,7 @@ function sortUsers(users, currentUser, recentlyInteractedUserIds) {
         }
     }
 
-    return sortedUsers
+    return sortedUsers.filter(Boolean)
 }
 
 function renderUsersSelect(users, selectElement, selectedUserId = null) {

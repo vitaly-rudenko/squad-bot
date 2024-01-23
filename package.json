@@ -1,12 +1,13 @@
 {
   "name": "squad-bot",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "Telegram bot assistant for squads",
   "main": "app.js",
   "type": "module",
   "scripts": {
     "start": "npm run umzug db:migrate && node app.js",
     "dev": "npm run umzug db:migrate && nodemon --legacy-watch --ignore test/ app.js",
+    "dev:https": "ENABLE_TEST_HTTPS=true npm run dev",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "mocha --recursive test/unit",
     "test:unit:dev": "nodemon --delay 0.5 --exec 'npm run test:unit'",

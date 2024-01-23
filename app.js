@@ -719,7 +719,8 @@ async function start() {
 
   const port = Number(process.env.PORT) || 3000
 
-  if (process.env.USE_TEST_MODE === 'true') {
+  if (process.env.ENABLE_TEST_HTTPS === 'true') {
+    logger.warn('Starting in test HTTPs mode')
     // https://stackoverflow.com/a/69743888
     const key = fs.readFileSync('./.cert/key.pem', 'utf-8')
     const cert = fs.readFileSync('./.cert/cert.pem', 'utf-8')
