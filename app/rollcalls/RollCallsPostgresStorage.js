@@ -35,11 +35,13 @@ export class RollCallsPostgresStorage {
       ['sort_order', sortOrder],
     ].filter(([key, value]) => key && value !== undefined)
 
-    await this._client.query(`
-      UPDATE roll_calls
-      SET ${fields.map(([key], i) => `${key} = $${i + 2}`).join(', ')}
-      WHERE id = $1;
-    `, [id, ...fields.map(field => field[1])])
+    if (fields.length > 0) {
+      await this._client.query(`
+        UPDATE roll_calls
+        SET ${fields.map(([key], i) => `${key} = $${i + 2}`).join(', ')}
+        WHERE id = $1;
+      `, [id, ...fields.map(field => field[1])])
+    }
 
     return this.findById(id)
   }
