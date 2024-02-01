@@ -17,7 +17,7 @@ const updatedReceiptPhotoBuffer = fs.readFileSync(
 
 describe('[receipts]', () => {
   describe('POST /receipts', () => {
-    it('should upload & compress receipt photo', async () => {
+    it('should upload & return receipt photo', async () => {
       const [user] = await createUsers(1)
 
       await createReceipt(user.id, {
@@ -28,7 +28,8 @@ describe('[receipts]', () => {
 
       const { photo, mime } = await getReceiptPhoto(receipt.id)
 
-      expect(mime).to.equal('image/jpeg')
+      expect(mime).to.equal('image/png')
+      expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
     })
 
     it('should return 404 when there is no receipt photo', async () => {

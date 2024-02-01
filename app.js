@@ -491,6 +491,14 @@ async function start() {
   })
 
   router.get('/users', async (req, res) => {
+    const groupId = req.query.group_id
+    if (groupId) {
+      const userIds = await membershipStorage.findUserIdsByGroupId(groupId)
+      const users = await usersStorage.findByIds(userIds)
+      res.json(users)
+      return
+    }
+
     const users = await usersStorage.findAll()
     res.json(users)
   })
@@ -734,30 +742,30 @@ async function start() {
     process.exit(1)
   })
 
-  const refreshMembershipsJobIntervalMs = 5 * 60_000
-  const refreshMembershipsUseCase = new RefreshMembershipsUseCase({
-    errorLogger,
-    membershipManager,
-    membershipStorage,
-  })
+  // const refreshMembershipsJobIntervalMs = 5 * 60_000
+  // const refreshMembershipsUseCase = new RefreshMembershipsUseCase({
+  //   errorLogger,
+  //   membershipManager,
+  //   membershipStorage,
+  // })
 
-  if (Number.isInteger(refreshMembershipsJobIntervalMs)) {
-    async function runRefreshMembershipsJob() {
-      try {
-        await refreshMembershipsUseCase.run()
-      } catch (error) {
-        logger.error(error, 'Could not refresh memberships')
-      } finally {
-        logger.debug(
-          { refreshMembershipsJobIntervalMs },
-          'Scheduling next automatic memberships refresh job'
-        )
-        setTimeout(runRefreshMembershipsJob, refreshMembershipsJobIntervalMs)
-      }
-    }
+  // if (Number.isInteger(refreshMembershipsJobIntervalMs)) {
+  //   async function runRefreshMembershipsJob() {
+  //     try {
+  //       await refreshMembershipsUseCase.run()
+  //     } catch (error) {
+  //       logger.error(error, 'Could not refresh memberships')
+  //     } finally {
+  //       logger.debug(
+  //         { refreshMembershipsJobIntervalMs },
+  //         'Scheduling next automatic memberships refresh job'
+  //       )
+  //       setTimeout(runRefreshMembershipsJob, refreshMembershipsJobIntervalMs)
+  //     }
+  //   }
 
-    await runRefreshMembershipsJob()
-  }
+  //   await runRefreshMembershipsJob()
+  // }
 }
 
 start()
