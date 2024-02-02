@@ -8,7 +8,6 @@ import crypto from 'crypto'
 import pg from 'pg'
 import express from 'express'
 import Router from 'express-promise-router'
-import ejs from 'ejs'
 import jwt from 'jsonwebtoken'
 import multer from 'multer'
 import Redis from 'ioredis'
@@ -59,7 +58,7 @@ import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
 import { RollCall } from './app/rollcalls/RollCall.js'
-import { rollCallsAddAction, rollCallsAddExcludeSenderAction, rollCallsAddMessagePatternMessage, rollCallsAddPollOptionsMessage, rollCallsAddPollOptionsSkipAction, rollCallsAddUsersPatternAllAction, rollCallsAddUsersPatternMessage, rollCallsCommand, rollCallsDeleteAction, rollCallsDeleteCancelAction, rollCallsDeleteIdAction, rollCallsMessage } from './app/rollcalls/flows/rollcalls.js'
+import { rollCallsMessage } from './app/rollcalls/flows/rollcalls.js'
 import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
@@ -76,7 +75,7 @@ async function start() {
 
   const upload = multer()
 
-  const redis = new Redis(process.env.REDIS_URL)
+  const redis = new Redis(process.env.REDIS_URL || '')
   const createRedisCache = createRedisCacheFactory(redis)
 
   const pgClient = new pg.Client(process.env.DATABASE_URL)
@@ -183,7 +182,7 @@ async function start() {
   const withPhase = withPhaseFactory()
 
   bot.use((context, next) => {
-    if (!useTestMode && context.from.is_bot) return
+    if (!useTestMode && context.from?.is_bot) return
     return next()
   })
 
@@ -232,7 +231,13 @@ async function start() {
   bot.use(wrap(withGroupChat(), async (context, next) => {
     const { userId, chatId } = context.state
 
-    await groupManager.store(new Group({ id: chatId, title: context.chat?.title || null }))
+    await groupManager.store(
+      new Group({
+        id: chatId,
+        title: (context.chat && 'title' in context.chat) && context.chat.title || null
+      })
+    )
+
     await membershipManager.softLink(userId, chatId)
 
     return next()
@@ -253,15 +258,6 @@ async function start() {
   bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage }))
   bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage }))
 
-  bot.command('rollcalls', requireGroupChat(), rollCallsCommand({ rollCallsStorage, usersStorage }))
-  bot.action(/^rollcalls:delete$/, withPhase(Phases.rollCalls), rollCallsDeleteAction({ rollCallsStorage }))
-  bot.action(/^rollcalls:delete:cancel$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteCancelAction())
-  bot.action(/^rollcalls:delete:id:(.+)$/, withPhase(Phases.deleteRollCall.id), rollCallsDeleteIdAction({ rollCallsStorage }))
-  bot.action(/^rollcalls:add$/, withPhase(Phases.rollCalls), rollCallsAddAction())
-  bot.action(/^rollcalls:add:users-pattern:all$/, withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternAllAction())
-  bot.action(/^rollcalls:add:exclude-sender:(.+)$/, withPhase(Phases.addRollCall.excludeSender), rollCallsAddExcludeSenderAction())
-  bot.action(/^rollcalls:add:poll-options:skip$/, withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsSkipAction({ rollCallsStorage }))
-
   bot.command('title', requireGroupChat(), titleSetCommand({ bot, membershipStorage, usersStorage }))
   bot.action(/^title:set:user-id:(.+)$/, withPhase(Phases.title.set.chooseUser), titleSetUserIdAction({ usersStorage }))
   bot.action(/^title:set:cancel$/, withPhase(Phases.title.set.chooseUser, Phases.title.set.sendTitle), titleSetCancelAction())
@@ -274,9 +270,6 @@ async function start() {
     // cards
     wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage })),
     // roll calls
-    wrap(withGroupChat(), withPhase(Phases.addRollCall.messagePattern), rollCallsAddMessagePatternMessage()),
-    wrap(withGroupChat(), withPhase(Phases.addRollCall.usersPattern), rollCallsAddUsersPatternMessage({ membershipStorage, usersStorage })),
-    wrap(withGroupChat(), withPhase(Phases.addRollCall.pollOptions), rollCallsAddPollOptionsMessage({ rollCallsStorage })),
     wrap(withGroupChat(), withPhase(Phases.title.set.sendTitle), titleSetMessage({ bot, membershipStorage, usersStorage })),
     wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
   )
@@ -291,9 +284,6 @@ async function start() {
   const app = express()
   app.use(express.json())
   app.use(cors({ origin: corsOrigin }))
-  app.use('/static', express.static('./public'))
-  app.engine('html', ejs.renderFile)
-  app.set('view engine', 'html')
 
   const router = Router()
 
@@ -323,17 +313,18 @@ async function start() {
 
   router.get('/authenticate', async (req, res, next) => {
     const temporaryAuthToken = req.query['token']
-    if (!(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
+    if (typeof temporaryAuthToken !== 'string' || !(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
       res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
       return
     }
 
     let userId
     try {
-      ({ userId } = jwt.verify(temporaryAuthToken, tokenSecret))
-      if (!userId) {
+      const parsed = jwt.verify(temporaryAuthToken, tokenSecret)
+      if (typeof parsed === 'string' || !parsed.userId) {
         throw new Error('Temporary token does not contain user ID')
       }
+      userId = parsed.userId
     } catch (error) {
       res.status(400).json({ error: { code: 'INVALID_TEMPORARY_AUTH_TOKEN' } })
       return
@@ -459,11 +450,11 @@ async function start() {
 
     if (token) {
       try {
-        const { user } = jwt.verify(token, tokenSecret)
-        if (!user.id || !user.username || !user.name) {
+        const parsed = jwt.verify(token, tokenSecret)
+        if (typeof parsed === 'string' || !parsed.user || !parsed.user.id || !parsed.user.username || !parsed.user.name) {
           throw new Error('Token does not contain user ID, username and name')
         }
-        req.user = user
+        req.user = parsed.user
         next()
       } catch (error) {
         res.status(401).json({ error: { code: 'INVALID_AUTH_TOKEN', message: error.message } })
@@ -692,7 +683,13 @@ async function start() {
   })
 
   router.get('/rollcalls', async (req, res) => {
-    const rollCalls = await rollCallsStorage.findByGroupId(req.query['group_id'])
+    const groupId = req.query['group_id']
+    if (typeof groupId !== 'string') {
+      res.sendStatus(400)
+      return
+    }
+
+    const rollCalls = await rollCallsStorage.findByGroupId(groupId)
     res.json(rollCalls)
   })
 
@@ -726,12 +723,10 @@ async function start() {
     const key = fs.readFileSync('./.cert/key.pem', 'utf-8')
     const cert = fs.readFileSync('./.cert/cert.pem', 'utf-8')
     await new Promise(resolve => {
-      https.createServer({ key, cert }, app).listen(port, () => resolve())
+      https.createServer({ key, cert }, app).listen(port, () => resolve(undefined))
     })
   } else {
-    await new Promise(resolve => {
-      app.listen(port, () => resolve())
-    })
+    await new Promise(resolve => app.listen(port, () => resolve(undefined)))
   }
 
   bot.catch((error) => errorLogger.log(error))

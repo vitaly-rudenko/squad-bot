@@ -5,16 +5,6 @@ export const Phases = organizeValues({
   deleteCard: {
     id: '',
   },
-  rollCalls: '',
-  deleteRollCall: {
-    id: ''
-  },
-  addRollCall: {
-    messagePattern: '',
-    usersPattern: '',
-    excludeSender: '',
-    pollOptions: ''
-  },
   title: {
     set: {
       chooseUser: '',
