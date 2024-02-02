@@ -2,7 +2,7 @@ import { renderAggregatedDebt } from '../renderDebtAmount.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }) {
+export function debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager, generateWebAppUrl }) {
   return async (context) => {
     const { userId, localize } = context.state
     const users = await usersStorage.findAll()
@@ -39,7 +39,7 @@ export function debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debt
         photo: receipt.hasPhoto
           ? localize('command.debts.withPhoto')
           : localize('command.debts.withoutPhoto'),
-        receiptUrl: escapeMd(`${process.env.WEB_APP_URL}/?receipt_id=${receipt.id}`)
+        receiptUrl: escapeMd(generateWebAppUrl('receipt', receipt.id))
       })
     }
 

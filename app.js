@@ -67,6 +67,7 @@ import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
+import { generateTemporaryAuthToken } from './app/auth/generateTemporaryAuthToken.js'
 
 async function start() {
   if (useTestMode) {
@@ -75,6 +76,7 @@ async function start() {
 
   const upload = multer()
 
+  // @ts-ignore
   const redis = new Redis(process.env.REDIS_URL || '')
   const createRedisCache = createRedisCacheFactory(redis)
 
@@ -111,6 +113,11 @@ async function start() {
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
   const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
 
+  const generateWebAppUrl = createWebAppUrlGenerator({
+    botUsername: (await bot.telegram.getMe()).username,
+    webAppName: process.env.WEB_APP_NAME,
+  })
+
   const massTelegramNotificationFactory = new MassTelegramNotificationFactory({
     telegramNotifier,
     errorLogger,
@@ -127,6 +134,7 @@ async function start() {
     massTelegramNotificationFactory,
     usersStorage,
     debtsStorage,
+    generateWebAppUrl,
   })
 
   const receiptManager = new ReceiptManager({
@@ -161,11 +169,6 @@ async function start() {
   const userManager = new UserManager({
     usersStorage,
     userCache: new UserCache(createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)),
-  })
-
-  const generateWebAppUrl = createWebAppUrlGenerator({
-    botUsername: (await bot.telegram.getMe()).username,
-    webAppName: process.env.WEB_APP_NAME,
   })
 
   bot.telegram.setMyCommands([
@@ -248,7 +251,12 @@ async function start() {
     return next()
   }))
 
-  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
+  bot.command('login', requirePrivateChat(), async (context) => {
+    const { userId } = context.state
+    await context.reply(`${process.env.WEB_APP_URL}/?token=${generateTemporaryAuthToken(userId)}`)
+  })
+
+  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager, generateWebAppUrl }))
   bot.command('receipts', receiptsCommand({ usersStorage, generateWebAppUrl }))
   bot.command('payments', paymentsCommand({ usersStorage, generateWebAppUrl }))
   bot.command('rollcalls', requireGroupChat(), rollCallsCommand({ usersStorage, generateWebAppUrl }))
@@ -292,31 +300,9 @@ async function start() {
 
   const router = Router()
 
-  router.get('/', async (req, res) => {
-    res.render('receipt')
-  })
-
-  router.get('/authpage', async (req, res) => {
-    res.render('auth')
-  })
-
-  router.get('/paymentview', async (req, res) => {
-    res.render('payment')
-  })
-
-  router.get('/paymentslist', async (req, res) => {
-    res.render('payments_list')
-  })
-
-  router.get('/receiptslist', async (req, res) => {
-    res.render('receipts_list')
-  })
-
-  // --- API
-
   const temporaryAuthTokenCache = createRedisCache('tokens', useTestMode ? 60_000 : 5 * 60_000)
 
-  router.get('/authenticate', async (req, res, next) => {
+  router.get('/authenticate', async (req, res) => {
     const temporaryAuthToken = req.query['token']
     if (typeof temporaryAuthToken !== 'string' || !(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
       res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })

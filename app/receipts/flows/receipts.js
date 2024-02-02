@@ -6,14 +6,16 @@ export function receiptsCommand({ usersStorage, generateWebAppUrl }) {
     const { userId, localize } = context.state
 
     const user = await usersStorage.findById(userId)
-    const webAppUrl = generateWebAppUrl({ command: 'receipts' })
+    const viewUrl = generateWebAppUrl('receipts')
+    const createUrl = generateWebAppUrl('receipt', 'new')
 
     await context.reply(
       localize(
         'command.receipts.help',
         {
           name: escapeMd(user.name),
-          webAppUrl: escapeMd(webAppUrl),
+          viewUrl: escapeMd(viewUrl),
+          createUrl: escapeMd(createUrl),
         }
       ),
       {

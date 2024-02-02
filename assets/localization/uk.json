@@ -77,20 +77,29 @@
     },
     "payments": {
       "help": [
-        "💸 {name}, керувати платежами можна тут:",
-        "{webAppUrl}"
+        "💸 {name}, переглянути платежі можна тут:",
+        "{viewUrl}",
+        "",
+        "➕ Створити новий:",
+        "{createUrl}"
       ]
     },
     "receipts": {
       "help": [
-        "🧾 {name}, керувати чеками можна тут:",
-        "{webAppUrl}"
+        "🧾 {name}, переглянути чеками можна тут:",
+        "{viewUrl}",
+        "",
+        "➕ Створити новий:",
+        "{createUrl}"
       ]
     },
     "rollCalls": {
       "help": [
-        "🗣 {name}, керувати перекличками можна тут:",
-        "{webAppUrl}"
+        "🗣 {name}, переглянути перекличками можна тут:",
+        "{viewUrl}",
+        "",
+        "➕ Створити нову:",
+        "{createUrl}"
       ]
     },
     "title": {
@@ -140,11 +149,12 @@
   "notifications": {
     "receiptStored": {
       "message": [
-        "📝 {editorName} \\(@{editorUsername}\\) {action} [чек {receiptDescription}]({receiptUrl}) на суму {receiptAmount}",
+        "📝 {editorName} \\(@{editorUsername}\\) {action} чек {receiptDescription} на суму {receiptAmount}",
         "👤 Платник: {payerName} \\(@{payerUsername}\\)",
         "{part}\\",
-        "{photo}\\",
-        "📑 Борги: /debts, чеки: /receipts"
+        "📑 Борги: /debts, чеки: /receipts",
+        "",
+        "{receiptUrl}"
       ],
       "description": "\"{description}\"",
       "noDescription": "без опису",
@@ -155,8 +165,7 @@
       "part": {
         "incomplete": "⚠️ [*Заповни свою частину у цьому чеку*]({receiptUrl})\n",
         "complete": "💵 Твоя частина в чеку: *{partAmount}*\n"
-      },
-      "photo": "📷 [Відкрити фото чека]({photoUrl})\n"
+      }
     },
     "receiptDeleted": {
       "message": [

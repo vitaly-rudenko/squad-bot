@@ -6,12 +6,14 @@ export function rollCallsCommand({ usersStorage, generateWebAppUrl }) {
     const { userId, chatId, localize } = context.state
 
     const user = await usersStorage.findById(userId)
-    const webAppUrl = generateWebAppUrl({ command: `group__${chatId}__roll-calls` })
+    const viewUrl = generateWebAppUrl('group', chatId, 'roll-calls')
+    const createUrl = generateWebAppUrl('group', chatId, 'roll-call', 'new')
 
     await context.reply(
       localize('command.rollCalls.help', {
         name: escapeMd(user.name),
-        webAppUrl: escapeMd(webAppUrl),
+        viewUrl: escapeMd(viewUrl),
+        createUrl: escapeMd(createUrl),
       }),
       { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
     )

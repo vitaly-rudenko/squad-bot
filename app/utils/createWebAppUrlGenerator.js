@@ -1,5 +1,6 @@
 export function createWebAppUrlGenerator({ botUsername, webAppName }) {
-  return ({ command }) => {
-    return `https://t.me/${botUsername}/${webAppName}${command ? `?startapp=${command}` : ''}`
+  return (...commands) => {
+    const query = commands.length > 0 ? `?startapp=${commands.join('__')}` : ''
+    return `https://t.me/${botUsername}/${webAppName}${query}`
   }
 }

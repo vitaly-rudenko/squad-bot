@@ -3,15 +3,15 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
 export class ReceiptTelegramNotifier {
-  constructor({ massTelegramNotificationFactory, usersStorage, debtsStorage, localize, domain = process.env.WEB_APP_URL }) {
+  constructor({ massTelegramNotificationFactory, usersStorage, debtsStorage, localize, generateWebAppUrl }) {
     this._usersStorage = usersStorage
     this._debtsStorage = debtsStorage
     this._massTelegramNotificationFactory = massTelegramNotificationFactory
     this._localize = localize
-    this._domain = domain
+    this._generateWebAppUrl = generateWebAppUrl
   }
 
-  /** @param {import('../Receipt').Receipt} receipt */
+  /** @param {import('../Receipt.js').Receipt} receipt */
   async deleted(receipt, { editorId }) {
     const { payerId, description, amount } = receipt
     const debts = await this._debtsStorage.findByReceiptId(receipt.id)
@@ -47,20 +47,20 @@ export class ReceiptTelegramNotifier {
     return massNotification
   }
 
-  /** @param {import('../Receipt').Receipt} receipt */
+  /** @param {import('../Receipt.js').Receipt} receipt */
   async created(receipt, { editorId }) {
     return this._stored(receipt, { editorId, isNew: true })
   }
 
-  /** @param {import('../Receipt').Receipt} receipt */
+  /** @param {import('../Receipt.js').Receipt} receipt */
   async updated(receipt, { editorId }) {
     return this._stored(receipt, { editorId, isNew: false })
   }
 
-  /** @param {import('../Receipt').Receipt} receipt */
+  /** @param {import('../Receipt.js').Receipt} receipt */
   async _stored(receipt, { editorId, isNew }) {
     const { payerId, amount, description } = receipt
-    const receiptUrl = `${this._domain}/?receipt_id=${receipt.id}`
+    const receiptUrl = this._generateWebAppUrl('receipt', receipt.id)
     const debts = await this._debtsStorage.findByReceiptId(receipt.id)
 
     const editor = await this._usersStorage.findById(editorId)
@@ -75,7 +75,6 @@ export class ReceiptTelegramNotifier {
 
       const debt = debts.find(debt => debt.debtorId === user.id)
       const isComplete = debt && debt?.amount !== null
-      const hidePhoto = !receipt.hasPhoto
 
       const notification = this._localize(user.locale, 'notifications.receiptStored.message', {
         editorName: escapeMd(editor.name),
@@ -107,11 +106,6 @@ export class ReceiptTelegramNotifier {
           } : {
             receiptUrl: escapeMd(receiptUrl),
           },
-        ),
-        photo: hidePhoto ? '' : this._localize(
-          user.locale,
-          'notifications.receiptStored.photo',
-          { photoUrl: escapeMd(`${this._domain}/receipts/${receipt.id}/photo`) }
         ),
       })
 
