@@ -15,13 +15,12 @@ import Redis from 'ioredis'
 import { versionCommand } from './app/shared/flows/version.js'
 
 import { startCommand } from './app/users/flows/start.js'
-import { usersCommand } from './app/users/flows/users.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
-import { receiptsGetCommand } from './app/receipts/flows/receipts.js'
+import { receiptsCommand } from './app/receipts/flows/receipts.js'
 import { withPhaseFactory } from './app/shared/middlewares/phase.js'
 import { Phases } from './app/Phases.js'
 import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsCommand, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
-import { paymentsGetCommand } from './app/payments/flows/payments.js'
+import { paymentsCommand } from './app/payments/flows/payments.js'
 import { withUserId } from './app/users/middlewares/userId.js'
 import { User } from './app/users/User.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
@@ -58,7 +57,7 @@ import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
 import { RollCall } from './app/rollcalls/RollCall.js'
-import { rollCallsMessage } from './app/rollcalls/flows/rollcalls.js'
+import { rollCallsCommand, rollCallsMessage } from './app/rollcalls/flows/rollcalls.js'
 import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
@@ -67,6 +66,7 @@ import { titleSetCancelAction, titleSetCommand, titleSetMessage, titleSetUserIdA
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
+import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 
 async function start() {
   if (useTestMode) {
@@ -163,6 +163,11 @@ async function start() {
     userCache: new UserCache(createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)),
   })
 
+  const generateWebAppUrl = createWebAppUrlGenerator({
+    botUsername: (await bot.telegram.getMe()).username,
+    webAppName: process.env.WEB_APP_NAME,
+  })
+
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
     { command: 'receipts', description: 'Додати або переглянути чеки' },
@@ -243,10 +248,10 @@ async function start() {
     return next()
   }))
 
-  bot.command('users', usersCommand({ usersStorage, membershipStorage }))
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager }))
-  bot.command('receipts', receiptsGetCommand({ usersStorage, bot }))
-  bot.command('payments', paymentsGetCommand({ usersStorage, bot }))
+  bot.command('receipts', receiptsCommand({ usersStorage, generateWebAppUrl }))
+  bot.command('payments', paymentsCommand({ usersStorage, generateWebAppUrl }))
+  bot.command('rollcalls', requireGroupChat(), rollCallsCommand({ usersStorage, generateWebAppUrl }))
 
   bot.command('addcard', cardsAddCommand())
   bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction())
@@ -737,30 +742,32 @@ async function start() {
     process.exit(1)
   })
 
-  // const refreshMembershipsJobIntervalMs = 5 * 60_000
-  // const refreshMembershipsUseCase = new RefreshMembershipsUseCase({
-  //   errorLogger,
-  //   membershipManager,
-  //   membershipStorage,
-  // })
+  if (process.env.DISABLE_MEMBERSHIP_REFRESH_TASK === 'true') return
 
-  // if (Number.isInteger(refreshMembershipsJobIntervalMs)) {
-  //   async function runRefreshMembershipsJob() {
-  //     try {
-  //       await refreshMembershipsUseCase.run()
-  //     } catch (error) {
-  //       logger.error(error, 'Could not refresh memberships')
-  //     } finally {
-  //       logger.debug(
-  //         { refreshMembershipsJobIntervalMs },
-  //         'Scheduling next automatic memberships refresh job'
-  //       )
-  //       setTimeout(runRefreshMembershipsJob, refreshMembershipsJobIntervalMs)
-  //     }
-  //   }
+  const refreshMembershipsJobIntervalMs = 5 * 60_000
+  const refreshMembershipsUseCase = new RefreshMembershipsUseCase({
+    errorLogger,
+    membershipManager,
+    membershipStorage,
+  })
 
-  //   await runRefreshMembershipsJob()
-  // }
+  if (Number.isInteger(refreshMembershipsJobIntervalMs)) {
+    async function runRefreshMembershipsJob() {
+      try {
+        await refreshMembershipsUseCase.run()
+      } catch (error) {
+        logger.error(error, 'Could not refresh memberships')
+      } finally {
+        logger.debug(
+          { refreshMembershipsJobIntervalMs },
+          'Scheduling next automatic memberships refresh job'
+        )
+        setTimeout(runRefreshMembershipsJob, refreshMembershipsJobIntervalMs)
+      }
+    }
+
+    await runRefreshMembershipsJob()
+  }
 }
 
 start()

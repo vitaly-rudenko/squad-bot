@@ -1,5 +1,6 @@
 import fs from 'fs'
 import { logger } from '../../logger.js'
+import { escapeMd } from '../utils/escapeMd.js'
 
 const cachedLocalizations = {}
 function loadLocalization(name) {
@@ -26,7 +27,7 @@ export function get(messageKey, locale) {
     logger.warn(`Could not find localization key for "${messageKey}"`)
   }
 
-  return result ?? messageKey
+  return result ?? escapeMd(messageKey)
 }
 
 export function localize(locale, messageKey, replacements = null) {

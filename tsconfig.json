@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "useUnknownInCatchVariables": false,
+    "noImplicitAny": false,
+    "allowJs": true,
+    "checkJs": true,
+    "esModuleInterop": true,
+    "noEmit": true
+  },
+  "include": ["types.d.ts", "app.js", "env.js", "logger.js", "app/**/*.js"],
+  "exclude": ["node_modules"]
+}

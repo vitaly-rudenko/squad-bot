@@ -1,6 +1,23 @@
 import { PatternBuilder, PatternMatcher, EntryMatchers } from '@vitalyrudenko/templater'
 import { escapeMd } from '../../utils/escapeMd.js'
 
+export function rollCallsCommand({ usersStorage, generateWebAppUrl }) {
+  return async (context) => {
+    const { userId, chatId, localize } = context.state
+
+    const user = await usersStorage.findById(userId)
+    const webAppUrl = generateWebAppUrl({ command: `group__${chatId}__roll-calls` })
+
+    await context.reply(
+      localize('command.rollCalls.help', {
+        name: escapeMd(user.name),
+        webAppUrl: escapeMd(webAppUrl),
+      }),
+      { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
+    )
+  }
+}
+
 export function rollCallsMessage({ rollCallsStorage, membershipStorage, usersStorage }) {
   return async (context, next) => {
     if (!('text' in context.message)) return next()

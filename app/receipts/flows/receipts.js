@@ -1,29 +1,16 @@
-import { Markup } from 'telegraf'
-import { generateTemporaryAuthToken } from '../../auth/generateTemporaryAuthToken.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function receiptsGetCommand({ usersStorage, bot }) {
+export function receiptsCommand({ usersStorage, generateWebAppUrl }) {
   /** @param {import('telegraf').Context} context */
   return async (context) => {
-    bot.botInfo ??= await bot.telegram.getMe()
-
     const { userId, localize } = context.state
-    const isPrivateChat = context.chat?.type === 'private'
-
-    const token = generateTemporaryAuthToken(userId)
-
-    const queryString = isPrivateChat ? `?token=${token}`: ''
-    const addUrl = `${process.env.WEB_APP_URL}/${queryString}`
-    const viewUrl = `${process.env.WEB_APP_URL}/receiptslist${queryString}`
-    const webAppUrl = `https://t.me/${bot.botInfo.username}/${process.env.WEB_APP_NAME}?startapp=receipts`
 
     const user = await usersStorage.findById(userId)
+    const webAppUrl = generateWebAppUrl({ command: 'receipts' })
 
     await context.reply(
       localize(
-        isPrivateChat
-          ? 'command.receipts.chooseAction'
-          : 'command.receipts.chooseActionWithoutToken',
+        'command.receipts.help',
         {
           name: escapeMd(user.name),
           webAppUrl: escapeMd(webAppUrl),
@@ -31,10 +18,6 @@ export function receiptsGetCommand({ usersStorage, bot }) {
       ),
       {
         parse_mode: 'MarkdownV2',
-        reply_markup: Markup.inlineKeyboard([
-          Markup.button.url(localize('command.receipts.actions.add'), addUrl),
-          Markup.button.url(localize('command.receipts.actions.view'), viewUrl),
-        ], { columns: 1 }).reply_markup,
         disable_web_page_preview: true,
       }
     )
