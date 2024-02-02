@@ -1,6 +1,6 @@
 {
   "name": "squad-bot",
-  "version": "4.3.0",
+  "version": "5.0.0",
   "description": "Telegram bot assistant for squads",
   "main": "app.js",
   "type": "module",
@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/vitaly-rudenko/squad-bot#readme",
   "devDependencies": {
+    "@types/node": "^20.11.16",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "chai-subset": "^1.6.0",
@@ -42,11 +43,9 @@
     "@vitalyrudenko/templater": "^1.0.0-pre.4",
     "cors": "^2.8.5",
     "dotenv": "^12.0.3",
-    "ejs": "^3.1.6",
     "express": "^4.17.2",
     "express-promise-router": "^4.1.1",
-    "googleapis": "^92.0.0",
-    "ioredis": "^5.0.0-beta.4",
+    "ioredis": "^5.3.2",
     "jsonwebtoken": "^8.5.1",
     "markdown-escapes": "^2.0.1",
     "multer": "^1.4.4",
@@ -54,6 +53,7 @@
     "pino": "^7.9.1",
     "pino-pretty": "^7.5.4",
     "telegraf": "^4.6.0",
-    "umzug": "^3.0.0"
+    "umzug": "^3.0.0",
+    "uuid": "^9.0.1"
   }
 }
