@@ -10,7 +10,7 @@ import express from 'express'
 import Router from 'express-promise-router'
 import jwt from 'jsonwebtoken'
 import multer from 'multer'
-import Redis from 'ioredis'
+import { Redis } from 'ioredis'
 
 import { versionCommand } from './app/shared/flows/version.js'
 
@@ -68,6 +68,7 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 import { generateTemporaryAuthToken } from './app/auth/generateTemporaryAuthToken.js'
+import { ApiError } from './app/ApiError.js'
 
 async function start() {
   if (useTestMode) {
@@ -112,8 +113,9 @@ async function start() {
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
   const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
 
+  const botInfo = await bot.telegram.getMe()
   const generateWebAppUrl = createWebAppUrlGenerator({
-    botUsername: (await bot.telegram.getMe()).username,
+    botUsername: botInfo.username,
     webAppName: process.env.WEB_APP_NAME,
   })
 
@@ -723,7 +725,7 @@ async function start() {
 
   logger.info({}, 'Starting telegram bot')
   bot.launch().catch((error) => {
-    logger.error(error, 'Could not launch telegram bot')
+    logger.error({ error }, 'Could not launch telegram bot')
     process.exit(1)
   })
 
@@ -741,7 +743,7 @@ async function start() {
       try {
         await refreshMembershipsUseCase.run()
       } catch (error) {
-        logger.error(error, 'Could not refresh memberships')
+        logger.error({ error }, 'Could not refresh memberships')
       } finally {
         logger.debug(
           { refreshMembershipsJobIntervalMs },
@@ -758,6 +760,6 @@ async function start() {
 start()
   .then(() => logger.info({}, 'Started!'))
   .catch((error) => {
-    logger.error(error, 'Unexpected starting error')
+    logger.error({ error }, 'Unexpected starting error')
     process.exit(1)
   })
