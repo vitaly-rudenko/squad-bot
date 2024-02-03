@@ -52,11 +52,11 @@
     "jsonwebtoken": "^8.5.1",
     "markdown-escapes": "^2.0.1",
     "multer": "^1.4.4",
+    "nanoid": "^5.0.5",
     "pg": "^8.7.1",
     "pino": "^7.9.1",
     "pino-pretty": "^7.5.4",
     "telegraf": "^4.15.3",
-    "umzug": "^3.0.0",
-    "uuid": "^9.0.1"
+    "umzug": "^3.0.0"
   }
 }
