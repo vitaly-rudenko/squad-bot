@@ -76,7 +76,6 @@ async function start() {
 
   const upload = multer()
 
-  // @ts-ignore
   const redis = new Redis(process.env.REDIS_URL || '')
   const createRedisCache = createRedisCacheFactory(redis)
 
@@ -257,9 +256,9 @@ async function start() {
   })
 
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager, generateWebAppUrl }))
-  bot.command('receipts', receiptsCommand({ usersStorage, generateWebAppUrl }))
-  bot.command('payments', paymentsCommand({ usersStorage, generateWebAppUrl }))
-  bot.command('rollcalls', requireGroupChat(), rollCallsCommand({ usersStorage, generateWebAppUrl }))
+  bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
+  bot.command('payments', paymentsCommand({ generateWebAppUrl }))
+  bot.command('rollcalls', rollCallsCommand({ generateWebAppUrl }))
 
   bot.command('addcard', cardsAddCommand())
   bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction())

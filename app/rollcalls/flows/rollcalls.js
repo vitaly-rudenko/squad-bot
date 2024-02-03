@@ -1,19 +1,20 @@
 import { PatternBuilder, PatternMatcher, EntryMatchers } from '@vitalyrudenko/templater'
 import { escapeMd } from '../../utils/escapeMd.js'
+import { GROUP_CHAT_TYPES } from '../../shared/middlewares/groupChat.js'
 
-export function rollCallsCommand({ usersStorage, generateWebAppUrl }) {
+export function rollCallsCommand({ generateWebAppUrl }) {
   return async (context) => {
-    const { userId, chatId, localize } = context.state
+    const { chatId, localize } = context.state
 
-    const user = await usersStorage.findById(userId)
-    const viewUrl = generateWebAppUrl('group', chatId, 'roll-calls')
-    const createUrl = generateWebAppUrl('group', chatId, 'roll-call', 'new')
+    const isGroup = GROUP_CHAT_TYPES.includes(context.chat.type)
+
+    const viewUrl = isGroup ? generateWebAppUrl('group', chatId, 'roll-calls') : generateWebAppUrl('groups')
+    const createUrl = isGroup ? generateWebAppUrl('group', chatId, 'roll-call', 'new') : undefined
 
     await context.reply(
-      localize('command.rollCalls.help', {
-        name: escapeMd(user.name),
+      localize(isGroup ? 'command.rollCalls.group' : 'command.rollCalls.private', {
         viewUrl: escapeMd(viewUrl),
-        createUrl: escapeMd(createUrl),
+        ...createUrl && { createUrl: escapeMd(createUrl) },
       }),
       { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
     )

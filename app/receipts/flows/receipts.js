@@ -1,11 +1,10 @@
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function receiptsCommand({ usersStorage, generateWebAppUrl }) {
+export function receiptsCommand({ generateWebAppUrl }) {
   /** @param {import('telegraf').Context} context */
   return async (context) => {
-    const { userId, localize } = context.state
+    const { localize } = context.state
 
-    const user = await usersStorage.findById(userId)
     const viewUrl = generateWebAppUrl('receipts')
     const createUrl = generateWebAppUrl('receipt', 'new')
 
@@ -13,7 +12,6 @@ export function receiptsCommand({ usersStorage, generateWebAppUrl }) {
       localize(
         'command.receipts.help',
         {
-          name: escapeMd(user.name),
           viewUrl: escapeMd(viewUrl),
           createUrl: escapeMd(createUrl),
         }
