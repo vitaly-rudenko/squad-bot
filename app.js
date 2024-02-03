@@ -62,7 +62,7 @@ import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
-import { titleSetCancelAction, titleSetCommand, titleSetMessage, titleSetUserIdAction } from './app/titles/flows/title.js'
+import { titleCommand } from './app/titles/flows/title.js'
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
@@ -272,9 +272,7 @@ async function start() {
   bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage }))
   bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage }))
 
-  bot.command('title', requireGroupChat(), titleSetCommand({ bot, membershipStorage, usersStorage }))
-  bot.action(/^title:set:user-id:(.+)$/, withPhase(Phases.title.set.chooseUser), titleSetUserIdAction({ usersStorage }))
-  bot.action(/^title:set:cancel$/, withPhase(Phases.title.set.chooseUser, Phases.title.set.sendTitle), titleSetCancelAction())
+  bot.command('title', titleCommand({ generateWebAppUrl }))
 
   bot.on('message',
     async (context, next) => {
@@ -284,7 +282,6 @@ async function start() {
     // cards
     wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage })),
     // roll calls
-    wrap(withGroupChat(), withPhase(Phases.title.set.sendTitle), titleSetMessage({ bot, membershipStorage, usersStorage })),
     wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
   )
 
