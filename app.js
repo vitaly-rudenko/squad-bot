@@ -486,6 +486,14 @@ async function start() {
     res.json(users)
   })
 
+  router.get('/bot', async (req, res) => {
+    res.json({
+      id: String(botInfo.id),
+      name: botInfo.first_name,
+      username: botInfo.username,
+    })
+  })
+
   async function formatReceipt(receipt) {
     const debts = await debtsStorage.findByReceiptId(receipt.id)
 
