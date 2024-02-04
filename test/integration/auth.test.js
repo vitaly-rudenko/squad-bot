@@ -41,7 +41,7 @@ describe('[auth]', () => {
       })
     })
 
-    it('should not expired temporary auth token', async () => {
+    it('should not exchange expired temporary auth token', async () => {
       const [user] = await createUsers(1)
       const temporaryAuthToken = jwt.sign({ userId: user.id }, process.env.TOKEN_SECRET, {
         expiresIn: '100 ms',
