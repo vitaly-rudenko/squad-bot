@@ -6,6 +6,11 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, { encoding: 'utf
 
 export function versionCommand() {
   return async (context) => {
-    await context.reply(packageJson.version)
+    await context.reply([
+      `Version: ${packageJson.version}`,
+      `Bot ID: ${context.botInfo.id}`,
+      `User ID: ${context.from.id}`,
+      `Chat ID: ${context.chat.id} (${context.chat.type})`,
+    ].join('\n'))
   }
 }
