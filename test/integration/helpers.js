@@ -190,6 +190,7 @@ export function createToken({ userId, username, name }) {
   return jwt.sign({ user: { id: userId, username, name } }, TOKEN_SECRET)
 }
 
+/** @returns {Promise<import('../../app/payments/Payment.js').Payment>} */
 export async function createPayment(fromUserId, toUserId, amount) {
   const payment = { fromUserId, toUserId, amount }
 
@@ -216,6 +217,7 @@ export async function deletePayment(paymentId, userId) {
   validateResponse(response)
 }
 
+/** @returns {Promise<import('../../app/debts/Debt.js').Debt[]>} */
 export async function getDebts(userId) {
   const response = await fetch(`${TEST_API_URL}/debts`, {
     headers: createAuthorizationHeader({ userId }),
@@ -226,6 +228,7 @@ export async function getDebts(userId) {
   return await response.json()
 }
 
+/** @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall>} */
 export async function createRollCall(userId, groupId, sortOrder = 1, {
   messagePattern = '@channel',
   usersPattern = '*',
@@ -264,7 +267,7 @@ export async function createRollCall(userId, groupId, sortOrder = 1, {
  *   pollOptions?: string[]
  *   sortOrder?: number
  * }} input
- * @returns
+ * @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall>}
  */
 export async function updateRollCall(userId, rollCallId, {
   messagePattern,
@@ -293,6 +296,7 @@ export async function updateRollCall(userId, rollCallId, {
   return await response.json()
 }
 
+/** @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall[]>} */
 export async function getRollCalls(groupId, userId) {
   const response = await fetch(`${TEST_API_URL}/rollcalls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),
@@ -312,6 +316,7 @@ export async function deleteRollCall(id, userId) {
   validateResponse(response)
 }
 
+/** @returns {Promise<import('../../app/groups/Group.js').Group>} */
 export async function getGroups(userId) {
   const response = await fetch(`${TEST_API_URL}/groups`, {
     headers: createAuthorizationHeader({ userId }),
