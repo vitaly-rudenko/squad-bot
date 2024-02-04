@@ -9,7 +9,7 @@ export const withLocalization = ({ userManager }) => {
 
     const user = await userManager.getCachedUser(userId)
 
-    context.state.localize = (message, replacements = null) =>
+    context.state.localize = (message, replacements) =>
       localize(user?.locale ?? DEFAULT_LOCALE, message, replacements)
 
     return next()

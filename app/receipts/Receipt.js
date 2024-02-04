@@ -1,5 +1,15 @@
 export class Receipt {
-  constructor({ id = undefined, payerId, amount, description = null, hasPhoto = false, createdAt = new Date() }) {
+  /**
+   * @param {{
+   *   id?: string
+   *   payerId: string
+   *   amount: number
+   *   description?: string
+   *   hasPhoto: boolean
+   *   createdAt?: Date
+   * }} input
+   */
+  constructor({ id, payerId, amount, description, hasPhoto = false, createdAt = new Date() }) {
     this.id = id
     this.payerId = payerId
     this.amount = amount

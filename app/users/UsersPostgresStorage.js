@@ -44,7 +44,7 @@ export class UsersPostgresStorage {
   /** @param {string} id */
   async findById(id) {
     const users = await this._find({ ids: [id], limit: 1 })
-    return users.length > 0 ? users[0] : null
+    return users.at(0)
   }
 
   /** @param {string[]} ids */
@@ -59,7 +59,7 @@ export class UsersPostgresStorage {
    *   limit?: number,
    *   offset?: number,
    *   allowDeprecatedNoConditions?: boolean
-   * }} options 
+   * }} options
    */
   async _find({ ids, limit, offset, allowDeprecatedNoConditions = false } = {}) {
     const conditions = []

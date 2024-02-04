@@ -6,7 +6,7 @@ export function receiptsCommand({ generateWebAppUrl }) {
     const { localize } = context.state
 
     const viewUrl = generateWebAppUrl('receipts')
-    const createUrl = generateWebAppUrl('receipt', 'new')
+    const createUrl = generateWebAppUrl('new-receipt')
 
     await context.reply(
       localize(

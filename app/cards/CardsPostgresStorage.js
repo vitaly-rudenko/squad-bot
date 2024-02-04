@@ -28,7 +28,7 @@ export class CardsPostgresStorage {
   /** @param {string} id */
   async findById(id) {
     const cards = await this._find({ ids: [id], limit: 1 })
-    return cards.length > 0 ? cards[0] : null
+    return cards.at(0)
   }
 
   /** @param {string} userId */

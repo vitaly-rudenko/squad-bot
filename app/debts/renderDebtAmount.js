@@ -1,15 +1,11 @@
 import { renderAmount, renderMoney } from '../utils/renderMoney.js'
 
-/** @param {import('./Debt').Debt} debt */
+/** @param {import('./Debt.js').Debt} debt */
 export function renderDebtAmount(debt) {
-  return renderMoney(debt.amount === null ? '?' : debt.amount)
+  return renderMoney(debt.amount)
 }
 
 /** @param {import('./AggregatedDebt').AggregatedDebt} debt */
 export function renderAggregatedDebt(debt) {
-  return renderMoney(
-    debt.isIncomplete()
-      ? (debt.amount === 0 ? '?': `${renderAmount(debt.amount)}+?`)
-      : debt.amount
-  )
+  return renderMoney(debt.amount)
 }

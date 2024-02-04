@@ -1,4 +1,3 @@
-import { toNullableAmount } from '../utils/toNullableAmount.js'
 import { AggregatedPayment } from './AggregatedPayment.js'
 import { Payment } from './Payment.js'
 
@@ -40,7 +39,8 @@ export class PaymentsPostgresStorage {
     return this._aggregatePayments({ fromUserId: userId })
   }
 
-  async _aggregatePayments({ fromUserId = undefined, toUserId = undefined }) {
+  /** @param {{ fromUserId?: string; toUserId?: string }} input */
+  async _aggregatePayments({ fromUserId, toUserId }) {
     const variables = []
     const conditions = [
       'p.deleted_at IS NULL'
@@ -57,7 +57,7 @@ export class PaymentsPostgresStorage {
     }
 
     const response = await this._client.query(`
-      SELECT SUM(p.amount) AS amount
+      SELECT SUM(p.amount)::int AS amount
         , p.from_user_id
         , p.to_user_id
       FROM payments p
@@ -71,7 +71,7 @@ export class PaymentsPostgresStorage {
   /** @param {string} id */
   async findById(id) {
     const payments = await this._find({ ids: [id] })
-    return payments.length > 0 ? payments[0] : null
+    return payments.at(0)
   }
 
   /** @param {string} userId */
@@ -134,7 +134,7 @@ export class PaymentsPostgresStorage {
       id: row['id'],
       fromUserId: row['from_user_id'],
       toUserId: row['to_user_id'],
-      amount: toNullableAmount(row['amount']),
+      amount: row['amount'],
       createdAt: new Date(row['created_at']),
     })
   }
@@ -143,7 +143,7 @@ export class PaymentsPostgresStorage {
     return new AggregatedPayment({
       fromUserId: row['from_user_id'],
       toUserId: row['to_user_id'],
-      amount: toNullableAmount(row['amount']),
+      amount: row['amount'],
     })
   }
 }

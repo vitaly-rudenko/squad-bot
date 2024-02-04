@@ -1,6 +1,13 @@
 import { Debt } from '../debts/Debt.js'
 
 export class ReceiptManager {
+  /**
+   * @param {{
+   *   receiptsStorage: import('./ReceiptsPostgresStorage.js').ReceiptsPostgresStorage,
+   *   debtsStorage: import('../debts/DebtsPostgresStorage.js').DebtsPostgresStorage,
+   *   receiptNotifier: import('./notifications/ReceiptTelegramNotifier.js').ReceiptTelegramNotifier,
+   * }} input
+   */
   constructor({ receiptsStorage, debtsStorage, receiptNotifier }) {
     this._receiptsStorage = receiptsStorage
     this._debtsStorage = debtsStorage
@@ -10,8 +17,8 @@ export class ReceiptManager {
   /**
    * @param {{
    *   receipt: import('./Receipt').Receipt,
-   *   receiptPhoto: import('./ReceiptPhoto').ReceiptPhoto | null,
-   *   debts: { debtorId: string, amount: number | null }[]
+   *   receiptPhoto: import('./ReceiptPhoto').ReceiptPhoto | undefined | 'delete',
+   *   debts: { debtorId: string, amount: number }[]
    * }} data
    * @param {{ editorId: string }} meta
    */

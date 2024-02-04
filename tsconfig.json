@@ -1,15 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "useUnknownInCatchVariables": false,
-    "noImplicitAny": false,
+    "target": "ES2020",
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "allowJs": true,
     "checkJs": true,
-    "esModuleInterop": true,
-    "noEmit": true
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "useUnknownInCatchVariables": false,
+    "noImplicitAny": false,
   },
   "include": ["types.d.ts", "app.js", "env.js", "logger.js", "app/**/*.js"],
   "exclude": ["node_modules"]

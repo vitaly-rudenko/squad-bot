@@ -240,7 +240,7 @@ describe('[receipts]', () => {
       })
 
       const { id: receipt3Id } = await createReceipt(user1.id, {
-        [user2.id]: null,
+        [user2.id]: 10,
       }, { description: 'hello world' })
 
       await deleteReceipt(receipt2Id, user2.id)

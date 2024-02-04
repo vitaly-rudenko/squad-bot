@@ -6,7 +6,7 @@ export function paymentsCommand({ generateWebAppUrl }) {
     const { localize } = context.state
 
     const viewUrl = generateWebAppUrl('payments')
-    const createUrl = generateWebAppUrl('payment', 'new')
+    const createUrl = generateWebAppUrl('new-payment')
 
     await context.reply(
       localize(

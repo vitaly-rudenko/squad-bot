@@ -25,7 +25,8 @@ export function validateResponse(response) {
   }
 }
 
-export async function createUser(index = null) {
+/** @returns {Promise<import('../../app/users/User.js').User>} */
+export async function createUser(index) {
   const userId = [index, generateUserId()].filter(Boolean).join('_')
 
   const response = await fetch(`${TEST_API_URL}/users`, {
@@ -51,13 +52,27 @@ export async function createUsers(count = 1) {
   return users
 }
 
+/**
+ *
+ * @param {string} payerId
+ * @param {Record<string, number>} debts
+ * @param {{
+ *   leavePhoto?: boolean
+ *   photo?: Buffer
+ *   mime?: string
+ *   description?: string
+ *   receiptId?: string
+ *   amount?: number
+ * }} [input]
+ * @returns {Promise<import('../../app/receipts/Receipt.js').Receipt>}
+ */
 export async function createReceipt(payerId, debts, {
   leavePhoto = false,
-  photo = null,
-  mime = null,
-  description = null,
-  receiptId = null,
-  amount = null,
+  photo,
+  mime,
+  description,
+  receiptId,
+  amount,
 } = {}) {
   if (!amount) {
     amount = Object.values(debts).reduce((a, b) => a + b, 0)
@@ -94,6 +109,7 @@ export async function createReceipt(payerId, debts, {
   return await response.json()
 }
 
+/** @returns {Promise<import('../../app/receipts/Receipt.js').Receipt[]>} */
 export async function getReceipts(userId) {
   const response = await fetch(`${TEST_API_URL}/receipts`, {
     headers: createAuthorizationHeader({ userId })
@@ -110,6 +126,7 @@ export async function getAuthToken(temporaryAuthToken) {
   return await response.json()
 }
 
+/** @returns {Promise<import('../../app/receipts/Receipt.js').Receipt>} */
 export async function getReceipt(receiptId, userId) {
   const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}`, {
     headers: createAuthorizationHeader({ userId }),
@@ -236,12 +253,25 @@ export async function createRollCall(userId, groupId, sortOrder = 1, {
   return await response.json()
 }
 
+/**
+ *
+ * @param {string} userId
+ * @param {string} rollCallId
+ * @param {{
+ *   messagePattern?: string
+ *   usersPattern?: string
+ *   excludeSender?: boolean
+ *   pollOptions?: string[]
+ *   sortOrder?: number
+ * }} input
+ * @returns
+ */
 export async function updateRollCall(userId, rollCallId, {
-  messagePattern = undefined,
-  usersPattern = undefined,
-  excludeSender = undefined,
-  pollOptions = undefined,
-  sortOrder = undefined,
+  messagePattern,
+  usersPattern,
+  excludeSender,
+  pollOptions,
+  sortOrder,
 } = {}) {
   const response = await fetch(`${TEST_API_URL}/rollcalls/${rollCallId}`, {
     method: 'PATCH',
