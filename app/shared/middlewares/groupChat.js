@@ -1,4 +1,4 @@
-const GROUP_CHAT_TYPES = ['group', 'supergroup']
+export const GROUP_CHAT_TYPES = ['group', 'supergroup']
 
 export const requireGroupChat = () => {
   /** @param {import('telegraf').Context} context @param {Function} next */

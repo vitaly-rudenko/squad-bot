@@ -1,4 +1,4 @@
-import pino from 'pino'
+import { pino } from 'pino'
 import { logLevel } from './env.js'
 
 console.log('Log level:', logLevel)

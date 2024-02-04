@@ -10,7 +10,7 @@ import express from 'express'
 import Router from 'express-promise-router'
 import jwt from 'jsonwebtoken'
 import multer from 'multer'
-import Redis from 'ioredis'
+import { Redis } from 'ioredis'
 
 import { versionCommand } from './app/shared/flows/version.js'
 
@@ -62,12 +62,13 @@ import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 import { AlreadyExistsError } from './app/errors/AlreadyExistsError.js'
-import { titleSetCancelAction, titleSetCommand, titleSetMessage, titleSetUserIdAction } from './app/titles/flows/title.js'
+import { titleCommand } from './app/titles/flows/title.js'
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 import { generateTemporaryAuthToken } from './app/auth/generateTemporaryAuthToken.js'
+import { ApiError } from './app/ApiError.js'
 
 async function start() {
   if (useTestMode) {
@@ -76,7 +77,6 @@ async function start() {
 
   const upload = multer()
 
-  // @ts-ignore
   const redis = new Redis(process.env.REDIS_URL || '')
   const createRedisCache = createRedisCacheFactory(redis)
 
@@ -113,8 +113,9 @@ async function start() {
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
   const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
 
+  const botInfo = await bot.telegram.getMe()
   const generateWebAppUrl = createWebAppUrlGenerator({
-    botUsername: (await bot.telegram.getMe()).username,
+    botUsername: botInfo.username,
     webAppName: process.env.WEB_APP_NAME,
   })
 
@@ -257,9 +258,9 @@ async function start() {
   })
 
   bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager, generateWebAppUrl }))
-  bot.command('receipts', receiptsCommand({ usersStorage, generateWebAppUrl }))
-  bot.command('payments', paymentsCommand({ usersStorage, generateWebAppUrl }))
-  bot.command('rollcalls', requireGroupChat(), rollCallsCommand({ usersStorage, generateWebAppUrl }))
+  bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
+  bot.command('payments', paymentsCommand({ generateWebAppUrl }))
+  bot.command('rollcalls', rollCallsCommand({ generateWebAppUrl }))
 
   bot.command('addcard', cardsAddCommand())
   bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction())
@@ -271,9 +272,7 @@ async function start() {
   bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage }))
   bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage }))
 
-  bot.command('title', requireGroupChat(), titleSetCommand({ bot, membershipStorage, usersStorage }))
-  bot.action(/^title:set:user-id:(.+)$/, withPhase(Phases.title.set.chooseUser), titleSetUserIdAction({ usersStorage }))
-  bot.action(/^title:set:cancel$/, withPhase(Phases.title.set.chooseUser, Phases.title.set.sendTitle), titleSetCancelAction())
+  bot.command('title', titleCommand({ generateWebAppUrl }))
 
   bot.on('message',
     async (context, next) => {
@@ -283,7 +282,6 @@ async function start() {
     // cards
     wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage })),
     // roll calls
-    wrap(withGroupChat(), withPhase(Phases.title.set.sendTitle), titleSetMessage({ bot, membershipStorage, usersStorage })),
     wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
   )
 
@@ -483,6 +481,14 @@ async function start() {
 
     const users = await usersStorage.findAll()
     res.json(users)
+  })
+
+  router.get('/bot', async (req, res) => {
+    res.json({
+      id: String(botInfo.id),
+      name: botInfo.first_name,
+      username: botInfo.username,
+    })
   })
 
   async function formatReceipt(receipt) {
@@ -704,6 +710,126 @@ async function start() {
     res.json(await groupStorage.findByMemberUserId(req.user.id))
   })
 
+  router.get('/admins', async (req, res) => {
+    const groupId = req.query.group_id
+    if (typeof groupId !== 'string') {
+      res.sendStatus(400)
+      return
+    }
+
+    if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
+      res.sendStatus(403)
+      return
+    }
+
+    try {
+      const admins = await bot.telegram.getChatAdministrators(Number(groupId))
+
+      res.json(admins.map(admin => ({
+        userId: String(admin.user.id),
+        title: admin.custom_title || '',
+        isCreator: admin.status === 'creator',
+        isCurrentBot: admin.user.id === botInfo.id,
+        editable: admin.status !== 'creator' && admin.can_be_edited,
+      })))
+    } catch (error) {
+      if (error.message.includes('chat not found')) {
+        res.status(502).json({ error: { code: 'CHAT_NOT_FOUND', message: 'Chat not found. Does bot have access to the group?' } })
+        return
+      }
+
+      logger.error({ error, groupId }, 'Could not get chat administrators')
+      throw error
+    }
+  })
+
+  async function setUserCustomTitle(groupId, userId, title) {
+    try {
+      await bot.telegram.setChatAdministratorCustomTitle(Number(groupId), Number(userId), title)
+    } catch (error) {
+      if (error.message.includes('ADMIN_RANK_EMOJI_NOT_ALLOWED')) {
+        throw new ApiError({ code: 'INVALID_CUSTOM_TITLE', status: 502 })
+      }
+
+      if (error.message.includes('RIGHT_FORBIDDEN')) {
+        throw new ApiError({ code: 'INSUFFICIENT_PERMISSIONS', status: 502 })
+      }
+
+      if (error.message.includes('method is available only for supergroups')) {
+        throw new ApiError({ code: 'FOR_SUPERGROUPS_ONLY', status: 502 })
+      }
+
+      throw error
+    }
+  }
+
+  // https://stackoverflow.com/questions/61022534/telegram-bot-with-add-new-admin-rights-cant-promote-new-admins-or-change-cust
+  // "To change custom title, user has to be promoted by the bot itself."
+  async function setUserCustomTitleAndPromote(groupId, userId, title) {
+    try {
+      await setUserCustomTitle(groupId, userId, title)
+    } catch (error) {
+      if (!error.message.includes('user is not an administrator')) {
+        throw error
+      }
+
+      try {
+        await bot.telegram.promoteChatMember(Number(groupId), Number(userId), {
+          can_change_info: true,
+          can_pin_messages: true,
+        })
+      } catch (error) {
+        if (error.message.includes('not enough rights')) {
+          throw new ApiError({ code: 'CANNOT_ADD_NEW_ADMINS', status: 502 })
+        }
+
+        throw error
+      }
+
+      await setUserCustomTitle(groupId, userId, title)
+    }
+  }
+
+  router.patch('/admins', async (req, res) => {
+    const { groupId, admins } = req.body
+    if (
+      typeof groupId !== 'string' ||
+      !Array.isArray(admins) ||
+      admins.some(admin =>
+        typeof admin.userId !== 'string' ||
+        typeof admin.title !== 'string'
+      )
+    ) {
+      res.sendStatus(400)
+      return
+    }
+
+    if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
+      res.sendStatus(403)
+      return
+    }
+
+    const errorCodes = []
+    for (const admin of admins) {
+      try {
+        await setUserCustomTitleAndPromote(groupId, admin.userId, admin.title)
+      } catch (error) {
+        if (error instanceof ApiError) {
+          errorCodes.push({ userId: admin.userId, errorCode: error.code })
+        } else {
+          logger.error({ error, groupId, admin }, 'Could not update admin')
+          throw error
+        }
+      }
+    }
+
+    if (errorCodes.length > 0) {
+      res.status(400).json({ error: { code: 'COULD_NOT_UPDATE_ADMINS', context: { errorCodes } } })
+    } else {
+      res.sendStatus(200)
+    }
+  })
+
   app.use(router)
 
   const port = Number(process.env.PORT) || 3000
@@ -724,7 +850,7 @@ async function start() {
 
   logger.info({}, 'Starting telegram bot')
   bot.launch().catch((error) => {
-    logger.error(error, 'Could not launch telegram bot')
+    logger.error({ error }, 'Could not launch telegram bot')
     process.exit(1)
   })
 
@@ -742,7 +868,7 @@ async function start() {
       try {
         await refreshMembershipsUseCase.run()
       } catch (error) {
-        logger.error(error, 'Could not refresh memberships')
+        logger.error({ error }, 'Could not refresh memberships')
       } finally {
         logger.debug(
           { refreshMembershipsJobIntervalMs },
@@ -759,6 +885,6 @@ async function start() {
 start()
   .then(() => logger.info({}, 'Started!'))
   .catch((error) => {
-    logger.error(error, 'Unexpected starting error')
+    logger.error({ error }, 'Unexpected starting error')
     process.exit(1)
   })

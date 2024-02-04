@@ -1,4 +1,4 @@
-import { v4 as uuid } from 'uuid'
+import { nanoid } from 'nanoid'
 import { toNullableAmount } from '../utils/toNullableAmount.js'
 import { Receipt } from './Receipt.js'
 import { ReceiptPhoto } from './ReceiptPhoto.js'
@@ -10,10 +10,10 @@ export class ReceiptsPostgresStorage {
   }
 
   /**
-   * @param {Receipt} receipt 
-   * @param {ReceiptPhoto} [receiptPhoto] 
+   * @param {Receipt} receipt
+   * @param {ReceiptPhoto} [receiptPhoto]
    */
-  async create(receipt, receiptPhoto = null) {
+  async create(receipt, receiptPhoto) {
     const { payerId, amount, description } = receipt
     const { binary = null, mime = null } = receiptPhoto || {}
 
@@ -21,16 +21,16 @@ export class ReceiptsPostgresStorage {
       INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime, is_photo_optimized)
       VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
       RETURNING id;
-    `, [uuid(), new Date().toISOString(), payerId, amount, description, binary, mime])
+    `, [nanoid(12), new Date().toISOString(), payerId, amount, description, binary, mime])
 
     return this.findById(response.rows[0]['id'])
   }
 
   /**
-   * @param {Receipt} receipt 
-   * @param {ReceiptPhoto} [receiptPhoto] 
+   * @param {Receipt} receipt
+   * @param {ReceiptPhoto} [receiptPhoto]
    */
-  async update(receipt, receiptPhoto = null) {
+  async update(receipt, receiptPhoto) {
     const { id, payerId, amount, description } = receipt
     const { binary = null, mime = null } = receiptPhoto || {}
 
@@ -90,7 +90,7 @@ export class ReceiptsPostgresStorage {
    *   participantUserIds?: string[],
    *   limit?: number,
    *   offset?: number,
-   * }} options 
+   * }} options
    */
   async _find({ ids, participantUserIds, limit, offset } = {}) {
     const conditions = ['r.deleted_at IS NULL']
