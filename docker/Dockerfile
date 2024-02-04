@@ -8,7 +8,7 @@ WORKDIR /app
 RUN apk add --no-cache npm
 
 COPY package*.json .
-RUN npm ci --no-optional
+RUN npm ci --omit=optional
 
 COPY . .
 
