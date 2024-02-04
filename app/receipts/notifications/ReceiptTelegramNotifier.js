@@ -3,6 +3,15 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
 export class ReceiptTelegramNotifier {
+  /**
+   * @param {{
+   *   massTelegramNotificationFactory: import('../../shared/notifications/MassTelegramNotification.js').MassTelegramNotificationFactory,
+   *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage,
+   *   debtsStorage: import('../../debts/DebtsPostgresStorage.js').DebtsPostgresStorage,
+   *   localize: any,
+   *   generateWebAppUrl: any,
+   * }} input
+   */
   constructor({ massTelegramNotificationFactory, usersStorage, debtsStorage, localize, generateWebAppUrl }) {
     this._usersStorage = usersStorage
     this._debtsStorage = debtsStorage
@@ -27,8 +36,8 @@ export class ReceiptTelegramNotifier {
       if (!user.isComplete) continue
 
       const notification = this._localize(user.locale, 'notifications.receiptDeleted.message', {
-        editorName: escapeMd(editor.name),
-        editorUsername: escapeMd(editor.username),
+        editorName: escapeMd(editor?.name),
+        editorUsername: escapeMd(editor?.username),
         receiptDescription: description
           ? this._localize(
             user.locale,
@@ -37,8 +46,8 @@ export class ReceiptTelegramNotifier {
           )
           : this._localize(user.locale, 'notifications.receiptDeleted.noDescription'),
         receiptAmount: escapeMd(renderMoney(amount)),
-        payerName: escapeMd(payer.name),
-        payerUsername: escapeMd(payer.username),
+        payerName: escapeMd(payer?.name),
+        payerUsername: escapeMd(payer?.username),
       })
 
       massNotification.add(user.id, notification)
@@ -74,11 +83,10 @@ export class ReceiptTelegramNotifier {
       if (!user.isComplete) continue
 
       const debt = debts.find(debt => debt.debtorId === user.id)
-      const isComplete = debt && debt?.amount !== null
 
       const notification = this._localize(user.locale, 'notifications.receiptStored.message', {
-        editorName: escapeMd(editor.name),
-        editorUsername: escapeMd(editor.username),
+        editorName: escapeMd(editor?.name),
+        editorUsername: escapeMd(editor?.username),
         action: this._localize(
           user.locale,
           isNew
@@ -93,20 +101,14 @@ export class ReceiptTelegramNotifier {
           )
           : this._localize(user.locale, 'notifications.receiptStored.noDescription'),
         receiptAmount: escapeMd(renderMoney(amount)),
-        payerName: escapeMd(payer.name),
-        payerUsername: escapeMd(payer.username),
+        payerName: escapeMd(payer?.name),
+        payerUsername: escapeMd(payer?.username),
         receiptUrl: escapeMd(receiptUrl),
-        part: this._localize(
+        part: debt ? this._localize(
           user.locale,
-          isComplete
-            ? 'notifications.receiptStored.part.complete'
-            : 'notifications.receiptStored.part.incomplete',
-          isComplete ? {
-            partAmount: escapeMd(renderDebtAmount(debt)),
-          } : {
-            receiptUrl: escapeMd(receiptUrl),
-          },
-        ),
+          'notifications.receiptStored.part',
+          { partAmount: escapeMd(renderDebtAmount(debt)) },
+        ) : '',
       })
 
       massNotification.add(user.id, notification)

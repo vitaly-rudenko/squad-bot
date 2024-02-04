@@ -1,4 +1,3 @@
-import { toNullableAmount } from '../utils/toNullableAmount.js'
 import { AggregatedDebt } from './AggregatedDebt.js'
 import { Debt } from './Debt.js'
 
@@ -29,7 +28,7 @@ export class DebtsPostgresStorage {
 
   async findById(id) {
     const debts = await this._find({ ids: [id], limit: 1 })
-    return debts.length > 0 ? debts[0] : null
+    return debts.at(0)
   }
 
   async findByReceiptId(receiptId) {
@@ -98,7 +97,7 @@ export class DebtsPostgresStorage {
       id: row['id'],
       debtorId: row['debtor_id'],
       receiptId: row['receipt_id'],
-      amount: toNullableAmount(row['amount']),
+      amount: row['amount'],
     })
   }
 
@@ -110,7 +109,8 @@ export class DebtsPostgresStorage {
     return this._aggregateDebts({ fromUserId: userId })
   }
 
-  async _aggregateDebts({ fromUserId = undefined, toUserId = undefined }) {
+  /** @param {{ fromUserId?: string; toUserId?: string }} input */
+  async _aggregateDebts({ fromUserId, toUserId }) {
     const variables = []
     const conditions = [
       'd.debtor_id != r.payer_id',
@@ -129,10 +129,9 @@ export class DebtsPostgresStorage {
     }
 
     const response = await this._client.query(`
-      SELECT SUM(d.amount) AS amount
+      SELECT SUM(d.amount)::int AS amount
         , d.debtor_id as from_user_id
         , r.payer_id as to_user_id
-        , ARRAY_REMOVE(ARRAY_AGG(CASE WHEN d.amount IS NULL THEN d.receipt_id ELSE NULL END), null) AS incomplete_receipt_ids
       FROM debts d
       LEFT JOIN receipts r ON d.receipt_id = r.id
       WHERE (${conditions.join(') AND (')})
@@ -146,8 +145,7 @@ export class DebtsPostgresStorage {
     return new AggregatedDebt({
       fromUserId: row['from_user_id'],
       toUserId: row['to_user_id'],
-      amount: toNullableAmount(row['amount']),
-      incompleteReceiptIds: row['incomplete_receipt_ids'],
+      amount: row['amount'],
     })
   }
 }

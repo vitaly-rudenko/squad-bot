@@ -54,12 +54,12 @@ class MigrationsCli {
   }
 
   /**
- * Executes all pending migrations up to specified one.
- * If destination is not specified, executes all pending migrations.
- *
- * @param {string} destination Migration destination.
- */
-  async migrate(destination = undefined) {
+   * Executes all pending migrations up to specified one.
+   * If destination is not specified, executes all pending migrations.
+   *
+   * @param {string} [destination] Migration destination.
+   */
+  async migrate(destination) {
     const migrations = destination !== undefined
       ? await umzug.up({ to: destination })
       : await umzug.up()
@@ -71,6 +71,9 @@ class MigrationsCli {
     }
   }
 
+  /**
+   * @param {string | 0} [destination] Migration destination.
+   */
   async undo(destination) {
     const migrations = destination !== undefined
       ? await umzug.down({ to: destination })
@@ -95,7 +98,7 @@ class MigrationsCli {
   }
 
   async printExecuted() {
-    const migrations = await umzug.storage.executed()
+    const migrations = await umzug.executed()
 
     if (migrations.length > 0) {
       console.log('Executed migrations:')

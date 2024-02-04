@@ -30,7 +30,7 @@ export function get(messageKey, locale) {
   return result ?? escapeMd(messageKey)
 }
 
-export function localize(locale, messageKey, replacements = null) {
+export function localize(locale, messageKey, replacements) {
   let result = get(messageKey, locale)
 
   if (Array.isArray(result)) {

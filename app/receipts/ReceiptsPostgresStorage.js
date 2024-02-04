@@ -1,5 +1,4 @@
 import { nanoid } from 'nanoid'
-import { toNullableAmount } from '../utils/toNullableAmount.js'
 import { Receipt } from './Receipt.js'
 import { ReceiptPhoto } from './ReceiptPhoto.js'
 
@@ -15,7 +14,8 @@ export class ReceiptsPostgresStorage {
    */
   async create(receipt, receiptPhoto) {
     const { payerId, amount, description } = receipt
-    const { binary = null, mime = null } = receiptPhoto || {}
+    const binary = receiptPhoto ? receiptPhoto.binary : null
+    const mime = receiptPhoto ? receiptPhoto.mime : null
 
     const response = await this._client.query(`
       INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime, is_photo_optimized)
@@ -28,17 +28,30 @@ export class ReceiptsPostgresStorage {
 
   /**
    * @param {Receipt} receipt
-   * @param {ReceiptPhoto} [receiptPhoto]
+   * @param {ReceiptPhoto | undefined | 'delete'} receiptPhoto
    */
   async update(receipt, receiptPhoto) {
     const { id, payerId, amount, description } = receipt
-    const { binary = null, mime = null } = receiptPhoto || {}
+    if (!id) {
+      throw new Error('Receipt ID is not provided for update')
+    }
 
-    await this._client.query(`
-      UPDATE receipts
-      SET payer_id = $2, amount = $3, description = $4, photo = $5, mime = $6
-      WHERE id = $1;
-    `, [id, payerId, amount, description, binary, mime])
+    if (receiptPhoto !== undefined) {
+      const binary = receiptPhoto === 'delete' ? null : receiptPhoto.binary
+      const mime = receiptPhoto === 'delete' ? null : receiptPhoto.mime
+
+      await this._client.query(`
+        UPDATE receipts
+        SET payer_id = $2, amount = $3, description = $4, photo = $5, mime = $6
+        WHERE id = $1;
+      `, [id, payerId, amount, description, binary, mime])
+    } else {
+      await this._client.query(`
+        UPDATE receipts
+        SET payer_id = $2, amount = $3, description = $4
+        WHERE id = $1;
+      `, [id, payerId, amount, description])
+    }
 
     return this.findById(id)
   }
@@ -62,7 +75,7 @@ export class ReceiptsPostgresStorage {
     `, [receiptId])
 
     if (response.rowCount === 0 || !response.rows[0]['photo'] || !response.rows[0]['mime']) {
-      return null
+      return undefined
     }
 
     return this.deserializeReceiptPhoto(response.rows[0])
@@ -75,7 +88,7 @@ export class ReceiptsPostgresStorage {
   /** @param {string} id */
   async findById(id) {
     const receipts = await this._find({ ids: [id] })
-    return receipts.length > 0 ? receipts[0] : null
+    return receipts.at(0)
   }
 
   /** @param {string[]} ids */
@@ -152,7 +165,7 @@ export class ReceiptsPostgresStorage {
       id: row['id'],
       createdAt: new Date(row['created_at']),
       payerId: row['payer_id'],
-      amount: toNullableAmount(row['amount']),
+      amount: row['amount'],
       description: row['description'],
       hasPhoto: row['has_photo']
     })

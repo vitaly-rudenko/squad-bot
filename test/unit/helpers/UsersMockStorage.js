@@ -10,7 +10,7 @@ export class UsersMockStorage {
   }
 
   findById(userId) {
-    return this._users.get(userId) || null
+    return this._users.get(userId)
   }
 
   findByIds(userIds) {

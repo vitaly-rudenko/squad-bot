@@ -40,12 +40,12 @@ describe('ReceiptTelegramNotifier', () => {
       usersStorage,
       debtsStorage,
       localize: localizeMock,
-      domain: 'http://example.com',
+      generateWebAppUrl: (...commands) => `web-app-url(${commands.join(', ')})`,
     })
   })
 
   describe('[receipt created]', () => {
-    it('should notify participants about new receipts (description + complete receipt)', async () => {
+    it('should notify participants about new receipts (description)', async () => {
       const editor = createUser()
       const payer = createUser()
       const debtor = createUser()
@@ -57,6 +57,11 @@ describe('ReceiptTelegramNotifier', () => {
       const description = 'Hello world!'
 
       debtsStorage.mock_storeDebts(
+        new Debt({
+          receiptId,
+          debtorId: payer.id,
+          amount: 4321,
+        }),
         new Debt({
           receiptId,
           debtorId: debtor.id,
@@ -87,10 +92,9 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
-              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${payer.locale}):
-                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              photo: ''
+              receiptUrl: ${escapeMd(`web-app-url(receipt, ${receiptId})`)}
+              part: notifications.receiptStored.part(${payer.locale}):
+                partAmount: 43\\.21 грн
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -102,15 +106,14 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
-              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.complete(${debtor.locale}):
+              receiptUrl: ${escapeMd(`web-app-url(receipt, ${receiptId})`)}
+              part: notifications.receiptStored.part(${debtor.locale}):
                 partAmount: 12 грн
-              photo: ''
           `]
         ])
     })
 
-    it('should notify participants about new receipts (no description + incomplete receipt)', async () => {
+    it('should notify participants about new receipts (no description)', async () => {
       const editor = createUser()
       const payer = createUser()
       const debtor = createUser()
@@ -124,14 +127,14 @@ describe('ReceiptTelegramNotifier', () => {
         new Debt({
           receiptId,
           debtorId: debtor.id,
-          amount: null,
+          amount: 1200,
         }),
       )
 
       const notification = await receiptTelegramNotifier.created({
         payerId: payer.id,
         amount,
-        description: null,
+        description: undefined,
         hasPhoto: false,
         createdAt: new Date(),
         id: receiptId,
@@ -150,10 +153,8 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.30 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
-              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${payer.locale}):
-                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              photo: ''
+              receiptUrl: ${escapeMd(`web-app-url(receipt, ${receiptId})`)}
+              part: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -164,17 +165,16 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.30 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
-              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${debtor.locale}):
-                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              photo: ''
+              receiptUrl: ${escapeMd(`web-app-url(receipt, ${receiptId})`)}
+              part: notifications.receiptStored.part(${debtor.locale}):
+                partAmount: 12 грн
           `]
         ])
     })
   })
 
   describe('[receipt updated]', () => {
-    it('should notify participants about updated receipts (description + complete receipt)', async () => {
+    it('should notify participants about updated receipts (description)', async () => {
       const editor = createUser()
       const payer = createUser()
       const debtor = createUser()
@@ -216,10 +216,8 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
-              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${payer.locale}):
-                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              photo: ''
+              receiptUrl: ${escapeMd(`web-app-url(receipt, ${receiptId})`)}
+              part: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -231,15 +229,14 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
-              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.complete(${debtor.locale}):
+              receiptUrl: ${escapeMd(`web-app-url(receipt, ${receiptId})`)}
+              part: notifications.receiptStored.part(${debtor.locale}):
                 partAmount: 12 грн
-              photo: ''
           `]
         ])
     })
 
-    it('should notify participants about updated receipts (no description + incomplete receipt)', async () => {
+    it('should notify participants about updated receipts (no description)', async () => {
       const editor = createUser()
       const payer = createUser()
       const debtor = createUser()
@@ -253,14 +250,14 @@ describe('ReceiptTelegramNotifier', () => {
         new Debt({
           receiptId,
           debtorId: debtor.id,
-          amount: null,
+          amount: 1200,
         }),
       )
 
       const notification = await receiptTelegramNotifier.updated({
         payerId: payer.id,
         amount,
-        description: null,
+        description: undefined,
         hasPhoto: false,
         createdAt: new Date(),
         id: receiptId,
@@ -279,10 +276,8 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.34 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
-              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${payer.locale}):
-                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              photo: ''
+              receiptUrl: ${escapeMd(`web-app-url(receipt, ${receiptId})`)}
+              part: ''
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -293,10 +288,9 @@ describe('ReceiptTelegramNotifier', () => {
               receiptAmount: 12\\.34 грн
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
-              receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              part: notifications.receiptStored.part.incomplete(${debtor.locale}):
-                receiptUrl: ${escapeMd(`http://example.com/?receipt_id=${receiptId}`)}
-              photo: ''
+              receiptUrl: ${escapeMd(`web-app-url(receipt, ${receiptId})`)}
+              part: notifications.receiptStored.part(${debtor.locale}):
+                partAmount: 12 грн
           `]
         ])
     })
@@ -372,14 +366,14 @@ describe('ReceiptTelegramNotifier', () => {
         new Debt({
           receiptId,
           debtorId: debtor.id,
-          amount: null,
+          amount: 1200,
         }),
       )
 
       const notification = await receiptTelegramNotifier.deleted({
         payerId: payer.id,
         amount,
-        description: null,
+        description: undefined,
         hasPhoto: false,
         createdAt: new Date(),
         id: receiptId,

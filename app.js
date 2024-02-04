@@ -69,6 +69,7 @@ import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsU
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 import { generateTemporaryAuthToken } from './app/auth/generateTemporaryAuthToken.js'
 import { ApiError } from './app/ApiError.js'
+import { saveReceiptSchema } from './app/schemas/receipts.js'
 
 async function start() {
   if (useTestMode) {
@@ -243,7 +244,7 @@ async function start() {
     await groupManager.store(
       new Group({
         id: chatId,
-        title: (context.chat && 'title' in context.chat) && context.chat.title || null
+        title: (context.chat && 'title' in context.chat) ? context.chat.title : undefined,
       })
     )
 
@@ -257,7 +258,7 @@ async function start() {
     await context.reply(`${process.env.WEB_APP_URL}/?token=${generateTemporaryAuthToken(userId)}`)
   })
 
-  bot.command('debts', debtsCommand({ receiptsStorage, usersStorage, debtsStorage, debtManager, generateWebAppUrl }))
+  bot.command('debts', debtsCommand({ usersStorage, debtManager }))
   bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
   bot.command('payments', paymentsCommand({ generateWebAppUrl }))
   bot.command('rollcalls', rollCallsCommand({ generateWebAppUrl }))
@@ -514,29 +515,25 @@ async function start() {
       return
     }
 
-    const id = req.body.id ?? undefined
-    const payerId = req.body.payer_id
-    const binary = req.file?.buffer ?? null
-    const mime = req.file?.mimetype ?? null
-    const description = req.body.description ?? null
-    const amount = Number(req.body.amount)
-    const debts = Object.entries(JSON.parse(req.body.debts))
-      .map(([debtorId, amount]) => ({
-        debtorId,
-        amount: (amount && Number.isInteger(Number(amount)))
-          ? Number(amount)
-          : null,
-      }))
+    const {
+      id,
+      payer_id: payerId,
+      description,
+      amount,
+      debts,
+      leave_photo: leavePhoto,
+    } = saveReceiptSchema.create(req.body)
 
-    const receipt = new Receipt({ id, payerId, amount, description })
+    const binary = req.file?.buffer
+    const mime = req.file?.mimetype
 
-    let receiptPhoto = binary && mime
+    const receiptPhoto = (binary && mime)
       ? new ReceiptPhoto({ binary, mime })
-      : null
+      : leavePhoto
+        ? undefined
+        : 'delete'
 
-    if (id && !receiptPhoto && req.body.leave_photo === 'true') {
-      receiptPhoto = await receiptsStorage.getReceiptPhoto(id)
-    }
+    const receipt = new Receipt({ id, payerId, amount, description, hasPhoto: receiptPhoto !== undefined && receiptPhoto !== 'delete' })
 
     const storedReceipt = await receiptManager.store({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
 
@@ -590,20 +587,17 @@ async function start() {
   })
 
   router.get('/debts', async (req, res) => {
-    const { ingoingDebts, outgoingDebts, incompleteReceiptIds } = await debtManager.aggregateByUserId(req.user.id)
+    const { ingoingDebts, outgoingDebts } = await debtManager.aggregateByUserId(req.user.id)
 
     res.json({
       ingoingDebts: ingoingDebts.map(debt => ({
         userId: debt.fromUserId,
         amount: debt.amount,
-        ...debt.incompleteReceiptIds.length > 0 && { isIncomplete: debt.incompleteReceiptIds.length > 0 },
       })),
       outgoingDebts: outgoingDebts.map(debt => ({
         userId: debt.toUserId,
         amount: debt.amount,
-        ...debt.incompleteReceiptIds.length > 0 && { isIncomplete: debt.incompleteReceiptIds.length > 0 },
       })),
-      ...incompleteReceiptIds.length > 0 && { incompleteReceiptIds }
     })
   })
 

@@ -1,5 +1,14 @@
 export class User {
-  constructor({ id, name, username = null, locale = 'uk', isComplete = false }) {
+  /**
+   * @param {{
+   *   id: string
+   *   name: string
+   *   username?: string
+   *   locale?: string
+   *   isComplete?: boolean
+   * }} input
+   */
+  constructor({ id, name, username, locale = 'uk', isComplete = false }) {
     this.id = id
     this.username = username
     this.name = name
