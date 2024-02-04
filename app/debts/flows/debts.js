@@ -32,13 +32,13 @@ export function debtsCommand({ usersStorage, debtManager }) {
       })
       : localize('command.debts.noOutgoingDebts')
 
-    const isIncomplete = !user.isComplete && localize('command.debts.incompleteUser')
+    const isUserIncomplete = !user.isComplete && localize('command.debts.incompleteUser')
 
     await context.reply(
       [
         outgoingDebtsFormatted,
         ingoingDebtsFormatted,
-        isIncomplete
+        isUserIncomplete
       ].filter(Boolean).map(s => s.trim()).join('\n\n'),
       { parse_mode: 'MarkdownV2' }
     )
