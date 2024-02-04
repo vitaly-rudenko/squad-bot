@@ -159,13 +159,13 @@ async function start() {
   })
 
   bot.telegram.setMyCommands([
-    { command: 'debts', description: 'Підрахувати борги' },
-    { command: 'receipts', description: 'Переглянути чеки' },
-    { command: 'payments', description: 'Переглянути платежі' },
-    { command: 'cards', description: 'Переглянути картки' },
-    { command: 'titles', description: 'Керувати підписами' },
-    { command: 'rollcalls', description: 'Керувати перекличками' },
-    { command: 'start', description: 'Зареєструватись' },
+    { command: 'debts', description: 'Борги' },
+    { command: 'receipts', description: 'Чеки' },
+    { command: 'payments', description: 'Платежі' },
+    { command: 'cards', description: 'Банківські картки' },
+    { command: 'titles', description: 'Підписи в чаті' },
+    { command: 'rollcalls', description: 'Переклички' },
+    { command: 'start', description: 'Оновити дані' },
   ])
 
   process.on('unhandledRejection', (error) => {
