@@ -484,7 +484,7 @@ async function start() {
     res.json(users)
   })
 
-  router.get('/bot', async (req, res) => {
+  router.get('/bot', async (_, res) => {
     res.json({
       id: String(botInfo.id),
       name: botInfo.first_name,
@@ -492,9 +492,11 @@ async function start() {
     })
   })
 
-  async function formatReceipt(receipt) {
-    const debts = await debtsStorage.findByReceiptId(receipt.id)
-
+  /**
+   * @param {import('./app/receipts/Receipt.js').Receipt} receipt
+   * @param {import('./app/debts/Debt.js').Debt[]} debts
+   */
+  function formatReceipt(receipt, debts) {
     return {
       id: receipt.id,
       createdAt: receipt.createdAt,
@@ -502,10 +504,12 @@ async function start() {
       amount: receipt.amount,
       description: receipt.description,
       hasPhoto: receipt.hasPhoto,
-      debts: debts.map(debt => ({
-        debtorId: debt.debtorId,
-        amount: debt.amount,
-      }))
+      debts: debts
+        .filter(debt => debt.receiptId === receipt.id)
+        .map(debt => ({
+          debtorId: debt.debtorId,
+          amount: debt.amount,
+        }))
     }
   }
 
@@ -529,28 +533,31 @@ async function start() {
 
     const receiptPhoto = (binary && mime)
       ? new ReceiptPhoto({ binary, mime })
-      : leavePhoto
-        ? undefined
-        : 'delete'
+      : leavePhoto ? undefined : 'delete'
 
-    const receipt = new Receipt({ id, payerId, amount, description, hasPhoto: receiptPhoto !== undefined && receiptPhoto !== 'delete' })
+    const receipt = new Receipt({
+      id,
+      payerId,
+      amount,
+      description,
+      hasPhoto: receiptPhoto !== undefined && receiptPhoto !== 'delete'
+    })
 
     const storedReceipt = await receiptManager.store({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
 
-    res.json(await formatReceipt(storedReceipt))
+    res.json(
+      formatReceipt(
+        storedReceipt,
+        await debtsStorage.findByReceiptId(receipt.id)
+      )
+    )
   })
 
   router.get('/receipts', async (req, res) => {
     const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
+    const debts = await debtsStorage.findByReceiptIds(receipts.map(r => r.id))
 
-    const formattedReceipts = []
-    for (const receipt of receipts) {
-      formattedReceipts.push(
-        await formatReceipt(receipt)
-      )
-    }
-
-    res.json(formattedReceipts)
+    res.json(receipts.map((receipt) => formatReceipt(receipt, debts)))
   })
 
   router.get('/receipts/:receiptId', async (req, res) => {
@@ -561,7 +568,9 @@ async function start() {
       return res.sendStatus(404)
     }
 
-    res.json(await formatReceipt(receipt))
+    const debts = await debtsStorage.findByReceiptId(receiptId)
+
+    res.json(formatReceipt(receipt, debts))
   })
 
   router.delete('/receipts/:receiptId', async (req, res) => {
@@ -637,7 +646,7 @@ async function start() {
     }
   })
 
-  router.patch('/rollcalls/:id', async (req, res, next) => {
+  router.patch('/rollcalls/:id', async (req, res) => {
     const rollCallId = req.params.id
 
     const rollCall = await rollCallsStorage.findById(rollCallId)
