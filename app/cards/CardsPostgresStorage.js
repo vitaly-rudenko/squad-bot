@@ -17,12 +17,15 @@ export class CardsPostgresStorage {
     return this.findById(response.rows[0]['id'])
   }
 
-  /** @param {string} id */
-  async deleteById(id) {
+  /**
+   * @param {string} userId
+   * @param {number} cardId
+   */
+  async delete(userId, cardId) {
     await this._client.query(`
       DELETE FROM cards
-      WHERE id = $1;
-    `, [id])
+      WHERE user_id = $1 AND id = $2;
+    `, [userId, cardId])
   }
 
   /** @param {string} id */

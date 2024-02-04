@@ -1,11 +1,4 @@
-export const Phases = organizeValues({
-  addCard: {
-    number: '',
-  },
-  deleteCard: {
-    id: '',
-  }
-})
+export const Phases = organizeValues({})
 
 /**
 * @param {T} values
