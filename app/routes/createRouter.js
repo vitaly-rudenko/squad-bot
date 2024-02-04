@@ -12,11 +12,14 @@ import { saveReceiptSchema } from '../schemas/receipts.js'
 import { logger } from '../../logger.js'
 import { Group } from '../groups/Group.js'
 import multer from 'multer'
+import { Card } from '../cards/Card.js'
+import { formatCardNumber } from '../utils/formatCardNumber.js'
 
 /**
  * @param {{
  *   telegram: import('telegraf').Telegram,
  *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>,
+ *   cardsStorage: import('../cards/CardsPostgresStorage.js').CardsPostgresStorage,
  *   createRedisCache: ReturnType<import('../utils/createRedisCacheFactory.js').createRedisCacheFactory>,
  *   debtManager: import('../debts/DebtManager.js').DebtManager,
  *   debtsStorage: import('../debts/DebtsPostgresStorage.js').DebtsPostgresStorage,
@@ -38,6 +41,7 @@ import multer from 'multer'
 export function createRouter({
   telegram,
   botInfo,
+  cardsStorage,
   createRedisCache,
   debtManager,
   debtsStorage,
@@ -488,24 +492,55 @@ export function createRouter({
     }
   })
 
+  router.get('/cards', async (req, res) => {
+    const userId = req.query.user_id
+    if (typeof userId !== 'string') {
+      res.sendStatus(400)
+      return
+    }
+
+    const cards = await cardsStorage.findByUserId(userId)
+
+    res.json(cards)
+  })
+
+  router.post('/cards', async (req, res) => {
+    const { number, bank } = req.body
+    if (
+      typeof number !== 'string' ||
+      typeof bank !== 'string' ||
+      number.length !== 16 ||
+      !['privatbank', 'monobank'].includes(bank)
+    ) {
+      res.sendStatus(400)
+      return
+    }
+
+    await cardsStorage.create(
+      new Card({
+        userId: req.user.id,
+        bank,
+        number: formatCardNumber(number),
+      })
+    )
+
+    res.sendStatus(200)
+  })
+
+  router.delete('/cards/:cardId', async (req, res) => {
+    const cardId = Number(req.params.cardId)
+    if (!Number.isInteger(cardId)) {
+      res.sendStatus(400)
+      return
+    }
+
+    await cardsStorage.delete(req.user.id, cardId)
+
+    res.sendStatus(204)
+  })
+
   return router
 }
-
-// https://stackoverflow.com/a/72985407
-// function checkWebAppSignature(botToken, initData) {
-//   const query = new URLSearchParams(initData)
-//   const hash = query.get('hash')
-//   if (!hash) return false
-//   query.delete('hash')
-
-//   const sorted = [...query.entries()].sort(([key1], [key2]) => key1.localeCompare(key2))
-//   const dataCheckString = sorted.map(([key, value]) => `${key}=${value}`).join('\n')
-
-//   const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest('hex')
-//   const computedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex')
-
-//   return computedHash === hash
-// }
 
 // https://gist.github.com/konstantin24121/49da5d8023532d66cc4db1136435a885?permalink_comment_id=4574538#gistcomment-4574538
 function checkWebAppSignature(botToken, initData) {
