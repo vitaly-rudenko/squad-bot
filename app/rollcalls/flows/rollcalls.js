@@ -8,8 +8,8 @@ export function rollCallsCommand({ generateWebAppUrl }) {
 
     const isGroup = GROUP_CHAT_TYPES.includes(context.chat.type)
 
-    const viewUrl = isGroup ? generateWebAppUrl('group', chatId, 'roll-calls') : generateWebAppUrl('groups')
-    const createUrl = isGroup ? generateWebAppUrl('group', chatId, 'roll-call', 'new') : undefined
+    const viewUrl = isGroup ? generateWebAppUrl(`roll-calls${chatId}`) : generateWebAppUrl('groups')
+    const createUrl = isGroup ? generateWebAppUrl(`new-roll-call${chatId}`) : undefined
 
     await context.reply(
       localize(isGroup ? 'command.rollCalls.group' : 'command.rollCalls.private', {

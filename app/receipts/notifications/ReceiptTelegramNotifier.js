@@ -69,7 +69,7 @@ export class ReceiptTelegramNotifier {
   /** @param {import('../Receipt.js').Receipt} receipt */
   async _stored(receipt, { editorId, isNew }) {
     const { payerId, amount, description } = receipt
-    const receiptUrl = this._generateWebAppUrl('receipt', receipt.id)
+    const receiptUrl = this._generateWebAppUrl(`receipt-${receipt.id}`)
     const debts = await this._debtsStorage.findByReceiptId(receipt.id)
 
     const editor = await this._usersStorage.findById(editorId)

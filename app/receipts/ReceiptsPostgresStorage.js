@@ -1,6 +1,9 @@
-import { nanoid } from 'nanoid'
+import { customAlphabet } from 'nanoid'
+import { alphanumeric } from 'nanoid-dictionary'
 import { Receipt } from './Receipt.js'
 import { ReceiptPhoto } from './ReceiptPhoto.js'
+
+const generateId = customAlphabet(alphanumeric, 12)
 
 export class ReceiptsPostgresStorage {
   /** @param {import('pg').Client} client */
@@ -21,7 +24,7 @@ export class ReceiptsPostgresStorage {
       INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime, is_photo_optimized)
       VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
       RETURNING id;
-    `, [nanoid(12), new Date().toISOString(), payerId, amount, description, binary, mime])
+    `, [generateId(), new Date().toISOString(), payerId, amount, description, binary, mime])
 
     return this.findById(response.rows[0]['id'])
   }
