@@ -15,7 +15,7 @@ import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsCommand } from './app/receipts/flows/receipts.js'
 import { withPhaseFactory } from './app/shared/middlewares/phase.js'
 import { Phases } from './app/Phases.js'
-import { cardsAddCommand, cardsAddNumberMessage, cardsAddBankAction, cardsDeleteCommand, cardsDeleteIdAction, cardsCommand, cardsGetIdAction, cardsGetUserIdAction } from './app/cards/flows/cards.js'
+import { cardsCommand } from './app/cards/flows/cards.js'
 import { paymentsCommand } from './app/payments/flows/payments.js'
 import { withUserId } from './app/users/middlewares/userId.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
@@ -165,8 +165,6 @@ async function start() {
     { command: 'receipts', description: 'Додати або переглянути чеки' },
     { command: 'payments', description: 'Додати або переглянути платежі' },
     { command: 'cards', description: 'Переглянути банківські картки користувача' },
-    { command: 'addcard', description: 'Додати банківську картку' },
-    { command: 'deletecard', description: 'Видалити банківську картку' },
     { command: 'titles', description: 'Керування підписами' },
     { command: 'rollcalls', description: 'Керування перекличками' },
     { command: 'start', description: 'Зареєструватись' },
@@ -249,17 +247,7 @@ async function start() {
   bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
   bot.command('payments', paymentsCommand({ generateWebAppUrl }))
   bot.command('rollcalls', rollCallsCommand({ generateWebAppUrl }))
-
-  bot.command('addcard', cardsAddCommand())
-  bot.action(/^cards:add:bank:(.+)$/, cardsAddBankAction())
-
-  bot.command('deletecard', cardsDeleteCommand({ cardsStorage }))
-  bot.action(/^cards:delete:id:(.+)$/, withPhase(Phases.deleteCard.id), cardsDeleteIdAction({ cardsStorage }))
-
-  bot.command('cards', cardsCommand({ usersStorage, cardsStorage }))
-  bot.action(/^cards:get:user-id:(.+)$/, cardsGetUserIdAction({ cardsStorage, usersStorage }))
-  bot.action(/^cards:get:id:(.+)$/, cardsGetIdAction({ cardsStorage }))
-
+  bot.command('cards', cardsCommand({ generateWebAppUrl }))
   bot.command('titles', titlesCommand({ generateWebAppUrl }))
 
   bot.on('message',
@@ -267,8 +255,6 @@ async function start() {
       if ('text' in context.message && context.message.text.startsWith('/')) return
       return next()
     },
-    // cards
-    wrap(withPhase(Phases.addCard.number), cardsAddNumberMessage({ cardsStorage })),
     // roll calls
     wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
   )
@@ -286,6 +272,7 @@ async function start() {
   app.use(createRouter({
     telegram: bot.telegram,
     botInfo,
+    cardsStorage,
     createRedisCache,
     debtManager,
     debtsStorage,
