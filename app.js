@@ -13,8 +13,6 @@ import { versionCommand } from './app/shared/flows/version.js'
 import { startCommand } from './app/users/flows/start.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsCommand } from './app/receipts/flows/receipts.js'
-import { withPhaseFactory } from './app/shared/middlewares/phase.js'
-import { Phases } from './app/Phases.js'
 import { cardsCommand } from './app/cards/flows/cards.js'
 import { paymentsCommand } from './app/payments/flows/payments.js'
 import { withUserId } from './app/users/middlewares/userId.js'
@@ -162,19 +160,17 @@ async function start() {
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Підрахувати борги' },
-    { command: 'receipts', description: 'Додати або переглянути чеки' },
-    { command: 'payments', description: 'Додати або переглянути платежі' },
-    { command: 'cards', description: 'Переглянути банківські картки користувача' },
-    { command: 'titles', description: 'Керування підписами' },
-    { command: 'rollcalls', description: 'Керування перекличками' },
+    { command: 'receipts', description: 'Переглянути чеки' },
+    { command: 'payments', description: 'Переглянути платежі' },
+    { command: 'cards', description: 'Переглянути картки' },
+    { command: 'titles', description: 'Керувати підписами' },
+    { command: 'rollcalls', description: 'Керувати перекличками' },
     { command: 'start', description: 'Зареєструватись' },
   ])
 
   process.on('unhandledRejection', (error) => {
     errorLogger.log(error)
   })
-
-  const withPhase = withPhaseFactory()
 
   bot.use((context, next) => {
     if (!useTestMode && context.from?.is_bot) return
