@@ -63,13 +63,13 @@ export function createRouter({
 }) {
   const router = Router()
 
-  router.get('/bot', async (_, res) => {
-    res.json({
-      id: String(botInfo.id),
-      name: botInfo.first_name,
-      username: botInfo.username,
-    })
-  })
+  const botResponse = {
+    id: String(botInfo.id),
+    name: botInfo.first_name,
+    username: botInfo.username,
+  }
+
+  router.get('/bot', async (_, res) => res.json(botResponse))
 
   router.use(
     authentication.createRouter({
@@ -95,45 +95,33 @@ export function createRouter({
         })
       )
 
-      res.json('ok')
+      res.sendStatus(200)
     })
   }
 
-  router.use(authentication.createMiddleware({ tokenSecret }))
-
-  router.use(users.createRouter({ usersStorage, membershipStorage }))
-
   router.use(
+    authentication.createMiddleware({ tokenSecret }),
+    users.createRouter({ usersStorage, membershipStorage }),
     receipts.createRouter({
       debtsStorage,
       receiptManager,
       receiptsStorage,
-    })
-  )
-
-  router.use(
+    }),
     payments.createRouter({
       paymentManager,
       paymentsStorage,
-    })
-  )
-
-  router.use(debts.createRouter({ debtManager }))
-  router.use(rollCalls.createRouter({ membershipManager, rollCallsStorage }))
-
-  router.use(
+    }),
+    debts.createRouter({ debtManager }),
+    rollCalls.createRouter({ membershipManager, rollCallsStorage }),
     groups.createRouter({
       telegram,
       botInfo,
       groupStorage,
       membershipManager,
-    })
-  )
-
-  router.use(
+    }),
     cards.createRouter({
       cardsStorage,
-    })
+    }),
   )
 
   return router
