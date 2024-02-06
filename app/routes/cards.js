@@ -1,7 +1,14 @@
 import Router from 'express-promise-router'
 import { Card } from '../cards/Card.js'
 import { formatCardNumber } from '../utils/formatCardNumber.js'
-import { literal, nonempty, object, refine, size, string, union } from 'superstruct'
+import { literal, object, refine, size, string, union } from 'superstruct'
+import { userIdSchema } from '../schemas/common.js'
+
+export const cardNumberRegex = /^[0-9]+$/
+export const createCardSchema = object({
+  number: refine(size(string(), 16), 'numeric', (value) => cardNumberRegex.test(value)),
+  bank: union([literal('privatbank'), literal('monobank')]),
+})
 
 /**
  * @param {{
@@ -13,18 +20,10 @@ export function createRouter({
 }) {
   const router = Router()
 
-  const userIdSchema = nonempty(string())
-
   router.get('/cards', async (req, res) => {
     const userId = userIdSchema.create(req.query.user_id)
     const cards = await cardsStorage.findByUserId(userId)
     res.json(cards)
-  })
-
-  const numberRegex = /^[0-9]+$/
-  const createCardSchema = object({
-    number: refine(size(string(), 16), 'numeric', (value) => numberRegex.test(value)),
-    bank: union([literal('privatbank'), literal('monobank')]),
   })
 
   router.post('/cards', async (req, res) => {

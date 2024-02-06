@@ -1,7 +1,13 @@
 import Router from 'express-promise-router'
 import { Payment } from '../payments/Payment.js'
-import { nonempty, object, string } from 'superstruct'
-import { amountSchema } from '../schemas/common.js'
+import { object } from 'superstruct'
+import { amountSchema, userIdSchema } from '../schemas/common.js'
+
+export const createPaymentSchema = object({
+  fromUserId: userIdSchema,
+  toUserId: userIdSchema,
+  amount: amountSchema,
+})
 
 /**
  * @param {{
@@ -14,12 +20,6 @@ export function createRouter({
   paymentsStorage,
 }) {
   const router = Router()
-
-  const createPaymentSchema = object({
-    fromUserId: nonempty(string()),
-    toUserId: nonempty(string()),
-    amount: amountSchema,
-  })
 
   router.post('/payments', async (req, res) => {
     const { fromUserId, toUserId, amount } = createPaymentSchema.create(req.body)

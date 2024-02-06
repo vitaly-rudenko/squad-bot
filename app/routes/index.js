@@ -10,6 +10,8 @@ import * as rollCalls from './rollcalls.js'
 import * as groups from './groups.js'
 import * as cards from './cards.js'
 
+export const createMembershipSchema = object({ userId: string(), groupId: string(), title: string() })
+
 /**
  * @param {{
  *   telegram: import('telegraf').Telegram,
@@ -77,8 +79,6 @@ export function createRouter({
   router.use(receipts.createPublicRouter({ receiptsStorage }))
 
   if (useTestMode) {
-    const createMembershipSchema = object({ userId: string(), groupId: string(), title: string() })
-
     router.post('/memberships', async (req, res) => {
       const { userId, groupId, title } = createMembershipSchema.create(req.body)
 

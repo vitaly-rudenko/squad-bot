@@ -1,5 +1,6 @@
 import { refine, coerce, number, string, boolean, nonempty } from 'superstruct'
 
+export const userIdSchema = nonempty(string())
 export const groupIdSchema = nonempty(string())
 
 export const amountSchema = refine(

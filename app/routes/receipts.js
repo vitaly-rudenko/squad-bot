@@ -3,11 +3,12 @@ import Router from 'express-promise-router'
 import { Receipt } from '../receipts/Receipt.js'
 import { ReceiptPhoto } from '../receipts/ReceiptPhoto.js'
 import { object, string, coerce, array, optional, size } from 'superstruct'
-import { amountSchema, stringifiedBooleanSchema } from '../schemas/common.js'
+import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../schemas/common.js'
 
-export const debtSchema = object({ debtorId: string(), amount: amountSchema })
+export const debtSchema = object({ debtorId: userIdSchema, amount: amountSchema })
 export const debtsSchema = coerce(
-  array(debtSchema), string(),
+  array(debtSchema),
+  string(),
   (value) => (
     Object.entries(JSON.parse(value))
       .map(([debtorId, amount]) => ({ debtorId, amount }))

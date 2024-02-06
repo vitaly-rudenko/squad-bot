@@ -2,7 +2,36 @@ import Router from 'express-promise-router'
 import { RollCall } from '../rollcalls/RollCall.js'
 import { AlreadyExistsError } from '../errors/AlreadyExistsError.js'
 import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, union } from 'superstruct'
-import { groupIdSchema } from '../schemas/common.js'
+import { groupIdSchema, userIdSchema } from '../schemas/common.js'
+
+export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
+export const pollOptionsSchema = array(size(string(), 1, 32))
+export const messagePatternSchema = size(string(), 1, 256)
+export const usersPatternSchema = union([
+  literal('*'),
+  refine(
+    nonempty(string()),
+    'users pattern',
+    (value) => value.split(',').every(userId => userIdSchema.is(userId))
+  ),
+])
+
+export const createRollCallSchema = object({
+  groupId: groupIdSchema,
+  messagePattern: messagePatternSchema,
+  usersPattern: usersPatternSchema,
+  excludeSender: boolean(),
+  pollOptions: pollOptionsSchema,
+  sortOrder: sortOrderSchema,
+})
+
+export const updateRollCallSchema = object({
+  messagePattern: optional(messagePatternSchema),
+  usersPattern: optional(usersPatternSchema),
+  excludeSender: optional(boolean()),
+  pollOptions: optional(pollOptionsSchema),
+  sortOrder: optional(sortOrderSchema),
+})
 
 /**
  * @param {{
@@ -15,27 +44,6 @@ export function createRouter({
   rollCallsStorage,
 }) {
   const router = Router()
-
-  const sortOrder = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
-  const pollOptions = array(size(string(), 1, 32))
-  const userIdRegex = /^[0-9]+$/
-  const usersPattern = union([
-    literal('*'),
-    refine(
-      nonempty(string()),
-      'users pattern',
-      (value) => value.split(',').every(userId => userIdRegex.test(userId))
-    ),
-  ])
-
-  const createRollCallSchema = object({
-    groupId: groupIdSchema,
-    messagePattern: size(string(), 1, 256),
-    usersPattern,
-    excludeSender: boolean(),
-    pollOptions,
-    sortOrder,
-  })
 
   router.post('/rollcalls', async (req, res, next) => {
     const {
@@ -72,14 +80,6 @@ export function createRouter({
         next(error)
       }
     }
-  })
-
-  const updateRollCallSchema = object({
-    messagePattern: optional(nonempty(string())),
-    usersPattern: optional(usersPattern),
-    excludeSender: optional(boolean()),
-    pollOptions: optional(pollOptions),
-    sortOrder: optional(sortOrder),
   })
 
   // TODO: merge with "create" request

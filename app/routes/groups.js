@@ -2,7 +2,17 @@ import Router from 'express-promise-router'
 import { ApiError } from '../ApiError.js'
 import { logger } from '../../logger.js'
 import { array, nonempty, object, size, string } from 'superstruct'
-import { groupIdSchema } from '../schemas/common.js'
+import { groupIdSchema, userIdSchema } from '../schemas/common.js'
+
+export const updateAdminsSchema = object({
+  groupId: groupIdSchema,
+  admins: nonempty(
+    array(object({
+      userId: userIdSchema,
+      title: size(string(), 0, 16),
+    }))
+  )
+})
 
 /**
  * @param {{
@@ -54,16 +64,6 @@ export function createRouter({
       logger.error({ error, groupId }, 'Could not get chat administrators')
       throw error
     }
-  })
-
-  const updateAdminsSchema = object({
-    groupId: groupIdSchema,
-    admins: nonempty(
-      array(object({
-        userId: nonempty(string()),
-        title: size(string(), 0, 16),
-      }))
-    )
   })
 
   router.patch('/admins', async (req, res) => {
