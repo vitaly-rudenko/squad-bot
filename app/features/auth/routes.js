@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken'
 import { nonempty, number, object, optional, string, type } from 'superstruct'
 import { userIdSchema } from '../common/schemas.js'
 import { NotAuthenticatedError, NotFoundError } from '../common/errors.js'
-import { ApiError } from '../../ApiError.js'
+import { ApiError } from '../common/errors.js'
 
 export const temporaryAuthTokenSchema = nonempty(string())
 export const temporaryAuthTokenPayloadSchema = type({ userId: userIdSchema })

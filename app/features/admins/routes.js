@@ -1,5 +1,5 @@
 import Router from 'express-promise-router'
-import { ApiError } from '../../ApiError.js'
+import { ApiError } from '../common/errors.js'
 import { logger } from '../../../logger.js'
 import { array, nonempty, object, size, string, trimmed } from 'superstruct'
 import { groupIdSchema, userIdSchema } from '../common/schemas.js'

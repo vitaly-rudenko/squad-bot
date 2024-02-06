@@ -5,7 +5,7 @@ import { ReceiptPhoto } from '../receipts/ReceiptPhoto.js'
 import { object, string, coerce, array, optional, size, trimmed } from 'superstruct'
 import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../features/common/schemas.js'
 import { NotFoundError } from '../features/common/errors.js'
-import { ApiError } from '../ApiError.js'
+import { ApiError } from '../features/common/errors.js'
 
 export const debtSchema = object({
   debtorId: userIdSchema,

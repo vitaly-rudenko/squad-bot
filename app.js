@@ -56,7 +56,7 @@ import { DebtsPostgresStorage } from './app/features/debts/storage.js'
 import { createDebtsFlow } from './app/features/debts/telegram.js'
 import { PaymentsPostgresStorage } from './app/features/payments/storage.js'
 import { createPaymentsFlow } from './app/features/payments/telegram.js'
-import { ApiError } from './app/ApiError.js'
+import { ApiError } from './app/features/common/errors.js'
 
 async function start() {
   if (useTestMode) {
