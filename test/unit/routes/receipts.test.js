@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { saveReceiptSchema } from '../../../app/schemas/receipts.js'
+import { saveReceiptSchema } from '../../../app/routes/receipts.js'
 import { StructError } from 'superstruct'
 
 const receipt = {

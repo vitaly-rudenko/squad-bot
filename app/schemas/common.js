@@ -1,6 +1,8 @@
-import { refine, coerce, number, string, boolean } from 'superstruct'
+import { refine, coerce, number, string, boolean, nonempty } from 'superstruct'
 
-export const amount = refine(
+export const groupIdSchema = nonempty(string())
+
+export const amountSchema = refine(
   coerce(number(), string(), (value) => Number(value)),
   'amount',
   (value) => (
@@ -9,7 +11,7 @@ export const amount = refine(
   )
 )
 
-export const stringifiedBoolean = coerce(boolean(), string(), (value) => {
+export const stringifiedBooleanSchema = coerce(boolean(), string(), (value) => {
   if (value === 'true') return true
   if (value === 'false') return false
   return undefined

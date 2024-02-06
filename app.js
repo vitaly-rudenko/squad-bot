@@ -56,7 +56,7 @@ import { createUserSessionFactory } from './app/users/createUserSessionFactory.j
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 import { generateTemporaryAuthToken } from './app/auth/generateTemporaryAuthToken.js'
-import { createRouter } from './app/routes/createRouter.js'
+import { createRouter } from './app/routes/index.js'
 
 async function start() {
   if (useTestMode) {

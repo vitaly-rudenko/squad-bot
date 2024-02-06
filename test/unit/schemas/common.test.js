@@ -1,19 +1,19 @@
 import { expect } from 'chai'
-import { amount, stringifiedBoolean } from '../../../app/schemas/common.js'
+import { amountSchema, stringifiedBooleanSchema } from '../../../app/schemas/common.js'
 import { StructError } from 'superstruct'
 
 describe('schemas/receipts', () => {
   describe('amount', () => {
     it('should allow valid values (string)', () => {
-      expect(amount.create('0')).to.eq(0)
-      expect(amount.create('10')).to.eq(10)
-      expect(amount.create('1234')).to.eq(1234)
-      expect(amount.create('10000000')).to.eq(10000000)
+      expect(amountSchema.create('0')).to.eq(0)
+      expect(amountSchema.create('10')).to.eq(10)
+      expect(amountSchema.create('1234')).to.eq(1234)
+      expect(amountSchema.create('10000000')).to.eq(10000000)
     })
 
     it('should allow valid values (number)', () => {
       for (const value of [0, 10, 1234, 100_000_00]) {
-        expect(amount.create(value)).to.eq(value)
+        expect(amountSchema.create(value)).to.eq(value)
       }
     })
 
@@ -28,7 +28,7 @@ describe('schemas/receipts', () => {
         'true',
         'hello world',
       ]) {
-        expect(() => amount.create(value)).to.throw(StructError)
+        expect(() => amountSchema.create(value)).to.throw(StructError)
       }
     })
 
@@ -43,20 +43,20 @@ describe('schemas/receipts', () => {
         true,
         { hello: 'world' },
       ]) {
-        expect(() => amount.create(value)).to.throw(StructError)
+        expect(() => amountSchema.create(value)).to.throw(StructError)
       }
     })
   })
 
   describe('stringifiedBoolean', () => {
     it('should allow valid values (string)', () => {
-      expect(stringifiedBoolean.create('true')).to.eq(true)
-      expect(stringifiedBoolean.create('false')).to.eq(false)
+      expect(stringifiedBooleanSchema.create('true')).to.eq(true)
+      expect(stringifiedBooleanSchema.create('false')).to.eq(false)
     })
 
     it('should allow valid values (boolean)', () => {
       for (const value of [true, false]) {
-        expect(stringifiedBoolean.create(value)).to.eq(value)
+        expect(stringifiedBooleanSchema.create(value)).to.eq(value)
       }
     })
 
@@ -67,7 +67,7 @@ describe('schemas/receipts', () => {
         'hello world',
         '12345',
       ]) {
-        expect(() => stringifiedBoolean.create(value)).to.throw(StructError)
+        expect(() => stringifiedBooleanSchema.create(value)).to.throw(StructError)
       }
     })
 
@@ -77,7 +77,7 @@ describe('schemas/receipts', () => {
         0,
         { hello: 'world' },
       ]) {
-        expect(() => stringifiedBoolean.create(value)).to.throw(StructError)
+        expect(() => stringifiedBooleanSchema.create(value)).to.throw(StructError)
       }
     })
   })
