@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { nonempty, number, object, optional, string, type } from 'superstruct'
 import { userIdSchema } from '../common/schemas.js'
 import { NotAuthenticatedError, NotFoundError } from '../common/errors.js'
+import { ApiError } from '../../ApiError.js'
 
 export const temporaryAuthTokenSchema = nonempty(string())
 export const temporaryAuthTokenPayloadSchema = type({ userId: userIdSchema })
@@ -40,22 +41,25 @@ export function createAuthRouter({
   router.get('/authenticate', async (req, res) => {
     const temporaryAuthToken = temporaryAuthTokenSchema.create(req.query['token'])
     if (!(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
-      res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
-      return
+      throw new ApiError({
+        code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE',
+        status: 400,
+      })
     }
 
     let userId
     try {
       ({ userId } = temporaryAuthTokenPayloadSchema.create(jwt.verify(temporaryAuthToken, tokenSecret)))
     } catch (error) {
-      res.status(400).json({ error: { code: 'INVALID_TEMPORARY_AUTH_TOKEN' } })
-      return
+      throw new ApiError({
+        code: 'INVALID_TEMPORARY_AUTH_TOKEN',
+        status: 400,
+      })
     }
 
     const user = await usersStorage.findById(userId)
     if (!user) {
       throw new NotFoundError()
-      return
     }
 
     res.json(
@@ -74,15 +78,19 @@ export function createAuthRouter({
       const { initData } = authenticateWebAppSchema.create(req.body)
 
       if (!checkWebAppSignature(telegramBotToken, initData)) {
-        res.status(400).json({ error: { code: 'INVALID_SIGNATURE' } })
-        return
+        throw new ApiError({
+          code: 'INVALID_SIGNATURE',
+          status: 400,
+        })
       }
 
       const initDataUser = new URLSearchParams(initData).get('user')
       const telegramUser = initDataUser ? initDataUserSchema.create(JSON.parse(initDataUser)) : undefined
       if (!telegramUser) {
-        res.status(400).json({ error: { code: 'INVALID_INIT_DATA' } })
-        return
+        throw new ApiError({
+          code: 'INVALID_INIT_DATA',
+          status: 400,
+        })
       }
 
       const user = await usersStorage.findById(String(telegramUser.id))

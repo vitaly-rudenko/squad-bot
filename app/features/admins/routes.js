@@ -50,8 +50,11 @@ export function createAdminsRouter({
       )
     } catch (error) {
       if (error.message.includes('chat not found')) {
-        res.status(502).json({ error: { code: 'CHAT_NOT_FOUND', message: 'Chat not found. Does bot have access to the group?' } })
-        return
+        throw new ApiError({
+          code: 'CHAT_NOT_FOUND',
+          message: 'Chat not found. Does bot have access to the group?',
+          status: 502,
+        })
       }
 
       logger.error({ error, groupId }, 'Could not get chat administrators')
@@ -82,10 +85,14 @@ export function createAdminsRouter({
     }
 
     if (errorCodes.length > 0) {
-      res.status(400).json({ error: { code: 'COULD_NOT_UPDATE_ADMINS', context: { errorCodes } } })
-    } else {
-      res.sendStatus(200)
+      throw new ApiError({
+        code: 'COULD_NOT_UPDATE_ADMINS',
+        context: { errorCodes },
+        status: 400
+      })
     }
+
+    res.sendStatus(200)
   })
 
   return router

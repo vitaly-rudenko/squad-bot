@@ -7,7 +7,7 @@ export class ApiError extends Error {
    *   context?: any
    * }} input
    */
-  constructor({ code, status = 500, message = code, context }) {
+  constructor({ code, status = 500, message = '', context }) {
     super(message)
     this.code = code
     this.status = status

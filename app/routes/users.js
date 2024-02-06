@@ -18,18 +18,14 @@ export function createRouter({
   router.post('/users', async (req, res) => {
     const { id, username, name } = req.user
 
-    try {
-      const user = new User({ id, name, username })
-      await usersStorage.create(user)
+    const user = new User({ id, name, username })
+    await usersStorage.create(user)
 
-      res.json({
-        id: user.id,
-        name: user.name,
-        username: user.username,
-      })
-    } catch (error) {
-      res.sendStatus(409)
-    }
+    res.json({
+      id: user.id,
+      name: user.name,
+      username: user.username,
+    })
   })
 
   router.get('/users', async (req, res) => {

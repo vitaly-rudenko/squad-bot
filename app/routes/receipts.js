@@ -5,6 +5,7 @@ import { ReceiptPhoto } from '../receipts/ReceiptPhoto.js'
 import { object, string, coerce, array, optional, size, trimmed } from 'superstruct'
 import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../features/common/schemas.js'
 import { NotFoundError } from '../features/common/errors.js'
+import { ApiError } from '../ApiError.js'
 
 export const debtSchema = object({
   debtorId: userIdSchema,
@@ -32,7 +33,7 @@ export const saveReceiptSchema = object({
 
 /**
  * @param {{
- *   debtsStorage: import('../debts/DebtsPostgresStorage.js').DebtsPostgresStorage,
+ *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage,
  *   receiptManager: import('../receipts/ReceiptManager.js').ReceiptManager,
  *   receiptsStorage: import('../receipts/ReceiptsPostgresStorage.js').ReceiptsPostgresStorage,
  * }} input
@@ -47,8 +48,11 @@ export function createRouter({
 
   router.post('/receipts', upload.single('photo'), async (req, res) => {
     if (req.file && req.file.size > 300_000) { // 300 kb
-      res.sendStatus(413)
-      return
+      throw new ApiError({
+        code: 'PHOTO_TOO_LARGE',
+        status: 413,
+        message: 'Receipt photo is too large',
+      })
     }
 
     const {

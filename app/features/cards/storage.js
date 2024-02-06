@@ -23,7 +23,7 @@ export class CardsPostgresStorage {
 
   /**
    * @param {string} userId
-   * @param {number} cardId
+   * @param {string} cardId
    */
   async delete(userId, cardId) {
     await this._client.query(`

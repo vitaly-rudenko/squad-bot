@@ -37,13 +37,7 @@ export function createCardsRouter({
   })
 
   router.delete('/cards/:cardId', async (req, res) => {
-    const cardId = Number(req.params.cardId)
-    if (!Number.isInteger(cardId)) {
-      res.sendStatus(400)
-      return
-    }
-
-    await cardsStorage.delete(req.user.id, cardId)
+    await cardsStorage.delete(req.user.id, req.params.cardId)
 
     res.sendStatus(204)
   })

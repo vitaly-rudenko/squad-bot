@@ -299,11 +299,11 @@ async function start() {
     }
 
     if (err instanceof ApiError) {
-      res.sendStatus(err.status).json({
+      res.status(err.status).json({
         error: {
           code: err.code,
-          message: err.message,
-          context: err.context,
+          ...err.message && { message: err.message },
+          ...err.context && { context: err.context },
         }
       })
     } else {
