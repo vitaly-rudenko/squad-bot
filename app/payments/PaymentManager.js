@@ -1,3 +1,5 @@
+// TODO: rewrite notifications system: should be async and separate
+
 export class PaymentManager {
   constructor({ paymentsStorage, paymentNotifier }) {
     this._paymentsStorage = paymentsStorage

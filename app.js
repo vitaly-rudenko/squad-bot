@@ -8,8 +8,6 @@ import pg from 'pg'
 import express from 'express'
 import { Redis } from 'ioredis'
 
-import { versionCommand } from './app/shared/flows/version.js'
-
 import { startCommand } from './app/users/flows/start.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsCommand } from './app/receipts/flows/receipts.js'
@@ -52,11 +50,16 @@ import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
-import { generateTemporaryAuthToken } from './app/auth/generateTemporaryAuthToken.js'
 import { createRouter } from './app/routes/index.js'
 import { CardsPostgresStorage } from './app/features/cards/storage.js'
 import { createCardsFlow } from './app/features/cards/telegram.js'
 import { createRollCallsFlow } from './app/features/roll-calls/telegram.js'
+import { string } from 'superstruct'
+import { createTemporaryAuthTokenGenerator } from './app/features/auth/utils.js'
+import { createAuthFlow } from './app/features/auth/telegram.js'
+import { createCommonFlow } from './app/features/common/telegram.js'
+import path from 'path'
+import { getAppVersion } from './app/features/common/utils.js'
 
 async function start() {
   if (useTestMode) {
@@ -104,7 +107,7 @@ async function start() {
   const botInfo = await bot.telegram.getMe()
   const generateWebAppUrl = createWebAppUrlGenerator({
     botUsername: botInfo.username,
-    webAppName: process.env.WEB_APP_NAME,
+    webAppName: string().create(process.env.WEB_APP_NAME),
   })
 
   const massTelegramNotificationFactory = new MassTelegramNotificationFactory({
@@ -179,8 +182,6 @@ async function start() {
     return next()
   })
 
-  bot.command('version', versionCommand())
-
   bot.use(withUserId())
   bot.use(withChatId())
   bot.use(withLocalization({ userManager }))
@@ -191,6 +192,7 @@ async function start() {
     })
   }))
 
+  // TODO: deprecated?
   bot.on('new_chat_members', async (context) => {
     const { chatId } = context.state
 
@@ -208,6 +210,7 @@ async function start() {
     }
   })
 
+  // TODO: deprecated?
   bot.on('left_chat_member', async (context) => {
     const user = context.message.left_chat_member
     if (!useTestMode && user.is_bot) return
@@ -221,6 +224,9 @@ async function start() {
   bot.command('start', requirePrivateChat(), startCommand({ userManager }))
 
   bot.use(registerUser({ userManager }))
+
+  // TODO: this seems inefficient, does softLink store things to DB on every call?
+  // TODO: also need to re-arrange commands to avoid this middleware to be executed unnecessarily
   bot.use(wrap(withGroupChat(), async (context, next) => {
     const { userId, chatId } = context.state
 
@@ -236,16 +242,23 @@ async function start() {
     return next()
   }))
 
-  bot.command('login', requirePrivateChat(), async (context) => {
-    const { userId } = context.state
-    await context.reply(`${process.env.WEB_APP_URL}/?token=${generateTemporaryAuthToken(userId)}`)
-  })
-
   const { cards } = createCardsFlow({ generateWebAppUrl })
   bot.command('cards', cards)
 
   const { rollCalls, rollCallMessage } = createRollCallsFlow({ generateWebAppUrl, membershipStorage, rollCallsStorage, usersStorage })
   bot.command('rollcalls', rollCalls)
+
+  const { login } = createAuthFlow({
+    webAppUrl: string().create(process.env.WEB_APP_URL),
+    generateTemporaryAuthToken: createTemporaryAuthTokenGenerator({
+      tokenSecret,
+      useTestMode,
+    })
+  })
+  bot.command('login', requirePrivateChat(), login)
+
+  const { version } = createCommonFlow({ version: getAppVersion() })
+  bot.command('version', requirePrivateChat(), version)
 
   bot.command('debts', debtsCommand({ usersStorage, debtManager }))
   bot.command('receipts', receiptsCommand({ generateWebAppUrl }))

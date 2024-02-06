@@ -1,7 +1,6 @@
 import Router from 'express-promise-router'
 import { Group } from '../groups/Group.js'
 import { nonempty, object, string, trimmed } from 'superstruct'
-import * as authentication from './authentication.js'
 import * as users from './users.js'
 import * as receipts from './receipts.js'
 import * as payments from './payments.js'
@@ -10,6 +9,7 @@ import * as groups from './groups.js'
 import { groupIdSchema, userIdSchema } from '../schemas/common.js'
 import { createCardsRouter } from '../features/cards/routes.js'
 import { createRollCallsRouter } from '../features/roll-calls/routes.js'
+import { createAuthMiddleware, createAuthRouter } from '../features/auth/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -72,7 +72,7 @@ export function createRouter({
   router.get('/bot', async (_, res) => res.json(botResponse))
 
   router.use(
-    authentication.createRouter({
+    createAuthRouter({
       createRedisCache,
       telegramBotToken,
       tokenSecret,
@@ -99,8 +99,9 @@ export function createRouter({
     })
   }
 
+  router.use(createAuthMiddleware({ tokenSecret }))
+
   router.use(
-    authentication.createMiddleware({ tokenSecret }),
     users.createRouter({ usersStorage, membershipStorage }),
     receipts.createRouter({
       debtsStorage,

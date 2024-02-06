@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import Router from 'express-promise-router'
 import jwt from 'jsonwebtoken'
 import { nonempty, number, object, optional, string, type } from 'superstruct'
-import { userIdSchema } from '../schemas/common.js'
+import { userIdSchema } from '../../schemas/common.js'
 
 export const temporaryAuthTokenSchema = nonempty(string())
 export const temporaryAuthTokenPayloadSchema = type({ userId: userIdSchema })
@@ -18,14 +18,14 @@ export const authTokenSchema = type({
 
 /**
  * @param {{
- *   createRedisCache: ReturnType<import('../utils/createRedisCacheFactory.js').createRedisCacheFactory>,
+ *   createRedisCache: ReturnType<import('../../utils/createRedisCacheFactory.js').createRedisCacheFactory>,
  *   telegramBotToken: string,
  *   tokenSecret: string,
- *   usersStorage: import('../users/UsersPostgresStorage.js').UsersPostgresStorage,
+ *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage,
  *   useTestMode: boolean,
  * }} input
  */
-export function createRouter({
+export function createAuthRouter({
   createRedisCache,
   telegramBotToken,
   tokenSecret,
@@ -106,12 +106,14 @@ export function createRouter({
   return router
 }
 
-export function createMiddleware({ tokenSecret }) {
+/** @param {{ tokenSecret: string }} input */
+export function createAuthMiddleware({ tokenSecret }) {
+  /** @type {import('express-serve-static-core').RequestHandler} */
   return (req, res, next) => {
     const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
-
     if (!token) {
       res.status(401).json({ error: { code: 'AUTH_TOKEN_NOT_PROVIDED' } })
+      return
     }
 
     try {
@@ -124,6 +126,10 @@ export function createMiddleware({ tokenSecret }) {
 }
 
 // https://gist.github.com/konstantin24121/49da5d8023532d66cc4db1136435a885?permalink_comment_id=4574538#gistcomment-4574538
+/**
+ * @param {string} botToken
+ * @param {string} initData
+ */
 function checkWebAppSignature(botToken, initData) {
   const urlParams = new URLSearchParams(initData)
 
