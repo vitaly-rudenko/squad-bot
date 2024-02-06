@@ -10,19 +10,12 @@ export class UserManager {
   async softRegister(user) {
     const existingUser = await this.getCachedUser(user.id)
 
-    if (existingUser) {
-      if (!existingUser.isComplete && user.isComplete) {
-        await this._usersStorage.update(user)
-        await this.clearCache(user.id)
-
-        logger.debug(`User is now complete: ${user.name} (${user.id}, @${user.username})`)
-      }
-    } else {
+    if (!existingUser) {
       try {
         await this._usersStorage.create(user)
         await this.clearCache(user.id)
 
-        logger.debug(`User has been registered: ${user.name} (${user.id}, @${user.username}, complete: ${user.isComplete})`)
+        logger.debug({ user }, `User has been registered`)
       } catch (error) {
         if (error.code !== 'ALREADY_EXISTS') {
           throw error

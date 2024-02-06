@@ -1,12 +1,7 @@
 import { logger } from '../../../logger.js'
 import { escapeMd } from '../../utils/escapeMd.js'
+import { isNotificationErrorIgnorable } from '../common/telegram.js'
 import { renderAmount, renderUser } from '../common/utils.js'
-
-const ignoredErrors = ['chat not found', "bot can't initiate conversation with a user"]
-/** @param {Error} err */
-function isIgnorableError(err) {
-  return ignoredErrors.some(m => err.message.includes(m))
-}
 
 /**
  * @param {{
@@ -53,8 +48,9 @@ export async function sendPaymentSavedNotification({
         disable_web_page_preview: true,
       })
     } catch (err) {
-      if (isIgnorableError(err)) return
-      logger.warn({ err, user, message }, 'Could not send notification')
+      if (!isNotificationErrorIgnorable(err)) {
+        logger.warn({ err, user, message }, 'Could not send notification')
+      }
     }
   }
 }
@@ -101,8 +97,9 @@ export async function sendPaymentDeletedNotification({
         disable_web_page_preview: true,
       })
     } catch (err) {
-      if (isIgnorableError(err)) return
-      logger.warn({ err, user, message }, 'Could not send notification')
+      if (!isNotificationErrorIgnorable(err)) {
+        logger.warn({ err, user, message }, 'Could not send notification')
+      }
     }
   }
 }

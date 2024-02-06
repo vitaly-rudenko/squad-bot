@@ -10,7 +10,6 @@ export function createUser() {
     id: chance.guid(),
     name: chance.name({ prefix: true }),
     username: chance.name().replaceAll(' ', '_').toLowerCase(),
-    isComplete: true,
     locale: chance.locale(),
   })
 }

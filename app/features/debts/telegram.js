@@ -51,13 +51,10 @@ export function createDebtsFlow({ usersStorage, debtsStorage, paymentsStorage })
       })
       : localize('command.debts.noOutgoingDebts')
 
-    const isUserIncomplete = !user.isComplete && localize('command.debts.incompleteUser')
-
     await context.reply(
       [
         outgoingDebtsFormatted,
         ingoingDebtsFormatted,
-        isUserIncomplete
       ].filter(Boolean).map(s => s.trim()).join('\n\n'),
       { parse_mode: 'MarkdownV2' }
     )

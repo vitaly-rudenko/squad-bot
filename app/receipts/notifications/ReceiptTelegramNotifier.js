@@ -33,8 +33,6 @@ export class ReceiptTelegramNotifier {
     const massNotification = this._massTelegramNotificationFactory.create()
 
     for (const user of users) {
-      if (!user.isComplete) continue
-
       const notification = this._localize(user.locale, 'notifications.receiptDeleted.message', {
         editorName: escapeMd(editor?.name),
         editorUsername: escapeMd(editor?.username),
@@ -80,8 +78,6 @@ export class ReceiptTelegramNotifier {
     const massNotification = this._massTelegramNotificationFactory.create()
 
     for (const user of users) {
-      if (!user.isComplete) continue
-
       const debt = debts.find(debt => debt.debtorId === user.id)
 
       const notification = this._localize(user.locale, 'notifications.receiptStored.message', {

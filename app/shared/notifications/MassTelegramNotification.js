@@ -1,3 +1,5 @@
+import { isNotificationErrorIgnorable } from '../../features/common/telegram.js'
+
 export class MassTelegramNotification {
   constructor({ telegramNotifier, errorLogger }) {
     this._telegramNotifier = telegramNotifier
@@ -13,8 +15,10 @@ export class MassTelegramNotification {
     for (const [userId, message] of this._notifications) {
       try {
         await this._telegramNotifier.notify(userId, message)
-      } catch (error) {
-        this._errorLogger.log(error, 'Could not send notification', { userId, message })
+      } catch (err) {
+        if (!isNotificationErrorIgnorable(err)) {
+          this._errorLogger.log(err, 'Could not send notification', { userId, message })
+        }
       }
     }
   }

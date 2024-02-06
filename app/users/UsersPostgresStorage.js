@@ -11,9 +11,9 @@ export class UsersPostgresStorage {
   async create(user) {
     try {
       await this._client.query(`
-        INSERT INTO users (id, username, name, is_complete)
-        VALUES ($1, $2, $3, $4);
-      `, [user.id, user.username, user.name, user.isComplete])
+        INSERT INTO users (id, username, name)
+        VALUES ($1, $2, $3);
+      `, [user.id, user.username, user.name])
 
       return this.findById(user.id)
     } catch (error) {
@@ -29,9 +29,9 @@ export class UsersPostgresStorage {
   async update(user) {
     await this._client.query(`
       UPDATE users
-      SET (name, username, is_complete) = ($2, $3, $4)
+      SET (name, username) = ($2, $3)
       WHERE id = $1;
-    `, [user.id, user.name, user.username, user.isComplete])
+    `, [user.id, user.name, user.username])
 
     return this.findById(user.id)
   }
@@ -94,7 +94,7 @@ export class UsersPostgresStorage {
     ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
-      SELECT u.id, u.name, u.username, u.is_complete
+      SELECT u.id, u.name, u.username
       FROM users u ${whereClause} ${paginationClause};
     `, variables)
 
@@ -106,7 +106,6 @@ export class UsersPostgresStorage {
       id: row['id'],
       name: row['name'],
       username: row['username'],
-      isComplete: row['is_complete'],
     })
   }
 }

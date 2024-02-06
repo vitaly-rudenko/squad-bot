@@ -5,14 +5,12 @@ export class User {
    *   name: string
    *   username?: string
    *   locale?: string
-   *   isComplete?: boolean
    * }} input
    */
-  constructor({ id, name, username, locale = 'uk', isComplete = false }) {
+  constructor({ id, name, username, locale = 'uk' }) {
     this.id = id
     this.username = username
     this.name = name
     this.locale = locale
-    this.isComplete = isComplete
   }
 }
