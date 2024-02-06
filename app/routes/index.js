@@ -6,10 +6,10 @@ import * as users from './users.js'
 import * as receipts from './receipts.js'
 import * as payments from './payments.js'
 import * as debts from './debts.js'
-import * as rollCalls from './rollcalls.js'
 import * as groups from './groups.js'
 import { groupIdSchema, userIdSchema } from '../schemas/common.js'
 import { createCardsRouter } from '../features/cards/routes.js'
+import { createRollCallsRouter } from '../features/roll-calls/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -33,7 +33,7 @@ export const createMembershipSchema = object({
  *   paymentsStorage: import('../payments/PaymentsPostgresStorage.js').PaymentsPostgresStorage,
  *   receiptManager: import('../receipts/ReceiptManager.js').ReceiptManager,
  *   receiptsStorage: import('../receipts/ReceiptsPostgresStorage.js').ReceiptsPostgresStorage,
- *   rollCallsStorage: import('../rollcalls/RollCallsPostgresStorage.js').RollCallsPostgresStorage,
+ *   rollCallsStorage: import('../features/roll-calls/storage.js').RollCallsPostgresStorage,
  *   telegramBotToken: string,
  *   tokenSecret: string,
  *   usersStorage: import('../users/UsersPostgresStorage.js').UsersPostgresStorage,
@@ -112,7 +112,10 @@ export function createRouter({
       paymentsStorage,
     }),
     debts.createRouter({ debtManager }),
-    rollCalls.createRouter({ membershipManager, rollCallsStorage }),
+    createRollCallsRouter({
+      membershipManager,
+      rollCallsStorage,
+    }),
     groups.createRouter({
       telegram,
       botInfo,

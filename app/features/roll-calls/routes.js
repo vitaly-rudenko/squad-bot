@@ -1,8 +1,7 @@
 import Router from 'express-promise-router'
-import { RollCall } from '../rollcalls/RollCall.js'
-import { AlreadyExistsError } from '../errors/AlreadyExistsError.js'
 import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, trimmed, union } from 'superstruct'
-import { groupIdSchema, userIdSchema } from '../schemas/common.js'
+import { AlreadyExistsError } from '../../errors/AlreadyExistsError.js'
+import { userIdSchema, groupIdSchema } from '../../schemas/common.js'
 
 export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
 export const pollOptionsSchema = array(size(trimmed(string()), 1, 32))
@@ -35,11 +34,11 @@ export const updateRollCallSchema = object({
 
 /**
  * @param {{
- *   membershipManager: import('../memberships/MembershipManager.js').MembershipManager,
- *   rollCallsStorage: import('../rollcalls/RollCallsPostgresStorage.js').RollCallsPostgresStorage,
+ *   membershipManager: import('../../memberships/MembershipManager.js').MembershipManager,
+ *   rollCallsStorage: import('./storage.js').RollCallsPostgresStorage,
  * }} input
  */
-export function createRouter({
+export function createRollCallsRouter({
   membershipManager,
   rollCallsStorage,
 }) {
@@ -61,16 +60,14 @@ export function createRouter({
     }
 
     try {
-      const storedRollCall = await rollCallsStorage.create(
-        new RollCall({
-          groupId,
-          excludeSender,
-          messagePattern,
-          usersPattern,
-          pollOptions,
-          sortOrder,
-        })
-      )
+      const storedRollCall = await rollCallsStorage.create({
+        groupId,
+        excludeSender,
+        messagePattern,
+        usersPattern,
+        pollOptions,
+        sortOrder,
+      })
 
       res.json(storedRollCall)
     } catch (error) {
@@ -105,18 +102,16 @@ export function createRouter({
       return
     }
 
-    const updatedRollCall = await rollCallsStorage.update(
-      rollCallId,
-      {
-        excludeSender,
-        messagePattern,
-        usersPattern,
-        pollOptions,
-        sortOrder,
-      }
-    )
+    await rollCallsStorage.update({
+      id: rollCallId,
+      excludeSender,
+      messagePattern,
+      usersPattern,
+      pollOptions,
+      sortOrder,
+    })
 
-    res.json(updatedRollCall)
+    res.sendStatus(201)
   })
 
   router.get('/rollcalls', async (req, res) => {

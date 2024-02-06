@@ -19,7 +19,7 @@ import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/localization.js'
 import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
-import { RollCallsPostgresStorage } from './app/rollcalls/RollCallsPostgresStorage.js'
+import { RollCallsPostgresStorage } from './app/features/roll-calls/storage.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
@@ -44,7 +44,6 @@ import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
-import { rollCallsCommand, rollCallsMessage } from './app/rollcalls/flows/rollcalls.js'
 import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
@@ -57,6 +56,7 @@ import { generateTemporaryAuthToken } from './app/auth/generateTemporaryAuthToke
 import { createRouter } from './app/routes/index.js'
 import { CardsPostgresStorage } from './app/features/cards/storage.js'
 import { createCardsFlow } from './app/features/cards/telegram.js'
+import { createRollCallsFlow } from './app/features/roll-calls/telegram.js'
 
 async function start() {
   if (useTestMode) {
@@ -244,10 +244,12 @@ async function start() {
   const { cards } = createCardsFlow({ generateWebAppUrl })
   bot.command('cards', cards)
 
+  const { rollCalls, rollCallMessage } = createRollCallsFlow({ generateWebAppUrl, membershipStorage, rollCallsStorage, usersStorage })
+  bot.command('rollcalls', rollCalls)
+
   bot.command('debts', debtsCommand({ usersStorage, debtManager }))
   bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
   bot.command('payments', paymentsCommand({ generateWebAppUrl }))
-  bot.command('rollcalls', rollCallsCommand({ generateWebAppUrl }))
   bot.command('titles', titlesCommand({ generateWebAppUrl }))
 
   bot.on('message',
@@ -256,7 +258,7 @@ async function start() {
       return next()
     },
     // roll calls
-    wrap(withGroupChat(), rollCallsMessage({ membershipStorage, rollCallsStorage, usersStorage })),
+    wrap(withGroupChat(), rollCallMessage),
   )
 
   bot.catch((error) => errorLogger.log(error))

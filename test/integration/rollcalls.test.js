@@ -179,14 +179,17 @@ describe('[roll calls]', () => {
       usersPattern: '123,456,789'
     })
 
-    const updatedRollCall = await updateRollCall(user.id, rollCall.id, {
+    await updateRollCall(user.id, rollCall.id, {
       messagePattern: 'updated message',
       excludeSender: false,
       pollOptions: [],
       usersPattern: '*',
     })
 
-    expect(updatedRollCall.id).to.eq(rollCall.id)
+    const rollCalls = await getRollCalls(groupId, user.id)
+    const updatedRollCall = rollCalls.find(r => r.id === rollCall.id)
+
+    expect(updatedRollCall?.id).to.eq(rollCall.id)
     expect(updatedRollCall).to.containSubset({
       groupId,
       messagePattern: 'updated message',

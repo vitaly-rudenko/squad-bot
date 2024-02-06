@@ -77,7 +77,10 @@ export class CardsPostgresStorage {
     return response.rows.map(row => this.deserializeCard(row))
   }
 
-  /** @returns {import('./types').Card} */
+  /**
+   * @param {any} row
+   * @returns {import('./types').Card}
+   */
   deserializeCard(row) {
     return {
       id: row['id'],

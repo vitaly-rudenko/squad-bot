@@ -2,11 +2,20 @@ import { PatternBuilder, PatternMatcher, EntryMatchers } from '@vitalyrudenko/te
 import { escapeMd } from '../../utils/escapeMd.js'
 import { GROUP_CHAT_TYPES } from '../../shared/middlewares/groupChat.js'
 
-export function rollCallsCommand({ generateWebAppUrl }) {
-  return async (context) => {
+/**
+ * @param {{
+ *   rollCallsStorage: import('./storage.js').RollCallsPostgresStorage
+ *   membershipStorage: import('../../memberships/MembershipPostgresStorage.js').MembershipPostgresStorage
+ *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage
+ *   generateWebAppUrl: import('../../utils/types').GenerateWebAppUrl
+ * }} input
+ */
+export function createRollCallsFlow({ rollCallsStorage, membershipStorage, usersStorage, generateWebAppUrl }) {
+  /** @param {import('telegraf').Context} context */
+  const rollCalls = async (context) => {
     const { chatId, localize } = context.state
 
-    const isGroup = GROUP_CHAT_TYPES.includes(context.chat.type)
+    const isGroup = GROUP_CHAT_TYPES.includes(/** @type {string} */ (context.chat?.type))
 
     const viewUrl = isGroup ? generateWebAppUrl(`roll-calls${chatId}`) : generateWebAppUrl('groups')
     const createUrl = isGroup ? generateWebAppUrl(`new-roll-call${chatId}`) : undefined
@@ -19,11 +28,13 @@ export function rollCallsCommand({ generateWebAppUrl }) {
       { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
     )
   }
-}
 
-export function rollCallsMessage({ rollCallsStorage, membershipStorage, usersStorage }) {
-  return async (context, next) => {
-    if (!('text' in context.message)) return next()
+  /**
+   * @param {import('telegraf').Context} context
+   * @param {Function} next
+   */
+  const rollCallMessage = async (context, next) => {
+    if (!context.message || !('text' in context.message)) return next()
 
     const { userId, chatId, localize } = context.state
 
@@ -66,6 +77,7 @@ export function rollCallsMessage({ rollCallsStorage, membershipStorage, usersSto
       return
     }
 
+    /** @param {any} user */
     function formatMention(user) {
       if (user.username) {
         return localize('rollCalls.mention.withUsername', { username: escapeMd(user.username) })
@@ -93,5 +105,10 @@ export function rollCallsMessage({ rollCallsStorage, membershipStorage, usersSto
         { is_anonymous: false }
       )
     }
+  }
+
+  return {
+    rollCalls,
+    rollCallMessage,
   }
 }

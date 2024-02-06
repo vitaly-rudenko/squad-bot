@@ -1,5 +1,4 @@
-import { AlreadyExistsError } from '../errors/AlreadyExistsError.js'
-import { RollCall } from './RollCall.js'
+import { AlreadyExistsError } from '../../errors/AlreadyExistsError.js'
 
 export class RollCallsPostgresStorage {
   /** @param {import('pg').Client} client */
@@ -7,7 +6,7 @@ export class RollCallsPostgresStorage {
     this._client = client
   }
 
-  /** @param {RollCall} rollCall */
+  /** @param {Omit<import('./types').RollCall, 'id'>} rollCall */
   async create(rollCall) {
     try {
       const response = await this._client.query(`
@@ -26,24 +25,23 @@ export class RollCallsPostgresStorage {
     }
   }
 
-  async update(id, { messagePattern, usersPattern, excludeSender, pollOptions, sortOrder }) {
+  /** @param {Pick<import('./types').RollCall, 'id'> & Partial<import('./types').RollCall>} input */
+  async update(input) {
     const fields = [
-      ['message_pattern', messagePattern],
-      ['users_pattern', usersPattern],
-      ['exclude_sender', excludeSender],
-      ['poll_options', pollOptions],
-      ['sort_order', sortOrder],
-    ].filter(([key, value]) => key && value !== undefined)
+      ['message_pattern', input.messagePattern],
+      ['users_pattern', input.usersPattern],
+      ['exclude_sender', input.excludeSender],
+      ['poll_options', input.pollOptions],
+      ['sort_order', input.sortOrder],
+    ].filter(([_, value]) => value !== undefined)
 
     if (fields.length > 0) {
       await this._client.query(`
         UPDATE roll_calls
         SET ${fields.map(([key], i) => `${key} = $${i + 2}`).join(', ')}
         WHERE id = $1;
-      `, [id, ...fields.map(field => field[1])])
+      `, [input.id, ...fields.map(field => field[1])])
     }
-
-    return this.findById(id)
   }
 
   /** @param {string} id */
@@ -114,8 +112,12 @@ export class RollCallsPostgresStorage {
     return response.rows.map(row => this.deserializeRollCall(row))
   }
 
+  /**
+   * @param {any} row
+   * @returns {import('./types').RollCall}
+   */
   deserializeRollCall(row) {
-    return new RollCall({
+    return {
       id: row['id'],
       groupId: row['group_id'],
       messagePattern: row['message_pattern'],
@@ -123,6 +125,6 @@ export class RollCallsPostgresStorage {
       excludeSender: row['exclude_sender'],
       pollOptions: row['poll_options'],
       sortOrder: row['sort_order'],
-    })
+    }
   }
 }

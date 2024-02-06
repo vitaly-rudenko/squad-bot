@@ -2,7 +2,7 @@ import Router from 'express-promise-router'
 import { literal, object, refine, size, string, trimmed, union } from 'superstruct'
 import { userIdSchema } from '../../schemas/common.js'
 
-export const cardNumberRegex = /^[0-9]+$/
+const cardNumberRegex = /^[0-9]+$/
 export const createCardSchema = object({
   number: refine(size(trimmed(string()), 16), 'numeric', (value) => cardNumberRegex.test(value)),
   bank: union([literal('privatbank'), literal('monobank')]),

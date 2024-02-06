@@ -292,8 +292,6 @@ export async function updateRollCall(userId, rollCallId, {
   })
 
   validateResponse(response)
-
-  return await response.json()
 }
 
 /** @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall[]>} */
