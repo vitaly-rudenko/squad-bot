@@ -14,6 +14,6 @@
     "useUnknownInCatchVariables": false,
     "noImplicitAny": false,
   },
-  "include": ["types.d.ts", "app.js", "env.js", "logger.js", "app/**/*.js"],
+  "include": ["index.d.ts", "app.js", "env.js", "logger.js", "app/**/*.js"],
   "exclude": ["node_modules"]
 }

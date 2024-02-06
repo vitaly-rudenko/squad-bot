@@ -14,6 +14,8 @@ import { Group } from '../groups/Group.js'
 import multer from 'multer'
 import { Card } from '../cards/Card.js'
 import { formatCardNumber } from '../utils/formatCardNumber.js'
+import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, type, union } from 'superstruct'
+import { amount } from '../schemas/common.js'
 
 /**
  * @param {{
@@ -62,22 +64,28 @@ export function createRouter({
   const router = Router()
   const upload = multer()
 
+  router.get('/bot', async (_, res) => {
+    res.json({
+      id: String(botInfo.id),
+      name: botInfo.first_name,
+      username: botInfo.username,
+    })
+  })
+
   const temporaryAuthTokenCache = createRedisCache('tokens', useTestMode ? 60_000 : 5 * 60_000)
+  const temporaryAuthTokenSchema = nonempty(string())
+  const temporaryAuthTokenPayloadSchema = type({ userId: nonempty(string()) })
 
   router.get('/authenticate', async (req, res) => {
-    const temporaryAuthToken = req.query['token']
-    if (typeof temporaryAuthToken !== 'string' || !(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
+    const temporaryAuthToken = temporaryAuthTokenSchema.create(req.query['token'])
+    if (!(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
       res.status(400).json({ error: { code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE' } })
       return
     }
 
     let userId
     try {
-      const parsed = jwt.verify(temporaryAuthToken, tokenSecret)
-      if (typeof parsed === 'string' || !parsed.userId) {
-        throw new Error('Temporary token does not contain user ID')
-      }
-      userId = parsed.userId
+      ({ userId } = temporaryAuthTokenPayloadSchema.create(jwt.verify(temporaryAuthToken, tokenSecret)))
     } catch (error) {
       res.status(400).json({ error: { code: 'INVALID_TEMPORARY_AUTH_TOKEN' } })
       return
@@ -89,34 +97,37 @@ export function createRouter({
       return
     }
 
-    res.json(jwt.sign({
-      user: {
-        id: user.id,
-        name: user.name,
-        username: user.username,
-      }
-    }, tokenSecret))
+    res.json(
+      jwt.sign({
+        user: {
+          id: user.id,
+          name: user.name,
+          username: user.username,
+        }
+      }, tokenSecret)
+    )
   })
+
+  const authenticateWebAppSchema = object({ initData: string() })
+  const initDataUserSchema = type({ id: number() })
 
   router.post('/authenticate-web-app', async (req, res, next) => {
     try {
-      const { initData } = req.body
-
-      if (typeof initData !== 'string') {
-        res.status(400).json({ error: { code: 'VALIDATION_ERROR' } })
-        return
-      }
+      const { initData } = authenticateWebAppSchema.create(req.body)
 
       if (!checkWebAppSignature(telegramBotToken, initData)) {
         res.status(400).json({ error: { code: 'INVALID_SIGNATURE' } })
         return
       }
 
-      const parsedInitData = new URLSearchParams(initData)
-      const telegramUser = JSON.parse(parsedInitData.get('user') ?? '')
-      const userId = String(telegramUser.id)
+      const initDataUser = new URLSearchParams(initData).get('user')
+      const telegramUser = initDataUser ? initDataUserSchema.create(JSON.parse(initDataUser)) : undefined
+      if (!telegramUser) {
+        res.status(400).json({ error: { code: 'INVALID_INIT_DATA' } })
+        return
+      }
 
-      const user = await usersStorage.findById(userId)
+      const user = await usersStorage.findById(String(telegramUser.id))
       if (!user) {
         res.status(404).json({ error: { code: 'USER_NOT_FOUND' } })
         return
@@ -147,8 +158,10 @@ export function createRouter({
   })
 
   if (useTestMode) {
+    const createMembershipSchema = object({ userId: string(), groupId: string(), title: string() })
+
     router.post('/memberships', async (req, res) => {
-      const { userId, groupId, title } = req.body
+      const { userId, groupId, title } = createMembershipSchema.create(req.body)
 
       await membershipManager.hardLink(userId, groupId)
       await groupManager.store(
@@ -162,22 +175,26 @@ export function createRouter({
     })
   }
 
+  const authTokenSchema = type({
+    user: type({
+      id: string(),
+      name: string(),
+      username: optional(string()),
+    })
+  })
+
   router.use((req, res, next) => {
     const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
 
-    if (token) {
-      try {
-        const parsed = jwt.verify(token, tokenSecret)
-        if (typeof parsed === 'string' || !parsed.user || !parsed.user.id || !parsed.user.username || !parsed.user.name) {
-          throw new Error('Token does not contain user ID, username and name')
-        }
-        req.user = parsed.user
-        next()
-      } catch (error) {
-        res.status(401).json({ error: { code: 'INVALID_AUTH_TOKEN', message: error.message } })
-      }
-    } else {
+    if (!token) {
       res.status(401).json({ error: { code: 'AUTH_TOKEN_NOT_PROVIDED' } })
+    }
+
+    try {
+      req.user = authTokenSchema.create(jwt.verify(token, tokenSecret)).user
+      next()
+    } catch (error) {
+      res.status(401).json({ error: { code: 'INVALID_AUTH_TOKEN', message: error.message } })
     }
   })
 
@@ -198,8 +215,10 @@ export function createRouter({
     }
   })
 
+  const groupIdSchema = nonempty(string())
+
   router.get('/users', async (req, res) => {
-    const groupId = req.query.group_id
+    const groupId = optional(groupIdSchema).create(req.query.group_id)
     if (groupId) {
       const userIds = await membershipStorage.findUserIdsByGroupId(groupId)
       const users = await usersStorage.findByIds(userIds)
@@ -209,14 +228,6 @@ export function createRouter({
 
     const users = await usersStorage.findAll()
     res.json(users)
-  })
-
-  router.get('/bot', async (_, res) => {
-    res.json({
-      id: String(botInfo.id),
-      name: botInfo.first_name,
-      username: botInfo.username,
-    })
   })
 
   router.post('/receipts', upload.single('photo'), async (req, res) => {
@@ -249,7 +260,10 @@ export function createRouter({
       hasPhoto: receiptPhoto !== undefined && receiptPhoto !== 'delete'
     })
 
-    const storedReceipt = await receiptManager.store({ debts, receipt, receiptPhoto }, { editorId: req.user.id })
+    const storedReceipt = await receiptManager.store(
+      { debts, receipt, receiptPhoto },
+      { editorId: req.user.id },
+    )
 
     res.json(
       formatReceipt(
@@ -280,19 +294,27 @@ export function createRouter({
   })
 
   router.delete('/receipts/:receiptId', async (req, res) => {
-    await receiptManager.delete(req.params.receiptId, { editorId: req.user.id })
+    const receiptId = req.params.receiptId
+    await receiptManager.delete(receiptId, { editorId: req.user.id })
     res.sendStatus(204)
   })
 
+  const createPaymentSchema = object({
+    fromUserId: nonempty(string()),
+    toUserId: nonempty(string()),
+    amount,
+  })
+
   router.post('/payments', async (req, res) => {
-    const { fromUserId, toUserId, amount } = req.body
+    const { fromUserId, toUserId, amount } = createPaymentSchema.create(req.body)
     const payment = new Payment({ fromUserId, toUserId, amount })
     const storedPayment = await paymentManager.store(payment, { editorId: req.user.id })
     res.json(storedPayment)
   })
 
   router.delete('/payments/:paymentId', async (req, res) => {
-    await paymentManager.delete(req.params.paymentId, { editorId: req.user.id })
+    const paymentId = req.params.paymentId
+    await paymentManager.delete(paymentId, { editorId: req.user.id })
     res.sendStatus(204)
   })
 
@@ -316,19 +338,41 @@ export function createRouter({
     })
   })
 
+  const sortOrder = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
+  const pollOptions = array(size(string(), 1, 32))
+  const userIdRegex = /^[0-9]+$/
+  const usersPattern = union([
+    literal('*'),
+    refine(
+      nonempty(string()),
+      'users pattern',
+      (value) => value.split(',').every(userId => userIdRegex.test(userId))
+    ),
+  ])
+
+  const createRollCallSchema = object({
+    groupId: groupIdSchema,
+    messagePattern: size(string(), 1, 256),
+    usersPattern,
+    excludeSender: boolean(),
+    pollOptions,
+    sortOrder,
+  })
+
   router.post('/rollcalls', async (req, res, next) => {
-    const groupId = req.body.groupId
+    const {
+      groupId,
+      messagePattern,
+      usersPattern,
+      excludeSender,
+      pollOptions,
+      sortOrder,
+    } = createRollCallSchema.create(req.body)
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
       res.sendStatus(403)
       return
     }
-
-    const messagePattern = req.body.messagePattern
-    const usersPattern = req.body.usersPattern
-    const excludeSender = req.body.excludeSender
-    const pollOptions = req.body.pollOptions
-    const sortOrder = req.body.sortOrder
 
     try {
       const storedRollCall = await rollCallsStorage.create(
@@ -352,8 +396,17 @@ export function createRouter({
     }
   })
 
-  router.patch('/rollcalls/:id', async (req, res) => {
-    const rollCallId = req.params.id
+  const updateRollCallSchema = object({
+    messagePattern: optional(nonempty(string())),
+    usersPattern: optional(usersPattern),
+    excludeSender: optional(boolean()),
+    pollOptions: optional(pollOptions),
+    sortOrder: optional(sortOrder),
+  })
+
+  // TODO: merge with "create" request
+  router.patch('/rollcalls/:rollCallId', async (req, res) => {
+    const rollCallId = req.params.rollCallId
 
     const rollCall = await rollCallsStorage.findById(rollCallId)
     if (!rollCall) {
@@ -361,18 +414,18 @@ export function createRouter({
       return
     }
 
-    const groupId = rollCall.groupId
+    const {
+      messagePattern,
+      usersPattern,
+      excludeSender,
+      pollOptions,
+      sortOrder,
+    } = updateRollCallSchema.create(req.body)
 
-    if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
+    if (!(await membershipManager.isHardLinked(req.user.id, rollCall.groupId))) {
       res.sendStatus(403)
       return
     }
-
-    const messagePattern = req.body.messagePattern
-    const usersPattern = req.body.usersPattern
-    const excludeSender = req.body.excludeSender
-    const pollOptions = req.body.pollOptions
-    const sortOrder = req.body.sortOrder
 
     const updatedRollCall = await rollCallsStorage.update(
       rollCallId,
@@ -389,12 +442,7 @@ export function createRouter({
   })
 
   router.get('/rollcalls', async (req, res) => {
-    const groupId = req.query['group_id']
-    if (typeof groupId !== 'string') {
-      res.sendStatus(400)
-      return
-    }
-
+    const groupId = groupIdSchema.create(req.query.group_id)
     const rollCalls = await rollCallsStorage.findByGroupId(groupId)
     res.json(rollCalls)
   })
@@ -416,15 +464,12 @@ export function createRouter({
   })
 
   router.get('/groups', async (req, res) => {
-    res.json(await groupStorage.findByMemberUserId(req.user.id))
+    const groups = await groupStorage.findByMemberUserId(req.user.id)
+    res.json(groups)
   })
 
   router.get('/admins', async (req, res) => {
-    const groupId = req.query.group_id
-    if (typeof groupId !== 'string') {
-      res.sendStatus(400)
-      return
-    }
+    const groupId = groupIdSchema.create(req.query.group_id)
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
       res.sendStatus(403)
@@ -434,13 +479,15 @@ export function createRouter({
     try {
       const admins = await telegram.getChatAdministrators(Number(groupId))
 
-      res.json(admins.map(admin => ({
-        userId: String(admin.user.id),
-        title: admin.custom_title || '',
-        isCreator: admin.status === 'creator',
-        isCurrentBot: admin.user.id === botInfo.id,
-        editable: admin.status !== 'creator' && admin.can_be_edited,
-      })))
+      res.json(
+        admins.map(admin => ({
+          userId: String(admin.user.id),
+          title: admin.custom_title || '',
+          isCreator: admin.status === 'creator',
+          isCurrentBot: admin.user.id === botInfo.id,
+          editable: admin.status !== 'creator' && admin.can_be_edited,
+        }))
+      )
     } catch (error) {
       if (error.message.includes('chat not found')) {
         res.status(502).json({ error: { code: 'CHAT_NOT_FOUND', message: 'Chat not found. Does bot have access to the group?' } })
@@ -452,25 +499,25 @@ export function createRouter({
     }
   })
 
+  const updateAdminsSchema = object({
+    groupId: groupIdSchema,
+    admins: nonempty(
+      array(object({
+        userId: nonempty(string()),
+        title: size(string(), 0, 16),
+      }))
+    )
+  })
+
   router.patch('/admins', async (req, res) => {
-    const { groupId, admins } = req.body
-    if (
-      typeof groupId !== 'string' ||
-      !Array.isArray(admins) ||
-      admins.some(admin =>
-        typeof admin.userId !== 'string' ||
-        typeof admin.title !== 'string'
-      )
-    ) {
-      res.sendStatus(400)
-      return
-    }
+    const { groupId, admins } = updateAdminsSchema.create(req.body)
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
       res.sendStatus(403)
       return
     }
 
+    /** @type {{ userId: string; errorCode: string }[]} */
     const errorCodes = []
     for (const admin of admins) {
       try {
@@ -492,29 +539,22 @@ export function createRouter({
     }
   })
 
+  const userIdSchema = nonempty(string())
+
   router.get('/cards', async (req, res) => {
-    const userId = req.query.user_id
-    if (typeof userId !== 'string') {
-      res.sendStatus(400)
-      return
-    }
-
+    const userId = userIdSchema.create(req.query.user_id)
     const cards = await cardsStorage.findByUserId(userId)
-
     res.json(cards)
   })
 
+  const numberRegex = /^[0-9]+$/
+  const createCardSchema = object({
+    number: refine(size(string(), 16), 'numeric', (value) => numberRegex.test(value)),
+    bank: union([literal('privatbank'), literal('monobank')]),
+  })
+
   router.post('/cards', async (req, res) => {
-    const { number, bank } = req.body
-    if (
-      typeof number !== 'string' ||
-      typeof bank !== 'string' ||
-      number.length !== 16 ||
-      !['privatbank', 'monobank'].includes(bank)
-    ) {
-      res.sendStatus(400)
-      return
-    }
+    const { number, bank } = createCardSchema.create(req.body)
 
     await cardsStorage.create(
       new Card({
