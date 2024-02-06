@@ -3,7 +3,7 @@ import Router from 'express-promise-router'
 import jwt from 'jsonwebtoken'
 import { nonempty, number, object, optional, string, type } from 'superstruct'
 import { userIdSchema } from '../common/schemas.js'
-import { NotFoundError } from '../common/errors.js'
+import { NotAuthenticatedError, NotFoundError } from '../common/errors.js'
 
 export const temporaryAuthTokenSchema = nonempty(string())
 export const temporaryAuthTokenPayloadSchema = type({ userId: userIdSchema })
@@ -109,19 +109,19 @@ export function createAuthRouter({
 /** @param {{ tokenSecret: string }} input */
 export function createAuthMiddleware({ tokenSecret }) {
   /** @type {import('express-serve-static-core').RequestHandler} */
-  return (req, res, next) => {
+  return (req, _, next) => {
     const token = req.headers['authorization']?.slice(7) // 'Bearer ' length
     if (!token) {
-      res.status(401).json({ error: { code: 'AUTH_TOKEN_NOT_PROVIDED' } })
-      return
+      throw new NotAuthenticatedError('Authentication token not provided')
     }
 
     try {
       req.user = authTokenSchema.create(jwt.verify(token, tokenSecret)).user
-      next()
     } catch (error) {
-      res.status(401).json({ error: { code: 'INVALID_AUTH_TOKEN', message: error.message } })
+      throw new NotAuthenticatedError('Invalid authentication token')
     }
+
+    next()
   }
 }
 

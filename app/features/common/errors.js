@@ -1,19 +1,29 @@
 import { ApiError } from '../../ApiError.js'
 
 export class NotFoundError extends ApiError {
-  constructor() {
-    super({ code: 'NOT_FOUND', status: 404, message: 'Resource not found' })
+  /** @param {string} [message] */
+  constructor(message = 'Resource not found') {
+    super({ code: 'NOT_FOUND', status: 404, message })
+  }
+}
+
+export class NotAuthenticatedError extends ApiError {
+  /** @param {string} [message] */
+  constructor(message = 'Not authenticated') {
+    super({ code: 'NOT_AUTHENTICATED', status: 403, message })
   }
 }
 
 export class NotAuthorizedError extends ApiError {
-  constructor() {
-    super({ code: 'NOT_AUTHORIZED', status: 403, message: 'Access denied' })
+  /** @param {string} [message] */
+  constructor(message = 'Access denied') {
+    super({ code: 'NOT_AUTHORIZED', status: 403, message })
   }
 }
 
 export class AlreadyExistsError extends ApiError {
-  constructor() {
-    super({ code: 'ALREADY_EXISTS', status: 409, message: 'Resource already exists' })
+  /** @param {string} [message] */
+  constructor(message = 'Resource already exists') {
+    super({ code: 'ALREADY_EXISTS', status: 409, message })
   }
 }

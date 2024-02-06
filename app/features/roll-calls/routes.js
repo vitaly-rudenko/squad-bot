@@ -1,7 +1,7 @@
 import Router from 'express-promise-router'
 import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, trimmed, union } from 'superstruct'
 import { userIdSchema, groupIdSchema } from '../common/schemas.js'
-import { NotFoundError } from '../common/errors.js'
+import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
 
 export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
 export const pollOptionsSchema = array(size(trimmed(string()), 1, 32))
@@ -55,8 +55,7 @@ export function createRollCallsRouter({
     } = createRollCallSchema.create(req.body)
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
-      res.sendStatus(403)
-      return
+      throw new NotAuthorizedError()
     }
 
     res.json(
@@ -89,8 +88,7 @@ export function createRollCallsRouter({
     } = updateRollCallSchema.create(req.body)
 
     if (!(await membershipManager.isHardLinked(req.user.id, rollCall.groupId))) {
-      res.sendStatus(403)
-      return
+      throw new NotAuthorizedError()
     }
 
     await rollCallsStorage.update({
@@ -118,8 +116,7 @@ export function createRollCallsRouter({
     }
 
     if (!(await membershipManager.isHardLinked(req.user.id, rollCall.groupId))) {
-      res.sendStatus(403)
-      return
+      throw new NotAuthorizedError()
     }
 
     await rollCallsStorage.deleteById(req.params.rollCallId)

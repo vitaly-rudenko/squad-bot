@@ -3,6 +3,7 @@ import { ApiError } from '../../ApiError.js'
 import { logger } from '../../../logger.js'
 import { array, nonempty, object, size, string, trimmed } from 'superstruct'
 import { groupIdSchema, userIdSchema } from '../common/schemas.js'
+import { NotAuthorizedError } from '../common/errors.js'
 
 export const updateAdminsSchema = object({
   groupId: groupIdSchema,
@@ -32,8 +33,7 @@ export function createAdminsRouter({
     const groupId = groupIdSchema.create(req.query.group_id)
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
-      res.sendStatus(403)
-      return
+      throw new NotAuthorizedError()
     }
 
     try {
@@ -63,8 +63,7 @@ export function createAdminsRouter({
     const { groupId, admins } = updateAdminsSchema.create(req.body)
 
     if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
-      res.sendStatus(403)
-      return
+      throw new NotAuthorizedError()
     }
 
     /** @type {{ userId: string; errorCode: string }[]} */
