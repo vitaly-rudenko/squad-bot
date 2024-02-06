@@ -3,6 +3,7 @@ import Router from 'express-promise-router'
 import jwt from 'jsonwebtoken'
 import { nonempty, number, object, optional, string, type } from 'superstruct'
 import { userIdSchema } from '../common/schemas.js'
+import { NotFoundError } from '../common/errors.js'
 
 export const temporaryAuthTokenSchema = nonempty(string())
 export const temporaryAuthTokenPayloadSchema = type({ userId: userIdSchema })
@@ -53,7 +54,7 @@ export function createAuthRouter({
 
     const user = await usersStorage.findById(userId)
     if (!user) {
-      res.status(404).json({ error: { code: 'USER_NOT_FOUND' } })
+      throw new NotFoundError()
       return
     }
 
@@ -86,8 +87,7 @@ export function createAuthRouter({
 
       const user = await usersStorage.findById(String(telegramUser.id))
       if (!user) {
-        res.status(404).json({ error: { code: 'USER_NOT_FOUND' } })
-        return
+        throw new NotFoundError()
       }
 
       res.json(jwt.sign({

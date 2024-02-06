@@ -4,6 +4,7 @@ import { Receipt } from '../receipts/Receipt.js'
 import { ReceiptPhoto } from '../receipts/ReceiptPhoto.js'
 import { object, string, coerce, array, optional, size, trimmed } from 'superstruct'
 import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../features/common/schemas.js'
+import { NotFoundError } from '../features/common/errors.js'
 
 export const debtSchema = object({
   debtorId: userIdSchema,
@@ -97,9 +98,8 @@ export function createRouter({
   router.get('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
     const receipt = await receiptsStorage.findById(receiptId)
-
     if (!receipt) {
-      return res.sendStatus(404)
+      throw new NotFoundError()
     }
 
     const debts = await debtsStorage.findByReceiptId(receiptId)
@@ -126,13 +126,13 @@ export function createPublicRouter({ receiptsStorage }) {
 
   router.get('/receipts/:receiptId/photo', async (req, res) => {
     const receiptId = req.params.receiptId
-    const receiptPhoto = await receiptsStorage.getReceiptPhoto(receiptId)
 
-    if (receiptPhoto) {
-      res.contentType(receiptPhoto.mime).send(receiptPhoto.binary).end()
-    } else {
-      res.sendStatus(404)
+    const receiptPhoto = await receiptsStorage.getReceiptPhoto(receiptId)
+    if (!receiptPhoto) {
+      throw new NotFoundError()
     }
+
+    res.contentType(receiptPhoto.mime).send(receiptPhoto.binary).end()
   })
 
   return router
