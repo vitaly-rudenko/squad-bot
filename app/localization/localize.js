@@ -15,12 +15,20 @@ function getMessages(locale) {
   return loadLocalization(locale)
 }
 
+/**
+ * @param {string} messageKey
+ * @param {string} locale
+ * @returns {string}
+ */
 export function get(messageKey, locale) {
   const path = messageKey.split('.')
 
   let result = getMessages(locale)
-  while (result && path.length > 0) {
-    result = result[path.shift()]
+  while (result) {
+    const name = path.shift()
+    if (!name) break
+
+    result = result[name]
   }
 
   if (!result) {
@@ -30,6 +38,12 @@ export function get(messageKey, locale) {
   return result ?? escapeMd(messageKey)
 }
 
+/**
+ * @param {string} locale
+ * @param {string} messageKey
+ * @param {Record<string, any>} [replacements]
+ * @returns {string}
+ */
 export function localize(locale, messageKey, replacements) {
   let result = get(messageKey, locale)
 

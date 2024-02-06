@@ -10,7 +10,6 @@ import { Redis } from 'ioredis'
 
 import { startCommand } from './app/users/flows/start.js'
 import { receiptsCommand } from './app/receipts/flows/receipts.js'
-import { paymentsCommand } from './app/payments/flows/payments.js'
 import { withUserId } from './app/users/middlewares/userId.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/localization.js'
@@ -20,11 +19,8 @@ import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
 import { TelegramErrorLogger } from './app/shared/TelegramErrorLogger.js'
-import { PaymentTelegramNotifier } from './app/payments/notifications/PaymentTelegramNotifier.js'
-import { PaymentsPostgresStorage } from './app/payments/PaymentsPostgresStorage.js'
 import { ReceiptsPostgresStorage } from './app/receipts/ReceiptsPostgresStorage.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
-import { PaymentManager } from './app/payments/PaymentManager.js'
 import { MembershipManager } from './app/memberships/MembershipManager.js'
 import { MembershipCache } from './app/memberships/MembershipCache.js'
 import { MembershipPostgresStorage } from './app/memberships/MembershipPostgresStorage.js'
@@ -58,6 +54,9 @@ import { getAppVersion } from './app/features/common/utils.js'
 import { createAdminsFlow } from './app/features/admins/telegram.js'
 import { DebtsPostgresStorage } from './app/features/debts/storage.js'
 import { createDebtsFlow } from './app/features/debts/telegram.js'
+import { PaymentsPostgresStorage } from './app/features/payments/storage.js'
+import { createPaymentsFlow } from './app/features/payments/telegram.js'
+import { ApiError } from './app/ApiError.js'
 
 async function start() {
   if (useTestMode) {
@@ -113,12 +112,6 @@ async function start() {
     errorLogger,
   })
 
-  const paymentNotifier = new PaymentTelegramNotifier({
-    localize,
-    massTelegramNotificationFactory,
-    usersStorage,
-  })
-
   const receiptNotifier = new ReceiptTelegramNotifier({
     localize,
     massTelegramNotificationFactory,
@@ -131,11 +124,6 @@ async function start() {
     debtsStorage,
     receiptNotifier,
     receiptsStorage,
-  })
-
-  const paymentManager = new PaymentManager({
-    paymentNotifier,
-    paymentsStorage,
   })
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
@@ -259,8 +247,10 @@ async function start() {
   const { debts } = createDebtsFlow({ debtsStorage, paymentsStorage, usersStorage })
   bot.command('debts', debts)
 
+  const { payments } = createPaymentsFlow({ generateWebAppUrl })
+  bot.command('payments', payments)
+
   bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
-  bot.command('payments', paymentsCommand({ generateWebAppUrl }))
 
   bot.on('message',
     async (context, next) => {
@@ -282,25 +272,44 @@ async function start() {
   app.use(express.json())
   app.use(cors({ origin: corsOrigin }))
   app.use(createRouter({
-    telegram: bot.telegram,
     botInfo,
     cardsStorage,
     createRedisCache,
     debtsStorage,
     groupManager,
     groupStorage,
+    localize,
     membershipManager,
     membershipStorage,
-    paymentManager,
     paymentsStorage,
     receiptManager,
     receiptsStorage,
     rollCallsStorage,
+    telegram: bot.telegram,
     telegramBotToken,
     tokenSecret,
     usersStorage,
     useTestMode,
   }))
+
+  // @ts-ignore
+  app.use((err, req, res, next) => {
+    if (res.headersSent) {
+      return next(err)
+    }
+
+    if (err instanceof ApiError) {
+      res.sendStatus(err.status).json({
+        error: {
+          code: err.code,
+          message: err.message,
+          context: err.context,
+        }
+      })
+    } else {
+      next(err)
+    }
+  })
 
   const port = Number(process.env.PORT) || 3000
 

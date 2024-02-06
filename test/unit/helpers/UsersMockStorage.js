@@ -24,4 +24,9 @@ export class UsersMockStorage {
 
     return users
   }
+
+  findAndMapByIds(userIds) {
+    const users = this.findByIds(userIds)
+    return userIds.map(id => users.find(u => u.id === id))
+  }
 }

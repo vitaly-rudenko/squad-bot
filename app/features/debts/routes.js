@@ -4,7 +4,7 @@ import { aggregateDebts } from './utils.js'
 /**
  * @param {{
  *   debtsStorage: import('./storage.js').DebtsPostgresStorage
- *   paymentsStorage: import('../../payments/PaymentsPostgresStorage.js').PaymentsPostgresStorage
+ *   paymentsStorage: import('../payments/storage.js').PaymentsPostgresStorage
  * }} input
  */
 export function createDebtsRouter({

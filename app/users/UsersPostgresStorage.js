@@ -54,6 +54,15 @@ export class UsersPostgresStorage {
   }
 
   /**
+   * @param {string[]} ids
+   * @returns {Promise<(User | undefined)[]>}
+   */
+  async findAndMapByIds(ids) {
+    const users = await this.findByIds(ids)
+    return ids.map(id => users.find(u => u.id === id))
+  }
+
+  /**
    * @param {{
    *   ids?: string[],
    *   limit?: number,

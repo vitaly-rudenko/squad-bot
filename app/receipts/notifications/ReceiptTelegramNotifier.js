@@ -1,6 +1,6 @@
+import { renderAmount } from '../../features/common/utils.js'
 import { renderDebtAmount } from '../../features/debts/utils.js'
 import { escapeMd } from '../../utils/escapeMd.js'
-import { renderMoney } from '../../utils/renderMoney.js'
 
 export class ReceiptTelegramNotifier {
   /**
@@ -45,7 +45,7 @@ export class ReceiptTelegramNotifier {
             { description: escapeMd(description) },
           )
           : this._localize(user.locale, 'notifications.receiptDeleted.noDescription'),
-        receiptAmount: escapeMd(renderMoney(amount)),
+        receiptAmount: escapeMd(renderAmount(amount)),
         payerName: escapeMd(payer?.name),
         payerUsername: escapeMd(payer?.username),
       })
@@ -100,7 +100,7 @@ export class ReceiptTelegramNotifier {
             { description: escapeMd(description) },
           )
           : this._localize(user.locale, 'notifications.receiptStored.noDescription'),
-        receiptAmount: escapeMd(renderMoney(amount)),
+        receiptAmount: escapeMd(renderAmount(amount)),
         payerName: escapeMd(payer?.name),
         payerUsername: escapeMd(payer?.username),
         receiptUrl: escapeMd(receiptUrl),

@@ -1,20 +1,20 @@
-import { renderMoney } from '../../utils/renderMoney.js'
+import { renderAmount } from '../common/utils.js'
 
 /** @param {import('./types').Debt} debt */
 export function renderDebtAmount(debt) {
-  return renderMoney(debt.amount)
+  return renderAmount(debt.amount)
 }
 
 /** @param {import('./types').AggregatedDebt} debt */
 export function renderAggregatedDebt(debt) {
-  return renderMoney(debt.amount)
+  return renderAmount(debt.amount)
 }
 
 /**
  * @param {{
  *   userId: string
  *   debtsStorage: import('./storage.js').DebtsPostgresStorage,
- *   paymentsStorage: import('../../payments/PaymentsPostgresStorage.js').PaymentsPostgresStorage,
+ *   paymentsStorage: import('../payments/storage.js').PaymentsPostgresStorage,
  * }} input
  */
 export async function aggregateDebts({

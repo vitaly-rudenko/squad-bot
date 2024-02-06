@@ -1,23 +1,24 @@
-import { AggregatedPayment } from './AggregatedPayment.js'
-import { Payment } from './Payment.js'
-
 export class PaymentsPostgresStorage {
   /** @param {import('pg').Client} client */
   constructor(client) {
     this._client = client
   }
 
-  /** @param {Payment} payment */
-  async create(payment) {
-    const { fromUserId, toUserId, amount, createdAt } = payment
-
+  /**
+   * @param {Omit<import('./types').Payment, 'id'>} input
+   * @returns {Promise<import('./types').Payment>}
+   */
+  async create(input) {
     const response = await this._client.query(`
       INSERT INTO payments (from_user_id, to_user_id, amount, created_at)
       VALUES ($1, $2, $3, $4)
       RETURNING id;
-    `, [fromUserId, toUserId, amount, createdAt])
+    `, [input.fromUserId, input.toUserId, input.amount, input.createdAt])
 
-    return this.findById(response.rows[0]['id'])
+    return {
+      id: response.rows[0].id,
+      ...input
+    }
   }
 
   /** @param {string} id */
@@ -65,7 +66,7 @@ export class PaymentsPostgresStorage {
       GROUP BY p.from_user_id, p.to_user_id;
     `, variables)
 
-    return response.rows.map(row => this.deserializeAggregatedPayment(row))
+    return response.rows.map(row => deserializeAggregatedPayment(row))
   }
 
   /** @param {string} id */
@@ -126,24 +127,32 @@ export class PaymentsPostgresStorage {
       ORDER BY created_at DESC;
     `, variables)
 
-    return response.rows.map(row => this.deserializePayment(row))
+    return response.rows.map(row => deserializePayment(row))
   }
+}
 
-  deserializePayment(row) {
-    return new Payment({
-      id: row['id'],
-      fromUserId: row['from_user_id'],
-      toUserId: row['to_user_id'],
-      amount: row['amount'],
-      createdAt: new Date(row['created_at']),
-    })
+/**
+ * @param {any} row
+ * @returns {import('./types').Payment}
+ */
+function deserializePayment(row) {
+  return {
+    id: row['id'],
+    fromUserId: row['from_user_id'],
+    toUserId: row['to_user_id'],
+    amount: row['amount'],
+    createdAt: new Date(row['created_at']),
   }
+}
 
-  deserializeAggregatedPayment(row) {
-    return new AggregatedPayment({
-      fromUserId: row['from_user_id'],
-      toUserId: row['to_user_id'],
-      amount: row['amount'],
-    })
+/**
+ * @param {any} row
+ * @returns {import('./types').AggregatedPayment}
+ */
+function deserializeAggregatedPayment(row) {
+  return {
+    fromUserId: row['from_user_id'],
+    toUserId: row['to_user_id'],
+    amount: row['amount'],
   }
 }

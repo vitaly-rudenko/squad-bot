@@ -11,3 +11,20 @@ export function getAppVersion() {
     return 'unknown'
   }
 }
+
+/** @param {import('../../users/User.js').User} user */
+export function renderUser(user) {
+  return user.username ? `${user.name} (@${user.username})` : user.name
+}
+
+/** @param {number} input */
+export function renderAmount(input) {
+  if (!Number.isInteger(input)) {
+    throw new Error('Input must be integer')
+  }
+
+  const fixed = (input / 100).toFixed(2)
+  const amount = fixed.endsWith('.00') ? (input / 100).toFixed(0) : fixed
+
+  return `₴${amount}`
+}

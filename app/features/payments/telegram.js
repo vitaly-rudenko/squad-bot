@@ -1,8 +1,13 @@
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function paymentsCommand({ generateWebAppUrl }) {
+/**
+ * @param {{
+ *   generateWebAppUrl: import('../../utils/types').GenerateWebAppUrl
+ * }} input
+ */
+export function createPaymentsFlow({ generateWebAppUrl }) {
   /** @param {import('telegraf').Context} context */
-  return async (context) => {
+  const payments = async (context) => {
     const { localize } = context.state
 
     const viewUrl = generateWebAppUrl('payments')
@@ -10,7 +15,7 @@ export function paymentsCommand({ generateWebAppUrl }) {
 
     await context.reply(
       localize(
-        'command.payments.help',
+        'payments.command.help',
         {
           viewUrl: escapeMd(viewUrl),
           createUrl: escapeMd(createUrl),
@@ -21,5 +26,9 @@ export function paymentsCommand({ generateWebAppUrl }) {
         disable_web_page_preview: true,
       }
     )
+  }
+
+  return {
+    payments
   }
 }

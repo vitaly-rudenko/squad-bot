@@ -3,7 +3,6 @@ import { Group } from '../groups/Group.js'
 import { nonempty, object, string, trimmed } from 'superstruct'
 import * as users from './users.js'
 import * as receipts from './receipts.js'
-import * as payments from './payments.js'
 import * as groups from './groups.js'
 import { groupIdSchema, userIdSchema } from '../features/common/schemas.js'
 import { createCardsRouter } from '../features/cards/routes.js'
@@ -11,6 +10,7 @@ import { createRollCallsRouter } from '../features/roll-calls/routes.js'
 import { createAuthMiddleware, createAuthRouter } from '../features/auth/routes.js'
 import { createAdminsRouter } from '../features/admins/routes.js'
 import { createDebtsRouter } from '../features/debts/routes.js'
+import { createPaymentsRouter } from '../features/payments/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -20,41 +20,41 @@ export const createMembershipSchema = object({
 
 /**
  * @param {{
- *   telegram: import('telegraf').Telegram,
- *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>,
- *   cardsStorage: import('../features/cards/storage.js').CardsPostgresStorage,
- *   createRedisCache: ReturnType<import('../utils/createRedisCacheFactory.js').createRedisCacheFactory>,
- *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage,
- *   groupManager: import('../groups/GroupManager.js').GroupManager,
- *   groupStorage: import('../groups/GroupPostgresStorage.js').GroupsPostgresStorage,
- *   membershipManager: import('../memberships/MembershipManager.js').MembershipManager,
- *   membershipStorage: import('../memberships/MembershipPostgresStorage.js').MembershipPostgresStorage,
- *   paymentManager: import('../payments/PaymentManager.js').PaymentManager,
- *   paymentsStorage: import('../payments/PaymentsPostgresStorage.js').PaymentsPostgresStorage,
- *   receiptManager: import('../receipts/ReceiptManager.js').ReceiptManager,
- *   receiptsStorage: import('../receipts/ReceiptsPostgresStorage.js').ReceiptsPostgresStorage,
- *   rollCallsStorage: import('../features/roll-calls/storage.js').RollCallsPostgresStorage,
- *   telegramBotToken: string,
- *   tokenSecret: string,
- *   usersStorage: import('../users/UsersPostgresStorage.js').UsersPostgresStorage,
- *   useTestMode: boolean,
+ *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>
+ *   cardsStorage: import('../features/cards/storage.js').CardsPostgresStorage
+ *   createRedisCache: ReturnType<import('../utils/createRedisCacheFactory.js').createRedisCacheFactory>
+ *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage
+ *   groupManager: import('../groups/GroupManager.js').GroupManager
+ *   groupStorage: import('../groups/GroupPostgresStorage.js').GroupsPostgresStorage
+ *   localize: import('../localization/localize.js').localize
+ *   membershipManager: import('../memberships/MembershipManager.js').MembershipManager
+ *   membershipStorage: import('../memberships/MembershipPostgresStorage.js').MembershipPostgresStorage
+ *   paymentsStorage: import('../features/payments/storage.js').PaymentsPostgresStorage
+ *   receiptManager: import('../receipts/ReceiptManager.js').ReceiptManager
+ *   receiptsStorage: import('../receipts/ReceiptsPostgresStorage.js').ReceiptsPostgresStorage
+ *   rollCallsStorage: import('../features/roll-calls/storage.js').RollCallsPostgresStorage
+ *   telegram: import('telegraf').Telegram
+ *   telegramBotToken: string
+ *   tokenSecret: string
+ *   usersStorage: import('../users/UsersPostgresStorage.js').UsersPostgresStorage
+ *   useTestMode: boolean
  * }} input
  */
 export function createRouter({
-  telegram,
   botInfo,
   cardsStorage,
   createRedisCache,
   debtsStorage,
   groupManager,
   groupStorage,
+  localize,
   membershipManager,
   membershipStorage,
-  paymentManager,
   paymentsStorage,
   receiptManager,
   receiptsStorage,
   rollCallsStorage,
+  telegram,
   telegramBotToken,
   tokenSecret,
   usersStorage,
@@ -107,9 +107,11 @@ export function createRouter({
       receiptManager,
       receiptsStorage,
     }),
-    payments.createRouter({
-      paymentManager,
+    createPaymentsRouter({
+      localize,
       paymentsStorage,
+      telegram,
+      usersStorage,
     }),
     createDebtsRouter({
       debtsStorage,

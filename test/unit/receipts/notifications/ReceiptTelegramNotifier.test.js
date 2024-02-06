@@ -88,12 +88,12 @@ describe('ReceiptTelegramNotifier', () => {
               action: notifications.receiptStored.actions.added(${payer.locale})
               receiptDescription: notifications.receiptStored.description(${payer.locale}):
                 description: Hello world\\!
-              receiptAmount: 12 грн
+              receiptAmount: ₴12
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`web-app-url(receipt-${receiptId})`)}
               part: notifications.receiptStored.part(${payer.locale}):
-                partAmount: 43\\.21 грн
+                partAmount: ₴43\\.21
           `],
           [debtor.id, stripIndent`
             notifications.receiptStored.message(${debtor.locale}):
@@ -102,12 +102,12 @@ describe('ReceiptTelegramNotifier', () => {
               action: notifications.receiptStored.actions.added(${debtor.locale})
               receiptDescription: notifications.receiptStored.description(${debtor.locale}):
                 description: Hello world\\!
-              receiptAmount: 12 грн
+              receiptAmount: ₴12
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`web-app-url(receipt-${receiptId})`)}
               part: notifications.receiptStored.part(${debtor.locale}):
-                partAmount: 12 грн
+                partAmount: ₴12
           `]
         ])
     })
@@ -149,7 +149,7 @@ describe('ReceiptTelegramNotifier', () => {
               editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.added(${payer.locale})
               receiptDescription: notifications.receiptStored.noDescription(${payer.locale})
-              receiptAmount: 12\\.30 грн
+              receiptAmount: ₴12\\.30
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`web-app-url(receipt-${receiptId})`)}
@@ -161,12 +161,12 @@ describe('ReceiptTelegramNotifier', () => {
               editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.added(${debtor.locale})
               receiptDescription: notifications.receiptStored.noDescription(${debtor.locale})
-              receiptAmount: 12\\.30 грн
+              receiptAmount: ₴12\\.30
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`web-app-url(receipt-${receiptId})`)}
               part: notifications.receiptStored.part(${debtor.locale}):
-                partAmount: 12 грн
+                partAmount: ₴12
           `]
         ])
     })
@@ -212,7 +212,7 @@ describe('ReceiptTelegramNotifier', () => {
               action: notifications.receiptStored.actions.updated(${payer.locale})
               receiptDescription: notifications.receiptStored.description(${payer.locale}):
                 description: Hello world\\!
-              receiptAmount: 12 грн
+              receiptAmount: ₴12
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`web-app-url(receipt-${receiptId})`)}
@@ -225,12 +225,12 @@ describe('ReceiptTelegramNotifier', () => {
               action: notifications.receiptStored.actions.updated(${debtor.locale})
               receiptDescription: notifications.receiptStored.description(${debtor.locale}):
                 description: Hello world\\!
-              receiptAmount: 12 грн
+              receiptAmount: ₴12
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`web-app-url(receipt-${receiptId})`)}
               part: notifications.receiptStored.part(${debtor.locale}):
-                partAmount: 12 грн
+                partAmount: ₴12
           `]
         ])
     })
@@ -272,7 +272,7 @@ describe('ReceiptTelegramNotifier', () => {
               editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.updated(${payer.locale})
               receiptDescription: notifications.receiptStored.noDescription(${payer.locale})
-              receiptAmount: 12\\.34 грн
+              receiptAmount: ₴12\\.34
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`web-app-url(receipt-${receiptId})`)}
@@ -284,12 +284,12 @@ describe('ReceiptTelegramNotifier', () => {
               editorUsername: ${escapeMd(editor.username)}
               action: notifications.receiptStored.actions.updated(${debtor.locale})
               receiptDescription: notifications.receiptStored.noDescription(${debtor.locale})
-              receiptAmount: 12\\.34 грн
+              receiptAmount: ₴12\\.34
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
               receiptUrl: ${escapeMd(`web-app-url(receipt-${receiptId})`)}
               part: notifications.receiptStored.part(${debtor.locale}):
-                partAmount: 12 грн
+                partAmount: ₴12
           `]
         ])
     })
@@ -334,7 +334,7 @@ describe('ReceiptTelegramNotifier', () => {
               editorUsername: ${escapeMd(editor.username)}
               receiptDescription: notifications.receiptDeleted.description(${payer.locale}):
                 description: Hello world\\!
-              receiptAmount: 12 грн
+              receiptAmount: ₴12
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
           `],
@@ -344,7 +344,7 @@ describe('ReceiptTelegramNotifier', () => {
               editorUsername: ${escapeMd(editor.username)}
               receiptDescription: notifications.receiptDeleted.description(${debtor.locale}):
                 description: Hello world\\!
-              receiptAmount: 12 грн
+              receiptAmount: ₴12
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
           `]
@@ -387,7 +387,7 @@ describe('ReceiptTelegramNotifier', () => {
               editorName: ${escapeMd(editor.name)}
               editorUsername: ${escapeMd(editor.username)}
               receiptDescription: notifications.receiptDeleted.noDescription(${payer.locale})
-              receiptAmount: 12\\.30 грн
+              receiptAmount: ₴12\\.30
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
           `],
@@ -396,7 +396,7 @@ describe('ReceiptTelegramNotifier', () => {
               editorName: ${escapeMd(editor.name)}
               editorUsername: ${escapeMd(editor.username)}
               receiptDescription: notifications.receiptDeleted.noDescription(${debtor.locale})
-              receiptAmount: 12\\.30 грн
+              receiptAmount: ₴12\\.30
               payerName: ${escapeMd(payer.name)}
               payerUsername: ${escapeMd(payer.username)}
           `]
