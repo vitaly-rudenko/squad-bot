@@ -1,12 +1,12 @@
 import Router from 'express-promise-router'
 import { RollCall } from '../rollcalls/RollCall.js'
 import { AlreadyExistsError } from '../errors/AlreadyExistsError.js'
-import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, union } from 'superstruct'
+import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, trimmed, union } from 'superstruct'
 import { groupIdSchema, userIdSchema } from '../schemas/common.js'
 
 export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
-export const pollOptionsSchema = array(size(string(), 1, 32))
-export const messagePatternSchema = size(string(), 1, 256)
+export const pollOptionsSchema = array(size(trimmed(string()), 1, 32))
+export const messagePatternSchema = size(trimmed(string()), 1, 256)
 export const usersPatternSchema = union([
   literal('*'),
   refine(

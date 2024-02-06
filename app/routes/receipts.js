@@ -2,10 +2,14 @@ import multer from 'multer'
 import Router from 'express-promise-router'
 import { Receipt } from '../receipts/Receipt.js'
 import { ReceiptPhoto } from '../receipts/ReceiptPhoto.js'
-import { object, string, coerce, array, optional, size } from 'superstruct'
+import { object, string, coerce, array, optional, size, trimmed } from 'superstruct'
 import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../schemas/common.js'
 
-export const debtSchema = object({ debtorId: userIdSchema, amount: amountSchema })
+export const debtSchema = object({
+  debtorId: userIdSchema,
+  amount: amountSchema,
+})
+
 export const debtsSchema = coerce(
   array(debtSchema),
   string(),
@@ -18,7 +22,7 @@ export const debtsSchema = coerce(
 export const saveReceiptSchema = object({
   id: optional(string()),
   payer_id: string(),
-  description: optional(size(string(), 1, 64)),
+  description: optional(size(trimmed(string()), 1, 64)),
   amount: amountSchema,
   debts: size(debtsSchema, 1, 10),
   leave_photo: optional(stringifiedBooleanSchema),

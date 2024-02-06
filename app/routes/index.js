@@ -1,6 +1,6 @@
 import Router from 'express-promise-router'
 import { Group } from '../groups/Group.js'
-import { object, string } from 'superstruct'
+import { nonempty, object, string, trimmed } from 'superstruct'
 import * as authentication from './authentication.js'
 import * as users from './users.js'
 import * as receipts from './receipts.js'
@@ -9,8 +9,13 @@ import * as debts from './debts.js'
 import * as rollCalls from './rollcalls.js'
 import * as groups from './groups.js'
 import * as cards from './cards.js'
+import { groupIdSchema, userIdSchema } from '../schemas/common.js'
 
-export const createMembershipSchema = object({ userId: string(), groupId: string(), title: string() })
+export const createMembershipSchema = object({
+  userId: userIdSchema,
+  groupId: groupIdSchema,
+  title: nonempty(trimmed(string())),
+})
 
 /**
  * @param {{

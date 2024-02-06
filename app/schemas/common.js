@@ -1,10 +1,10 @@
-import { refine, coerce, number, string, boolean, nonempty } from 'superstruct'
+import { refine, coerce, number, string, boolean, nonempty, trimmed } from 'superstruct'
 
 export const userIdSchema = nonempty(string())
 export const groupIdSchema = nonempty(string())
 
 export const amountSchema = refine(
-  coerce(number(), string(), (value) => Number(value)),
+  coerce(number(), trimmed(string()), (value) => Number(value)),
   'amount',
   (value) => (
     Number.isInteger(value) && value >= 0 && value <= 100_000_00 ||

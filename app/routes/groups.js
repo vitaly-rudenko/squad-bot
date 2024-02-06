@@ -1,7 +1,7 @@
 import Router from 'express-promise-router'
 import { ApiError } from '../ApiError.js'
 import { logger } from '../../logger.js'
-import { array, nonempty, object, size, string } from 'superstruct'
+import { array, nonempty, object, size, string, trimmed } from 'superstruct'
 import { groupIdSchema, userIdSchema } from '../schemas/common.js'
 
 export const updateAdminsSchema = object({
@@ -9,7 +9,7 @@ export const updateAdminsSchema = object({
   admins: nonempty(
     array(object({
       userId: userIdSchema,
-      title: size(string(), 0, 16),
+      title: size(trimmed(string()), 0, 16),
     }))
   )
 })
