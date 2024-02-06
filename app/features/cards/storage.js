@@ -1,20 +1,16 @@
-import { Card } from './Card.js'
-
 export class CardsPostgresStorage {
   /** @param {import('pg').Client} client */
   constructor(client) {
     this._client = client
   }
 
-  /** @param {Card} card */
+  /** @param {Omit<import('./types').Card, 'id'>} card */
   async create(card) {
-    const response = await this._client.query(`
+    await this._client.query(`
       INSERT INTO cards (user_id, bank, number)
       VALUES ($1, $2, $3)
-      RETURNING id;
+      RETURNING *;
     `, [card.userId, card.bank, card.number])
-
-    return this.findById(response.rows[0]['id'])
   }
 
   /**
@@ -28,20 +24,9 @@ export class CardsPostgresStorage {
     `, [userId, cardId])
   }
 
-  /** @param {string} id */
-  async findById(id) {
-    const cards = await this._find({ ids: [id], limit: 1 })
-    return cards.at(0)
-  }
-
   /** @param {string} userId */
   async findByUserId(userId) {
     return this._find({ userIds: [userId] })
-  }
-
-  /** @param {string[]} userIds */
-  async findByUserIds(userIds) {
-    return this._find({ userIds })
   }
 
   /**
@@ -92,12 +77,13 @@ export class CardsPostgresStorage {
     return response.rows.map(row => this.deserializeCard(row))
   }
 
+  /** @returns {import('./types').Card} */
   deserializeCard(row) {
-    return new Card({
+    return {
       id: row['id'],
       userId: row['user_id'],
       bank: row['bank'],
       number: row['number'],
-    })
+    }
   }
 }

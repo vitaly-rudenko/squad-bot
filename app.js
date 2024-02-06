@@ -13,13 +13,11 @@ import { versionCommand } from './app/shared/flows/version.js'
 import { startCommand } from './app/users/flows/start.js'
 import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsCommand } from './app/receipts/flows/receipts.js'
-import { cardsCommand } from './app/cards/flows/cards.js'
 import { paymentsCommand } from './app/payments/flows/payments.js'
 import { withUserId } from './app/users/middlewares/userId.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/localization.js'
 import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
-import { CardsPostgresStorage } from './app/cards/CardsPostgresStorage.js'
 import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { RollCallsPostgresStorage } from './app/rollcalls/RollCallsPostgresStorage.js'
 import { localize } from './app/localization/localize.js'
@@ -57,6 +55,8 @@ import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsU
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 import { generateTemporaryAuthToken } from './app/auth/generateTemporaryAuthToken.js'
 import { createRouter } from './app/routes/index.js'
+import { CardsPostgresStorage } from './app/features/cards/storage.js'
+import { createCardsFlow } from './app/features/cards/telegram.js'
 
 async function start() {
   if (useTestMode) {
@@ -71,9 +71,11 @@ async function start() {
 
   if (process.env.LOG_DATABASE_QUERIES === 'true') {
     const query = pgClient.query.bind(pgClient)
+    // @ts-ignore
     pgClient.query = (...args) => {
       logger.debug({ args }, 'Database query')
-      return query(...args)
+    // @ts-ignore
+      return query(argvum)
     }
   }
 
@@ -239,11 +241,13 @@ async function start() {
     await context.reply(`${process.env.WEB_APP_URL}/?token=${generateTemporaryAuthToken(userId)}`)
   })
 
+  const { cards } = createCardsFlow({ generateWebAppUrl })
+  bot.command('cards', cards)
+
   bot.command('debts', debtsCommand({ usersStorage, debtManager }))
   bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
   bot.command('payments', paymentsCommand({ generateWebAppUrl }))
   bot.command('rollcalls', rollCallsCommand({ generateWebAppUrl }))
-  bot.command('cards', cardsCommand({ generateWebAppUrl }))
   bot.command('titles', titlesCommand({ generateWebAppUrl }))
 
   bot.on('message',

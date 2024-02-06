@@ -1,8 +1,6 @@
 import Router from 'express-promise-router'
-import { Card } from '../cards/Card.js'
-import { formatCardNumber } from '../utils/formatCardNumber.js'
 import { literal, object, refine, size, string, trimmed, union } from 'superstruct'
-import { userIdSchema } from '../schemas/common.js'
+import { userIdSchema } from '../../schemas/common.js'
 
 export const cardNumberRegex = /^[0-9]+$/
 export const createCardSchema = object({
@@ -12,10 +10,10 @@ export const createCardSchema = object({
 
 /**
  * @param {{
- *   cardsStorage: import('../cards/CardsPostgresStorage.js').CardsPostgresStorage,
+ *   cardsStorage: import('./storage.js').CardsPostgresStorage,
  * }} input
  */
-export function createRouter({
+export function createCardsRouter({
   cardsStorage,
 }) {
   const router = Router()
@@ -29,15 +27,13 @@ export function createRouter({
   router.post('/cards', async (req, res) => {
     const { number, bank } = createCardSchema.create(req.body)
 
-    await cardsStorage.create(
-      new Card({
-        userId: req.user.id,
-        bank,
-        number: formatCardNumber(number),
-      })
-    )
+    await cardsStorage.create({
+      userId: req.user.id,
+      bank,
+      number,
+    })
 
-    res.sendStatus(200)
+    res.sendStatus(201)
   })
 
   router.delete('/cards/:cardId', async (req, res) => {

@@ -1,7 +1,13 @@
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function cardsCommand({ generateWebAppUrl }) {
-  return async (context) => {
+/**
+ * @param {{
+ *   generateWebAppUrl: import('../../utils/types').GenerateWebAppUrl
+ * }} input
+ */
+export function createCardsFlow({ generateWebAppUrl }) {
+  /** @param {import('telegraf').Context} context */
+  const cards = async (context) => {
     const { localize } = context.state
 
     const viewUrl = generateWebAppUrl('cards')
@@ -21,4 +27,6 @@ export function cardsCommand({ generateWebAppUrl }) {
       }
     )
   }
+
+  return { cards }
 }

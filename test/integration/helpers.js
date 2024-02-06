@@ -336,8 +336,6 @@ export async function createMembership(userId, groupId, title = 'Fake chat') {
   })
 
   validateResponse(response)
-
-  return await response.json()
 }
 
 export const NO_DEBTS = { ingoingDebts: [], outgoingDebts: [] }

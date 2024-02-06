@@ -1,7 +1,10 @@
 module.exports = {
   /** @param {{ context: import('pg').Pool }} context */
   async up({ context: db }) {
-    // stub
+    await db.query(`
+      UPDATE cards
+      SET number = replace(number, ' ', '');
+    `)
   },
 
   /** @param {{ context: import('pg').Pool }} context */

@@ -8,8 +8,8 @@ import * as payments from './payments.js'
 import * as debts from './debts.js'
 import * as rollCalls from './rollcalls.js'
 import * as groups from './groups.js'
-import * as cards from './cards.js'
 import { groupIdSchema, userIdSchema } from '../schemas/common.js'
+import { createCardsRouter } from '../features/cards/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -21,7 +21,7 @@ export const createMembershipSchema = object({
  * @param {{
  *   telegram: import('telegraf').Telegram,
  *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>,
- *   cardsStorage: import('../cards/CardsPostgresStorage.js').CardsPostgresStorage,
+ *   cardsStorage: import('../features/cards/storage.js').CardsPostgresStorage,
  *   createRedisCache: ReturnType<import('../utils/createRedisCacheFactory.js').createRedisCacheFactory>,
  *   debtManager: import('../debts/DebtManager.js').DebtManager,
  *   debtsStorage: import('../debts/DebtsPostgresStorage.js').DebtsPostgresStorage,
@@ -119,7 +119,7 @@ export function createRouter({
       groupStorage,
       membershipManager,
     }),
-    cards.createRouter({
+    createCardsRouter({
       cardsStorage,
     }),
   )
