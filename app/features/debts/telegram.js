@@ -5,7 +5,7 @@ import { aggregateDebts, renderAggregatedDebt } from './utils.js'
  * @param {{
  *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage
  *   debtsStorage: import('./storage.js').DebtsPostgresStorage,
- *   paymentsStorage: import('../../payments/PaymentsPostgresStorage.js').PaymentsPostgresStorage
+ *   paymentsStorage: import('../payments/storage.js').PaymentsPostgresStorage
  * }} input
  */
 export function createDebtsFlow({ usersStorage, debtsStorage, paymentsStorage }) {
@@ -15,14 +15,18 @@ export function createDebtsFlow({ usersStorage, debtsStorage, paymentsStorage })
     const user = await usersStorage.findById(userId)
     if (!user) return
 
-    // TODO: only get rendered users
-    const users = await usersStorage.findAll()
-
     const { ingoingDebts, outgoingDebts } = await aggregateDebts({
       userId,
       debtsStorage,
       paymentsStorage,
     })
+
+    const userIds = [...new Set([
+      ...ingoingDebts.flatMap(d => [d.fromUserId, d.toUserId]),
+      ...outgoingDebts.flatMap(d => [d.fromUserId, d.toUserId]),
+    ])]
+
+    const users = await usersStorage.findByIds(userIds)
 
     /** @param {import('./types').AggregatedDebt} debt */
     function localizeAggregatedDebt(debt) {
