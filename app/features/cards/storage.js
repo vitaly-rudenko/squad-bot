@@ -5,19 +5,19 @@ export class CardsPostgresStorage {
   }
 
   /**
-   * @param {Omit<import('./types').Card, 'id'>} card
+   * @param {Omit<import('./types').Card, 'id'>} input
    * @return {Promise<import('./types').Card>}
    */
-  async create(card) {
+  async create(input) {
     const response = await this._client.query(`
       INSERT INTO cards (user_id, bank, number)
       VALUES ($1, $2, $3)
       RETURNING id;
-    `, [card.userId, card.bank, card.number])
+    `, [input.userId, input.bank, input.number])
 
     return {
       id: response.rows[0].id,
-      ...card,
+      ...input,
     }
   }
 
@@ -82,19 +82,19 @@ export class CardsPostgresStorage {
       FROM cards c ${whereClause} ${paginationClause};
     `, variables)
 
-    return response.rows.map(row => this.deserializeCard(row))
+    return response.rows.map(row => deserializeCard(row))
   }
+}
 
-  /**
-   * @param {any} row
-   * @returns {import('./types').Card}
-   */
-  deserializeCard(row) {
-    return {
-      id: row['id'],
-      userId: row['user_id'],
-      bank: row['bank'],
-      number: row['number'],
-    }
+/**
+ * @param {any} row
+ * @returns {import('./types').Card}
+ */
+function deserializeCard(row) {
+  return {
+    id: row['id'],
+    userId: row['user_id'],
+    bank: row['bank'],
+    number: row['number'],
   }
 }

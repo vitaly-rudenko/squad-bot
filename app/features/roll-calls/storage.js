@@ -7,20 +7,20 @@ export class RollCallsPostgresStorage {
   }
 
   /**
-   * @param {Omit<import('./types').RollCall, 'id'>} rollCall
+   * @param {Omit<import('./types').RollCall, 'id'>} input
    * @returns {Promise<import('./types').RollCall>}
    */
-  async create(rollCall) {
+  async create(input) {
     try {
       const response = await this._client.query(`
         INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, sort_order)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id;
-      `, [rollCall.groupId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender, rollCall.pollOptions, rollCall.sortOrder])
+      `, [input.groupId, input.messagePattern, input.usersPattern, input.excludeSender, input.pollOptions, input.sortOrder])
 
       return {
         id: response.rows[0].id,
-        ...rollCall,
+        ...input,
       }
     } catch (error) {
       if (String(error.code) === '23505') {
@@ -115,22 +115,22 @@ export class RollCallsPostgresStorage {
       ORDER BY sort_order DESC ${paginationClause};
     `, variables)
 
-    return response.rows.map(row => this.deserializeRollCall(row))
+    return response.rows.map(row => deserializeRollCall(row))
   }
+}
 
-  /**
-   * @param {any} row
-   * @returns {import('./types').RollCall}
-   */
-  deserializeRollCall(row) {
-    return {
-      id: row['id'],
-      groupId: row['group_id'],
-      messagePattern: row['message_pattern'],
-      usersPattern: row['users_pattern'],
-      excludeSender: row['exclude_sender'],
-      pollOptions: row['poll_options'],
-      sortOrder: row['sort_order'],
-    }
+/**
+ * @param {any} row
+ * @returns {import('./types').RollCall}
+ */
+export function deserializeRollCall(row) {
+  return {
+    id: row['id'],
+    groupId: row['group_id'],
+    messagePattern: row['message_pattern'],
+    usersPattern: row['users_pattern'],
+    excludeSender: row['exclude_sender'],
+    pollOptions: row['poll_options'],
+    sortOrder: row['sort_order'],
   }
 }

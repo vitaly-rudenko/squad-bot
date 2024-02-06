@@ -5,19 +5,19 @@ export class DebtsPostgresStorage {
   }
 
   /**
-   * @param {Omit<import('./types').Debt, 'id'>} debt
+   * @param {Omit<import('./types').Debt, 'id'>} input
    * @return {Promise<import('./types').Debt>}
    */
-  async create(debt) {
+  async create(input) {
     const response = await this._client.query(`
       INSERT INTO debts (debtor_id, receipt_id, amount)
       VALUES ($1, $2, $3)
       RETURNING id;
-    `, [debt.debtorId, debt.receiptId, debt.amount])
+    `, [input.debtorId, input.receiptId, input.amount])
 
     return {
       id: response.rows[0].id,
-      ...debt,
+      ...input,
     }
   }
 
@@ -96,20 +96,7 @@ export class DebtsPostgresStorage {
       JOIN receipts r ON r.id = d.receipt_id ${whereClause} ${paginationClause};
     `, variables)
 
-    return response.rows.map(row => this.deserializeDebt(row))
-  }
-
-  /**
-   * @param {any} row
-   * @returns {import('./types').Debt}
-   */
-  deserializeDebt(row) {
-    return {
-      id: row['id'],
-      debtorId: row['debtor_id'],
-      receiptId: row['receipt_id'],
-      amount: row['amount'],
-    }
+    return response.rows.map(row => deserializeDebt(row))
   }
 
   /** @param {string} userId */
@@ -151,18 +138,31 @@ export class DebtsPostgresStorage {
       GROUP BY d.debtor_id, r.payer_id;
     `, variables)
 
-    return response.rows.map(row => this.deserializeAggregatedDebt(row))
+    return response.rows.map(row => deserializeAggregatedDebt(row))
   }
+}
 
-  /**
-   * @param {any} row
-   * @returns {import('./types').AggregatedDebt}
-   */
-  deserializeAggregatedDebt(row) {
-    return {
-      fromUserId: row['from_user_id'],
-      toUserId: row['to_user_id'],
-      amount: row['amount'],
-    }
+/**
+ * @param {any} row
+ * @returns {import('./types').Debt}
+ */
+export function deserializeDebt(row) {
+  return {
+    id: row['id'],
+    debtorId: row['debtor_id'],
+    receiptId: row['receipt_id'],
+    amount: row['amount'],
+  }
+}
+
+/**
+ * @param {any} row
+ * @returns {import('./types').AggregatedDebt}
+ */
+export function deserializeAggregatedDebt(row) {
+  return {
+    fromUserId: row['from_user_id'],
+    toUserId: row['to_user_id'],
+    amount: row['amount'],
   }
 }
