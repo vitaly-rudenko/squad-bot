@@ -1,4 +1,4 @@
-import { AlreadyExistsError } from '../errors/AlreadyExistsError.js'
+import { AlreadyExistsError } from '../features/common/errors.js'
 import { User } from './User.js'
 
 export class UsersPostgresStorage {

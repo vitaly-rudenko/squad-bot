@@ -1,6 +1,5 @@
 import Router from 'express-promise-router'
 import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, trimmed, union } from 'superstruct'
-import { AlreadyExistsError } from '../../errors/AlreadyExistsError.js'
 import { userIdSchema, groupIdSchema } from '../common/schemas.js'
 
 export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
@@ -59,24 +58,16 @@ export function createRollCallsRouter({
       return
     }
 
-    try {
-      res.json(
-        await rollCallsStorage.create({
-          groupId,
-          excludeSender,
-          messagePattern,
-          usersPattern,
-          pollOptions,
-          sortOrder,
-        })
-      )
-    } catch (error) {
-      if (error instanceof AlreadyExistsError) {
-        res.sendStatus(409)
-      } else {
-        throw error
-      }
-    }
+    res.json(
+      await rollCallsStorage.create({
+        groupId,
+        excludeSender,
+        messagePattern,
+        usersPattern,
+        pollOptions,
+        sortOrder,
+      })
+    )
   })
 
   // TODO: merge with "create" request

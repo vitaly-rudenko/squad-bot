@@ -1,4 +1,4 @@
-import { AlreadyExistsError } from '../../errors/AlreadyExistsError.js'
+import { AlreadyExistsError } from '../common/errors.js'
 
 export class RollCallsPostgresStorage {
   /** @param {import('pg').Client} client */

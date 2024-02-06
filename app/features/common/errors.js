@@ -11,3 +11,9 @@ export class NotAuthorizedError extends ApiError {
     super({ code: 'NOT_AUTHORIZED', status: 403, message: 'Access denied' })
   }
 }
+
+export class AlreadyExistsError extends ApiError {
+  constructor() {
+    super({ code: 'ALREADY_EXISTS', status: 409, message: 'Resource already exists' })
+  }
+}
