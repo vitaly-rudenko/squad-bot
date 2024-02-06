@@ -1,7 +1,7 @@
 import Router from 'express-promise-router'
 import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, trimmed, union } from 'superstruct'
 import { AlreadyExistsError } from '../../errors/AlreadyExistsError.js'
-import { userIdSchema, groupIdSchema } from '../../schemas/common.js'
+import { userIdSchema, groupIdSchema } from '../common/schemas.js'
 
 export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
 export const pollOptionsSchema = array(size(trimmed(string()), 1, 32))

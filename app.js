@@ -45,7 +45,6 @@ import { logger } from './logger.js'
 import { Group } from './app/groups/Group.js'
 import { GroupManager } from './app/groups/GroupManager.js'
 import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
-import { titlesCommand } from './app/titles/flows/titles.js'
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
@@ -58,8 +57,8 @@ import { string } from 'superstruct'
 import { createTemporaryAuthTokenGenerator } from './app/features/auth/utils.js'
 import { createAuthFlow } from './app/features/auth/telegram.js'
 import { createCommonFlow } from './app/features/common/telegram.js'
-import path from 'path'
 import { getAppVersion } from './app/features/common/utils.js'
+import { createAdminsFlow } from './app/features/admins/telegram.js'
 
 async function start() {
   if (useTestMode) {
@@ -260,10 +259,12 @@ async function start() {
   const { version } = createCommonFlow({ version: getAppVersion() })
   bot.command('version', requirePrivateChat(), version)
 
+  const { titles } = createAdminsFlow({ generateWebAppUrl })
+  bot.command('titles', titles)
+
   bot.command('debts', debtsCommand({ usersStorage, debtManager }))
   bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
   bot.command('payments', paymentsCommand({ generateWebAppUrl }))
-  bot.command('titles', titlesCommand({ generateWebAppUrl }))
 
   bot.on('message',
     async (context, next) => {

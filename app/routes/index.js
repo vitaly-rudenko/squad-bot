@@ -6,10 +6,11 @@ import * as receipts from './receipts.js'
 import * as payments from './payments.js'
 import * as debts from './debts.js'
 import * as groups from './groups.js'
-import { groupIdSchema, userIdSchema } from '../schemas/common.js'
+import { groupIdSchema, userIdSchema } from '../features/common/schemas.js'
 import { createCardsRouter } from '../features/cards/routes.js'
 import { createRollCallsRouter } from '../features/roll-calls/routes.js'
 import { createAuthMiddleware, createAuthRouter } from '../features/auth/routes.js'
+import { createAdminsRouter } from '../features/admins/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -118,10 +119,12 @@ export function createRouter({
       rollCallsStorage,
     }),
     groups.createRouter({
-      telegram,
-      botInfo,
       groupStorage,
+    }),
+    createAdminsRouter({
+      botInfo,
       membershipManager,
+      telegram,
     }),
     createCardsRouter({
       cardsStorage,

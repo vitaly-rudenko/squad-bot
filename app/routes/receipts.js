@@ -3,7 +3,7 @@ import Router from 'express-promise-router'
 import { Receipt } from '../receipts/Receipt.js'
 import { ReceiptPhoto } from '../receipts/ReceiptPhoto.js'
 import { object, string, coerce, array, optional, size, trimmed } from 'superstruct'
-import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../schemas/common.js'
+import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../features/common/schemas.js'
 
 export const debtSchema = object({
   debtorId: userIdSchema,

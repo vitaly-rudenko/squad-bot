@@ -1,7 +1,7 @@
 import Router from 'express-promise-router'
 import { Payment } from '../payments/Payment.js'
 import { object } from 'superstruct'
-import { amountSchema, userIdSchema } from '../schemas/common.js'
+import { amountSchema, userIdSchema } from '../features/common/schemas.js'
 
 export const createPaymentSchema = object({
   fromUserId: userIdSchema,

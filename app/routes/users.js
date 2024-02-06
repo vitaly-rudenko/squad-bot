@@ -1,7 +1,7 @@
 import Router from 'express-promise-router'
 import { User } from '../users/User.js'
 import { optional } from 'superstruct'
-import { groupIdSchema } from '../schemas/common.js'
+import { groupIdSchema } from '../features/common/schemas.js'
 
 /**
  * @param {{

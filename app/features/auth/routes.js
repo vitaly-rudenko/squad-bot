@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import Router from 'express-promise-router'
 import jwt from 'jsonwebtoken'
 import { nonempty, number, object, optional, string, type } from 'superstruct'
-import { userIdSchema } from '../../schemas/common.js'
+import { userIdSchema } from '../common/schemas.js'
 
 export const temporaryAuthTokenSchema = nonempty(string())
 export const temporaryAuthTokenPayloadSchema = type({ userId: userIdSchema })
