@@ -1,7 +1,6 @@
 import chai, { expect } from 'chai'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { spy } from 'sinon'
-import { Debt } from '../../../../app/debts/Debt.js'
 import { ReceiptTelegramNotifier } from '../../../../app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { stripIndent } from 'common-tags'
 import { localizeMock } from '../../helpers/localizeMock.js'
@@ -57,16 +56,16 @@ describe('ReceiptTelegramNotifier', () => {
       const description = 'Hello world!'
 
       debtsStorage.mock_storeDebts(
-        new Debt({
+        {
           receiptId,
           debtorId: payer.id,
           amount: 4321,
-        }),
-        new Debt({
+        },
+        {
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
-        }),
+        },
       )
 
       const notification = await receiptTelegramNotifier.created({
@@ -124,11 +123,11 @@ describe('ReceiptTelegramNotifier', () => {
       const amount = 1230
 
       debtsStorage.mock_storeDebts(
-        new Debt({
+        {
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
-        }),
+        },
       )
 
       const notification = await receiptTelegramNotifier.created({
@@ -186,11 +185,11 @@ describe('ReceiptTelegramNotifier', () => {
       const description = 'Hello world!'
 
       debtsStorage.mock_storeDebts(
-        new Debt({
+        {
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
-        }),
+        },
       )
 
       const notification = await receiptTelegramNotifier.updated({
@@ -247,11 +246,11 @@ describe('ReceiptTelegramNotifier', () => {
       const amount = 1234
 
       debtsStorage.mock_storeDebts(
-        new Debt({
+        {
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
-        }),
+        },
       )
 
       const notification = await receiptTelegramNotifier.updated({
@@ -309,11 +308,11 @@ describe('ReceiptTelegramNotifier', () => {
       const description = 'Hello world!'
 
       debtsStorage.mock_storeDebts(
-        new Debt({
+        {
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
-        }),
+        },
       )
 
       const notification = await receiptTelegramNotifier.deleted({
@@ -363,11 +362,11 @@ describe('ReceiptTelegramNotifier', () => {
       const amount = 1230
 
       debtsStorage.mock_storeDebts(
-        new Debt({
+        {
           receiptId,
           debtorId: debtor.id,
           amount: 1200,
-        }),
+        },
       )
 
       const notification = await receiptTelegramNotifier.deleted({

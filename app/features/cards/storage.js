@@ -4,13 +4,21 @@ export class CardsPostgresStorage {
     this._client = client
   }
 
-  /** @param {Omit<import('./types').Card, 'id'>} card */
+  /**
+   * @param {Omit<import('./types').Card, 'id'>} card
+   * @return {Promise<import('./types').Card>}
+   */
   async create(card) {
-    await this._client.query(`
+    const response = await this._client.query(`
       INSERT INTO cards (user_id, bank, number)
       VALUES ($1, $2, $3)
-      RETURNING *;
+      RETURNING id;
     `, [card.userId, card.bank, card.number])
+
+    return {
+      id: response.rows[0].id,
+      ...card,
+    }
   }
 
   /**

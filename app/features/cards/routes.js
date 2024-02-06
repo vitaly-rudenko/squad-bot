@@ -27,13 +27,13 @@ export function createCardsRouter({
   router.post('/cards', async (req, res) => {
     const { number, bank } = createCardSchema.create(req.body)
 
-    await cardsStorage.create({
-      userId: req.user.id,
-      bank,
-      number,
-    })
-
-    res.sendStatus(201)
+    res.json(
+      await cardsStorage.create({
+        userId: req.user.id,
+        bank,
+        number,
+      })
+    )
   })
 
   router.delete('/cards/:cardId', async (req, res) => {

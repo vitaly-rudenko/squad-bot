@@ -4,13 +4,13 @@ import { nonempty, object, string, trimmed } from 'superstruct'
 import * as users from './users.js'
 import * as receipts from './receipts.js'
 import * as payments from './payments.js'
-import * as debts from './debts.js'
 import * as groups from './groups.js'
 import { groupIdSchema, userIdSchema } from '../features/common/schemas.js'
 import { createCardsRouter } from '../features/cards/routes.js'
 import { createRollCallsRouter } from '../features/roll-calls/routes.js'
 import { createAuthMiddleware, createAuthRouter } from '../features/auth/routes.js'
 import { createAdminsRouter } from '../features/admins/routes.js'
+import { createDebtsRouter } from '../features/debts/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -24,8 +24,7 @@ export const createMembershipSchema = object({
  *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>,
  *   cardsStorage: import('../features/cards/storage.js').CardsPostgresStorage,
  *   createRedisCache: ReturnType<import('../utils/createRedisCacheFactory.js').createRedisCacheFactory>,
- *   debtManager: import('../debts/DebtManager.js').DebtManager,
- *   debtsStorage: import('../debts/DebtsPostgresStorage.js').DebtsPostgresStorage,
+ *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage,
  *   groupManager: import('../groups/GroupManager.js').GroupManager,
  *   groupStorage: import('../groups/GroupPostgresStorage.js').GroupsPostgresStorage,
  *   membershipManager: import('../memberships/MembershipManager.js').MembershipManager,
@@ -46,7 +45,6 @@ export function createRouter({
   botInfo,
   cardsStorage,
   createRedisCache,
-  debtManager,
   debtsStorage,
   groupManager,
   groupStorage,
@@ -113,7 +111,10 @@ export function createRouter({
       paymentManager,
       paymentsStorage,
     }),
-    debts.createRouter({ debtManager }),
+    createDebtsRouter({
+      debtsStorage,
+      paymentsStorage,
+    }),
     createRollCallsRouter({
       membershipManager,
       rollCallsStorage,

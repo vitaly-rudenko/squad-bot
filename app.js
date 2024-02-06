@@ -9,14 +9,12 @@ import express from 'express'
 import { Redis } from 'ioredis'
 
 import { startCommand } from './app/users/flows/start.js'
-import { debtsCommand } from './app/debts/flows/debts.js'
 import { receiptsCommand } from './app/receipts/flows/receipts.js'
 import { paymentsCommand } from './app/payments/flows/payments.js'
 import { withUserId } from './app/users/middlewares/userId.js'
 import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/localization.js'
 import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
-import { DebtsPostgresStorage } from './app/debts/DebtsPostgresStorage.js'
 import { RollCallsPostgresStorage } from './app/features/roll-calls/storage.js'
 import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
@@ -27,7 +25,6 @@ import { PaymentsPostgresStorage } from './app/payments/PaymentsPostgresStorage.
 import { ReceiptsPostgresStorage } from './app/receipts/ReceiptsPostgresStorage.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { PaymentManager } from './app/payments/PaymentManager.js'
-import { DebtManager } from './app/debts/DebtManager.js'
 import { MembershipManager } from './app/memberships/MembershipManager.js'
 import { MembershipCache } from './app/memberships/MembershipCache.js'
 import { MembershipPostgresStorage } from './app/memberships/MembershipPostgresStorage.js'
@@ -59,6 +56,8 @@ import { createAuthFlow } from './app/features/auth/telegram.js'
 import { createCommonFlow } from './app/features/common/telegram.js'
 import { getAppVersion } from './app/features/common/utils.js'
 import { createAdminsFlow } from './app/features/admins/telegram.js'
+import { DebtsPostgresStorage } from './app/features/debts/storage.js'
+import { createDebtsFlow } from './app/features/debts/telegram.js'
 
 async function start() {
   if (useTestMode) {
@@ -136,11 +135,6 @@ async function start() {
 
   const paymentManager = new PaymentManager({
     paymentNotifier,
-    paymentsStorage,
-  })
-
-  const debtManager = new DebtManager({
-    debtsStorage,
     paymentsStorage,
   })
 
@@ -262,7 +256,9 @@ async function start() {
   const { titles } = createAdminsFlow({ generateWebAppUrl })
   bot.command('titles', titles)
 
-  bot.command('debts', debtsCommand({ usersStorage, debtManager }))
+  const { debts } = createDebtsFlow({ debtsStorage, paymentsStorage, usersStorage })
+  bot.command('debts', debts)
+
   bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
   bot.command('payments', paymentsCommand({ generateWebAppUrl }))
 
@@ -290,7 +286,6 @@ async function start() {
     botInfo,
     cardsStorage,
     createRedisCache,
-    debtManager,
     debtsStorage,
     groupManager,
     groupStorage,
@@ -324,8 +319,8 @@ async function start() {
   bot.catch((error) => errorLogger.log(error))
 
   logger.info({}, 'Starting telegram bot')
-  bot.launch().catch((error) => {
-    logger.error({ error }, 'Could not launch telegram bot')
+  bot.launch().catch((err) => {
+    logger.error({ err }, 'Could not launch telegram bot')
     process.exit(1)
   })
 
@@ -342,8 +337,8 @@ async function start() {
     async function runRefreshMembershipsJob() {
       try {
         await refreshMembershipsUseCase.run()
-      } catch (error) {
-        logger.error({ error }, 'Could not refresh memberships')
+      } catch (err) {
+        logger.error({ err }, 'Could not refresh memberships')
       } finally {
         logger.debug(
           { refreshMembershipsJobIntervalMs },
@@ -359,7 +354,7 @@ async function start() {
 
 start()
   .then(() => logger.info({}, 'Started!'))
-  .catch((error) => {
-    logger.error({ error }, 'Unexpected starting error')
+  .catch((err) => {
+    logger.error({ err }, 'Unexpected starting error')
     process.exit(1)
   })

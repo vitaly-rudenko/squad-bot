@@ -1,13 +1,13 @@
-import { AggregatedDebt } from './AggregatedDebt.js'
-import { Debt } from './Debt.js'
-
 export class DebtsPostgresStorage {
   /** @param {import('pg').Client} client */
   constructor(client) {
     this._client = client
   }
 
-  /** @param {Debt} debt */
+  /**
+   * @param {Omit<import('./types').Debt, 'id'>} debt
+   * @return {Promise<import('./types').Debt>}
+   */
   async create(debt) {
     const response = await this._client.query(`
       INSERT INTO debts (debtor_id, receipt_id, amount)
@@ -15,9 +15,13 @@ export class DebtsPostgresStorage {
       RETURNING id;
     `, [debt.debtorId, debt.receiptId, debt.amount])
 
-    return this.findById(response.rows[0]['id'])
+    return {
+      id: response.rows[0].id,
+      ...debt,
+    }
   }
 
+  /** @param {string} receiptId */
   async deleteByReceiptId(receiptId) {
     await this._client.query(`
       UPDATE debts
@@ -26,15 +30,18 @@ export class DebtsPostgresStorage {
     `, [receiptId])
   }
 
+  /** @param {string} id */
   async findById(id) {
     const debts = await this._find({ ids: [id], limit: 1 })
     return debts.at(0)
   }
 
+  /** @param {string} receiptId */
   async findByReceiptId(receiptId) {
     return this._find({ receiptIds: [receiptId] })
   }
 
+  /** @param {string[]} receiptIds */
   async findByReceiptIds(receiptIds) {
     if (receiptIds.length === 0) return []
     return this._find({ receiptIds })
@@ -92,19 +99,25 @@ export class DebtsPostgresStorage {
     return response.rows.map(row => this.deserializeDebt(row))
   }
 
+  /**
+   * @param {any} row
+   * @returns {import('./types').Debt}
+   */
   deserializeDebt(row) {
-    return new Debt({
+    return {
       id: row['id'],
       debtorId: row['debtor_id'],
       receiptId: row['receipt_id'],
       amount: row['amount'],
-    })
+    }
   }
 
+  /** @param {string} userId */
   async aggregateIngoingDebts(userId) {
     return this._aggregateDebts({ toUserId: userId })
   }
 
+  /** @param {string} userId */
   async aggregateOutgoingDebts(userId) {
     return this._aggregateDebts({ fromUserId: userId })
   }
@@ -141,11 +154,15 @@ export class DebtsPostgresStorage {
     return response.rows.map(row => this.deserializeAggregatedDebt(row))
   }
 
+  /**
+   * @param {any} row
+   * @returns {import('./types').AggregatedDebt}
+   */
   deserializeAggregatedDebt(row) {
-    return new AggregatedDebt({
+    return {
       fromUserId: row['from_user_id'],
       toUserId: row['to_user_id'],
       amount: row['amount'],
-    })
+    }
   }
 }

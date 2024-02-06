@@ -44,7 +44,7 @@ export function createRollCallsRouter({
 }) {
   const router = Router()
 
-  router.post('/rollcalls', async (req, res, next) => {
+  router.post('/rollcalls', async (req, res) => {
     const {
       groupId,
       messagePattern,
@@ -60,21 +60,21 @@ export function createRollCallsRouter({
     }
 
     try {
-      const storedRollCall = await rollCallsStorage.create({
-        groupId,
-        excludeSender,
-        messagePattern,
-        usersPattern,
-        pollOptions,
-        sortOrder,
-      })
-
-      res.json(storedRollCall)
+      res.json(
+        await rollCallsStorage.create({
+          groupId,
+          excludeSender,
+          messagePattern,
+          usersPattern,
+          pollOptions,
+          sortOrder,
+        })
+      )
     } catch (error) {
       if (error instanceof AlreadyExistsError) {
         res.sendStatus(409)
       } else {
-        next(error)
+        throw error
       }
     }
   })

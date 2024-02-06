@@ -1,17 +1,24 @@
 import Router from 'express-promise-router'
+import { aggregateDebts } from './utils.js'
 
 /**
  * @param {{
- *   debtManager: import('../debts/DebtManager.js').DebtManager,
+ *   debtsStorage: import('./storage.js').DebtsPostgresStorage
+ *   paymentsStorage: import('../../payments/PaymentsPostgresStorage.js').PaymentsPostgresStorage
  * }} input
  */
-export function createRouter({
-  debtManager,
+export function createDebtsRouter({
+  debtsStorage,
+  paymentsStorage,
 }) {
   const router = Router()
 
   router.get('/debts', async (req, res) => {
-    const { ingoingDebts, outgoingDebts } = await debtManager.aggregateByUserId(req.user.id)
+    const { ingoingDebts, outgoingDebts } = await aggregateDebts({
+      userId: req.user.id,
+      debtsStorage,
+      paymentsStorage,
+    })
 
     res.json({
       ingoingDebts: ingoingDebts.map(debt => ({

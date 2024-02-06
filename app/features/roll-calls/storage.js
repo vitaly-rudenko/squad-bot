@@ -6,7 +6,10 @@ export class RollCallsPostgresStorage {
     this._client = client
   }
 
-  /** @param {Omit<import('./types').RollCall, 'id'>} rollCall */
+  /**
+   * @param {Omit<import('./types').RollCall, 'id'>} rollCall
+   * @returns {Promise<import('./types').RollCall>}
+   */
   async create(rollCall) {
     try {
       const response = await this._client.query(`
@@ -15,7 +18,10 @@ export class RollCallsPostgresStorage {
         RETURNING id;
       `, [rollCall.groupId, rollCall.messagePattern, rollCall.usersPattern, rollCall.excludeSender, rollCall.pollOptions, rollCall.sortOrder])
 
-      return this.findById(response.rows[0]['id'])
+      return {
+        id: response.rows[0].id,
+        ...rollCall,
+      }
     } catch (error) {
       if (String(error.code) === '23505') {
         throw new AlreadyExistsError()

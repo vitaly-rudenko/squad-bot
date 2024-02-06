@@ -1,4 +1,4 @@
-import { renderDebtAmount } from '../../debts/renderDebtAmount.js'
+import { renderDebtAmount } from '../../features/debts/utils.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 import { renderMoney } from '../../utils/renderMoney.js'
 
@@ -7,7 +7,7 @@ export class ReceiptTelegramNotifier {
    * @param {{
    *   massTelegramNotificationFactory: import('../../shared/notifications/MassTelegramNotification.js').MassTelegramNotificationFactory,
    *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage,
-   *   debtsStorage: import('../../debts/DebtsPostgresStorage.js').DebtsPostgresStorage,
+   *   debtsStorage: import('../../features/debts/storage.js').DebtsPostgresStorage,
    *   localize: any,
    *   generateWebAppUrl: any,
    * }} input

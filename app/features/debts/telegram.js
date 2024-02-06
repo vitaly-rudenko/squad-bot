@@ -1,21 +1,36 @@
-import { renderAggregatedDebt } from '../renderDebtAmount.js'
 import { escapeMd } from '../../utils/escapeMd.js'
+import { aggregateDebts, renderAggregatedDebt } from './utils.js'
 
-export function debtsCommand({ usersStorage, debtManager }) {
-  return async (context) => {
+/**
+ * @param {{
+ *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage
+ *   debtsStorage: import('./storage.js').DebtsPostgresStorage,
+ *   paymentsStorage: import('../../payments/PaymentsPostgresStorage.js').PaymentsPostgresStorage
+ * }} input
+ */
+export function createDebtsFlow({ usersStorage, debtsStorage, paymentsStorage }) {
+  /** @param {import('telegraf').Context} context */
+  const debts = async (context) => {
     const { userId, localize } = context.state
-    const users = await usersStorage.findAll()
     const user = await usersStorage.findById(userId)
+    if (!user) return
 
-    const { ingoingDebts, outgoingDebts } = await debtManager.aggregateByUserId(userId)
+    // TODO: only get rendered users
+    const users = await usersStorage.findAll()
 
-    function getUserName(id) {
-      return users.find(u => u.id === id)?.name ?? id
-    }
+    const { ingoingDebts, outgoingDebts } = await aggregateDebts({
+      userId,
+      debtsStorage,
+      paymentsStorage,
+    })
 
+    /** @param {import('./types').AggregatedDebt} debt */
     function localizeAggregatedDebt(debt) {
+      const debtorId = debt.fromUserId === userId ? debt.toUserId : debt.fromUserId
+      const name = users.find(u => u.id === debtorId)?.name ?? debtorId
+
       return localize('command.debts.debt', {
-        name: escapeMd(getUserName(debt.fromUserId === userId ? debt.toUserId : debt.fromUserId)),
+        name: escapeMd(name),
         amount: escapeMd(renderAggregatedDebt(debt)),
       })
     }
@@ -43,4 +58,6 @@ export function debtsCommand({ usersStorage, debtManager }) {
       { parse_mode: 'MarkdownV2' }
     )
   }
+
+  return { debts }
 }

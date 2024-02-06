@@ -1,10 +1,8 @@
-import { Debt } from '../debts/Debt.js'
-
 export class ReceiptManager {
   /**
    * @param {{
    *   receiptsStorage: import('./ReceiptsPostgresStorage.js').ReceiptsPostgresStorage,
-   *   debtsStorage: import('../debts/DebtsPostgresStorage.js').DebtsPostgresStorage,
+   *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage,
    *   receiptNotifier: import('./notifications/ReceiptTelegramNotifier.js').ReceiptTelegramNotifier,
    * }} input
    */
@@ -34,13 +32,11 @@ export class ReceiptManager {
     }
 
     for (const debt of debts) {
-      await this._debtsStorage.create(
-        new Debt({
-          receiptId: storedReceipt.id,
-          debtorId: debt.debtorId,
-          amount: debt.amount,
-        })
-      )
+      await this._debtsStorage.create({
+        receiptId: storedReceipt.id,
+        debtorId: debt.debtorId,
+        amount: debt.amount,
+      })
     }
 
     const notification = isNew
