@@ -1,12 +1,10 @@
-import { Group } from './Group.js'
-
 export class GroupsPostgresStorage {
   /** @param {import('pg').Client} client */
   constructor(client) {
     this._client = client
   }
 
-  /** @param {Group} group */
+  /** @param {import('./types').Group} group */
   async store(group) {
     const { id, title } = group
 
@@ -18,6 +16,7 @@ export class GroupsPostgresStorage {
     `, [id, title, new Date()])
   }
 
+  /** @param {string} userId */
   async findByMemberUserId(userId) {
     return this._find({ memberUserIds: [userId] })
   }
@@ -68,13 +67,17 @@ export class GroupsPostgresStorage {
       FROM groups g ${whereClause} ${paginationClause};
     `, variables)
 
-    return response.rows.map(row => this.deserializeGroup(row))
+    return response.rows.map(row => deserializeGroup(row))
   }
+}
 
-  deserializeGroup(row) {
-    return new Group({
-      id: row['id'],
-      title: row['title'],
-    })
+/**
+ * @param {any} row
+ * @returns {import('./types').Group}
+ */
+function deserializeGroup(row) {
+  return {
+    id: row['id'],
+    title: row['title'],
   }
 }

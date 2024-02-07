@@ -35,9 +35,6 @@ import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
-import { Group } from './app/groups/Group.js'
-import { GroupManager } from './app/groups/GroupManager.js'
-import { GroupsPostgresStorage } from './app/groups/GroupPostgresStorage.js'
 import { withUserSession } from './app/users/middlewares/userSession.js'
 import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
@@ -57,6 +54,7 @@ import { createDebtsFlow } from './app/features/debts/telegram.js'
 import { PaymentsPostgresStorage } from './app/features/payments/storage.js'
 import { createPaymentsFlow } from './app/features/payments/telegram.js'
 import { ApiError } from './app/features/common/errors.js'
+import { GroupsPostgresStorage } from './app/features/groups/storage.js'
 
 async function start() {
   if (useTestMode) {
@@ -134,10 +132,7 @@ async function start() {
   })
 
   const groupStorage = new GroupsPostgresStorage(pgClient)
-  const groupManager = new GroupManager(
-    groupStorage,
-    createRedisCache('groups', useTestMode ? 60_000 : 60 * 60_000)
-  )
+  const groupCache = createRedisCache('groups', useTestMode ? 60_000 : 60 * 60_000)
 
   const userManager = new UserManager({
     usersStorage,
@@ -211,12 +206,14 @@ async function start() {
   bot.use(wrap(withGroupChat(), async (context, next) => {
     const { userId, chatId } = context.state
 
-    await groupManager.store(
-      new Group({
+    if (!(await groupCache.has(chatId))) {
+      await groupStorage.store({
         id: chatId,
-        title: (context.chat && 'title' in context.chat) ? context.chat.title : undefined,
+        title: (context.chat && 'title' in context.chat)
+          ? context.chat.title
+          : '',
       })
-    )
+    }
 
     await membershipManager.softLink(userId, chatId)
 
@@ -276,7 +273,6 @@ async function start() {
     cardsStorage,
     createRedisCache,
     debtsStorage,
-    groupManager,
     groupStorage,
     localize,
     membershipManager,

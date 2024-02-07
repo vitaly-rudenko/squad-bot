@@ -1,9 +1,7 @@
 import Router from 'express-promise-router'
-import { Group } from '../groups/Group.js'
 import { nonempty, object, string, trimmed } from 'superstruct'
 import * as users from './users.js'
 import * as receipts from './receipts.js'
-import * as groups from './groups.js'
 import { groupIdSchema, userIdSchema } from '../features/common/schemas.js'
 import { createCardsRouter } from '../features/cards/routes.js'
 import { createRollCallsRouter } from '../features/roll-calls/routes.js'
@@ -11,6 +9,7 @@ import { createAuthMiddleware, createAuthRouter } from '../features/auth/routes.
 import { createAdminsRouter } from '../features/admins/routes.js'
 import { createDebtsRouter } from '../features/debts/routes.js'
 import { createPaymentsRouter } from '../features/payments/routes.js'
+import { createGroupsRouter } from '../features/groups/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -24,8 +23,7 @@ export const createMembershipSchema = object({
  *   cardsStorage: import('../features/cards/storage.js').CardsPostgresStorage
  *   createRedisCache: ReturnType<import('../utils/createRedisCacheFactory.js').createRedisCacheFactory>
  *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage
- *   groupManager: import('../groups/GroupManager.js').GroupManager
- *   groupStorage: import('../groups/GroupPostgresStorage.js').GroupsPostgresStorage
+ *   groupStorage: import('../features/groups/storage.js').GroupsPostgresStorage
  *   localize: import('../localization/localize.js').localize
  *   membershipManager: import('../memberships/MembershipManager.js').MembershipManager
  *   membershipStorage: import('../memberships/MembershipPostgresStorage.js').MembershipPostgresStorage
@@ -45,7 +43,6 @@ export function createRouter({
   cardsStorage,
   createRedisCache,
   debtsStorage,
-  groupManager,
   groupStorage,
   localize,
   membershipManager,
@@ -87,12 +84,10 @@ export function createRouter({
       const { userId, groupId, title } = createMembershipSchema.create(req.body)
 
       await membershipManager.hardLink(userId, groupId)
-      await groupManager.store(
-        new Group({
-          id: groupId,
-          title,
-        })
-      )
+      await groupStorage.store({
+        id: groupId,
+        title,
+      })
 
       res.sendStatus(200)
     })
@@ -121,7 +116,7 @@ export function createRouter({
       membershipManager,
       rollCallsStorage,
     }),
-    groups.createRouter({
+    createGroupsRouter({
       groupStorage,
     }),
     createAdminsRouter({
