@@ -187,8 +187,8 @@ function toCapital(str) {
   return str[0].toUpperCase() + str.slice(1)
 }
 
-export function createToken({ userId, username, name }) {
-  return jwt.sign({ user: { id: userId, username, name } }, TOKEN_SECRET)
+export function createToken({ userId, username, name, locale }) {
+  return jwt.sign({ user: { id: userId, username, name, locale } }, TOKEN_SECRET)
 }
 
 /** @returns {Promise<import('../../app/features/payments/types').Payment>} */

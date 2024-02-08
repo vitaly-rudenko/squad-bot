@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import Router from 'express-promise-router'
 import jwt from 'jsonwebtoken'
-import { nonempty, number, object, optional, string, type } from 'superstruct'
+import { literal, nonempty, number, object, optional, string, type, union } from 'superstruct'
 import { userIdSchema } from '../common/schemas.js'
 import { NotAuthenticatedError, NotFoundError } from '../common/errors.js'
 import { ApiError } from '../common/errors.js'
@@ -15,6 +15,7 @@ export const authTokenSchema = type({
     id: userIdSchema,
     name: string(),
     username: optional(string()),
+    locale: union([literal('uk'), literal('en')]),
   })
 })
 
@@ -125,10 +126,7 @@ export function createAuthMiddleware({ tokenSecret }) {
     }
 
     try {
-      req.user = {
-        ...authTokenSchema.create(jwt.verify(token, tokenSecret)).user,
-        locale: 'uk',
-      }
+      req.user = authTokenSchema.create(jwt.verify(token, tokenSecret)).user
     } catch (error) {
       throw new NotAuthenticatedError('Invalid authentication token')
     }

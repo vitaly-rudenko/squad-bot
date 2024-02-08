@@ -160,12 +160,12 @@ async function start() {
       if (!useTestMode && chatMember.is_bot) continue
 
       const userId = String(chatMember.id)
-
       try {
         await usersStorage.store({
           id: userId,
           name: chatMember.first_name,
           ...chatMember.username && { username: chatMember.username },
+          // TODO: get locale from `chatMember.language_code`
           locale: 'uk',
         })
 
@@ -200,6 +200,7 @@ async function start() {
         id: userId,
         name: context.from.first_name,
         ...context.from.username && { username: context.from.username },
+        // TODO: get locale from `context.from.language_code`
         locale: 'uk',
       })
 
