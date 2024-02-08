@@ -7,7 +7,7 @@ export class TelegramErrorLogger {
   }
 
   log(err, message = 'Unexpected error', context = {}) {
-    logger.error({ error: err, context }, message)
+    logger.error({ err, context }, message)
 
     this._telegram.sendMessage(
       this._debugChatId,

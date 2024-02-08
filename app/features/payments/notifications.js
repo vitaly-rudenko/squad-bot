@@ -10,7 +10,7 @@ import { renderAmount, renderUser } from '../common/utils.js'
  *   editorId: string
  *   payment: import('./types.js').Payment
  *   localize: import('../../localization/localize.js').localize
- *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage
+ *   usersStorage: import('../../features/users/storage.js').UsersPostgresStorage
  *   telegram: import('telegraf').Telegram
  * }} input
  */
@@ -62,7 +62,7 @@ export async function sendPaymentSavedNotification({
  *   editorId: string
  *   payment: import('./types.js').Payment
  *   localize: import('../../localization/localize.js').localize
- *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage
+ *   usersStorage: import('../../features/users/storage.js').UsersPostgresStorage
  *   telegram: import('telegraf').Telegram
  * }} input
  */

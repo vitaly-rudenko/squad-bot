@@ -8,10 +8,7 @@ import pg from 'pg'
 import express from 'express'
 import { Redis } from 'ioredis'
 
-import { startCommand } from './app/users/flows/start.js'
 import { receiptsCommand } from './app/receipts/flows/receipts.js'
-import { withUserId } from './app/users/middlewares/userId.js'
-import { UsersPostgresStorage } from './app/users/UsersPostgresStorage.js'
 import { withLocalization } from './app/localization/middlewares/localization.js'
 import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { RollCallsPostgresStorage } from './app/features/roll-calls/storage.js'
@@ -24,19 +21,13 @@ import { ReceiptManager } from './app/receipts/ReceiptManager.js'
 import { MembershipManager } from './app/memberships/MembershipManager.js'
 import { MembershipCache } from './app/memberships/MembershipCache.js'
 import { MembershipPostgresStorage } from './app/memberships/MembershipPostgresStorage.js'
-import { registerUser } from './app/users/middlewares/registeredUser.js'
-import { UserManager } from './app/users/UserManager.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
 import { withGroupChat } from './app/shared/middlewares/groupChat.js'
-import { UserCache } from './app/users/UserCache.js'
 import { withChatId } from './app/shared/middlewares/chatId.js'
-import { fromTelegramUser } from './app/users/fromTelegramUser.js'
 import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
-import { withUserSession } from './app/users/middlewares/userSession.js'
-import { createUserSessionFactory } from './app/users/createUserSessionFactory.js'
 import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 import { createRouter } from './app/routes/index.js'
@@ -55,6 +46,8 @@ import { PaymentsPostgresStorage } from './app/features/payments/storage.js'
 import { createPaymentsFlow } from './app/features/payments/telegram.js'
 import { ApiError } from './app/features/common/errors.js'
 import { GroupsPostgresStorage } from './app/features/groups/storage.js'
+import { UsersPostgresStorage } from './app/features/users/storage.js'
+import { useUsersFlow, withUserId } from './app/features/users/telegram.js'
 
 async function start() {
   if (useTestMode) {
@@ -134,10 +127,7 @@ async function start() {
   const groupStorage = new GroupsPostgresStorage(pgClient)
   const groupCache = createRedisCache('groups', useTestMode ? 60_000 : 60 * 60_000)
 
-  const userManager = new UserManager({
-    usersStorage,
-    userCache: new UserCache(createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)),
-  })
+  const usersCache = createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Борги' },
@@ -160,13 +150,7 @@ async function start() {
 
   bot.use(withUserId())
   bot.use(withChatId())
-  bot.use(withLocalization({ userManager }))
-  bot.use(withUserSession({
-    createUserSession: createUserSessionFactory({
-      contextsCache: createRedisCache('contexts', 5 * 60_000),
-      phasesCache: createRedisCache('phases', 5 * 60_000),
-    })
-  }))
+  bot.use(withLocalization())
 
   // TODO: deprecated?
   bot.on('new_chat_members', async (context) => {
@@ -175,13 +159,19 @@ async function start() {
     for (const chatMember of context.message.new_chat_members) {
       if (!useTestMode && chatMember.is_bot) continue
 
-      const user = fromTelegramUser(chatMember)
+      const userId = String(chatMember.id)
 
       try {
-        await userManager.softRegister(user)
-        await membershipManager.hardLink(user.id, chatId)
-      } catch (error) {
-        errorLogger.log(error, 'Could not register new chat member', { user })
+        await usersStorage.store({
+          id: userId,
+          name: chatMember.first_name,
+          ...chatMember.username && { username: chatMember.username },
+          locale: 'uk',
+        })
+
+        await membershipManager.hardLink(userId, chatId)
+      } catch (err) {
+        errorLogger.log(err, 'Could not register new chat member', { chatMember })
       }
     }
   })
@@ -197,11 +187,29 @@ async function start() {
     await membershipManager.unlink(userId, chatId)
   })
 
-  bot.command('start', requirePrivateChat(), startCommand({ userManager }))
+  const { start } = useUsersFlow({ usersStorage })
+  bot.command('start', requirePrivateChat(), start)
 
-  bot.use(registerUser({ userManager }))
+  bot.use(async (context, next) => {
+    if (!context.from) return
 
-  // TODO: this seems inefficient, does softLink store things to DB on every call?
+    const { userId } = context.state
+
+    if (!(await usersCache.has(userId))) {
+      await usersStorage.store({
+        id: userId,
+        name: context.from.first_name,
+        ...context.from.username && { username: context.from.username },
+        locale: 'uk',
+      })
+
+      await usersCache.set(userId)
+    }
+
+    return next()
+  })
+
+  // TODO: is this efficient?
   // TODO: also need to re-arrange commands to avoid this middleware to be executed unnecessarily
   bot.use(wrap(withGroupChat(), async (context, next) => {
     const { userId, chatId } = context.state
@@ -213,6 +221,8 @@ async function start() {
           ? context.chat.title
           : '',
       })
+
+      await groupCache.set(chatId)
     }
 
     await membershipManager.softLink(userId, chatId)

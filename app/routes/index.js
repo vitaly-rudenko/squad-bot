@@ -1,6 +1,5 @@
 import Router from 'express-promise-router'
 import { nonempty, object, string, trimmed } from 'superstruct'
-import * as users from './users.js'
 import * as receipts from './receipts.js'
 import { groupIdSchema, userIdSchema } from '../features/common/schemas.js'
 import { createCardsRouter } from '../features/cards/routes.js'
@@ -10,6 +9,7 @@ import { createAdminsRouter } from '../features/admins/routes.js'
 import { createDebtsRouter } from '../features/debts/routes.js'
 import { createPaymentsRouter } from '../features/payments/routes.js'
 import { createGroupsRouter } from '../features/groups/routes.js'
+import { createUsersRouter } from '../features/users/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -34,7 +34,7 @@ export const createMembershipSchema = object({
  *   telegram: import('telegraf').Telegram
  *   telegramBotToken: string
  *   tokenSecret: string
- *   usersStorage: import('../users/UsersPostgresStorage.js').UsersPostgresStorage
+ *   usersStorage: import('../features/users/storage.js').UsersPostgresStorage
  *   useTestMode: boolean
  * }} input
  */
@@ -96,7 +96,7 @@ export function createRouter({
   router.use(createAuthMiddleware({ tokenSecret }))
 
   router.use(
-    users.createRouter({ usersStorage, membershipStorage }),
+    createUsersRouter({ usersStorage, membershipStorage }),
     receipts.createRouter({
       debtsStorage,
       receiptManager,

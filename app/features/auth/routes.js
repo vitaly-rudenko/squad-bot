@@ -23,7 +23,7 @@ export const authTokenSchema = type({
  *   createRedisCache: ReturnType<import('../../utils/createRedisCacheFactory.js').createRedisCacheFactory>,
  *   telegramBotToken: string,
  *   tokenSecret: string,
- *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage,
+ *   usersStorage: import('../../features/users/storage.js').UsersPostgresStorage,
  *   useTestMode: boolean,
  * }} input
  */
@@ -68,6 +68,7 @@ export function createAuthRouter({
           id: user.id,
           name: user.name,
           username: user.username,
+          locale: user.locale,
         }
       }, tokenSecret)
     )
@@ -124,7 +125,10 @@ export function createAuthMiddleware({ tokenSecret }) {
     }
 
     try {
-      req.user = authTokenSchema.create(jwt.verify(token, tokenSecret)).user
+      req.user = {
+        ...authTokenSchema.create(jwt.verify(token, tokenSecret)).user,
+        locale: 'uk',
+      }
     } catch (error) {
       throw new NotAuthenticatedError('Invalid authentication token')
     }

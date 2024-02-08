@@ -1,39 +1,17 @@
-import { AlreadyExistsError } from '../features/common/errors.js'
-import { User } from './User.js'
-
 export class UsersPostgresStorage {
   /** @param {import('pg').Client} client */
   constructor(client) {
     this._client = client
   }
 
-  /** @param {User} user */
-  async create(user) {
-    try {
-      await this._client.query(`
-        INSERT INTO users (id, username, name)
-        VALUES ($1, $2, $3);
-      `, [user.id, user.username, user.name])
-
-      return this.findById(user.id)
-    } catch (error) {
-      if (String(error.code) === '23505') {
-        throw new AlreadyExistsError()
-      } else {
-        throw error
-      }
-    }
-  }
-
-  /** @param {User} user */
-  async update(user) {
+  /** @param {import('./types').User} user */
+  async store(user) {
     await this._client.query(`
-      UPDATE users
-      SET (name, username) = ($2, $3)
-      WHERE id = $1;
-    `, [user.id, user.name, user.username])
-
-    return this.findById(user.id)
+      INSERT INTO users (id, username, name, locale)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (id) DO UPDATE
+      SET (username, name, locale) = ($2, $3, $4);
+    `, [user.id, user.username, user.name, user.locale])
   }
 
   /** @deprecated */
@@ -55,7 +33,7 @@ export class UsersPostgresStorage {
 
   /**
    * @param {string[]} ids
-   * @returns {Promise<(User | undefined)[]>}
+   * @returns {Promise<(import('./types').User | undefined)[]>}
    */
   async findAndMapByIds(ids) {
     const users = await this.findByIds(ids)
@@ -94,18 +72,23 @@ export class UsersPostgresStorage {
     ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
-      SELECT u.id, u.name, u.username
+      SELECT u.id, u.name, u.username, u.locale
       FROM users u ${whereClause} ${paginationClause};
     `, variables)
 
-    return response.rows.map(row => this.deserializeUser(row))
+    return response.rows.map(row => deserializeUser(row))
   }
+}
 
-  deserializeUser(row) {
-    return new User({
-      id: row['id'],
-      name: row['name'],
-      username: row['username'],
-    })
+/**
+ * @param {any} row
+ * @returns {import('./types').User}
+ */
+function deserializeUser(row) {
+  return {
+    id: row['id'],
+    name: row['name'],
+    username: row['username'],
+    locale: row['locale'],
   }
 }

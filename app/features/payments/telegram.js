@@ -15,7 +15,7 @@ export function createPaymentsFlow({ generateWebAppUrl }) {
 
     await context.reply(
       localize(
-        'payments.command.help',
+        'payments.command.message',
         {
           viewUrl: escapeMd(viewUrl),
           createUrl: escapeMd(createUrl),

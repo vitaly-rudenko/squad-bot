@@ -13,6 +13,7 @@ declare module 'express-serve-static-core' {
       id: string
       name: string
       username?: string
+      locale: 'uk' | 'en'
     }
     file?: {
       buffer: Buffer

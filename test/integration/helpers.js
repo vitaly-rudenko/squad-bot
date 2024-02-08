@@ -25,12 +25,12 @@ export function validateResponse(response) {
   }
 }
 
-/** @returns {Promise<import('../../app/users/User.js').User>} */
+/** @returns {Promise<import('../../app/features/users/types').User>} */
 export async function createUser(index) {
   const userId = [index, generateUserId()].filter(Boolean).join('_')
 
   const response = await fetch(`${TEST_API_URL}/users`, {
-    method: 'POST',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       ...createAuthorizationHeader({ userId }),
@@ -178,8 +178,9 @@ export function createAuthorizationHeader({
   userId,
   username = `username_${userId}`,
   name = toCapital(userId.split('_').slice(1).join(' ')),
+  locale = 'uk',
 }) {
-  return { 'Authorization': `Bearer ${createToken({ userId, username, name })}` }
+  return { 'Authorization': `Bearer ${createToken({ userId, username, name, locale })}` }
 }
 
 function toCapital(str) {
@@ -190,7 +191,7 @@ export function createToken({ userId, username, name }) {
   return jwt.sign({ user: { id: userId, username, name } }, TOKEN_SECRET)
 }
 
-/** @returns {Promise<import('../../app/payments/Payment.js').Payment>} */
+/** @returns {Promise<import('../../app/features/payments/types').Payment>} */
 export async function createPayment(fromUserId, toUserId, amount) {
   const payment = { fromUserId, toUserId, amount }
 
@@ -217,7 +218,7 @@ export async function deletePayment(paymentId, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../app/debts/Debt.js').Debt[]>} */
+/** @returns {Promise<import('../../app/features/debts/types').Debt[]>} */
 export async function getDebts(userId) {
   const response = await fetch(`${TEST_API_URL}/debts`, {
     headers: createAuthorizationHeader({ userId }),
@@ -228,7 +229,7 @@ export async function getDebts(userId) {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall>} */
+/** @returns {Promise<import('../../app/features/roll-calls/types').RollCall>} */
 export async function createRollCall(userId, groupId, sortOrder = 1, {
   messagePattern = '@channel',
   usersPattern = '*',
@@ -267,7 +268,6 @@ export async function createRollCall(userId, groupId, sortOrder = 1, {
  *   pollOptions?: string[]
  *   sortOrder?: number
  * }} input
- * @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall>}
  */
 export async function updateRollCall(userId, rollCallId, {
   messagePattern,
@@ -294,7 +294,7 @@ export async function updateRollCall(userId, rollCallId, {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall[]>} */
+/** @returns {Promise<import('../../app/features/roll-calls/types').RollCall[]>} */
 export async function getRollCalls(groupId, userId) {
   const response = await fetch(`${TEST_API_URL}/rollcalls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),
@@ -314,7 +314,7 @@ export async function deleteRollCall(id, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../app/groups/Group.js').Group>} */
+/** @returns {Promise<import('../../app/features/groups/types').Group>} */
 export async function getGroups(userId) {
   const response = await fetch(`${TEST_API_URL}/groups`, {
     headers: createAuthorizationHeader({ userId }),
