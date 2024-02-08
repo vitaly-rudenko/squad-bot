@@ -17,22 +17,22 @@ export const updateAdminsSchema = object({
 
 /**
  * @param {{
- *   telegram: import('telegraf').Telegram,
- *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>,
- *   membershipManager: import('../../memberships/MembershipManager.js').MembershipManager,
+ *   telegram: import('telegraf').Telegram
+ *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>
+ *   membershipStorage: import('../../features/memberships/storage.js').MembershipPostgresStorage
  * }} input
  */
 export function createAdminsRouter({
   telegram,
   botInfo,
-  membershipManager,
+  membershipStorage,
 }) {
   const router = Router()
 
   router.get('/admins', async (req, res) => {
     const groupId = groupIdSchema.create(req.query.group_id)
 
-    if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
+    if (!(await membershipStorage.exists(req.user.id, groupId))) {
       throw new NotAuthorizedError()
     }
 
@@ -65,7 +65,7 @@ export function createAdminsRouter({
   router.patch('/admins', async (req, res) => {
     const { groupId, admins } = updateAdminsSchema.create(req.body)
 
-    if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
+    if (!(await membershipStorage.exists(req.user.id, groupId))) {
       throw new NotAuthorizedError()
     }
 

@@ -25,8 +25,7 @@ export const createMembershipSchema = object({
  *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage
  *   groupStorage: import('../features/groups/storage.js').GroupsPostgresStorage
  *   localize: import('../localization/localize.js').localize
- *   membershipManager: import('../memberships/MembershipManager.js').MembershipManager
- *   membershipStorage: import('../memberships/MembershipPostgresStorage.js').MembershipPostgresStorage
+ *   membershipStorage: import('../features/memberships/storage.js').MembershipPostgresStorage
  *   paymentsStorage: import('../features/payments/storage.js').PaymentsPostgresStorage
  *   receiptManager: import('../receipts/ReceiptManager.js').ReceiptManager
  *   receiptsStorage: import('../receipts/ReceiptsPostgresStorage.js').ReceiptsPostgresStorage
@@ -45,7 +44,6 @@ export function createRouter({
   debtsStorage,
   groupStorage,
   localize,
-  membershipManager,
   membershipStorage,
   paymentsStorage,
   receiptManager,
@@ -83,11 +81,12 @@ export function createRouter({
     router.post('/memberships', async (req, res) => {
       const { userId, groupId, title } = createMembershipSchema.create(req.body)
 
-      await membershipManager.hardLink(userId, groupId)
       await groupStorage.store({
         id: groupId,
         title,
       })
+
+      await membershipStorage.store(userId, groupId)
 
       res.sendStatus(200)
     })
@@ -113,7 +112,7 @@ export function createRouter({
       paymentsStorage,
     }),
     createRollCallsRouter({
-      membershipManager,
+      membershipStorage,
       rollCallsStorage,
     }),
     createGroupsRouter({
@@ -121,7 +120,7 @@ export function createRouter({
     }),
     createAdminsRouter({
       botInfo,
-      membershipManager,
+      membershipStorage,
       telegram,
     }),
     createCardsRouter({

@@ -18,9 +18,6 @@ import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js
 import { TelegramErrorLogger } from './app/shared/TelegramErrorLogger.js'
 import { ReceiptsPostgresStorage } from './app/receipts/ReceiptsPostgresStorage.js'
 import { ReceiptManager } from './app/receipts/ReceiptManager.js'
-import { MembershipManager } from './app/memberships/MembershipManager.js'
-import { MembershipCache } from './app/memberships/MembershipCache.js'
-import { MembershipPostgresStorage } from './app/memberships/MembershipPostgresStorage.js'
 import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
 import { withGroupChat } from './app/shared/middlewares/groupChat.js'
 import { withChatId } from './app/shared/middlewares/chatId.js'
@@ -28,7 +25,6 @@ import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
-import { RefreshMembershipsUseCase } from './app/memberships/RefreshMembershipsUseCase.js'
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 import { createRouter } from './app/routes/index.js'
 import { CardsPostgresStorage } from './app/features/cards/storage.js'
@@ -48,6 +44,8 @@ import { ApiError } from './app/features/common/errors.js'
 import { GroupsPostgresStorage } from './app/features/groups/storage.js'
 import { UsersPostgresStorage } from './app/features/users/storage.js'
 import { useUsersFlow, withUserId } from './app/features/users/telegram.js'
+import { runRefreshMembershipsTask, unlink } from './app/features/memberships/use-cases.js'
+import { MembershipPostgresStorage } from './app/features/memberships/storage.js'
 
 async function start() {
   if (useTestMode) {
@@ -118,11 +116,7 @@ async function start() {
   })
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
-  const membershipManager = new MembershipManager({
-    membershipCache: new MembershipCache(createRedisCache('memberships', useTestMode ? 60_000 : 60 * 60_000)),
-    membershipStorage,
-    telegram: bot.telegram,
-  })
+  const membershipCache = createRedisCache('memberships', useTestMode ? 60_000 : 60 * 60_000)
 
   const groupStorage = new GroupsPostgresStorage(pgClient)
   const groupCache = createRedisCache('groups', useTestMode ? 60_000 : 60 * 60_000)
@@ -169,7 +163,7 @@ async function start() {
           locale: 'uk',
         })
 
-        await membershipManager.hardLink(userId, chatId)
+        await membershipStorage.store(userId, chatId)
       } catch (err) {
         errorLogger.log(err, 'Could not register new chat member', { chatMember })
       }
@@ -184,7 +178,11 @@ async function start() {
     const { chatId } = context.state
     const userId = String(user.id)
 
-    await membershipManager.unlink(userId, chatId)
+    try {
+      await unlink({ userId, groupId: chatId, membershipStorage, membershipCache })
+    } catch (err) {
+      logger.warn({ err }, 'Could not unlink left chat member')
+    }
   })
 
   const { start } = useUsersFlow({ usersStorage })
@@ -226,7 +224,10 @@ async function start() {
       await groupCache.set(chatId)
     }
 
-    await membershipManager.softLink(userId, chatId)
+    if (!(await membershipCache.has(`${userId}_${chatId}`))) {
+      await membershipStorage.store(userId, chatId)
+      await membershipCache.set(`${userId}_${chatId}`)
+    }
 
     return next()
   }))
@@ -286,7 +287,6 @@ async function start() {
     debtsStorage,
     groupStorage,
     localize,
-    membershipManager,
     membershipStorage,
     paymentsStorage,
     receiptManager,
@@ -343,16 +343,15 @@ async function start() {
   if (process.env.DISABLE_MEMBERSHIP_REFRESH_TASK === 'true') return
 
   const refreshMembershipsJobIntervalMs = 5 * 60_000
-  const refreshMembershipsUseCase = new RefreshMembershipsUseCase({
-    errorLogger,
-    membershipManager,
-    membershipStorage,
-  })
 
   if (Number.isInteger(refreshMembershipsJobIntervalMs)) {
     async function runRefreshMembershipsJob() {
       try {
-        await refreshMembershipsUseCase.run()
+        await runRefreshMembershipsTask({
+          membershipCache,
+          membershipStorage,
+          telegram: bot.telegram,
+        })
       } catch (err) {
         logger.error({ err }, 'Could not refresh memberships')
       } finally {

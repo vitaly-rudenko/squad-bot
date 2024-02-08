@@ -4,6 +4,10 @@ export class MembershipPostgresStorage {
     this._client = client
   }
 
+  /**
+   * @param {string} userId
+   * @param {string} groupId
+   */
   async store(userId, groupId) {
     await this._client.query(`
       INSERT INTO memberships (user_id, group_id, updated_at)
@@ -13,7 +17,12 @@ export class MembershipPostgresStorage {
     `, [userId, groupId, new Date()])
   }
 
+  /**
+   * @param {string} userId
+   * @param {string} groupId
+   */
   async exists(userId, groupId) {
+    // TODO: improve?
     const response = await this._client.query(`
       SELECT COUNT(*) as count
       FROM memberships
@@ -25,6 +34,10 @@ export class MembershipPostgresStorage {
     return response.rows[0].count === '1'
   }
 
+  /**
+   * @param {string} userId
+   * @param {string} groupId
+   */
   async delete(userId, groupId) {
     await this._client.query(`
       DELETE FROM memberships
@@ -33,6 +46,10 @@ export class MembershipPostgresStorage {
     `, [userId, groupId])
   }
 
+  /**
+   * @param {string} groupId
+   * @returns {Promise<string[]>}
+   */
   async findUserIdsByGroupId(groupId) {
     const response = await this._client.query(`
       SELECT m.user_id
@@ -43,6 +60,7 @@ export class MembershipPostgresStorage {
     return response.rows.map(row => row['user_id'])
   }
 
+  /** @param {{ limit: number }} input */
   async findOldest({ limit }) {
     const response = await this._client.query(`
       SELECT m.user_id, m.group_id
@@ -51,9 +69,17 @@ export class MembershipPostgresStorage {
       LIMIT ${limit};
     `, [])
 
-    return response.rows.map(row => ({
-      userId: row['user_id'],
-      groupId: row['group_id'],
-    }))
+    return response.rows.map(row => deserializeMembership(row))
+  }
+}
+
+/**
+ * @param {any} row
+ * @returns {import('./types').Membership}
+ */
+function deserializeMembership(row) {
+  return {
+    userId: row['user_id'],
+    groupId: row['group_id'],
   }
 }

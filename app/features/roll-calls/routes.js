@@ -34,12 +34,12 @@ export const updateRollCallSchema = object({
 
 /**
  * @param {{
- *   membershipManager: import('../../memberships/MembershipManager.js').MembershipManager,
+ *   membershipStorage: import('../../features/memberships/storage.js').MembershipPostgresStorage,
  *   rollCallsStorage: import('./storage.js').RollCallsPostgresStorage,
  * }} input
  */
 export function createRollCallsRouter({
-  membershipManager,
+  membershipStorage,
   rollCallsStorage,
 }) {
   const router = Router()
@@ -54,7 +54,7 @@ export function createRollCallsRouter({
       sortOrder,
     } = createRollCallSchema.create(req.body)
 
-    if (!(await membershipManager.isHardLinked(req.user.id, groupId))) {
+    if (!(await membershipStorage.exists(req.user.id, groupId))) {
       throw new NotAuthorizedError()
     }
 
@@ -87,7 +87,7 @@ export function createRollCallsRouter({
       sortOrder,
     } = updateRollCallSchema.create(req.body)
 
-    if (!(await membershipManager.isHardLinked(req.user.id, rollCall.groupId))) {
+    if (!(await membershipStorage.exists(req.user.id, rollCall.groupId))) {
       throw new NotAuthorizedError()
     }
 
@@ -115,7 +115,7 @@ export function createRollCallsRouter({
       throw new NotFoundError()
     }
 
-    if (!(await membershipManager.isHardLinked(req.user.id, rollCall.groupId))) {
+    if (!(await membershipStorage.exists(req.user.id, rollCall.groupId))) {
       throw new NotAuthorizedError()
     }
 
