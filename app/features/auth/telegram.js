@@ -7,7 +7,7 @@ export function createAuthFlow() {
   const login = async (context) => {
     const { userId } = context.state
 
-    await context.reply(`${webAppUrl}?token=${generateTemporaryAuthToken(userId)}`)
+    await context.reply(`${webAppUrl}/?token=${generateTemporaryAuthToken(userId)}`)
   }
 
   return { login }

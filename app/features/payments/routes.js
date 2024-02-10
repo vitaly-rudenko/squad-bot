@@ -12,12 +12,7 @@ export const createPaymentSchema = object({
 })
 
 export function createPaymentsRouter() {
-  const {
-    paymentsStorage,
-    usersStorage,
-    localize,
-    telegram,
-  } = registry.export()
+  const { paymentsStorage } = registry.export()
 
   const router = Router()
 
@@ -31,14 +26,7 @@ export function createPaymentsRouter() {
       createdAt: new Date(),
     })
 
-    await sendPaymentSavedNotification({
-      action: 'create',
-      editorId: req.user.id,
-      payment,
-      localize,
-      telegram,
-      usersStorage,
-    })
+    await sendPaymentSavedNotification({ action: 'create', editorId: req.user.id, payment })
 
     res.json(payment)
   })
@@ -58,13 +46,7 @@ export function createPaymentsRouter() {
 
     await paymentsStorage.deleteById(paymentId)
 
-    await sendPaymentDeletedNotification({
-      editorId,
-      payment,
-      localize,
-      telegram,
-      usersStorage,
-    })
+    await sendPaymentDeletedNotification({ editorId, payment })
 
     res.sendStatus(204)
   })

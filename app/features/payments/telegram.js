@@ -2,17 +2,18 @@ import { registry } from '../../registry.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
 export function createPaymentsFlow() {
-  const { generateWebAppUrl } = registry.export()
+  const { generateWebAppUrl, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const payments = async (context) => {
-    const { localize } = context.state
+    const { locale } = context.state
 
     const viewUrl = generateWebAppUrl('payments')
     const createUrl = generateWebAppUrl('new-payment')
 
     await context.reply(
       localize(
+        locale,
         'payments.command.message',
         {
           viewUrl: escapeMd(viewUrl),

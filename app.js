@@ -9,10 +9,8 @@ import express from 'express'
 import { Redis } from 'ioredis'
 
 import { receiptsCommand } from './app/receipts/flows/receipts.js'
-import { withLocalization } from './app/localization/middlewares/localization.js'
 import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { RollCallsPostgresStorage } from './app/features/roll-calls/storage.js'
-import { localize } from './app/localization/localize.js'
 import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
 import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
 import { TelegramErrorLogger } from './app/shared/TelegramErrorLogger.js'
@@ -47,6 +45,8 @@ import { useUsersFlow, withUserId } from './app/features/users/telegram.js'
 import { runRefreshMembershipsTask, unlink } from './app/features/memberships/use-cases.js'
 import { MembershipPostgresStorage } from './app/features/memberships/storage.js'
 import { registry } from './app/registry.js'
+import { withLocale } from './app/features/localization/telegram.js'
+import { localize } from './app/features/localization/localize.js'
 
 async function start() {
   if (useTestMode) {
@@ -147,7 +147,7 @@ async function start() {
 
   bot.use(withUserId())
   bot.use(withChatId())
-  bot.use(withLocalization())
+  bot.use(withLocale())
 
   // TODO: deprecated?
   bot.on('new_chat_members', async (context) => {

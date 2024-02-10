@@ -9,7 +9,7 @@ export interface Dependencies {
   generateTemporaryAuthToken: import('./features/auth/types.js').GenerateTemporaryAuthToken
   generateWebAppUrl: import('./utils/types').GenerateWebAppUrl
   groupStorage: import('./features/groups/storage.js').GroupsPostgresStorage
-  localize: typeof import('./localization/localize.js').localize
+  localize: typeof import('./features/localization/localize.js').localize
   massTelegramNotificationFactory: import('./shared/notifications/MassTelegramNotification.js').MassTelegramNotificationFactory
   membershipCache: RedisCache
   membershipStorage: import('./features/memberships/storage.js').MembershipPostgresStorage

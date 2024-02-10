@@ -1,13 +1,13 @@
 import { registry } from '../../registry.js'
 
 export function useUsersFlow() {
-  const { usersStorage } = registry.export()
+  const { usersStorage, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const start = async (context) => {
     if (!context.from) return
 
-    const { localize } = context.state
+    const { locale } = context.state
 
     await usersStorage.store({
       id: String(context.from.id),
@@ -18,7 +18,8 @@ export function useUsersFlow() {
     })
 
     await context.reply(
-      localize('users.command.start.message', { parse_mode: 'MarkdownV2' })
+      localize(locale, 'users.command.start.message'),
+      { parse_mode: 'MarkdownV2' }
     )
   }
 

@@ -1,0 +1,107 @@
+payments:
+  command:
+    message:
+      - '💸 Переглянути *платежі*:'
+      - '{viewUrl}'
+      - ''
+      - '➕ Додати платіж:'
+      - '{createUrl}'
+  notifications:
+    saved:
+      message:
+        - ➡️ {editor} {action} платіж на суму *{amount}*
+        - '👤 Відправник: {sender}'
+        - '👤 Отримувач: {receiver}'
+        - '📑 Борги: /debts, платежі: /payments'
+      action:
+        create: створив\(ла\)
+        update: відредагував\(ла\)
+    deleted:
+      message:
+        - ❌ ➡️ {editor} видалив\(ла\) платіж на суму *{amount}*
+        - '👤 Відправник: {sender}'
+        - '👤 Отримувач: {receiver}'
+        - '📑 Борги: /debts, платежі: /payments'
+users:
+  command:
+    start:
+      message: 🎉 Вітаю\! Твоє імʼя і юзернейм були збережені\.
+cards:
+  command:
+    message:
+      - '💳 Переглянути **картки**:'
+      - '{viewUrl}'
+      - ''
+      - '➕ Додати картку:'
+      - '{createUrl}'
+debts:
+  command:
+    ingoingDebts:
+      - '⬅️ Тобі винні:'
+      - '{debts}'
+    noIngoingDebts: ✅ Тобі ніхто нічого не винен
+    outgoingDebts:
+      - '➡️ Ти винен:'
+      - '{debts}'
+    noOutgoingDebts: ✅ Ти нікому нічого не винен
+    debt: '\- *{name}*: {amount}'
+    noDescription: без опису
+    withPhoto: з фото
+    withoutPhoto: без фото
+rollCalls:
+  command:
+    group:
+      - '🗣 Переглянути *переклички*:'
+      - '{viewUrl}'
+      - ''
+      - '➕ Створити нову перекличку:'
+      - '{createUrl}'
+    private:
+      - '🗣 Переглянути *переклички*:'
+      - '{viewUrl}'
+  noOneToMention: ❌ Немає кого пінганути чи у бота недостатньо даних про цей чат
+  defaultPollTitle: Обери відповідь
+  message:
+    withText:
+      - '*{text}*'
+      - ''
+      - '{mentions}'
+    withoutText: '{mentions}'
+  mention:
+    withUsername: '@{username}'
+    withoutUsername: '[{name}]({profileUrl})'
+admins:
+  titles:
+    command:
+      message:
+        - '✍️ Відредагувати *підписи*:'
+        - '{editUrl}'
+groupChatOnly: ❌ Цю команду можна виконати лише у груповому чаті
+privateChatOnly: ❌ Цю команду можна виконати лише в особистому чаті з ботом
+notifications:
+  receiptStored:
+    message:
+      - >-
+        📝 {editorName} \(@{editorUsername}\) {action} чек {receiptDescription}
+        на суму {receiptAmount}
+      - '👤 Платник: {payerName} \(@{payerUsername}\)'
+      - '{part}\'
+      - '📑 Борги: /debts, чеки: /receipts'
+      - ''
+      - '{receiptUrl}'
+    description: '"{description}"'
+    noDescription: без опису
+    actions:
+      added: створив\(ла\)
+      updated: відредагував\(ла\)
+    part: |
+      💵 Твоя частина в чеку: *{partAmount}*
+  receiptDeleted:
+    message:
+      - >-
+        ❌ 📝 {editorName} \(@{editorUsername}\) видалив\(ла\) чек
+        {receiptDescription} на суму *{receiptAmount}*
+      - '👤 Платник: {payerName} \(@{payerUsername}\)'
+      - '📑 Борги: /debts, чеки: /receipts'
+    description: '"{description}"'
+    noDescription: без опису

@@ -25,7 +25,7 @@ export class NotFoundError extends ApiError {
 export class NotAuthenticatedError extends ApiError {
   /** @param {string} [message] */
   constructor(message = 'Not authenticated') {
-    super({ code: 'NOT_AUTHENTICATED', status: 403, message })
+    super({ code: 'NOT_AUTHENTICATED', status: 401, message })
   }
 }
 

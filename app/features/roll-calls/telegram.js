@@ -4,11 +4,11 @@ import { GROUP_CHAT_TYPES } from '../../shared/middlewares/groupChat.js'
 import { registry } from '../../registry.js'
 
 export function createRollCallsFlow() {
-  const { rollCallsStorage, membershipStorage, usersStorage, generateWebAppUrl } = registry.export()
+  const { rollCallsStorage, membershipStorage, usersStorage, generateWebAppUrl, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const rollCalls = async (context) => {
-    const { chatId, localize } = context.state
+    const { chatId, locale } = context.state
 
     const isGroup = GROUP_CHAT_TYPES.includes(/** @type {string} */ (context.chat?.type))
 
@@ -16,7 +16,7 @@ export function createRollCallsFlow() {
     const createUrl = isGroup ? generateWebAppUrl(`new-roll-call${chatId}`) : undefined
 
     await context.reply(
-      localize(isGroup ? 'command.rollCalls.group' : 'command.rollCalls.private', {
+      localize(locale, isGroup ? 'rollCalls.command.group' : 'rollCalls.command.private', {
         viewUrl: escapeMd(viewUrl),
         ...createUrl && { createUrl: escapeMd(createUrl) },
       }),
@@ -31,7 +31,7 @@ export function createRollCallsFlow() {
   const rollCallMessage = async (context, next) => {
     if (!context.message || !('text' in context.message)) return next()
 
-    const { userId, chatId, localize } = context.state
+    const { userId, chatId, locale } = context.state
 
     const rollCalls = await rollCallsStorage.findByGroupId(chatId)
 
@@ -68,16 +68,18 @@ export function createRollCallsFlow() {
     }
 
     if (userIdsToNotify.length === 0) {
-      await context.reply(localize('rollCalls.noOneToMention'))
+      await context.reply(localize(locale, 'rollCalls.noOneToMention'))
       return
     }
 
     /** @param {any} user */
     function formatMention(user) {
       if (user.username) {
-        return localize('rollCalls.mention.withUsername', { username: escapeMd(user.username) })
+        return localize(locale, 'rollCalls.mention.withUsername', {
+          username: escapeMd(user.username)
+        })
       } else {
-        return localize('rollCalls.mention.withoutUsername', {
+        return localize(locale, 'rollCalls.mention.withoutUsername', {
           name: escapeMd(user.name),
           profileUrl: escapeMd(`tg://user?id=${user.id}`),
         })
@@ -88,14 +90,14 @@ export function createRollCallsFlow() {
     const mentions = usersToNotify.map(formatMention).join(' ')
     const sendPoll = matchedRollCall.pollOptions.length > 0
     const message = (text && !sendPoll)
-      ? localize('rollCalls.message.withText', { text: escapeMd(text), mentions })
-      : localize('rollCalls.message.withoutText', { mentions })
+      ? localize(locale, 'rollCalls.message.withText', { text: escapeMd(text), mentions })
+      : localize(locale, 'rollCalls.message.withoutText', { mentions })
 
     await context.reply(message, { parse_mode: 'MarkdownV2' })
 
     if (sendPoll) {
       await context.replyWithPoll(
-        text || localize('rollCalls.defaultPollTitle'),
+        text || localize(locale, 'rollCalls.defaultPollTitle'),
         matchedRollCall.pollOptions,
         { is_anonymous: false }
       )

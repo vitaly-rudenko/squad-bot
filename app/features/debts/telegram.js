@@ -3,11 +3,11 @@ import { escapeMd } from '../../utils/escapeMd.js'
 import { aggregateDebts, renderAggregatedDebt } from './utils.js'
 
 export function createDebtsFlow() {
-  const { usersStorage, debtsStorage, paymentsStorage } = registry.export()
+  const { usersStorage, debtsStorage, paymentsStorage, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const debts = async (context) => {
-    const { userId, localize } = context.state
+    const { userId, locale } = context.state
     const user = await usersStorage.findById(userId)
     if (!user) return
 
@@ -29,23 +29,23 @@ export function createDebtsFlow() {
       const debtorId = debt.fromUserId === userId ? debt.toUserId : debt.fromUserId
       const name = users.find(u => u.id === debtorId)?.name ?? debtorId
 
-      return localize('command.debts.debt', {
+      return localize(locale, 'debts.command.debt', {
         name: escapeMd(name),
         amount: escapeMd(renderAggregatedDebt(debt)),
       })
     }
 
     const ingoingDebtsFormatted = ingoingDebts.length > 0
-      ? localize('command.debts.ingoingDebts', {
+      ? localize(locale, 'debts.command.ingoingDebts', {
         debts: ingoingDebts.map(localizeAggregatedDebt).join('\n')
       })
-      : localize('command.debts.noIngoingDebts')
+      : localize(locale, 'debts.command.noIngoingDebts')
 
     const outgoingDebtsFormatted = outgoingDebts.length > 0
-      ? localize('command.debts.outgoingDebts', {
+      ? localize(locale, 'debts.command.outgoingDebts', {
         debts: outgoingDebts.map(localizeAggregatedDebt).join('\n')
       })
-      : localize('command.debts.noOutgoingDebts')
+      : localize(locale, 'debts.command.noOutgoingDebts')
 
     await context.reply(
       [

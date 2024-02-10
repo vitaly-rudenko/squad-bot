@@ -1,13 +1,17 @@
+import { registry } from '../../registry.js'
+
 export const requirePrivateChat = () => {
+  const { localize } = registry.export()
+
   /** @param {import('telegraf').Context} context @param {Function} next */
   return async (context, next) => {
-    const { localize } = context.state
+    const { locale } = context.state
 
     if (context.chat.type === 'private') {
       return next()
     }
 
-    await context.reply(localize('privateChatOnly'), { parse_mode: 'MarkdownV2' })
+    await context.reply(localize(locale, 'privateChatOnly'), { parse_mode: 'MarkdownV2' })
   }
 }
 
