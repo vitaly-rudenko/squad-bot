@@ -1,6 +1,6 @@
 import * as http from 'http'
 import { ParsedQs } from 'qs'
-import { User } from './users/types'
+import { User } from './src/users/types'
 
 declare module 'express-serve-static-core' {
   export interface Request<

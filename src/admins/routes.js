@@ -1,6 +1,6 @@
 import Router from 'express-promise-router'
 import { ApiError } from '../common/errors.js'
-import { logger } from '../logger.js'
+import { logger } from '../common/logger.js'
 import { array, nonempty, object, size, string, trimmed } from 'superstruct'
 import { groupIdSchema, userIdSchema } from '../common/schemas.js'
 import { NotAuthorizedError } from '../common/errors.js'

@@ -17,6 +17,6 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.js", "src/**/*.ts", "test/unit/**/*.js"],
+  "include": ["src/**/*.js", "src/**/*.ts", "test/unit/**/*.js", "index.d.ts"],
   "exclude": ["node_modules"]
 }

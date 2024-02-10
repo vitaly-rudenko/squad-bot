@@ -1,5 +1,5 @@
 import { disableTelegramApi } from '../env.js'
-import { logger } from '../logger.js'
+import { logger } from '../common/logger.js'
 import { registry } from '../registry.js'
 import { escapeMd, isNotificationErrorIgnorable } from '../common/telegram.js'
 import { isDefined, renderAmount, renderUser } from '../common/utils.js'

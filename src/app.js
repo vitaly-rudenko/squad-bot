@@ -10,7 +10,7 @@ import { Redis } from 'ioredis'
 
 import { RollCallsPostgresStorage } from './roll-calls/storage.js'
 import { useTestMode } from './env.js'
-import { logger } from './logger.js'
+import { logger } from './common/logger.js'
 import { createApiRouter } from './api.js'
 import { CardsPostgresStorage } from './cards/storage.js'
 import { createCardsFlow } from './cards/telegram.js'

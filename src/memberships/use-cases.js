@@ -1,4 +1,4 @@
-import { logger } from '../logger.js'
+import { logger } from '../common/logger.js'
 import { registry } from '../registry.js'
 import { isChatMember } from './telegram.js'
 
