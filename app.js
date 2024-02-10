@@ -45,7 +45,7 @@ import { useUsersFlow, withUserId } from './app/features/users/telegram.js'
 import { runRefreshMembershipsTask, unlink } from './app/features/memberships/use-cases.js'
 import { MembershipPostgresStorage } from './app/features/memberships/storage.js'
 import { registry } from './app/registry.js'
-import { withLocale } from './app/features/localization/telegram.js'
+import { localeFromLanguageCode, withLocale } from './app/features/localization/telegram.js'
 import { localize } from './app/features/localization/localize.js'
 
 async function start() {
@@ -162,8 +162,7 @@ async function start() {
           id: userId,
           name: chatMember.first_name,
           ...chatMember.username && { username: chatMember.username },
-          // TODO: get locale from `chatMember.language_code`
-          locale: 'uk',
+          locale: localeFromLanguageCode(chatMember.language_code),
         })
 
         await membershipStorage.store(userId, chatId)
@@ -194,15 +193,14 @@ async function start() {
   bot.use(async (context, next) => {
     if (!context.from) return
 
-    const { userId } = context.state
+    const { userId, locale } = context.state
 
     if (!(await usersCache.has(userId))) {
       await usersStorage.store({
         id: userId,
         name: context.from.first_name,
         ...context.from.username && { username: context.from.username },
-        // TODO: get locale from `context.from.language_code`
-        locale: 'uk',
+        locale,
       })
 
       await usersCache.set(userId)

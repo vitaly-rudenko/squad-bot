@@ -12,7 +12,7 @@ export function receiptsCommand() {
     const createUrl = generateWebAppUrl('new-receipt')
 
     await context.reply(
-      localize(locale, 'command.receipts.help', {
+      localize(locale, 'receipts.command.message', {
         viewUrl: escapeMd(viewUrl),
         createUrl: escapeMd(createUrl),
       }),

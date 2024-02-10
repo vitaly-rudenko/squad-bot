@@ -1,5 +1,6 @@
-import * as http from 'http';
-import { ParsedQs } from 'qs';
+import * as http from 'http'
+import { ParsedQs } from 'qs'
+import { User } from './app/features/users/types'
 
 declare module 'express-serve-static-core' {
   export interface Request<
@@ -9,12 +10,7 @@ declare module 'express-serve-static-core' {
     ReqQuery = ParsedQs,
     LocalsObj extends Record<string, any> = Record<string, any>,
   > extends http.IncomingMessage, Express.Request {
-    user: {
-      id: string
-      name: string
-      username?: string
-      locale: 'uk' | 'en'
-    }
+    user: User
     file?: {
       buffer: Buffer
       mimetype: string

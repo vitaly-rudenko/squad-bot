@@ -4,11 +4,11 @@ import yaml from 'js-yaml'
 import { fileURLToPath } from 'url'
 import { localeFileSchema } from './schemas.js'
 
-const uk = flattenLocaleFile(
+const en = flattenLocaleFile(
   localeFileSchema.create(
     yaml.load(
       fs.readFileSync(
-        path.join(path.dirname(fileURLToPath(import.meta.url)), 'locales', 'uk.yml'),
+        path.join(path.dirname(fileURLToPath(import.meta.url)), 'locales', 'en.yml'),
         'utf8',
       )
     )
@@ -22,11 +22,7 @@ const uk = flattenLocaleFile(
  * @returns {string}
  */
 export function localize(locale, key, replacements) {
-  if (locale !== 'uk') {
-    throw new Error(`Unsupported locale: "${locale}"`)
-  }
-
-  return replaceVariables(flattenMessage(uk[key]), replacements)
+  return replaceVariables(flattenMessage(en[key]), replacements)
 }
 
 /**
@@ -56,17 +52,7 @@ function flattenLocaleFile(localeFile) {
  * @returns {string}
  */
 function flattenMessage(message) {
-  if (Array.isArray(message)) {
-    return message
-      .map((item, index, array) => (
-        item.endsWith('\\')
-          ? item.slice(0, -1)
-          : (index === array.length - 1) ? item : `${item}\n`
-      ))
-      .join('')
-  }
-
-  return message
+  return Array.isArray(message) ? message.join('\n') : message
 }
 
 /**

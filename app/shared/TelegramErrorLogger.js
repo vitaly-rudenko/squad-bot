@@ -1,12 +1,23 @@
 import { logger } from '../../logger.js'
 
 export class TelegramErrorLogger {
+  /**
+   * @param {{
+   *   telegram: import('telegraf').Telegram
+   *   debugChatId: number
+   * }} input
+   */
   constructor({ telegram, debugChatId }) {
     this._debugChatId = debugChatId
     this._telegram = telegram
   }
 
-  log(err, message = 'Unexpected error', context = {}) {
+  /**
+   * @param {Error} err
+   * @param {string} message
+   * @param {any} [context]
+   */
+  log(err, message = 'Unexpected error', context) {
     logger.error({ err, context }, message)
 
     this._telegram.sendMessage(

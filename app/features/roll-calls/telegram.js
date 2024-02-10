@@ -1,3 +1,4 @@
+// @ts-expect-error TODO: create typings for templater
 import { PatternBuilder, PatternMatcher, EntryMatchers } from '@vitalyrudenko/templater'
 import { escapeMd } from '../../utils/escapeMd.js'
 import { GROUP_CHAT_TYPES } from '../../shared/middlewares/groupChat.js'
@@ -38,7 +39,7 @@ export function createRollCallsFlow() {
     const patternMatcher = new PatternMatcher()
     const entryMatchers = new EntryMatchers()
 
-    let matchedRollCall, text
+    let matchedRollCall, title
     for (const rollCall of rollCalls) {
       const result = patternMatcher.match(
         context.message.text,
@@ -50,7 +51,7 @@ export function createRollCallsFlow() {
       if (!result) continue
 
       matchedRollCall = rollCall
-      text = result.fields[0]?.value
+      title = result.fields[0]?.value
       break
     }
 
@@ -89,15 +90,15 @@ export function createRollCallsFlow() {
     const usersToNotify = await usersStorage.findByIds(userIdsToNotify)
     const mentions = usersToNotify.map(formatMention).join(' ')
     const sendPoll = matchedRollCall.pollOptions.length > 0
-    const message = (text && !sendPoll)
-      ? localize(locale, 'rollCalls.message.withText', { text: escapeMd(text), mentions })
-      : localize(locale, 'rollCalls.message.withoutText', { mentions })
+    const message = (title && !sendPoll)
+      ? localize(locale, 'rollCalls.message.withTitle', { title: escapeMd(title), mentions })
+      : localize(locale, 'rollCalls.message.withoutTitle', { mentions })
 
     await context.reply(message, { parse_mode: 'MarkdownV2' })
 
     if (sendPoll) {
       await context.replyWithPoll(
-        text || localize(locale, 'rollCalls.defaultPollTitle'),
+        title || localize(locale, 'rollCalls.defaultPollTitle'),
         matchedRollCall.pollOptions,
         { is_anonymous: false }
       )

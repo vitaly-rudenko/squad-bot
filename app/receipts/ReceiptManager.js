@@ -1,3 +1,5 @@
+import { logger } from '../../logger.js'
+
 export class ReceiptManager {
   /**
    * @param {{
@@ -40,8 +42,8 @@ export class ReceiptManager {
     }
 
     const notification = isNew
-      ? await this._receiptNotifier.created(storedReceipt, { editorId }).catch(() => undefined)
-      : await this._receiptNotifier.updated(storedReceipt, { editorId }).catch(() => undefined)
+      ? await this._receiptNotifier.created(storedReceipt, { editorId }).catch((err) => logger.warn({ err }))
+      : await this._receiptNotifier.updated(storedReceipt, { editorId }).catch((err) => logger.warn({ err }))
 
     await notification?.send()
 
@@ -50,7 +52,7 @@ export class ReceiptManager {
 
   async delete(receiptId, { editorId }) {
     const receipt = await this._receiptsStorage.findById(receiptId)
-    const notification = await this._receiptNotifier.deleted(receipt, { editorId }).catch(() => undefined)
+    const notification = await this._receiptNotifier.deleted(receipt, { editorId }).catch((err) => logger.warn({ err }))
 
     await this._debtsStorage.deleteByReceiptId(receiptId)
     await this._receiptsStorage.deleteById(receiptId)

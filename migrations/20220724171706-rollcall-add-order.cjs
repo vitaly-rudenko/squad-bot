@@ -9,7 +9,6 @@ module.exports = {
     const { rows: rollCalls } = await db.query(`SELECT * FROM roll_calls;`)
     const perGroupOrder = new Map()
 
-    // TODO: test this
     for (const rollCall of rollCalls) {
       const groupId = rollCall['group_id']
       const order = (perGroupOrder.get(groupId) ?? 0) + 1

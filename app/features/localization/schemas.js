@@ -19,6 +19,26 @@ export const localeFileSchema = object({
       }),
     }),
   }),
+  receipts: object({
+    command: object({
+      message: _,
+    }),
+    notifications: object({
+      saved: object({
+        message: _,
+        description: _,
+        part: _,
+        action: object({
+          create: _,
+          update: _,
+        }),
+      }),
+      deleted: object({
+        message: _,
+        description: _,
+      }),
+    }),
+  }),
   users: object({
     command: object({
       start: object({
@@ -33,14 +53,14 @@ export const localeFileSchema = object({
   }),
   debts: object({
     command: object({
+      ingoingDebt: _,
       ingoingDebts: _,
       noIngoingDebts: _,
+      outgoingDebt: _,
       outgoingDebts: _,
       noOutgoingDebts: _,
       debt: _,
-      noDescription: _,
-      withPhoto: _,
-      withoutPhoto: _,
+      footer: _,
     }),
   }),
   rollCalls: object({
@@ -51,8 +71,8 @@ export const localeFileSchema = object({
     noOneToMention: _,
     defaultPollTitle: _,
     message: object({
-      withText: _,
-      withoutText: _,
+      withTitle: _,
+      withoutTitle: _,
     }),
     mention: object({
       withUsername: _,
@@ -68,21 +88,5 @@ export const localeFileSchema = object({
   }),
   groupChatOnly: _,
   privateChatOnly: _,
-  notifications: object({
-    receiptStored: object({
-      message: _,
-      description: _,
-      noDescription: _,
-      actions: object({
-        added: _,
-        updated: _,
-      }),
-      part: _,
-    }),
-    receiptDeleted: object({
-      message: _,
-      description: _,
-      noDescription: _,
-    }),
-  }),
+  unknownUser: _,
 })

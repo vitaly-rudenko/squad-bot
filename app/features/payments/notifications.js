@@ -39,7 +39,7 @@ export async function sendPaymentSavedNotification(
 
     try {
       if (disableTelegramApi) continue
-      await telegram.sendMessage(user.id, message, {
+      await telegram.sendMessage(Number(user.id), message, {
         parse_mode: 'MarkdownV2',
         disable_web_page_preview: true,
       })
@@ -83,7 +83,7 @@ export async function sendPaymentDeletedNotification(
 
     try {
       if (disableTelegramApi) continue
-      await telegram.sendMessage(user.id, message, {
+      await telegram.sendMessage(Number(user.id), message, {
         parse_mode: 'MarkdownV2',
         disable_web_page_preview: true,
       })

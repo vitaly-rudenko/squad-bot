@@ -1,5 +1,6 @@
 import { registry } from '../../registry.js'
 import { escapeMd } from '../../utils/escapeMd.js'
+import { renderUser } from '../common/utils.js'
 import { aggregateDebts, renderAggregatedDebt } from './utils.js'
 
 export function createDebtsFlow() {
@@ -25,32 +26,41 @@ export function createDebtsFlow() {
     const users = await usersStorage.findByIds(userIds)
 
     /** @param {import('./types').AggregatedDebt} debt */
-    function localizeAggregatedDebt(debt) {
+    function debtReplacements(debt) {
       const debtorId = debt.fromUserId === userId ? debt.toUserId : debt.fromUserId
-      const name = users.find(u => u.id === debtorId)?.name ?? debtorId
+      const debtor = users.find(u => u.id === debtorId)
 
-      return localize(locale, 'debts.command.debt', {
-        name: escapeMd(name),
+      return {
+        debtor: escapeMd(debtor ? renderUser(debtor) : localize(locale, 'unknownUser')),
         amount: escapeMd(renderAggregatedDebt(debt)),
-      })
+      }
     }
 
     const ingoingDebtsFormatted = ingoingDebts.length > 0
-      ? localize(locale, 'debts.command.ingoingDebts', {
-        debts: ingoingDebts.map(localizeAggregatedDebt).join('\n')
-      })
+      ? ingoingDebts.length === 1
+        ? localize(locale, 'debts.command.ingoingDebt', debtReplacements(ingoingDebts[0]))
+        : localize(locale, 'debts.command.ingoingDebts', {
+          debts: ingoingDebts
+            .map(debt => localize(locale, 'debts.command.debt', debtReplacements(debt)))
+            .join('\n')
+        })
       : localize(locale, 'debts.command.noIngoingDebts')
 
     const outgoingDebtsFormatted = outgoingDebts.length > 0
-      ? localize(locale, 'debts.command.outgoingDebts', {
-        debts: outgoingDebts.map(localizeAggregatedDebt).join('\n')
-      })
+      ? outgoingDebts.length === 1
+        ? localize(locale, 'debts.command.outgoingDebt', debtReplacements(outgoingDebts[0]))
+        : localize(locale, 'debts.command.outgoingDebts', {
+          debts: outgoingDebts
+            .map(debt => localize(locale, 'debts.command.debt', debtReplacements(debt)))
+            .join('\n')
+        })
       : localize(locale, 'debts.command.noOutgoingDebts')
 
     await context.reply(
       [
         outgoingDebtsFormatted,
         ingoingDebtsFormatted,
+        localize(locale, 'debts.command.footer'),
       ].filter(Boolean).map(s => s.trim()).join('\n\n'),
       { parse_mode: 'MarkdownV2' }
     )

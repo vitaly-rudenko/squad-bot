@@ -1,0 +1,110 @@
+payments:
+  command:
+    message:
+      - '💸 *Payments*'
+      - ''
+      - '👀 View: {viewUrl}'
+      - ''
+      - '➕ Record: {createUrl}'
+  notifications:
+    saved:
+      message:
+        - '💸 {editor} has {action} a *{amount}* payment'
+        - '👤 Sender: *{sender}*'
+        - '👤 Receiver: *{receiver}*'
+        - '🔗 /debts \| /receipts \| /payments'
+      action:
+        create: recorded
+        update: edited
+    deleted:
+      message:
+        - '❌ 💸 {editor} has deleted a *{amount}* payment'
+        - '👤 Sender: *{sender}*'
+        - '👤 Receiver: *{receiver}*'
+        - '🔗 /debts \| /receipts \| /payments'
+receipts:
+  command:
+    message:
+      - '📝  *Receipts*'
+      - ''
+      - '👀 View: {viewUrl}'
+      - ''
+      - '➕ Record: {createUrl}'
+  notifications:
+    saved:
+      message:
+        - '📝 {editor} has {action} a *{amount}* receipt {description}'
+        - '👤 Paid by *{payer}*'
+        - '{part}'
+        - '✍️ Edit: {receiptUrl}'
+        - '🔗 /debts \| /receipts \| /payments'
+      description: '\({description}\)'
+      part: '💵 Your part: *{amount}*'
+      action:
+        create: recorded
+        update: edited
+    deleted:
+      message:
+        - '❌ 📝 {editor} has deleted a *{amount}* receipt {description}'
+        - '👤 Paid by *{payer}*'
+        - '🔗 /debts \| /receipts \| /payments'
+      description: '\({description}\)'
+users:
+  command:
+    start:
+      message: 🎉 Welcome\! Your name and username have been saved\.
+cards:
+  command:
+    message:
+      - '💳 *Cards*'
+      - ''
+      - '👀 View: {viewUrl}'
+      - ''
+      - '➕ Add: {createUrl}'
+debts:
+  command:
+    ingoingDebt: '⬅️ {debtor} owes you *{amount}*'
+    ingoingDebts:
+      - '⬅️ Owed to you:'
+      - '{debts}'
+    noIngoingDebts: '✅ Nobody owes you anything'
+    outgoingDebt: '➡️ You owe *{amount}* to {debtor}'
+    outgoingDebts:
+      - '➡️ You owe:'
+      - '{debts}'
+    noOutgoingDebts: '✅ You have no debts'
+    debt: '\- *{name}*: {amount}'
+    footer: '🔗 /debts \| /receipts \| /payments'
+rollCalls:
+  command:
+    group:
+      - '📣 *Roll calls*'
+      - ''
+      - '👀 View: {viewUrl}'
+      - ''
+      - '➕ Record: {createUrl}'
+    private:
+      - '📣 *Roll calls*'
+      - ''
+      - '👀 View: {viewUrl}'
+  noOneToMention: '❌ No one to mention or the bot doesn''t have enough data about this chat'
+  defaultPollTitle: 'Choose an answer'
+  message:
+    withTitle:
+      - '*{title}*'
+      - ''
+      - '{mentions}'
+    withoutTitle: '{mentions}'
+  mention:
+    withUsername: '@{username}'
+    withoutUsername: '[{name}]({profileUrl})'
+admins:
+  titles:
+    command:
+      message:
+        - '👤 *Admin titles*'
+        - ''
+        - '✍️ Edit: {editUrl}'
+groupChatOnly: '❌ This command can only be executed in a group chat'
+privateChatOnly: '❌ This command can only be executed in a private chat'
+unknownUser: 'Unknown'

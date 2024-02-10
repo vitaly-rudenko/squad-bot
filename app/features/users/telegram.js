@@ -13,8 +13,7 @@ export function useUsersFlow() {
       id: String(context.from.id),
       name: context.from.first_name,
       ...context.from.username && { username: context.from.username },
-      // TODO: get locale from `context.from.language_code`
-      locale: 'uk',
+      locale,
     })
 
     await context.reply(
