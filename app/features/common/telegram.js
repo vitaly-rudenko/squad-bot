@@ -1,7 +1,8 @@
-/**
- * @param {{ version: string }} input
- */
-export function createCommonFlow({ version: appVersion }) {
+import { registry } from '../../registry.js'
+
+export function createCommonFlow() {
+  const { version: appVersion } = registry.export()
+
   /** @param {import('telegraf').Context} context */
   const version = async (context) => {
     if (!context.from || !context.chat) return

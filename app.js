@@ -87,22 +87,23 @@ async function start() {
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
 
   registry.values({
-    localize,
-    usersStorage,
-    debtsStorage: new DebtsPostgresStorage(pgClient),
-    receiptsStorage: new ReceiptsPostgresStorage(pgClient),
     botInfo: await bot.telegram.getMe(),
-    errorLogger,
-    tokenSecret,
-    telegramBotToken,
-    useTestMode,
-    createRedisCache,
-    webAppUrl: string().create(process.env.WEB_APP_URL),
-    webAppName: string().create(process.env.WEB_APP_NAME),
-    telegram: bot.telegram,
     cardsStorage: new CardsPostgresStorage(pgClient),
+    createRedisCache,
+    debtsStorage: new DebtsPostgresStorage(pgClient),
+    errorLogger,
+    localize,
     paymentsStorage: new PaymentsPostgresStorage(pgClient),
+    receiptsStorage: new ReceiptsPostgresStorage(pgClient),
     rollCallsStorage: new RollCallsPostgresStorage(pgClient),
+    telegram: bot.telegram,
+    telegramBotToken,
+    tokenSecret,
+    usersStorage,
+    useTestMode,
+    version: getAppVersion(),
+    webAppName: string().create(process.env.WEB_APP_NAME),
+    webAppUrl: string().create(process.env.WEB_APP_URL),
   })
 
   registry.create('generateWebAppUrl', ({ botInfo, webAppName }) => createWebAppUrlGenerator({ botUsername: botInfo.username, webAppName }))
@@ -181,7 +182,7 @@ async function start() {
     const userId = String(user.id)
 
     try {
-      await unlink({ userId, groupId: chatId, membershipStorage, membershipCache })
+      await unlink(userId, chatId)
     } catch (err) {
       logger.warn({ err }, 'Could not unlink left chat member')
     }
@@ -243,7 +244,7 @@ async function start() {
   const { login } = createAuthFlow()
   bot.command('login', requirePrivateChat(), login)
 
-  const { version } = createCommonFlow({ version: getAppVersion() })
+  const { version } = createCommonFlow()
   bot.command('version', requirePrivateChat(), version)
 
   const { titles } = createAdminsFlow()
@@ -326,11 +327,7 @@ async function start() {
   if (Number.isInteger(refreshMembershipsJobIntervalMs)) {
     async function runRefreshMembershipsJob() {
       try {
-        await runRefreshMembershipsTask({
-          membershipCache,
-          membershipStorage,
-          telegram: bot.telegram,
-        })
+        await runRefreshMembershipsTask()
       } catch (err) {
         logger.error({ err }, 'Could not refresh memberships')
       } finally {

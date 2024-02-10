@@ -1,5 +1,6 @@
 import { disableTelegramApi } from '../../../env.js'
 import { logger } from '../../../logger.js'
+import { registry } from '../../registry.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 import { isNotificationErrorIgnorable } from '../common/telegram.js'
 import { renderAmount, renderUser } from '../common/utils.js'
@@ -9,19 +10,12 @@ import { renderAmount, renderUser } from '../common/utils.js'
  *   action: 'create' | 'update'
  *   editorId: string
  *   payment: import('./types.js').Payment
- *   localize: import('../../localization/localize.js').localize
- *   usersStorage: import('../../features/users/storage.js').UsersPostgresStorage
- *   telegram: import('telegraf').Telegram
  * }} input
  */
-export async function sendPaymentSavedNotification({
-  action,
-  editorId,
-  payment,
-  localize,
-  usersStorage,
-  telegram,
-}) {
+export async function sendPaymentSavedNotification(
+  { action, editorId, payment },
+  { localize, usersStorage, telegram } = registry.export()
+) {
   const [editor, sender, receiver] = await usersStorage.findAndMapByIds([
     editorId,
     payment.fromUserId,
@@ -61,18 +55,12 @@ export async function sendPaymentSavedNotification({
  * @param {{
  *   editorId: string
  *   payment: import('./types.js').Payment
- *   localize: import('../../localization/localize.js').localize
- *   usersStorage: import('../../features/users/storage.js').UsersPostgresStorage
- *   telegram: import('telegraf').Telegram
  * }} input
  */
-export async function sendPaymentDeletedNotification({
-  editorId,
-  payment,
-  localize,
-  usersStorage,
-  telegram,
-}) {
+export async function sendPaymentDeletedNotification(
+  { editorId, payment },
+  { localize, usersStorage, telegram } = registry.export()
+) {
   const [editor, sender, receiver] = await usersStorage.findAndMapByIds([
     editorId,
     payment.fromUserId,

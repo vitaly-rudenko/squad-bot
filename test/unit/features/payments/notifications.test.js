@@ -52,6 +52,7 @@ describe('payments/notifications', () => {
         },
         action: 'create',
         editorId: editor.id,
+      }, {
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
@@ -99,6 +100,7 @@ describe('payments/notifications', () => {
         },
         action: 'update',
         editorId: editor.id,
+      }, {
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
@@ -147,6 +149,7 @@ describe('payments/notifications', () => {
           createdAt: new Date(),
         },
         editorId: editor.id,
+      }, {
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
