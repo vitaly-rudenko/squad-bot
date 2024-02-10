@@ -1,4 +1,4 @@
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 export function createAuthFlow() {
   const { generateTemporaryAuthToken, webAppUrl } = registry.export()

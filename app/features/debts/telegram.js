@@ -1,5 +1,5 @@
-import { registry } from '../../registry.js'
-import { escapeMd } from '../../utils/escapeMd.js'
+import { registry } from '../registry.js'
+import { escapeMd } from '../common/telegram.js'
 import { renderUser } from '../common/utils.js'
 import { aggregateDebts, renderAggregatedDebt } from './utils.js'
 

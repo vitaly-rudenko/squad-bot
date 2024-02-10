@@ -1,3 +1,5 @@
+import { registry } from '../registry.js'
+
 export class RedisCache {
   /**
    * @param {import('ioredis').default} redis
@@ -46,4 +48,13 @@ export class RedisCache {
   _key(key) {
     return `${this._prefix}:${key}`
   }
+}
+
+/**
+ * @param {string} prefix
+ * @param {number} ttlMs
+ */
+export function createRedisCache(prefix, ttlMs) {
+  const { redis } = registry.export()
+  return new RedisCache(redis, prefix, ttlMs)
 }

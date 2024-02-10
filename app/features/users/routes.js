@@ -1,7 +1,7 @@
 import Router from 'express-promise-router'
 import { optional } from 'superstruct'
 import { groupIdSchema } from '../common/schemas.js'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 export function createUsersRouter() {
   const {

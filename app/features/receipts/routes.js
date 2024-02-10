@@ -2,7 +2,7 @@ import multer from 'multer'
 import Router from 'express-promise-router'
 import { NotFoundError } from '../common/errors.js'
 import { ApiError } from '../common/errors.js'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from './notifications.js'
 import { saveReceiptSchema } from './schemas.js'
 

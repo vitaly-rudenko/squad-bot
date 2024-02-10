@@ -1,4 +1,4 @@
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 export function useUsersFlow() {
   const { usersStorage, localize } = registry.export()

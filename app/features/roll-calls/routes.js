@@ -2,7 +2,7 @@ import Router from 'express-promise-router'
 import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, trimmed, union } from 'superstruct'
 import { userIdSchema, groupIdSchema } from '../common/schemas.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
 export const pollOptionsSchema = array(size(trimmed(string()), 1, 32))

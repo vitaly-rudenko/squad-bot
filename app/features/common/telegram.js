@@ -1,4 +1,7 @@
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
+import { markdownEscapes } from 'markdown-escapes'
+
+const ESCAPE_REGEX = new RegExp(`(?<!\\\\)([\\${markdownEscapes.join('\\')}])`, 'g')
 
 const GROUP_CHAT_TYPES = ['group', 'supergroup']
 
@@ -135,3 +138,16 @@ export function wrap(...middlewares) {
   }
 }
 
+/** @param {import('../types.js').Dependencies} deps */
+export function createWebAppUrlGenerator({ botInfo, webAppName }) {
+  /** @param {string} command */
+  return (command) => {
+    const query = command ? `?startapp=${command}` : ''
+    return `https://t.me/${botInfo.username}/${webAppName}${query}`
+  }
+}
+
+/** @param {string} string */
+export function escapeMd(string) {
+  return string.replace(ESCAPE_REGEX, '\\$1')
+}

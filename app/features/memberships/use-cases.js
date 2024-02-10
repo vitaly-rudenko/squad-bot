@@ -1,5 +1,5 @@
 import { logger } from '../../../logger.js'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 import { isChatMember } from './telegram.js'
 
 export async function runRefreshMembershipsTask() {

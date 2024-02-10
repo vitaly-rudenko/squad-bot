@@ -1,7 +1,7 @@
 import Router from 'express-promise-router'
 import { literal, object, refine, size, string, trimmed, union } from 'superstruct'
 import { userIdSchema } from '../common/schemas.js'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 const cardNumberRegex = /^[0-9]+$/
 export const createCardSchema = object({

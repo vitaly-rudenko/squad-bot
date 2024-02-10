@@ -1,6 +1,6 @@
 import Router from 'express-promise-router'
 import { aggregateDebts } from './utils.js'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 export function createDebtsRouter() {
   const {

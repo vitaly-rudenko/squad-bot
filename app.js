@@ -10,9 +10,7 @@ import { Redis } from 'ioredis'
 
 import { RollCallsPostgresStorage } from './app/features/roll-calls/storage.js'
 import { useTestMode } from './env.js'
-import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
-import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
 import { createApiRouter } from './app/features/api.js'
 import { CardsPostgresStorage } from './app/features/cards/storage.js'
 import { createCardsFlow } from './app/features/cards/telegram.js'
@@ -20,7 +18,7 @@ import { createRollCallsFlow } from './app/features/roll-calls/telegram.js'
 import { string } from 'superstruct'
 import { createTemporaryAuthTokenGenerator } from './app/features/auth/utils.js'
 import { createAuthFlow } from './app/features/auth/telegram.js'
-import { createCommonFlow, requirePrivateChat, withChatId, withGroupChat, wrap } from './app/features/common/telegram.js'
+import { createCommonFlow, createWebAppUrlGenerator, requirePrivateChat, withChatId, withGroupChat, wrap } from './app/features/common/telegram.js'
 import { getAppVersion } from './app/features/common/utils.js'
 import { createAdminsFlow } from './app/features/admins/telegram.js'
 import { DebtsPostgresStorage } from './app/features/debts/storage.js'
@@ -33,19 +31,19 @@ import { UsersPostgresStorage } from './app/features/users/storage.js'
 import { useUsersFlow, withUserId } from './app/features/users/telegram.js'
 import { runRefreshMembershipsTask, unlink } from './app/features/memberships/use-cases.js'
 import { MembershipPostgresStorage } from './app/features/memberships/storage.js'
-import { registry } from './app/registry.js'
+import { registry } from './app/features/registry.js'
 import { localeFromLanguageCode, withLocale } from './app/features/localization/telegram.js'
 import { localize } from './app/features/localization/localize.js'
 import { ReceiptsPostgresStorage } from './app/features/receipts/storage.js'
 import { createReceiptsFlow } from './app/features/receipts/telegram.js'
+import { createRedisCache } from './app/features/common/cache.js'
 
 async function start() {
   if (useTestMode) {
     logger.warn('Test mode is enabled')
   }
 
-  const redis = new Redis(process.env.REDIS_URL || '')
-  const createRedisCache = createRedisCacheFactory(redis)
+  registry.value('redis', new Redis(process.env.REDIS_URL || ''))
 
   const pgClient = new pg.Client(process.env.DATABASE_URL)
   await pgClient.connect()
@@ -77,7 +75,6 @@ async function start() {
   registry.values({
     botInfo: await bot.telegram.getMe(),
     cardsStorage: new CardsPostgresStorage(pgClient),
-    createRedisCache,
     debtsStorage: new DebtsPostgresStorage(pgClient),
     localize,
     paymentsStorage: new PaymentsPostgresStorage(pgClient),
@@ -93,7 +90,7 @@ async function start() {
     webAppUrl: string().create(process.env.WEB_APP_URL),
   })
 
-  registry.create('generateWebAppUrl', ({ botInfo, webAppName }) => createWebAppUrlGenerator({ botUsername: botInfo.username, webAppName }))
+  registry.create('generateWebAppUrl', (deps) => createWebAppUrlGenerator(deps))
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
   const membershipCache = createRedisCache('memberships', useTestMode ? 60_000 : 60 * 60_000)

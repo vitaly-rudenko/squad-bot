@@ -3,7 +3,7 @@ import { object } from 'superstruct'
 import { userIdSchema, amountSchema } from '../common/schemas.js'
 import { sendPaymentDeletedNotification, sendPaymentSavedNotification } from './notifications.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 export const createPaymentSchema = object({
   fromUserId: userIdSchema,

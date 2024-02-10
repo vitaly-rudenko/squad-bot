@@ -1,8 +1,8 @@
-import { registry } from '../../registry.js'
-import { escapeMd } from '../../utils/escapeMd.js'
+import { registry } from '../registry.js'
+import { escapeMd } from '../common/telegram.js'
 
 export function createPaymentsFlow() {
-  const { generateWebAppUrl, localize } = registry.export()
+  const { localize, generateWebAppUrl } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const payments = async (context) => {

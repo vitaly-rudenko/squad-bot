@@ -1,11 +1,10 @@
 // @ts-expect-error TODO: create typings for templater
 import { PatternBuilder, PatternMatcher, EntryMatchers } from '@vitalyrudenko/templater'
-import { escapeMd } from '../../utils/escapeMd.js'
-import { registry } from '../../registry.js'
-import { isGroupChat } from '../common/telegram.js'
+import { registry } from '../registry.js'
+import { escapeMd, isGroupChat } from '../common/telegram.js'
 
 export function createRollCallsFlow() {
-  const { rollCallsStorage, membershipStorage, usersStorage, generateWebAppUrl, localize } = registry.export()
+  const { rollCallsStorage, membershipStorage, usersStorage, localize, generateWebAppUrl } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const rollCalls = async (context) => {

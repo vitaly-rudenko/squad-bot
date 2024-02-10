@@ -4,7 +4,7 @@ import { logger } from '../../../logger.js'
 import { array, nonempty, object, size, string, trimmed } from 'superstruct'
 import { groupIdSchema, userIdSchema } from '../common/schemas.js'
 import { NotAuthorizedError } from '../common/errors.js'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 export const updateAdminsSchema = object({
   groupId: groupIdSchema,

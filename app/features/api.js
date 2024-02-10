@@ -9,7 +9,7 @@ import { createDebtsRouter } from './debts/routes.js'
 import { createPaymentsRouter } from './payments/routes.js'
 import { createGroupsRouter } from './groups/routes.js'
 import { createUsersRouter } from './users/routes.js'
-import { registry } from '../registry.js'
+import { registry } from './registry.js'
 import { createPublicReceiptsRouter, createReceiptsRouter } from './receipts/routes.js'
 
 export const createMembershipSchema = object({

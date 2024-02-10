@@ -2,10 +2,10 @@ import chai, { expect } from 'chai'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { stripIndent } from 'common-tags'
 import { sendPaymentDeletedNotification, sendPaymentSavedNotification } from '../../../../app/features/payments/notifications.js'
-import { escapeMd } from '../../../../app/utils/escapeMd.js'
 import { createTelegramMock } from '../../helpers/telegram.js'
 import { createUser, createUsersStorage } from '../../helpers/users.js'
 import { localizeMock } from '../../helpers/localization.js'
+import { escapeMd } from '../../../../app/features/common/telegram.js'
 
 chai.use(deepEqualInAnyOrder)
 

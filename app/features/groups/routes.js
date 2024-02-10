@@ -1,5 +1,5 @@
 import Router from 'express-promise-router'
-import { registry } from '../../registry.js'
+import { registry } from '../registry.js'
 
 export function createGroupsRouter() {
   const { groupStorage } = registry.export()

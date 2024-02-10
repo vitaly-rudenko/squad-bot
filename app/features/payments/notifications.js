@@ -1,8 +1,7 @@
 import { disableTelegramApi } from '../../../env.js'
 import { logger } from '../../../logger.js'
-import { registry } from '../../registry.js'
-import { escapeMd } from '../../utils/escapeMd.js'
-import { isNotificationErrorIgnorable } from '../common/telegram.js'
+import { registry } from '../registry.js'
+import { escapeMd, isNotificationErrorIgnorable } from '../common/telegram.js'
 import { renderAmount, renderUser } from '../common/utils.js'
 import { deduplicateUsers } from '../users/utils.js'
 
