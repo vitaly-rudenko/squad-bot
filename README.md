@@ -13,8 +13,8 @@ Features:
 - ✏️ Easily change titles in a group
 - 💳 Quickly access your friends' credit card numbers
 
-Supported locales: Ukrainian.  
-Other locales can be added by adding new files into `assets/localization`.
+Supported locales: English.  
+Other locales can be added by adding new files into `src/localization/locales`.
 
 ## Stack & tools
 - Node.JS, PostgreSQL
