@@ -1,6 +1,9 @@
+import { registry } from '../../registry.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function receiptsCommand({ generateWebAppUrl }) {
+export function receiptsCommand() {
+  const { generateWebAppUrl } = registry.export()
+
   /** @param {import('telegraf').Context} context */
   return async (context) => {
     const { localize } = context.state

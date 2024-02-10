@@ -1,6 +1,7 @@
 import Router from 'express-promise-router'
 import { literal, object, refine, size, string, trimmed, union } from 'superstruct'
 import { userIdSchema } from '../common/schemas.js'
+import { registry } from '../../registry.js'
 
 const cardNumberRegex = /^[0-9]+$/
 export const createCardSchema = object({
@@ -8,14 +9,9 @@ export const createCardSchema = object({
   bank: union([literal('privatbank'), literal('monobank')]),
 })
 
-/**
- * @param {{
- *   cardsStorage: import('./storage.js').CardsPostgresStorage,
- * }} input
- */
-export function createCardsRouter({
-  cardsStorage,
-}) {
+export function createCardsRouter() {
+  const { cardsStorage } = registry.export()
+
   const router = Router()
 
   router.get('/cards', async (req, res) => {

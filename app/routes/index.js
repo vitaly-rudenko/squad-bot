@@ -10,6 +10,7 @@ import { createDebtsRouter } from '../features/debts/routes.js'
 import { createPaymentsRouter } from '../features/payments/routes.js'
 import { createGroupsRouter } from '../features/groups/routes.js'
 import { createUsersRouter } from '../features/users/routes.js'
+import { registry } from '../registry.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -17,44 +18,15 @@ export const createMembershipSchema = object({
   title: nonempty(trimmed(string())),
 })
 
-/**
- * @param {{
- *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>
- *   cardsStorage: import('../features/cards/storage.js').CardsPostgresStorage
- *   createRedisCache: ReturnType<import('../utils/createRedisCacheFactory.js').createRedisCacheFactory>
- *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage
- *   groupStorage: import('../features/groups/storage.js').GroupsPostgresStorage
- *   localize: import('../localization/localize.js').localize
- *   membershipStorage: import('../features/memberships/storage.js').MembershipPostgresStorage
- *   paymentsStorage: import('../features/payments/storage.js').PaymentsPostgresStorage
- *   receiptManager: import('../receipts/ReceiptManager.js').ReceiptManager
- *   receiptsStorage: import('../receipts/ReceiptsPostgresStorage.js').ReceiptsPostgresStorage
- *   rollCallsStorage: import('../features/roll-calls/storage.js').RollCallsPostgresStorage
- *   telegram: import('telegraf').Telegram
- *   telegramBotToken: string
- *   tokenSecret: string
- *   usersStorage: import('../features/users/storage.js').UsersPostgresStorage
- *   useTestMode: boolean
- * }} input
- */
-export function createRouter({
-  botInfo,
-  cardsStorage,
-  createRedisCache,
-  debtsStorage,
-  groupStorage,
-  localize,
-  membershipStorage,
-  paymentsStorage,
-  receiptManager,
-  receiptsStorage,
-  rollCallsStorage,
-  telegram,
-  telegramBotToken,
-  tokenSecret,
-  usersStorage,
-  useTestMode,
-}) {
+export function createRouter() {
+  const {
+    botInfo,
+    groupStorage,
+    membershipStorage,
+    tokenSecret,
+    useTestMode,
+  } = registry.export()
+
   const router = Router()
 
   const botResponse = {
@@ -65,17 +37,9 @@ export function createRouter({
 
   router.get('/bot', async (_, res) => res.json(botResponse))
 
-  router.use(
-    createAuthRouter({
-      createRedisCache,
-      telegramBotToken,
-      tokenSecret,
-      usersStorage,
-      useTestMode,
-    })
-  )
+  router.use(createAuthRouter())
 
-  router.use(receipts.createPublicRouter({ receiptsStorage }))
+  router.use(receipts.createPublicRouter())
 
   if (useTestMode) {
     router.post('/memberships', async (req, res) => {
@@ -95,37 +59,14 @@ export function createRouter({
   router.use(createAuthMiddleware({ tokenSecret }))
 
   router.use(
-    createUsersRouter({ usersStorage, membershipStorage }),
-    receipts.createRouter({
-      debtsStorage,
-      receiptManager,
-      receiptsStorage,
-    }),
-    createPaymentsRouter({
-      localize,
-      paymentsStorage,
-      telegram,
-      usersStorage,
-    }),
-    createDebtsRouter({
-      debtsStorage,
-      paymentsStorage,
-    }),
-    createRollCallsRouter({
-      membershipStorage,
-      rollCallsStorage,
-    }),
-    createGroupsRouter({
-      groupStorage,
-    }),
-    createAdminsRouter({
-      botInfo,
-      membershipStorage,
-      telegram,
-    }),
-    createCardsRouter({
-      cardsStorage,
-    }),
+    createUsersRouter(),
+    receipts.createRouter(),
+    createPaymentsRouter(),
+    createDebtsRouter(),
+    createRollCallsRouter(),
+    createGroupsRouter(),
+    createAdminsRouter(),
+    createCardsRouter(),
   )
 
   return router

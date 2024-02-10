@@ -1,16 +1,13 @@
 import Router from 'express-promise-router'
 import { aggregateDebts } from './utils.js'
+import { registry } from '../../registry.js'
 
-/**
- * @param {{
- *   debtsStorage: import('./storage.js').DebtsPostgresStorage
- *   paymentsStorage: import('../payments/storage.js').PaymentsPostgresStorage
- * }} input
- */
-export function createDebtsRouter({
-  debtsStorage,
-  paymentsStorage,
-}) {
+export function createDebtsRouter() {
+  const {
+    debtsStorage,
+    paymentsStorage,
+  } = registry.export()
+
   const router = Router()
 
   router.get('/debts', async (req, res) => {

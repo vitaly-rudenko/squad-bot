@@ -1,9 +1,8 @@
-/**
- * @param {{
- *   usersStorage: import('./storage.js').UsersPostgresStorage
- * }} input
- */
-export function useUsersFlow({ usersStorage }) {
+import { registry } from '../../registry.js'
+
+export function useUsersFlow() {
+  const { usersStorage } = registry.export()
+
   /** @param {import('telegraf').Context} context */
   const start = async (context) => {
     if (!context.from) return
@@ -14,6 +13,8 @@ export function useUsersFlow({ usersStorage }) {
       id: String(context.from.id),
       name: context.from.first_name,
       ...context.from.username && { username: context.from.username },
+      // TODO: get locale from `context.from.language_code`
+      locale: 'uk',
     })
 
     await context.reply(

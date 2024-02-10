@@ -1,12 +1,10 @@
 import { escapeMd } from '../../utils/escapeMd.js'
 import { GROUP_CHAT_TYPES } from '../../shared/middlewares/groupChat.js'
+import { registry } from '../../registry.js'
 
-/**
- * @param {{
- *   generateWebAppUrl: import('../../utils/types').GenerateWebAppUrl
- * }} input
- */
-export function createAdminsFlow({ generateWebAppUrl }) {
+export function createAdminsFlow() {
+  const { generateWebAppUrl } = registry.export()
+
   /** @param {import('telegraf').Context} context */
   const titles = async (context) => {
     const { chatId, localize } = context.state

@@ -2,6 +2,7 @@ import Router from 'express-promise-router'
 import { array, boolean, literal, nonempty, number, object, optional, refine, size, string, trimmed, union } from 'superstruct'
 import { userIdSchema, groupIdSchema } from '../common/schemas.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
+import { registry } from '../../registry.js'
 
 export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
 export const pollOptionsSchema = array(size(trimmed(string()), 1, 32))
@@ -32,16 +33,12 @@ export const updateRollCallSchema = object({
   sortOrder: optional(sortOrderSchema),
 })
 
-/**
- * @param {{
- *   membershipStorage: import('../../features/memberships/storage.js').MembershipPostgresStorage,
- *   rollCallsStorage: import('./storage.js').RollCallsPostgresStorage,
- * }} input
- */
-export function createRollCallsRouter({
-  membershipStorage,
-  rollCallsStorage,
-}) {
+export function createRollCallsRouter() {
+  const {
+    membershipStorage,
+    rollCallsStorage,
+  } = registry.export()
+
   const router = Router()
 
   router.post('/rollcalls', async (req, res) => {

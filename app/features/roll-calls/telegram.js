@@ -1,16 +1,11 @@
 import { PatternBuilder, PatternMatcher, EntryMatchers } from '@vitalyrudenko/templater'
 import { escapeMd } from '../../utils/escapeMd.js'
 import { GROUP_CHAT_TYPES } from '../../shared/middlewares/groupChat.js'
+import { registry } from '../../registry.js'
 
-/**
- * @param {{
- *   rollCallsStorage: import('./storage.js').RollCallsPostgresStorage
- *   membershipStorage: import('../../memberships/MembershipPostgresStorage.js').MembershipPostgresStorage
- *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage
- *   generateWebAppUrl: import('../../utils/types').GenerateWebAppUrl
- * }} input
- */
-export function createRollCallsFlow({ rollCallsStorage, membershipStorage, usersStorage, generateWebAppUrl }) {
+export function createRollCallsFlow() {
+  const { rollCallsStorage, membershipStorage, usersStorage, generateWebAppUrl } = registry.export()
+
   /** @param {import('telegraf').Context} context */
   const rollCalls = async (context) => {
     const { chatId, localize } = context.state

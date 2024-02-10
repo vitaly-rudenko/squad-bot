@@ -1,14 +1,10 @@
+import { registry } from '../../registry.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 import { aggregateDebts, renderAggregatedDebt } from './utils.js'
 
-/**
- * @param {{
- *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage
- *   debtsStorage: import('./storage.js').DebtsPostgresStorage,
- *   paymentsStorage: import('../payments/storage.js').PaymentsPostgresStorage
- * }} input
- */
-export function createDebtsFlow({ usersStorage, debtsStorage, paymentsStorage }) {
+export function createDebtsFlow() {
+  const { usersStorage, debtsStorage, paymentsStorage } = registry.export()
+
   /** @param {import('telegraf').Context} context */
   const debts = async (context) => {
     const { userId, localize } = context.state

@@ -4,6 +4,7 @@ import { logger } from '../../../logger.js'
 import { array, nonempty, object, size, string, trimmed } from 'superstruct'
 import { groupIdSchema, userIdSchema } from '../common/schemas.js'
 import { NotAuthorizedError } from '../common/errors.js'
+import { registry } from '../../registry.js'
 
 export const updateAdminsSchema = object({
   groupId: groupIdSchema,
@@ -15,18 +16,13 @@ export const updateAdminsSchema = object({
   )
 })
 
-/**
- * @param {{
- *   telegram: import('telegraf').Telegram
- *   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>
- *   membershipStorage: import('../../features/memberships/storage.js').MembershipPostgresStorage
- * }} input
- */
-export function createAdminsRouter({
-  telegram,
-  botInfo,
-  membershipStorage,
-}) {
+export function createAdminsRouter() {
+  const {
+    telegram,
+    botInfo,
+    membershipStorage,
+  } = registry.export()
+
   const router = Router()
 
   router.get('/admins', async (req, res) => {

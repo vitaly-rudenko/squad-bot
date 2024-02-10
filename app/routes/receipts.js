@@ -6,6 +6,7 @@ import { object, string, coerce, array, optional, size, trimmed } from 'superstr
 import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../features/common/schemas.js'
 import { NotFoundError } from '../features/common/errors.js'
 import { ApiError } from '../features/common/errors.js'
+import { registry } from '../registry.js'
 
 export const debtSchema = object({
   debtorId: userIdSchema,
@@ -30,19 +31,13 @@ export const saveReceiptSchema = object({
   leave_photo: optional(stringifiedBooleanSchema),
 })
 
+export function createRouter() {
+  const {
+    debtsStorage,
+    receiptManager,
+    receiptsStorage,
+  } = registry.export()
 
-/**
- * @param {{
- *   debtsStorage: import('../features/debts/storage.js').DebtsPostgresStorage,
- *   receiptManager: import('../receipts/ReceiptManager.js').ReceiptManager,
- *   receiptsStorage: import('../receipts/ReceiptsPostgresStorage.js').ReceiptsPostgresStorage,
- * }} input
- */
-export function createRouter({
-  debtsStorage,
-  receiptManager,
-  receiptsStorage,
-}) {
   const router = Router()
   const upload = multer()
 
@@ -120,12 +115,9 @@ export function createRouter({
   return router
 }
 
-/**
- * @param {{
- *   receiptsStorage: import('../receipts/ReceiptsPostgresStorage.js').ReceiptsPostgresStorage,
- * }} input
- */
-export function createPublicRouter({ receiptsStorage }) {
+export function createPublicRouter() {
+  const { receiptsStorage } = registry.export()
+
   const router = Router()
 
   router.get('/receipts/:receiptId/photo', async (req, res) => {
@@ -144,7 +136,7 @@ export function createPublicRouter({ receiptsStorage }) {
 
 /**
  * @param {import('../receipts/Receipt.js').Receipt} receipt
- * @param {import('../debts/Debt.js').Debt[]} debts
+ * @param {import('../features/debts/types').Debt[]} debts
  */
 function formatReceipt(receipt, debts) {
   return {

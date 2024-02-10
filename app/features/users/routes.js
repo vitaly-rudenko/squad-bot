@@ -1,17 +1,14 @@
 import Router from 'express-promise-router'
 import { optional } from 'superstruct'
 import { groupIdSchema } from '../common/schemas.js'
+import { registry } from '../../registry.js'
 
-/**
- * @param {{
- *   membershipStorage: import('../../memberships/MembershipPostgresStorage.js').MembershipPostgresStorage,
- *   usersStorage: import('./storage.js').UsersPostgresStorage,
- * }} input
- */
-export function createUsersRouter({
-  usersStorage,
-  membershipStorage,
-}) {
+export function createUsersRouter() {
+  const {
+    usersStorage,
+    membershipStorage,
+  } = registry.export()
+
   const router = Router()
 
   router.put('/users', async (req, res) => {

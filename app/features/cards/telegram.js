@@ -1,11 +1,9 @@
+import { registry } from '../../registry.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
-/**
- * @param {{
- *   generateWebAppUrl: import('../../utils/types').GenerateWebAppUrl
- * }} input
- */
-export function createCardsFlow({ generateWebAppUrl }) {
+export function createCardsFlow() {
+  const { generateWebAppUrl } = registry.export()
+
   /** @param {import('telegraf').Context} context */
   const cards = async (context) => {
     const { localize } = context.state

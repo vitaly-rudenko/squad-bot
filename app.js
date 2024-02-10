@@ -46,6 +46,7 @@ import { UsersPostgresStorage } from './app/features/users/storage.js'
 import { useUsersFlow, withUserId } from './app/features/users/telegram.js'
 import { runRefreshMembershipsTask, unlink } from './app/features/memberships/use-cases.js'
 import { MembershipPostgresStorage } from './app/features/memberships/storage.js'
+import { registry } from './app/registry.js'
 
 async function start() {
   if (useTestMode) {
@@ -60,20 +61,16 @@ async function start() {
 
   if (process.env.LOG_DATABASE_QUERIES === 'true') {
     const query = pgClient.query.bind(pgClient)
-    // @ts-ignore
+
+    /** @param {any[]} args */
     pgClient.query = (...args) => {
       logger.debug({ args }, 'Database query')
-    // @ts-ignore
-      return query(argvum)
+      // @ts-ignore
+      return query(...args)
     }
   }
 
   const usersStorage = new UsersPostgresStorage(pgClient)
-  const cardsStorage = new CardsPostgresStorage(pgClient)
-  const debtsStorage = new DebtsPostgresStorage(pgClient)
-  const paymentsStorage = new PaymentsPostgresStorage(pgClient)
-  const receiptsStorage = new ReceiptsPostgresStorage(pgClient)
-  const rollCallsStorage = new RollCallsPostgresStorage(pgClient)
 
   const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
   const tokenSecret = process.env.TOKEN_SECRET
@@ -88,32 +85,31 @@ async function start() {
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
   const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
-  const telegramNotifier = new TelegramNotifier({ telegram: bot.telegram })
 
-  const botInfo = await bot.telegram.getMe()
-  const generateWebAppUrl = createWebAppUrlGenerator({
-    botUsername: botInfo.username,
-    webAppName: string().create(process.env.WEB_APP_NAME),
-  })
-
-  const massTelegramNotificationFactory = new MassTelegramNotificationFactory({
-    telegramNotifier,
-    errorLogger,
-  })
-
-  const receiptNotifier = new ReceiptTelegramNotifier({
+  registry.values({
     localize,
-    massTelegramNotificationFactory,
     usersStorage,
-    debtsStorage,
-    generateWebAppUrl,
+    debtsStorage: new DebtsPostgresStorage(pgClient),
+    receiptsStorage: new ReceiptsPostgresStorage(pgClient),
+    botInfo: await bot.telegram.getMe(),
+    errorLogger,
+    tokenSecret,
+    telegramBotToken,
+    useTestMode,
+    createRedisCache,
+    webAppUrl: string().create(process.env.WEB_APP_URL),
+    webAppName: string().create(process.env.WEB_APP_NAME),
+    telegram: bot.telegram,
+    cardsStorage: new CardsPostgresStorage(pgClient),
+    paymentsStorage: new PaymentsPostgresStorage(pgClient),
+    rollCallsStorage: new RollCallsPostgresStorage(pgClient),
   })
 
-  const receiptManager = new ReceiptManager({
-    debtsStorage,
-    receiptNotifier,
-    receiptsStorage,
-  })
+  registry.create('generateWebAppUrl', ({ botInfo, webAppName }) => createWebAppUrlGenerator({ botUsername: botInfo.username, webAppName }))
+  registry.create('telegramNotifier', (deps) => new TelegramNotifier(deps))
+  registry.create('massTelegramNotificationFactory', (deps) => new MassTelegramNotificationFactory(deps))
+  registry.create('receiptNotifier', (deps) => new ReceiptTelegramNotifier(deps))
+  registry.create('receiptManager', (deps) => new ReceiptManager(deps))
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
   const membershipCache = createRedisCache('memberships', useTestMode ? 60_000 : 60 * 60_000)
@@ -122,6 +118,12 @@ async function start() {
   const groupCache = createRedisCache('groups', useTestMode ? 60_000 : 60 * 60_000)
 
   const usersCache = createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)
+
+  registry.values({
+    membershipStorage,
+    groupStorage,
+    generateTemporaryAuthToken: createTemporaryAuthTokenGenerator({ tokenSecret, useTestMode }),
+  })
 
   bot.telegram.setMyCommands([
     { command: 'debts', description: 'Борги' },
@@ -185,7 +187,7 @@ async function start() {
     }
   })
 
-  const { start } = useUsersFlow({ usersStorage })
+  const { start } = useUsersFlow()
   bot.command('start', requirePrivateChat(), start)
 
   bot.use(async (context, next) => {
@@ -232,34 +234,28 @@ async function start() {
     return next()
   }))
 
-  const { cards } = createCardsFlow({ generateWebAppUrl })
+  const { cards } = createCardsFlow()
   bot.command('cards', cards)
 
-  const { rollCalls, rollCallMessage } = createRollCallsFlow({ generateWebAppUrl, membershipStorage, rollCallsStorage, usersStorage })
+  const { rollCalls, rollCallMessage } = createRollCallsFlow()
   bot.command('rollcalls', rollCalls)
 
-  const { login } = createAuthFlow({
-    webAppUrl: string().create(process.env.WEB_APP_URL),
-    generateTemporaryAuthToken: createTemporaryAuthTokenGenerator({
-      tokenSecret,
-      useTestMode,
-    })
-  })
+  const { login } = createAuthFlow()
   bot.command('login', requirePrivateChat(), login)
 
   const { version } = createCommonFlow({ version: getAppVersion() })
   bot.command('version', requirePrivateChat(), version)
 
-  const { titles } = createAdminsFlow({ generateWebAppUrl })
+  const { titles } = createAdminsFlow()
   bot.command('titles', titles)
 
-  const { debts } = createDebtsFlow({ debtsStorage, paymentsStorage, usersStorage })
+  const { debts } = createDebtsFlow()
   bot.command('debts', debts)
 
-  const { payments } = createPaymentsFlow({ generateWebAppUrl })
+  const { payments } = createPaymentsFlow()
   bot.command('payments', payments)
 
-  bot.command('receipts', receiptsCommand({ generateWebAppUrl }))
+  bot.command('receipts', receiptsCommand())
 
   bot.on('message',
     async (context, next) => {
@@ -280,24 +276,7 @@ async function start() {
   const app = express()
   app.use(express.json())
   app.use(cors({ origin: corsOrigin }))
-  app.use(createRouter({
-    botInfo,
-    cardsStorage,
-    createRedisCache,
-    debtsStorage,
-    groupStorage,
-    localize,
-    membershipStorage,
-    paymentsStorage,
-    receiptManager,
-    receiptsStorage,
-    rollCallsStorage,
-    telegram: bot.telegram,
-    telegramBotToken,
-    tokenSecret,
-    usersStorage,
-    useTestMode,
-  }))
+  app.use(createRouter())
 
   // @ts-ignore
   app.use((err, req, res, next) => {

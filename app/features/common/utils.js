@@ -12,7 +12,7 @@ export function getAppVersion() {
   }
 }
 
-/** @param {import('../../users/User.js').User} user */
+/** @param {import('../../features/users/types').User} user */
 export function renderUser(user) {
   return user.username ? `${user.name} (@${user.username})` : user.name
 }

@@ -3,6 +3,7 @@ import { object } from 'superstruct'
 import { userIdSchema, amountSchema } from '../common/schemas.js'
 import { sendPaymentDeletedNotification, sendPaymentSavedNotification } from './notifications.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
+import { registry } from '../../registry.js'
 
 export const createPaymentSchema = object({
   fromUserId: userIdSchema,
@@ -10,20 +11,14 @@ export const createPaymentSchema = object({
   amount: amountSchema,
 })
 
-/**
- * @param {{
- *   paymentsStorage: import('./storage.js').PaymentsPostgresStorage,
- *   localize: import('../../localization/localize.js').localize
- *   usersStorage: import('../../users/UsersPostgresStorage.js').UsersPostgresStorage
- *   telegram: import('telegraf').Telegram
- * }} input
- */
-export function createPaymentsRouter({
-  paymentsStorage,
-  usersStorage,
-  localize,
-  telegram,
-}) {
+export function createPaymentsRouter() {
+  const {
+    paymentsStorage,
+    usersStorage,
+    localize,
+    telegram,
+  } = registry.export()
+
   const router = Router()
 
   router.post('/payments', async (req, res) => {

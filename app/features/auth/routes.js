@@ -5,6 +5,7 @@ import { literal, nonempty, number, object, optional, string, type, union } from
 import { userIdSchema } from '../common/schemas.js'
 import { NotAuthenticatedError, NotFoundError } from '../common/errors.js'
 import { ApiError } from '../common/errors.js'
+import { registry } from '../../registry.js'
 
 export const temporaryAuthTokenSchema = nonempty(string())
 export const temporaryAuthTokenPayloadSchema = type({ userId: userIdSchema })
@@ -19,22 +20,15 @@ export const authTokenSchema = type({
   })
 })
 
-/**
- * @param {{
- *   createRedisCache: ReturnType<import('../../utils/createRedisCacheFactory.js').createRedisCacheFactory>,
- *   telegramBotToken: string,
- *   tokenSecret: string,
- *   usersStorage: import('../../features/users/storage.js').UsersPostgresStorage,
- *   useTestMode: boolean,
- * }} input
- */
-export function createAuthRouter({
-  createRedisCache,
-  telegramBotToken,
-  tokenSecret,
-  usersStorage,
-  useTestMode,
-}) {
+export function createAuthRouter() {
+  const {
+    createRedisCache,
+    telegramBotToken,
+    tokenSecret,
+    usersStorage,
+    useTestMode,
+  } = registry.export()
+
   const router = Router()
 
   const temporaryAuthTokenCache = createRedisCache('tokens', useTestMode ? 60_000 : 5 * 60_000)

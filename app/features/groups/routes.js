@@ -1,13 +1,9 @@
 import Router from 'express-promise-router'
+import { registry } from '../../registry.js'
 
-/**
- * @param {{
- *   groupStorage: import('./storage.js').GroupsPostgresStorage,
- * }} input
- */
-export function createGroupsRouter({
-  groupStorage,
-}) {
+export function createGroupsRouter() {
+  const { groupStorage } = registry.export()
+
   const router = Router()
 
   router.get('/groups', async (req, res) => {

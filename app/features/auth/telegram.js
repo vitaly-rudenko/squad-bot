@@ -1,10 +1,8 @@
-/**
- * @param {{
- *   generateTemporaryAuthToken: import('./types').GenerateTemporaryAuthToken
- *   webAppUrl: string
- * }} input
- */
-export function createAuthFlow({ generateTemporaryAuthToken, webAppUrl }) {
+import { registry } from '../../registry.js'
+
+export function createAuthFlow() {
+  const { generateTemporaryAuthToken, webAppUrl } = registry.export()
+
   /** @param {import('telegraf').Context} context */
   const login = async (context) => {
     const { userId } = context.state
