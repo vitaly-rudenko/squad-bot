@@ -21,7 +21,7 @@
     "url": "git+https://github.com/vitaly-rudenko/squad-bot.git"
   },
   "author": "Vitaly Rudenko",
-  "license": "GPL-3.0-only",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/vitaly-rudenko/squad-bot/issues"
   },
