@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { amountSchema, stringifiedBooleanSchema } from '../../../../app/features/common/schemas.js'
+import { amountSchema, stringifiedBooleanSchema } from '../../../../src/common/schemas.js'
 import { StructError } from 'superstruct'
 
 describe('schemas/receipts', () => {

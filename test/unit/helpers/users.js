@@ -7,16 +7,19 @@ export class UsersMockStorage {
     this._users = new Map()
   }
 
+  /** @param {import('../../../src/users/types').User[]} users */
   mock_storeUsers(...users) {
     for (const user of users) {
       this._users.set(user.id, user)
     }
   }
 
+  /** @param {string} userId */
   findById(userId) {
     return this._users.get(userId)
   }
 
+  /** @param {string[]} userIds */
   findByIds(userIds) {
     const users = []
 
@@ -29,6 +32,7 @@ export class UsersMockStorage {
     return users
   }
 
+  /** @param {string[]} userIds */
   findAndMapByIds(userIds) {
     const users = this.findByIds(userIds)
     return userIds.map(id => users.find(u => u.id === id))
@@ -37,8 +41,8 @@ export class UsersMockStorage {
 
 /**
  * @param {T[]} users
- * @returns {import('../../../app/features/users/storage.js').UsersPostgresStorage}
- * @template {import('../../../app/features/users/types').User} T
+ * @returns {import('../../../src/users/storage.js').UsersPostgresStorage}
+ * @template {import('../../../src/users/types').User} T
  */
 export function createUsersStorage(users) {
   const usersStorage = new UsersMockStorage()
@@ -47,12 +51,12 @@ export function createUsersStorage(users) {
   return usersStorage
 }
 
-/** @returns {import('../../../app/features/users/types').User} */
+/** @returns {import('../../../src/users/types').User} */
 export function createUser() {
   return {
     id: String(chance.integer({ min: 100000, max: 999999 })),
     name: chance.name({ prefix: true }),
     username: chance.name().replaceAll(' ', '_').toLowerCase(),
-    locale: /** @type {import('../../../app/features/localization/types').Locale} */ (chance.locale()),
+    locale: /** @type {import('../../../src/localization/types').Locale} */ (chance.locale()),
   }
 }

@@ -10,6 +10,10 @@ class MigrationsCli {
     umzug.on('reverted', event => console.log(`== ${event.name}: reverted ==\n`))
   }
 
+  /**
+   * @param {string} task
+   * @param {{ migrateTo: string; undoTo: string; migrationName: string }} param1
+   */
   async runTask(task, { migrateTo, undoTo, migrationName }) {
     switch (task) {
       case 'db:reset':
@@ -108,6 +112,7 @@ class MigrationsCli {
     }
   }
 
+  /** @param {string} migrationName */
   async generate(migrationName) {
     const date = new Date()
     const timestamp = [
@@ -145,18 +150,24 @@ class MigrationsCli {
     }
   }
 
+  /** @param {import('umzug').MigrationMeta[]} migrations */
   _printMigrations(migrations) {
     migrations.forEach((migration, index) =>
       this._printMigration(migration, index + 1))
   }
 
+  /**
+   * @param {import('umzug').MigrationMeta | string} migration
+   * @param {number} [index]
+   */
   _printMigration(migration, index = undefined) {
-    const fileName = (migration.name || migration).replace('.cjs', '')
+    const fileName = (typeof migration === 'string' ? migration : migration.name).replace('.cjs', '')
     const prefix = index !== undefined ? `${index})` : '-'
 
     console.log(`  ${prefix} ${fileName}`)
   }
 
+  /** @param {number} number */
   _format(number) {
     return number.toString().padStart(2, '0')
   }

@@ -1,12 +1,12 @@
 import chai, { expect } from 'chai'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { stripIndent } from 'common-tags'
-import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from '../../../../app/features/receipts/notifications.js'
+import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from '../../../../src/receipts/notifications.js'
 import { createTelegramMock } from '../../helpers/telegram.js'
 import { createUser, createUsersStorage } from '../../helpers/users.js'
 import { localizeMock } from '../../helpers/localization.js'
 import { createDebt, createDebtsStorage } from '../../helpers/debts.js'
-import { escapeMd } from '../../../../app/features/common/telegram.js'
+import { escapeMd } from '../../../../src/common/telegram.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -37,7 +37,7 @@ describe('receipts/notifications', () => {
         ]),
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
-        generateWebAppUrl: (...args) => `web-app-url(${args.join(', ')})`,
+        generateWebAppUrl: (/** @type {any[]} */...args) => `web-app-url(${args.join(', ')})`,
       }))
 
       const options = {
@@ -111,7 +111,7 @@ describe('receipts/notifications', () => {
         ]),
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
-        generateWebAppUrl: (...args) => `web-app-url(${args.join(', ')})`,
+        generateWebAppUrl: (/** @type {any[]} */...args) => `web-app-url(${args.join(', ')})`,
       }))
 
       const options = {

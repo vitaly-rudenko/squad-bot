@@ -17,6 +17,6 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["index.d.ts", "app.js", "env.js", "logger.js", "app/**/*.js"],
+  "include": ["src/**/*.js", "src/**/*.ts", "test/unit/**/*.js"],
   "exclude": ["node_modules"]
 }

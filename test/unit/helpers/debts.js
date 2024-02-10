@@ -7,12 +7,14 @@ export class DebtsMockStorage {
     this._debts = new Set()
   }
 
+  /** @param {import('../../../src/debts/types').Debt[]} debts */
   mock_storeDebts(...debts) {
     for (const debt of debts) {
       this._debts.add(debt)
     }
   }
 
+  /** @param {string} receiptId */
   findByReceiptId(receiptId) {
     return [...this._debts].filter(d => d.receiptId === receiptId)
   }
@@ -20,8 +22,8 @@ export class DebtsMockStorage {
 
 /**
  * @param {T[]} debts
- * @returns {import('../../../app/features/debts/storage.js').DebtsPostgresStorage}
- * @template {import('../../../app/features/debts/types').Debt} T
+ * @returns {import('../../../src/debts/storage.js').DebtsPostgresStorage}
+ * @template {import('../../../src/debts/types').Debt} T
  */
 export function createDebtsStorage(debts) {
   const debtsStorage = new DebtsMockStorage()
@@ -31,8 +33,8 @@ export function createDebtsStorage(debts) {
 }
 
 /**
- * @param {Partial<import('../../../app/features/debts/types').Debt>} debt
- * @returns {import('../../../app/features/debts/types').Debt}
+ * @param {Partial<import('../../../src/debts/types').Debt>} debt
+ * @returns {import('../../../src/debts/types').Debt}
  */
 export function createDebt(debt) {
   return {

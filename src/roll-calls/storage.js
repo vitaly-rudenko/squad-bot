@@ -7,8 +7,8 @@ export class RollCallsPostgresStorage {
   }
 
   /**
-   * @param {Omit<import('./types').RollCall, 'id'>} input
-   * @returns {Promise<import('./types').RollCall>}
+   * @param {Omit<import('./types.js').RollCall, 'id'>} input
+   * @returns {Promise<import('./types.js').RollCall>}
    */
   async create(input) {
     try {
@@ -31,7 +31,7 @@ export class RollCallsPostgresStorage {
     }
   }
 
-  /** @param {Pick<import('./types').RollCall, 'id'> & Partial<import('./types').RollCall>} input */
+  /** @param {Pick<import('./types.js').RollCall, 'id'> & Partial<import('./types.js').RollCall>} input */
   async update(input) {
     const fields = [
       ['message_pattern', input.messagePattern],
@@ -121,7 +121,7 @@ export class RollCallsPostgresStorage {
 
 /**
  * @param {any} row
- * @returns {import('./types').RollCall}
+ * @returns {import('./types.js').RollCall}
  */
 export function deserializeRollCall(row) {
   return {

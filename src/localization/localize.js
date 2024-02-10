@@ -16,8 +16,8 @@ const en = flattenLocaleFile(
 )
 
 /**
- * @param {import('./types').Locale} _locale
- * @param {import('./types').MessageKey} key
+ * @param {import('./types.js').Locale} _locale
+ * @param {import('./types.js').MessageKey} key
  * @param {Record<string, number | string>} [replacements]
  * @returns {string}
  */
@@ -27,7 +27,7 @@ export function localize(_locale, key, replacements) {
 
 /**
  * @param {object} localeFile
- * @returns {Record<import('./types').MessageKey, string | string[]>}
+ * @returns {Record<import('./types.js').MessageKey, string | string[]>}
  */
 function flattenLocaleFile(localeFile) {
   /** @type {Record<string, any>} */

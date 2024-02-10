@@ -25,7 +25,7 @@ export function validateResponse(response) {
   }
 }
 
-/** @returns {Promise<import('../../app/features/users/types').User>} */
+/** @returns {Promise<import('../../src/users/types').User>} */
 export async function createUser(index) {
   const userId = [index, generateUserId()].filter(Boolean).join('_')
 
@@ -64,7 +64,7 @@ export async function createUsers(count = 1) {
  *   receiptId?: string
  *   amount?: number
  * }} [input]
- * @returns {Promise<import('../../app/features/receipts/types').Receipt>}
+ * @returns {Promise<import('../../src/receipts/types').Receipt>}
  */
 export async function createReceipt(payerId, debts, {
   leavePhoto = false,
@@ -109,7 +109,7 @@ export async function createReceipt(payerId, debts, {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/features/receipts/types').Receipt[]>} */
+/** @returns {Promise<import('../../src/receipts/types').Receipt[]>} */
 export async function getReceipts(userId) {
   const response = await fetch(`${TEST_API_URL}/receipts`, {
     headers: createAuthorizationHeader({ userId })
@@ -126,7 +126,7 @@ export async function getAuthToken(temporaryAuthToken) {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/features/receipts/types').Receipt>} */
+/** @returns {Promise<import('../../src/receipts/types').Receipt>} */
 export async function getReceipt(receiptId, userId) {
   const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}`, {
     headers: createAuthorizationHeader({ userId }),
@@ -191,7 +191,7 @@ export function createToken({ userId, username, name, locale }) {
   return jwt.sign({ user: { id: userId, username, name, locale } }, TOKEN_SECRET)
 }
 
-/** @returns {Promise<import('../../app/features/payments/types').Payment>} */
+/** @returns {Promise<import('../../src/payments/types').Payment>} */
 export async function createPayment(fromUserId, toUserId, amount) {
   const payment = { fromUserId, toUserId, amount }
 
@@ -218,7 +218,7 @@ export async function deletePayment(paymentId, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../app/features/debts/types').Debt[]>} */
+/** @returns {Promise<import('../../src/debts/types').Debt[]>} */
 export async function getDebts(userId) {
   const response = await fetch(`${TEST_API_URL}/debts`, {
     headers: createAuthorizationHeader({ userId }),
@@ -229,7 +229,7 @@ export async function getDebts(userId) {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/features/roll-calls/types').RollCall>} */
+/** @returns {Promise<import('../../src/roll-calls/types').RollCall>} */
 export async function createRollCall(userId, groupId, sortOrder = 1, {
   messagePattern = '@channel',
   usersPattern = '*',
@@ -294,7 +294,7 @@ export async function updateRollCall(userId, rollCallId, {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../app/features/roll-calls/types').RollCall[]>} */
+/** @returns {Promise<import('../../src/roll-calls/types').RollCall[]>} */
 export async function getRollCalls(groupId, userId) {
   const response = await fetch(`${TEST_API_URL}/rollcalls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),
@@ -314,7 +314,7 @@ export async function deleteRollCall(id, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../app/features/groups/types').Group>} */
+/** @returns {Promise<import('../../src/groups/types').Group>} */
 export async function getGroups(userId) {
   const response = await fetch(`${TEST_API_URL}/groups`, {
     headers: createAuthorizationHeader({ userId }),
