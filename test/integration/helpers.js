@@ -120,6 +120,7 @@ export async function getReceipts(userId) {
   return await response.json()
 }
 
+/** @returns {string} */
 export async function getAuthToken(temporaryAuthToken) {
   const response = await fetch(`${TEST_API_URL}/authenticate?token=${temporaryAuthToken}`)
 
@@ -146,6 +147,7 @@ export async function deleteReceipt(receiptId, userId) {
   validateResponse(response)
 }
 
+/** @returns {Promise<import('../../src/receipts/types').ReceiptPhoto>} */
 export async function getReceiptPhoto(receiptId) {
   const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}/photo`)
 
@@ -155,7 +157,7 @@ export async function getReceiptPhoto(receiptId) {
 
   return {
     mime: response.headers.get('Content-Type'),
-    photo: await response.arrayBuffer(),
+    binary: await response.arrayBuffer(),
   }
 }
 

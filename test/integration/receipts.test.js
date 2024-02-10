@@ -26,10 +26,10 @@ describe('[receipts]', () => {
 
       const [receipt] = await getReceipts(user.id)
 
-      const { photo, mime } = await getReceiptPhoto(receipt.id)
+      const { binary, mime } = await getReceiptPhoto(receipt.id)
 
       expect(mime).to.equal('image/png')
-      expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
+      expect(binary).to.deep.equal(receiptPhotoBuffer.buffer)
     })
 
     it('should return 404 when there is no receipt photo', async () => {
@@ -94,7 +94,7 @@ describe('[receipts]', () => {
       const photo2 = await getReceiptPhoto(receiptId)
 
       expect(photo1.mime).to.equal(photo2.mime)
-      expect(photo1.photo).to.deep.equal(photo2.photo)
+      expect(photo1.binary).to.deep.equal(photo2.binary)
     })
 
     it('should update the receipt (delete photo)', async () => {
@@ -147,7 +147,7 @@ describe('[receipts]', () => {
       const photo2 = await getReceiptPhoto(receiptId)
 
       expect(photo2.mime).to.equal('image/jpeg')
-      expect(photo2.photo).not.to.deep.equal(photo1.buffer)
+      expect(photo2.binary).not.to.deep.equal(photo1.binary)
     })
   })
 
