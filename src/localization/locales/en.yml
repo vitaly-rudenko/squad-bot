@@ -12,7 +12,7 @@ payments:
         - '💸 {editor} has {action} a *{amount}* payment'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
-        - '🔗 /debts \| /receipts \| /payments'
+        - '/debts \| /receipts \| /payments'
       action:
         create: recorded
         update: edited
@@ -21,7 +21,7 @@ payments:
         - '❌ 💸 {editor} has deleted a *{amount}* payment'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
-        - '🔗 /debts \| /receipts \| /payments'
+        - '/debts \| /receipts \| /payments'
 receipts:
   command:
     message:
@@ -37,7 +37,7 @@ receipts:
         - '👤 Paid by *{payer}*'
         - '{part}'
         - '✍️ Edit: {receiptUrl}'
-        - '🔗 /debts \| /receipts \| /payments'
+        - '/debts \| /receipts \| /payments'
       description: '\({description}\)'
       part: '💵 Your part: *{amount}*'
       action:
@@ -47,7 +47,7 @@ receipts:
       message:
         - '❌ 📝 {editor} has deleted a *{amount}* receipt {description}'
         - '👤 Paid by *{payer}*'
-        - '🔗 /debts \| /receipts \| /payments'
+        - '/debts \| /receipts \| /payments'
       description: '\({description}\)'
 users:
   command:
@@ -74,7 +74,7 @@ debts:
       - '{debts}'
     noOutgoingDebts: '✅ You have no debts'
     debt: '\- *{name}*: {amount}'
-    footer: '🔗 /debts \| /receipts \| /payments'
+    footer: '/debts \| /receipts \| /payments'
 rollCalls:
   command:
     group:

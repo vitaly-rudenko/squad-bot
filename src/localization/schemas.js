@@ -1,6 +1,7 @@
-import { union, string, array, object } from 'superstruct'
+import { string, array, object, coerce } from 'superstruct'
 
-const _ = union([string(), array(string())])
+const _ = coerce(string(), array(string()), (value) => value.join('\n'))
+
 export const localeFileSchema = object({
   payments: object({
     command: object({

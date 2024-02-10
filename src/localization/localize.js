@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 import { localeFileSchema } from './schemas.js'
 
 const en = flattenLocaleFile(
+  // @ts-expect-error TODO
   localeFileSchema.create(
     yaml.load(
       fs.readFileSync(
@@ -22,25 +23,33 @@ const en = flattenLocaleFile(
  * @returns {string}
  */
 export function localize(_locale, key, replacements) {
-  return replaceVariables(flattenMessage(en[key]), replacements)
+  if (!key) {
+    throw new Error(`Invalid localization key: '${String(key)}'`)
+  }
+
+  const message = en[key]
+  if (message === undefined) {
+    throw new Error(`Missing message for localization key '${String(key)}'`)
+  }
+
+  return replaceVariables(message, replacements)
 }
 
 /**
- * @param {object} localeFile
- * @returns {Record<import('./types.js').MessageKey, string | string[]>}
+ * @param {T} localeFile
+ * @template {Record<string, string | T>} T
  */
 function flattenLocaleFile(localeFile) {
-  /** @type {Record<string, any>} */
+  /** @type {Record<string, string>} */
   const result = {}
 
   for (const [key, value] of Object.entries(localeFile)) {
-    if (!Array.isArray(value) && typeof value === 'object') {
-      const sub = flattenLocaleFile(value)
-      for (const [subKey, subValue] of Object.entries(sub)) {
-        result[`${key}.${subKey}`] = subValue
-      }
+    if (typeof value === 'string') {
+      result[key] = value
     } else {
-      result[key] = Array.isArray(value) ? value.map(String) : String(value)
+      for (const [k, v] of Object.entries(flattenLocaleFile(value))) {
+        result[`${key}.${k}`] = v
+      }
     }
   }
 
@@ -48,24 +57,19 @@ function flattenLocaleFile(localeFile) {
 }
 
 /**
- * @param {string | string[]} message
- * @returns {string}
- */
-function flattenMessage(message) {
-  return Array.isArray(message) ? message.join('\n') : message
-}
-
-/**
  * @param {string} message
- * @param {Record<string, string | number>} [replacements]
+ * @param {Record<string, string | number> | undefined} [replacements]
  * @returns {string}
  */
-function replaceVariables(message, replacements) {
-  if (replacements) {
-    for (const [key, value] of Object.entries(replacements)) {
-      message = message.replaceAll(`{${key}}`, String(value))
+export function replaceVariables(message, replacements) {
+  message = message.replaceAll(/\{[a-z0-9_]+\}/ig, (variable) => {
+    const replacement = replacements?.[variable.slice(1, -1)]
+    if (replacement === undefined) {
+      throw new Error(`Missing replacement for variable ${String(variable)}`)
     }
-  }
+
+    return String(variable)
+  })
 
   return message
 }
