@@ -12,6 +12,7 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "useUnknownInCatchVariables": false,
+    "strictNullChecks": true,
     "noImplicitAny": true,
     "noEmit": true,
     "skipLibCheck": true

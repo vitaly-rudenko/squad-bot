@@ -64,7 +64,7 @@ export async function createUsers(count = 1) {
  *   receiptId?: string
  *   amount?: number
  * }} [input]
- * @returns {Promise<import('../../app/receipts/Receipt.js').Receipt>}
+ * @returns {Promise<import('../../app/features/receipts/types').Receipt>}
  */
 export async function createReceipt(payerId, debts, {
   leavePhoto = false,
@@ -109,7 +109,7 @@ export async function createReceipt(payerId, debts, {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/receipts/Receipt.js').Receipt[]>} */
+/** @returns {Promise<import('../../app/features/receipts/types').Receipt[]>} */
 export async function getReceipts(userId) {
   const response = await fetch(`${TEST_API_URL}/receipts`, {
     headers: createAuthorizationHeader({ userId })
@@ -126,7 +126,7 @@ export async function getAuthToken(temporaryAuthToken) {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/receipts/Receipt.js').Receipt>} */
+/** @returns {Promise<import('../../app/features/receipts/types').Receipt>} */
 export async function getReceipt(receiptId, userId) {
   const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}`, {
     headers: createAuthorizationHeader({ userId }),

@@ -4,6 +4,7 @@ import { registry } from '../../registry.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 import { isNotificationErrorIgnorable } from '../common/telegram.js'
 import { renderAmount, renderUser } from '../common/utils.js'
+import { deduplicateUsers } from '../users/utils.js'
 
 /**
  * @param {{
@@ -24,7 +25,9 @@ export async function sendPaymentSavedNotification(
 
   if (!editor || !sender || !receiver) return
 
-  for (const user of [sender, receiver]) {
+  const users = deduplicateUsers([editor, sender, receiver])
+
+  for (const user of users) {
     const message = localize(
       user.locale,
       'payments.notifications.saved.message',
@@ -69,7 +72,9 @@ export async function sendPaymentDeletedNotification(
 
   if (!editor || !sender || !receiver) return
 
-  for (const user of [sender, receiver]) {
+  const users = deduplicateUsers([editor, sender, receiver])
+
+  for (const user of users) {
     const message = localize(
       user.locale,
       'payments.notifications.deleted.message',

@@ -16,12 +16,12 @@ const en = flattenLocaleFile(
 )
 
 /**
- * @param {import('./types').Locale} locale
+ * @param {import('./types').Locale} _locale
  * @param {import('./types').MessageKey} key
  * @param {Record<string, number | string>} [replacements]
  * @returns {string}
  */
-export function localize(locale, key, replacements) {
+export function localize(_locale, key, replacements) {
   return replaceVariables(flattenMessage(en[key]), replacements)
 }
 

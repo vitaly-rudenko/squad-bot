@@ -1,38 +1,13 @@
-import { spy } from 'sinon'
 import chai, { expect } from 'chai'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
 import { stripIndent } from 'common-tags'
 import { sendPaymentDeletedNotification, sendPaymentSavedNotification } from '../../../../app/features/payments/notifications.js'
 import { escapeMd } from '../../../../app/utils/escapeMd.js'
-import { createUser } from '../../helpers/createUser.js'
-import { UsersMockStorage } from '../../helpers/UsersMockStorage.js'
-import { localizeMock } from '../../helpers/localizeMock.js'
+import { createTelegramMock } from '../../helpers/telegram.js'
+import { createUser, createUsersStorage } from '../../helpers/users.js'
+import { localizeMock } from '../../helpers/localization.js'
 
 chai.use(deepEqualInAnyOrder)
-
-/**
- * @param {T[]} users
- * @returns {import('../../../../app/users/UsersPostgresStorage.js').UsersPostgresStorage}
- * @template {import('../../../../app/users/User.js').User} T
- */
-function createUsersStorage(users) {
-  const usersStorage = new UsersMockStorage()
-  usersStorage.mock_storeUsers(...users)
-  // @ts-ignore
-  return usersStorage
-}
-
-function createTelegramMock() {
-  const telegramMock = {
-    sendMessage: spy(),
-  }
-
-  /** @type {import('telegraf').Telegram} */
-  // @ts-ignore
-  const telegram = telegramMock
-
-  return { telegram, telegramMock }
-}
 
 describe('payments/notifications', () => {
   describe('sendPaymentSavedNotification()', () => {
@@ -52,11 +27,11 @@ describe('payments/notifications', () => {
         },
         action: 'create',
         editorId: editor.id,
-      }, {
+      }, /** @type {any} */ ({
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
-      })
+      }))
 
       const options = {
         disable_web_page_preview: true,
@@ -65,7 +40,15 @@ describe('payments/notifications', () => {
 
       expect(telegramMock.sendMessage.args)
         .to.deep.equalInAnyOrder([
-          [sender.id, stripIndent`
+          [Number(editor.id), stripIndent`
+            payments.notifications.saved.message(${editor.locale}):
+              editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
+              sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
+              receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
+              amount: ₴12
+              action: payments.notifications.saved.action.create(${editor.locale})
+          `, options],
+          [Number(sender.id), stripIndent`
             payments.notifications.saved.message(${sender.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
@@ -73,7 +56,7 @@ describe('payments/notifications', () => {
               amount: ₴12
               action: payments.notifications.saved.action.create(${sender.locale})
           `, options],
-          [receiver.id, stripIndent`
+          [Number(receiver.id), stripIndent`
             payments.notifications.saved.message(${receiver.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
@@ -100,11 +83,11 @@ describe('payments/notifications', () => {
         },
         action: 'update',
         editorId: editor.id,
-      }, {
+      }, /** @type {any} */ ({
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
-      })
+      }))
 
       const options = {
         disable_web_page_preview: true,
@@ -113,7 +96,15 @@ describe('payments/notifications', () => {
 
       expect(telegramMock.sendMessage.args)
         .to.deep.equalInAnyOrder([
-          [sender.id, stripIndent`
+          [Number(editor.id), stripIndent`
+            payments.notifications.saved.message(${editor.locale}):
+              editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
+              sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
+              receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
+              amount: ₴12
+              action: payments.notifications.saved.action.update(${editor.locale})
+          `, options],
+          [Number(sender.id), stripIndent`
             payments.notifications.saved.message(${sender.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
@@ -121,7 +112,7 @@ describe('payments/notifications', () => {
               amount: ₴12
               action: payments.notifications.saved.action.update(${sender.locale})
           `, options],
-          [receiver.id, stripIndent`
+          [Number(receiver.id), stripIndent`
             payments.notifications.saved.message(${receiver.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
@@ -149,11 +140,11 @@ describe('payments/notifications', () => {
           createdAt: new Date(),
         },
         editorId: editor.id,
-      }, {
+      }, /** @type {any} */ ({
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
-      })
+      }))
 
       const options = {
         disable_web_page_preview: true,
@@ -162,20 +153,27 @@ describe('payments/notifications', () => {
 
       expect(telegramMock.sendMessage.args)
         .to.deep.equalInAnyOrder([
-          [sender.id, stripIndent`
+          [Number(editor.id), stripIndent`
+            payments.notifications.deleted.message(${editor.locale}):
+              editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
+              sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
+              receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
+              amount: ₴12
+          `, options],
+          [Number(sender.id), stripIndent`
             payments.notifications.deleted.message(${sender.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
           `, options],
-          [receiver.id, stripIndent`
+          [Number(receiver.id), stripIndent`
             payments.notifications.deleted.message(${receiver.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
-          `, options]
+          `, options],
         ])
     })
   })

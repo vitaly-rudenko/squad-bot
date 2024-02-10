@@ -1,11 +1,11 @@
 import { registry } from '../../registry.js'
 import { escapeMd } from '../../utils/escapeMd.js'
 
-export function receiptsCommand() {
+export function createReceiptsFlow() {
   const { generateWebAppUrl, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
-  return async (context) => {
+  const receipts = async (context) => {
     const { locale } = context.state
 
     const viewUrl = generateWebAppUrl('receipts')
@@ -22,4 +22,6 @@ export function receiptsCommand() {
       }
     )
   }
+
+  return { receipts }
 }

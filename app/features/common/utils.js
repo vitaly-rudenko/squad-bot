@@ -28,3 +28,12 @@ export function renderAmount(input) {
 
   return `₴${amount}`
 }
+
+/**
+ * @param {T | undefined} value
+ * @returns {value is T}
+ * @template T
+ */
+export function isDefined(value) {
+  return value !== undefined
+}

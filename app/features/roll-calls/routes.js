@@ -67,7 +67,6 @@ export function createRollCallsRouter() {
     )
   })
 
-  // TODO: merge with "create" request
   router.patch('/rollcalls/:rollCallId', async (req, res) => {
     const rollCallId = req.params.rollCallId
 

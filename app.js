@@ -8,30 +8,19 @@ import pg from 'pg'
 import express from 'express'
 import { Redis } from 'ioredis'
 
-import { receiptsCommand } from './app/receipts/flows/receipts.js'
-import { requirePrivateChat } from './app/shared/middlewares/privateChat.js'
 import { RollCallsPostgresStorage } from './app/features/roll-calls/storage.js'
-import { ReceiptTelegramNotifier } from './app/receipts/notifications/ReceiptTelegramNotifier.js'
-import { TelegramNotifier } from './app/shared/notifications/TelegramNotifier.js'
-import { TelegramErrorLogger } from './app/shared/TelegramErrorLogger.js'
-import { ReceiptsPostgresStorage } from './app/receipts/ReceiptsPostgresStorage.js'
-import { ReceiptManager } from './app/receipts/ReceiptManager.js'
-import { MassTelegramNotificationFactory } from './app/shared/notifications/MassTelegramNotification.js'
-import { withGroupChat } from './app/shared/middlewares/groupChat.js'
-import { withChatId } from './app/shared/middlewares/chatId.js'
-import { wrap } from './app/shared/middlewares/wrap.js'
 import { useTestMode } from './env.js'
 import { createRedisCacheFactory } from './app/utils/createRedisCacheFactory.js'
 import { logger } from './logger.js'
 import { createWebAppUrlGenerator } from './app/utils/createWebAppUrlGenerator.js'
-import { createRouter } from './app/routes/index.js'
+import { createApiRouter } from './app/features/api.js'
 import { CardsPostgresStorage } from './app/features/cards/storage.js'
 import { createCardsFlow } from './app/features/cards/telegram.js'
 import { createRollCallsFlow } from './app/features/roll-calls/telegram.js'
 import { string } from 'superstruct'
 import { createTemporaryAuthTokenGenerator } from './app/features/auth/utils.js'
 import { createAuthFlow } from './app/features/auth/telegram.js'
-import { createCommonFlow } from './app/features/common/telegram.js'
+import { createCommonFlow, requirePrivateChat, withChatId, withGroupChat, wrap } from './app/features/common/telegram.js'
 import { getAppVersion } from './app/features/common/utils.js'
 import { createAdminsFlow } from './app/features/admins/telegram.js'
 import { DebtsPostgresStorage } from './app/features/debts/storage.js'
@@ -47,6 +36,8 @@ import { MembershipPostgresStorage } from './app/features/memberships/storage.js
 import { registry } from './app/registry.js'
 import { localeFromLanguageCode, withLocale } from './app/features/localization/telegram.js'
 import { localize } from './app/features/localization/localize.js'
+import { ReceiptsPostgresStorage } from './app/features/receipts/storage.js'
+import { createReceiptsFlow } from './app/features/receipts/telegram.js'
 
 async function start() {
   if (useTestMode) {
@@ -78,20 +69,16 @@ async function start() {
     throw new Error('Telegram bot token is not defined')
   }
 
-  const debugChatId = process.env.DEBUG_CHAT_ID
   const bot = new Telegraf(telegramBotToken)
 
   process.once('SIGINT', () => bot.stop('SIGINT'))
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
-
-  const errorLogger = new TelegramErrorLogger({ telegram: bot.telegram, debugChatId })
 
   registry.values({
     botInfo: await bot.telegram.getMe(),
     cardsStorage: new CardsPostgresStorage(pgClient),
     createRedisCache,
     debtsStorage: new DebtsPostgresStorage(pgClient),
-    errorLogger,
     localize,
     paymentsStorage: new PaymentsPostgresStorage(pgClient),
     receiptsStorage: new ReceiptsPostgresStorage(pgClient),
@@ -107,10 +94,6 @@ async function start() {
   })
 
   registry.create('generateWebAppUrl', ({ botInfo, webAppName }) => createWebAppUrlGenerator({ botUsername: botInfo.username, webAppName }))
-  registry.create('telegramNotifier', (deps) => new TelegramNotifier(deps))
-  registry.create('massTelegramNotificationFactory', (deps) => new MassTelegramNotificationFactory(deps))
-  registry.create('receiptNotifier', (deps) => new ReceiptTelegramNotifier(deps))
-  registry.create('receiptManager', (deps) => new ReceiptManager(deps))
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
   const membershipCache = createRedisCache('memberships', useTestMode ? 60_000 : 60 * 60_000)
@@ -136,8 +119,8 @@ async function start() {
     { command: 'start', description: 'Оновити дані' },
   ])
 
-  process.on('unhandledRejection', (error) => {
-    errorLogger.log(error)
+  process.on('unhandledRejection', (err) => {
+    logger.error({ err }, 'Unhandled rejection')
   })
 
   bot.use((context, next) => {
@@ -167,7 +150,7 @@ async function start() {
 
         await membershipStorage.store(userId, chatId)
       } catch (err) {
-        errorLogger.log(err, 'Could not register new chat member', { chatMember })
+        logger.error({ err, chatMember }, 'Could not register new chat member')
       }
     }
   })
@@ -254,7 +237,8 @@ async function start() {
   const { payments } = createPaymentsFlow()
   bot.command('payments', payments)
 
-  bot.command('receipts', receiptsCommand())
+  const { receipts } = createReceiptsFlow()
+  bot.command('receipts', receipts)
 
   bot.on('message',
     async (context, next) => {
@@ -265,7 +249,7 @@ async function start() {
     wrap(withGroupChat(), rollCallMessage),
   )
 
-  bot.catch((error) => errorLogger.log(error))
+  // TODO: add debug chat error logging
 
   const corsOrigin = process.env.CORS_ORIGIN?.split(',')
   if (!corsOrigin || corsOrigin?.length === 0) {
@@ -275,7 +259,7 @@ async function start() {
   const app = express()
   app.use(express.json())
   app.use(cors({ origin: corsOrigin }))
-  app.use(createRouter())
+  app.use(createApiRouter())
 
   // @ts-ignore
   app.use((err, req, res, next) => {
@@ -309,8 +293,6 @@ async function start() {
   } else {
     await new Promise(resolve => app.listen(port, () => resolve(undefined)))
   }
-
-  bot.catch((error) => errorLogger.log(error))
 
   logger.info({}, 'Starting telegram bot')
   bot.launch().catch((err) => {

@@ -1,46 +1,21 @@
 import multer from 'multer'
 import Router from 'express-promise-router'
-import { Receipt } from '../receipts/Receipt.js'
-import { ReceiptPhoto } from '../receipts/ReceiptPhoto.js'
-import { object, string, coerce, array, optional, size, trimmed } from 'superstruct'
-import { amountSchema, stringifiedBooleanSchema, userIdSchema } from '../features/common/schemas.js'
-import { NotFoundError } from '../features/common/errors.js'
-import { ApiError } from '../features/common/errors.js'
-import { registry } from '../registry.js'
+import { NotFoundError } from '../common/errors.js'
+import { ApiError } from '../common/errors.js'
+import { registry } from '../../registry.js'
+import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from './notifications.js'
+import { saveReceiptSchema } from './schemas.js'
 
-export const debtSchema = object({
-  debtorId: userIdSchema,
-  amount: amountSchema,
-})
-
-export const debtsSchema = coerce(
-  array(debtSchema),
-  string(),
-  (value) => (
-    Object.entries(JSON.parse(value))
-      .map(([debtorId, amount]) => ({ debtorId, amount }))
-  )
-)
-
-export const saveReceiptSchema = object({
-  id: optional(string()),
-  payer_id: string(),
-  description: optional(size(trimmed(string()), 1, 64)),
-  amount: amountSchema,
-  debts: size(debtsSchema, 1, 10),
-  leave_photo: optional(stringifiedBooleanSchema),
-})
-
-export function createRouter() {
+export function createReceiptsRouter() {
   const {
     debtsStorage,
-    receiptManager,
     receiptsStorage,
   } = registry.export()
 
   const router = Router()
   const upload = multer()
 
+  // TODO: split into POST / PATCH
   router.post('/receipts', upload.single('photo'), async (req, res) => {
     if (req.file && req.file.size > 300_000) { // 300 kb
       throw new ApiError({
@@ -63,25 +38,51 @@ export function createRouter() {
     const mime = req.file?.mimetype
 
     const receiptPhoto = (binary && mime)
-      ? new ReceiptPhoto({ binary, mime })
+      ? { binary, mime }
       : leavePhoto ? undefined : 'delete'
 
-    const receipt = new Receipt({
-      id,
-      payerId,
-      amount,
-      description,
-      hasPhoto: receiptPhoto !== undefined && receiptPhoto !== 'delete'
-    })
+    let receipt
+    if (id) {
+      receipt = await receiptsStorage.findById(id)
+      if (!receipt) {
+        throw new NotFoundError()
+      }
 
-    const storedReceipt = await receiptManager.store(
-      { debts, receipt, receiptPhoto },
-      { editorId: req.user.id },
-    )
+      await receiptsStorage.update({
+        id,
+        payerId,
+        amount,
+        description,
+        createdAt: new Date(),
+      }, receiptPhoto)
+
+      await debtsStorage.deleteByReceiptId(id)
+    } else {
+      receipt = await receiptsStorage.create({
+        payerId,
+        amount,
+        description,
+        createdAt: new Date(),
+      }, receiptPhoto === 'delete' ? undefined : receiptPhoto)
+    }
+
+    for (const debt of debts) {
+      await debtsStorage.create({
+        receiptId: receipt.id,
+        debtorId: debt.debtorId,
+        amount: debt.amount,
+      })
+    }
+
+    await sendReceiptSavedNotification({
+      action: id ? 'update' : 'create',
+      editorId: req.user.id,
+      receipt,
+    })
 
     res.json(
       formatReceipt(
-        storedReceipt,
+        receipt,
         await debtsStorage.findByReceiptId(receipt.id)
       )
     )
@@ -108,14 +109,24 @@ export function createRouter() {
 
   router.delete('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
-    await receiptManager.delete(receiptId, { editorId: req.user.id })
+
+    const receipt = await receiptsStorage.findById(receiptId)
+    if (!receipt) {
+      throw new NotFoundError()
+    }
+
+    await debtsStorage.deleteByReceiptId(receiptId)
+    await receiptsStorage.deleteById(receiptId)
+
+    await sendReceiptDeletedNotification({ editorId: req.user.id, receipt })
+
     res.sendStatus(204)
   })
 
   return router
 }
 
-export function createPublicRouter() {
+export function createPublicReceiptsRouter() {
   const { receiptsStorage } = registry.export()
 
   const router = Router()
@@ -135,8 +146,8 @@ export function createPublicRouter() {
 }
 
 /**
- * @param {import('../receipts/Receipt.js').Receipt} receipt
- * @param {import('../features/debts/types').Debt[]} debts
+ * @param {import('./types').Receipt} receipt
+ * @param {import('../debts/types').Debt[]} debts
  */
 function formatReceipt(receipt, debts) {
   return {

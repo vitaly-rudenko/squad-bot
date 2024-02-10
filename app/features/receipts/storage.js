@@ -1,7 +1,5 @@
 import { customAlphabet } from 'nanoid'
 import { alphanumeric } from 'nanoid-dictionary'
-import { Receipt } from './Receipt.js'
-import { ReceiptPhoto } from './ReceiptPhoto.js'
 
 const generateId = customAlphabet(alphanumeric, 12)
 
@@ -12,33 +10,37 @@ export class ReceiptsPostgresStorage {
   }
 
   /**
-   * @param {Receipt} receipt
-   * @param {ReceiptPhoto} [receiptPhoto]
+   * @param {Omit<import('./types').Receipt, 'id' | 'hasPhoto'>} receipt
+   * @param {import('./types').ReceiptPhoto} [receiptPhoto]
+   * @returns {Promise<import('./types').Receipt>}
    */
   async create(receipt, receiptPhoto) {
-    const { payerId, amount, description } = receipt
-    const binary = receiptPhoto ? receiptPhoto.binary : null
-    const mime = receiptPhoto ? receiptPhoto.mime : null
-
     const response = await this._client.query(`
       INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id;
-    `, [generateId(), new Date().toISOString(), payerId, amount, description, binary, mime])
+    `, [
+      generateId(),
+      receipt.createdAt,
+      receipt.payerId,
+      receipt.amount,
+      receipt.description,
+      receiptPhoto?.binary,
+      receiptPhoto?.mime,
+    ])
 
-    return this.findById(response.rows[0]['id'])
+    return {
+      id: response.rows[0]['id'],
+      hasPhoto: receiptPhoto !== undefined,
+      ...receipt,
+    }
   }
 
   /**
-   * @param {Receipt} receipt
-   * @param {ReceiptPhoto | undefined | 'delete'} receiptPhoto
+   * @param {Omit<import('./types').Receipt, 'hasPhoto'>} receipt
+   * @param {import('./types').ReceiptPhoto | undefined | 'delete'} receiptPhoto
    */
   async update(receipt, receiptPhoto) {
-    const { id, payerId, amount, description } = receipt
-    if (!id) {
-      throw new Error('Receipt ID is not provided for update')
-    }
-
     if (receiptPhoto !== undefined) {
       const binary = receiptPhoto === 'delete' ? null : receiptPhoto.binary
       const mime = receiptPhoto === 'delete' ? null : receiptPhoto.mime
@@ -47,16 +49,14 @@ export class ReceiptsPostgresStorage {
         UPDATE receipts
         SET payer_id = $2, amount = $3, description = $4, photo = $5, mime = $6
         WHERE id = $1;
-      `, [id, payerId, amount, description, binary, mime])
+      `, [receipt.id, receipt.payerId, receipt.amount, receipt.description, binary, mime])
     } else {
       await this._client.query(`
         UPDATE receipts
         SET payer_id = $2, amount = $3, description = $4
         WHERE id = $1;
-      `, [id, payerId, amount, description])
+      `, [receipt.id, receipt.payerId, receipt.amount, receipt.description])
     }
-
-    return this.findById(id)
   }
 
   /** @param {string} id */
@@ -77,13 +77,18 @@ export class ReceiptsPostgresStorage {
         AND r.deleted_at IS NULL;
     `, [receiptId])
 
-    if (response.rowCount === 0 || !response.rows[0]['photo'] || !response.rows[0]['mime']) {
+    if (
+      response.rowCount === 0 ||
+      !response.rows[0]['photo'] ||
+      !response.rows[0]['mime']
+    ) {
       return undefined
     }
 
-    return this.deserializeReceiptPhoto(response.rows[0])
+    return deserializeReceiptPhoto(response.rows[0])
   }
 
+  /** @param {string} userId */
   async findByParticipantUserId(userId) {
     return this._find({ participantUserIds: [userId] })
   }
@@ -151,33 +156,38 @@ export class ReceiptsPostgresStorage {
 
     const response = await this._client.query(`
       SELECT${isDistinct ? ' DISTINCT' : ''} r.id
-        , r.created_at
-        , r.payer_id
-        , r.amount
-        , r.description
+        , r.created_at, r.payer_id, r.amount, r.description
         , (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
       FROM receipts r ${joinClause} ${whereClause} ${paginationClause}
       ORDER BY created_at DESC;
     `, variables)
 
-    return response.rows.map(row => this.deserializeReceipt(row))
+    return response.rows.map(row => deserializeReceipt(row))
   }
+}
 
-  deserializeReceipt(row) {
-    return new Receipt({
-      id: row['id'],
-      createdAt: new Date(row['created_at']),
-      payerId: row['payer_id'],
-      amount: row['amount'],
-      description: row['description'],
-      hasPhoto: row['has_photo']
-    })
+/**
+ * @param {any} row
+ * @returns {import('./types').Receipt}
+ */
+function deserializeReceipt(row) {
+  return {
+    id: row['id'],
+    createdAt: new Date(row['created_at']),
+    payerId: row['payer_id'],
+    amount: row['amount'],
+    description: row['description'],
+    hasPhoto: row['has_photo'],
   }
+}
 
-  deserializeReceiptPhoto(row) {
-    return new ReceiptPhoto({
-      binary: row['photo'],
-      mime: row['mime'],
-    })
+/**
+ * @param {any} row
+ * @returns {import('./types').ReceiptPhoto}
+ */
+function deserializeReceiptPhoto(row) {
+  return {
+    binary: row['photo'],
+    mime: row['mime'],
   }
 }

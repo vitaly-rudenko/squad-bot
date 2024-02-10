@@ -1,8 +1,8 @@
 // @ts-expect-error TODO: create typings for templater
 import { PatternBuilder, PatternMatcher, EntryMatchers } from '@vitalyrudenko/templater'
 import { escapeMd } from '../../utils/escapeMd.js'
-import { GROUP_CHAT_TYPES } from '../../shared/middlewares/groupChat.js'
 import { registry } from '../../registry.js'
+import { isGroupChat } from '../common/telegram.js'
 
 export function createRollCallsFlow() {
   const { rollCallsStorage, membershipStorage, usersStorage, generateWebAppUrl, localize } = registry.export()
@@ -11,7 +11,7 @@ export function createRollCallsFlow() {
   const rollCalls = async (context) => {
     const { chatId, locale } = context.state
 
-    const isGroup = GROUP_CHAT_TYPES.includes(/** @type {string} */ (context.chat?.type))
+    const isGroup = isGroupChat(context)
 
     const viewUrl = isGroup ? generateWebAppUrl(`roll-calls${chatId}`) : generateWebAppUrl('groups')
     const createUrl = isGroup ? generateWebAppUrl(`new-roll-call${chatId}`) : undefined

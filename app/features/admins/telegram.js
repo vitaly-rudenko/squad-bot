@@ -1,6 +1,6 @@
 import { escapeMd } from '../../utils/escapeMd.js'
-import { GROUP_CHAT_TYPES } from '../../shared/middlewares/groupChat.js'
 import { registry } from '../../registry.js'
+import { isGroupChat } from '../common/telegram.js'
 
 export function createAdminsFlow() {
   const { generateWebAppUrl, localize } = registry.export()
@@ -9,7 +9,7 @@ export function createAdminsFlow() {
   const titles = async (context) => {
     const { chatId, locale } = context.state
 
-    const isGroup = GROUP_CHAT_TYPES.includes(/** @type {string} */ (context.chat?.type))
+    const isGroup = isGroupChat(context)
 
     const editUrl = isGroup ? generateWebAppUrl(`titles${chatId}`) : generateWebAppUrl('groups')
 
