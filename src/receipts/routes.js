@@ -69,8 +69,9 @@ export function createReceiptsRouter() {
       }, receiptPhoto === 'delete' ? undefined : receiptPhoto)
     }
 
+    // TODO: store in bulk
     for (const debt of debts) {
-      await debtsStorage.create({
+      await debtsStorage.store({
         receiptId: receipt.id,
         debtorId: debt.debtorId,
         amount: debt.amount,

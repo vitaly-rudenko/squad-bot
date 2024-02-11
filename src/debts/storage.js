@@ -4,21 +4,12 @@ export class DebtsPostgresStorage {
     this._client = client
   }
 
-  /**
-   * @param {Omit<import('./types').Debt, 'id'>} input
-   * @return {Promise<import('./types').Debt>}
-   */
-  async create(input) {
-    const response = await this._client.query(`
+  /** @param {Omit<import('./types').Debt, 'id'>} input */
+  async store(input) {
+    await this._client.query(`
       INSERT INTO debts (debtor_id, receipt_id, amount)
-      VALUES ($1, $2, $3)
-      RETURNING id;
+      VALUES ($1, $2, $3);
     `, [input.debtorId, input.receiptId, input.amount])
-
-    return {
-      id: response.rows[0].id,
-      ...input,
-    }
   }
 
   /** @param {string} receiptId */
@@ -28,12 +19,6 @@ export class DebtsPostgresStorage {
       SET deleted_at = NOW()
       WHERE receipt_id = $1;
     `, [receiptId])
-  }
-
-  /** @param {string} id */
-  async findById(id) {
-    const debts = await this._find({ ids: [id], limit: 1 })
-    return debts.at(0)
   }
 
   /** @param {string} receiptId */
@@ -49,27 +34,17 @@ export class DebtsPostgresStorage {
 
   /**
    * @param {{
-   *   ids?: string[],
    *   receiptIds?: string[],
    *   limit?: number,
    *   offset?: number
    * }} options
    */
-  async _find({ ids, receiptIds, limit, offset } = {}) {
+  async _find({ receiptIds, limit, offset } = {}) {
     const conditions = [
       'd.deleted_at IS NULL',
       'r.deleted_at IS NULL',
     ]
     const variables = []
-
-    if (ids && Array.isArray(ids)) {
-      if (ids.length === 0) {
-        throw new Error('"ids" cannot be empty')
-      }
-
-      conditions.push(`d.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...ids)
-    }
 
     if (receiptIds && Array.isArray(receiptIds)) {
       if (receiptIds.length === 0) {
@@ -91,7 +66,7 @@ export class DebtsPostgresStorage {
     ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
-      SELECT d.id, d.debtor_id, d.receipt_id, d.amount
+      SELECT d.debtor_id, d.receipt_id, d.amount
       FROM debts d
       JOIN receipts r ON r.id = d.receipt_id ${whereClause} ${paginationClause};
     `, variables)
