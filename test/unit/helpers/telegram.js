@@ -2,7 +2,7 @@ import { spy } from 'sinon'
 
 export function createTelegramMock() {
   const telegramMock = {
-    sendMessage: spy(),
+    sendMessage: spy(async () => {}),
   }
 
   /** @type {import('telegraf').Telegram} */

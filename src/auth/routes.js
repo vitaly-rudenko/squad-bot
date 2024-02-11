@@ -42,7 +42,7 @@ export function createAuthRouter() {
     try {
       ({ userId } = temporaryAuthTokenPayloadSchema
         .create(jwt.verify(temporaryAuthToken, env.TOKEN_SECRET)))
-    } catch (error) {
+    } catch (err) {
       throw new ApiError({
         code: 'INVALID_TEMPORARY_AUTH_TOKEN',
         status: 400,
@@ -99,9 +99,9 @@ export function createAuthRouter() {
           locale: user.locale,
         }
       }, env.TOKEN_SECRET))
-    } catch (error) {
-      console.warn(error)
-      next(error)
+    } catch (err) {
+      console.warn(err)
+      next(err)
     }
   })
 
@@ -119,7 +119,7 @@ export function createAuthMiddleware({ tokenSecret }) {
 
     try {
       req.user = authTokenSchema.create(jwt.verify(token, tokenSecret)).user
-    } catch (error) {
+    } catch (err) {
       throw new NotAuthenticatedError('Invalid authentication token')
     }
 

@@ -1,8 +1,8 @@
-import { logger } from '../common/logger.js'
 import { registry } from '../registry.js'
-import { escapeMd, isNotificationErrorIgnorable } from '../common/telegram.js'
+import { escapeMd } from '../common/telegram.js'
 import { renderAmount, renderUser } from '../common/utils.js'
 import { deduplicateUsers } from '../users/utils.js'
+import { sendNotification } from '../common/notifications.js'
 
 /**
  * @param {{
@@ -27,7 +27,7 @@ export async function sendPaymentSavedNotification(
   const users = deduplicateUsers([editor, sender, receiver])
 
   for (const user of users) {
-    const message = localize(
+    sendNotification(user.id, localize(
       user.locale,
       'payments.notifications.saved.message',
       {
@@ -37,18 +37,7 @@ export async function sendPaymentSavedNotification(
         amount: escapeMd(renderAmount(payment.amount)),
         action: localize(user.locale, `payments.notifications.saved.action.${action}`),
       }
-    )
-
-    try {
-      await telegram.sendMessage(Number(user.id), message, {
-        parse_mode: 'MarkdownV2',
-        disable_web_page_preview: true,
-      })
-    } catch (err) {
-      if (!isNotificationErrorIgnorable(err)) {
-        logger.warn({ err, user, message }, 'Could not send notification')
-      }
-    }
+    ), { telegram })
   }
 }
 
@@ -74,7 +63,7 @@ export async function sendPaymentDeletedNotification(
   const users = deduplicateUsers([editor, sender, receiver])
 
   for (const user of users) {
-    const message = localize(
+    sendNotification(user.id, localize(
       user.locale,
       'payments.notifications.deleted.message',
       {
@@ -83,17 +72,6 @@ export async function sendPaymentDeletedNotification(
         receiver: escapeMd(renderUser(receiver)),
         amount: escapeMd(renderAmount(payment.amount)),
       }
-    )
-
-    try {
-      await telegram.sendMessage(Number(user.id), message, {
-        parse_mode: 'MarkdownV2',
-        disable_web_page_preview: true,
-      })
-    } catch (err) {
-      if (!isNotificationErrorIgnorable(err)) {
-        logger.warn({ err, user, message }, 'Could not send notification')
-      }
-    }
+    ), { telegram })
   }
 }

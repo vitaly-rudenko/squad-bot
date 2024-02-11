@@ -142,11 +142,11 @@ class MigrationsCli {
       })
 
       console.log(`Migration file '${migrationFileName}' has been created.`)
-    } catch (error) {
+    } catch (err) {
       rs.destroy()
       ws.end()
 
-      throw error
+      throw err
     }
   }
 
@@ -187,8 +187,7 @@ else if (task === 'migration:generate')
 
 cli.runTask(task, options)
   .then(() => process.exit())
-  .catch((error) => {
-    console.log('Error:', error.message)
-
+  .catch((err) => {
+    console.log('Error:', err.message)
     process.exit(1)
   })

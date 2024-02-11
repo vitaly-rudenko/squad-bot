@@ -241,7 +241,7 @@ async function start() {
 
   logger.info({}, 'Starting telegram bot')
   bot.launch().catch((err) => {
-    logger.error({ err }, 'Could not launch telegram bot')
+    logger.fatal({ err }, 'Could not launch telegram bot')
     process.exit(1)
   })
 
@@ -271,6 +271,6 @@ async function start() {
 start()
   .then(() => logger.info({}, 'Started!'))
   .catch((err) => {
-    logger.error({ err }, 'Unexpected starting error')
+    logger.fatal({ err }, 'Unexpected starting error')
     process.exit(1)
   })

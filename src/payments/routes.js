@@ -4,7 +4,6 @@ import { userIdSchema, amountSchema } from '../common/schemas.js'
 import { sendPaymentDeletedNotification, sendPaymentSavedNotification } from './notifications.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
 import { registry } from '../registry.js'
-import { logger } from '../common/logger.js'
 
 export const createPaymentSchema = object({
   fromUserId: userIdSchema,
@@ -27,8 +26,7 @@ export function createPaymentsRouter() {
       createdAt: new Date(),
     })
 
-    sendPaymentSavedNotification({ action: 'create', editorId: req.user.id, payment })
-      .catch((err) => logger.warn({ err, payment }, 'Could not send a notification'))
+    await sendPaymentSavedNotification({ action: 'create', editorId: req.user.id, payment })
 
     res.json(payment)
   })
@@ -48,8 +46,7 @@ export function createPaymentsRouter() {
 
     await paymentsStorage.deleteById(paymentId)
 
-    sendPaymentDeletedNotification({ editorId, payment })
-      .catch((err) => logger.warn({ err, payment }, 'Could not send a notification'))
+    await sendPaymentDeletedNotification({ editorId, payment })
 
     res.sendStatus(204)
   })

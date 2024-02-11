@@ -22,11 +22,11 @@ export class RollCallsPostgresStorage {
         id: response.rows[0].id,
         ...input,
       }
-    } catch (error) {
-      if (String(error.code) === '23505') {
+    } catch (err) {
+      if (String(err.code) === '23505') {
         throw new AlreadyExistsError()
       } else {
-        throw error
+        throw err
       }
     }
   }

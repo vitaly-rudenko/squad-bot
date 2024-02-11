@@ -8,13 +8,13 @@
 export async function isChatMember({ userId, groupId, telegram }) {
   try {
     await telegram.getChatMember(groupId, Number(userId))
-  } catch (error) {
+  } catch (err) {
     // TODO: check for error message
-    if (error.code === 400) {
+    if (err.code === 400) {
       return false
     }
 
-    throw error
+    throw err
   }
 
   return true

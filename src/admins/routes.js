@@ -44,8 +44,8 @@ export function createAdminsRouter() {
           editable: admin.status !== 'creator' && admin.can_be_edited,
         }))
       )
-    } catch (error) {
-      if (error.message.includes('chat not found')) {
+    } catch (err) {
+      if (err.message.includes('chat not found')) {
         throw new ApiError({
           code: 'CHAT_NOT_FOUND',
           message: 'Chat not found. Does bot have access to the group?',
@@ -53,8 +53,8 @@ export function createAdminsRouter() {
         })
       }
 
-      logger.error({ error, groupId }, 'Could not get chat administrators')
-      throw error
+      logger.error({ err, groupId }, 'Could not get chat administrators')
+      throw err
     }
   })
 
@@ -70,12 +70,12 @@ export function createAdminsRouter() {
     for (const admin of admins) {
       try {
         await setUserCustomTitleAndPromote(telegram, groupId, admin.userId, admin.title)
-      } catch (error) {
-        if (error instanceof ApiError) {
-          errorCodes.push({ userId: admin.userId, errorCode: error.code })
+      } catch (err) {
+        if (err instanceof ApiError) {
+          errorCodes.push({ userId: admin.userId, errorCode: err.code })
         } else {
-          logger.error({ error, groupId, admin }, 'Could not update admin')
-          throw error
+          logger.error({ err, groupId, admin }, 'Could not update admin')
+          throw err
         }
       }
     }
@@ -105,9 +105,9 @@ export function createAdminsRouter() {
 async function setUserCustomTitleAndPromote(telegram, groupId, userId, title) {
   try {
     await setUserCustomTitle(telegram, groupId, userId, title)
-  } catch (error) {
-    if (!error.message.includes('user is not an administrator')) {
-      throw error
+  } catch (err) {
+    if (!err.message.includes('user is not an administrator')) {
+      throw err
     }
 
     try {
@@ -115,12 +115,12 @@ async function setUserCustomTitleAndPromote(telegram, groupId, userId, title) {
         can_change_info: true,
         can_pin_messages: true,
       })
-    } catch (error) {
-      if (error.message.includes('not enough rights')) {
+    } catch (err) {
+      if (err.message.includes('not enough rights')) {
         throw new ApiError({ code: 'CANNOT_ADD_NEW_ADMINS', status: 502 })
       }
 
-      throw error
+      throw err
     }
 
     await setUserCustomTitle(telegram, groupId, userId, title)
@@ -136,19 +136,19 @@ async function setUserCustomTitleAndPromote(telegram, groupId, userId, title) {
 async function setUserCustomTitle(telegram, groupId, userId, title) {
   try {
     await telegram.setChatAdministratorCustomTitle(Number(groupId), Number(userId), title)
-  } catch (error) {
-    if (error.message.includes('ADMIN_RANK_EMOJI_NOT_ALLOWED')) {
+  } catch (err) {
+    if (err.message.includes('ADMIN_RANK_EMOJI_NOT_ALLOWED')) {
       throw new ApiError({ code: 'INVALID_CUSTOM_TITLE', status: 502 })
     }
 
-    if (error.message.includes('RIGHT_FORBIDDEN')) {
+    if (err.message.includes('RIGHT_FORBIDDEN')) {
       throw new ApiError({ code: 'INSUFFICIENT_PERMISSIONS', status: 502 })
     }
 
-    if (error.message.includes('method is available only for supergroups')) {
+    if (err.message.includes('method is available only for supergroups')) {
       throw new ApiError({ code: 'FOR_SUPERGROUPS_ONLY', status: 502 })
     }
 
-    throw error
+    throw err
   }
 }
