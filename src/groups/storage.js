@@ -29,7 +29,7 @@ export class GroupsPostgresStorage {
    *   offset?: number,
    * }} options
    */
-  async _find({ ids, memberUserIds, limit, offset } = {}) {
+  async _find({ ids, memberUserIds, limit = 100, offset = 0 } = {}) {
     const conditions = []
     const variables = []
 
@@ -58,14 +58,11 @@ export class GroupsPostgresStorage {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
-    const paginationClause = [
-      Number.isInteger(limit) && `LIMIT ${limit}`,
-      Number.isInteger(offset) && `OFFSET ${offset}`
-    ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
       SELECT g.id, g.title, g.updated_at
-      FROM groups g ${whereClause} ${paginationClause};
+      FROM groups g ${whereClause}
+      LIMIT ${limit} OFFSET ${offset};;
     `, variables)
 
     return response.rows.map(row => deserializeGroup(row))

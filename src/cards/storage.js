@@ -45,7 +45,7 @@ export class CardsPostgresStorage {
    *   offset?: number
    * }} options
    */
-  async _find({ ids, userIds, limit, offset } = {}) {
+  async _find({ ids, userIds, limit = 100, offset = 0 } = {}) {
     const conditions = []
     const variables = []
 
@@ -72,14 +72,11 @@ export class CardsPostgresStorage {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
-    const paginationClause = [
-      Number.isInteger(limit) && `LIMIT ${limit}`,
-      Number.isInteger(offset) && `OFFSET ${offset}`
-    ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
       SELECT c.id, c.user_id, c.number, c.bank
-      FROM cards c ${whereClause} ${paginationClause};
+      FROM cards c ${whereClause}
+      LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
     return response.rows.map(row => deserializeCard(row))

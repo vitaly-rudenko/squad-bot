@@ -88,7 +88,7 @@ export class PaymentsPostgresStorage {
    *   offset?: number,
    * }} options
    */
-  async _find({ ids, participantUserIds, limit, offset } = {}) {
+  async _find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
     const conditions = ['p.deleted_at IS NULL']
     const variables = []
 
@@ -116,15 +116,12 @@ export class PaymentsPostgresStorage {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
-    const paginationClause = [
-      Number.isInteger(limit) && `LIMIT ${limit}`,
-      Number.isInteger(offset) && `OFFSET ${offset}`
-    ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
       SELECT p.id, p.from_user_id, p.to_user_id, p.amount, p.created_at
-      FROM payments p ${whereClause} ${paginationClause}
-      ORDER BY created_at DESC;
+      FROM payments p ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
     return response.rows.map(row => deserializePayment(row))

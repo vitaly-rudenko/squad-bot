@@ -39,7 +39,7 @@ export class DebtsPostgresStorage {
    *   offset?: number
    * }} options
    */
-  async _find({ receiptIds, limit, offset } = {}) {
+  async _find({ receiptIds, limit = 100, offset = 0 } = {}) {
     const conditions = [
       'd.deleted_at IS NULL',
       'r.deleted_at IS NULL',
@@ -60,15 +60,12 @@ export class DebtsPostgresStorage {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
-    const paginationClause = [
-      Number.isInteger(limit) && `LIMIT ${limit}`,
-      Number.isInteger(offset) && `OFFSET ${offset}`
-    ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
       SELECT d.debtor_id, d.receipt_id, d.amount
       FROM debts d
-      JOIN receipts r ON r.id = d.receipt_id ${whereClause} ${paginationClause};
+      JOIN receipts r ON r.id = d.receipt_id ${whereClause}
+      LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
     return response.rows.map(row => deserializeDebt(row))

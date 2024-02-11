@@ -61,7 +61,11 @@ export class MembershipPostgresStorage {
   }
 
   /** @param {{ limit: number }} input */
-  async findOldest({ limit }) {
+  async findOldest({ limit = 100 }) {
+    if (limit <= 0 || limit > 100) {
+      throw new Error('Limit must be between 1 and 100')
+    }
+
     const response = await this._client.query(`
       SELECT m.user_id, m.group_id
       FROM memberships m

@@ -117,7 +117,7 @@ export class ReceiptsPostgresStorage {
    *   offset?: number,
    * }} options
    */
-  async _find({ ids, participantUserIds, limit, offset } = {}) {
+  async _find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
     const conditions = ['r.deleted_at IS NULL']
     const variables = []
     const joins = []
@@ -153,16 +153,13 @@ export class ReceiptsPostgresStorage {
 
     const joinClause = joins.join(' ')
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
-    const paginationClause = [
-      Number.isInteger(limit) && `LIMIT ${limit}`,
-      Number.isInteger(offset) && `OFFSET ${offset}`
-    ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
       SELECT${isDistinct ? ' DISTINCT' : ''} r.id
         , r.created_at, r.payer_id, r.amount, r.description, r.has_photo
-      FROM receipts r ${joinClause} ${whereClause} ${paginationClause}
-      ORDER BY created_at DESC;
+      FROM receipts r ${joinClause} ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
     return response.rows.map(row => deserializeReceipt(row))

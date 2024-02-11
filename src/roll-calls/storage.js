@@ -76,7 +76,7 @@ export class RollCallsPostgresStorage {
    *   offset?: number
    * }} options
    */
-  async _find({ ids, groupIds, limit, offset } = {}) {
+  async _find({ ids, groupIds, limit = 100, offset = 0 } = {}) {
     const conditions = []
     const variables = []
 
@@ -103,15 +103,12 @@ export class RollCallsPostgresStorage {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
-    const paginationClause = [
-      Number.isInteger(limit) && `LIMIT ${limit}`,
-      Number.isInteger(offset) && `OFFSET ${offset}`
-    ].filter(Boolean).join(' ')
 
     const response = await this._client.query(`
       SELECT rc.id, rc.group_id, rc.message_pattern, rc.users_pattern, rc.exclude_sender, rc.poll_options, rc.sort_order
       FROM roll_calls rc ${whereClause}
-      ORDER BY sort_order DESC ${paginationClause};
+      ORDER BY sort_order DESC
+      LIMIT ${limit} OFFSET ${offset};;
     `, variables)
 
     return response.rows.map(row => deserializeRollCall(row))
