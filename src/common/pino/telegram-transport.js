@@ -6,7 +6,7 @@ import { escapeMd } from '../telegram.js'
 /**
  * @param {{
  *   telegramBotToken: string
- *   debugChatId: string
+ *   debugChatId: number
  * }} options
  */
 export default async function ({ telegramBotToken, debugChatId }) {
@@ -17,9 +17,10 @@ export default async function ({ telegramBotToken, debugChatId }) {
     for await (let log of stream) {
       const { level, msg, time, pid, hostname, ...context } = log
 
+      // TODO: handle large contexts that don't fit into single message (perhaps send in a separate message & trimmed?)
       try {
         await bot.telegram.sendMessage(
-          Number(debugChatId),
+          debugChatId,
           [
             `⚠️ *${escapeMd(pino.levels.labels[level].toUpperCase())}*: ${escapeMd(msg)}`,
             `🤖 ${escapeMd(`@${botInfo.username}`)}`,
@@ -28,7 +29,6 @@ export default async function ({ telegramBotToken, debugChatId }) {
             ${escapeMd(JSON.stringify(context, null, 2))}
             \`\`\``,
           ].filter(Boolean).join('\n'),
-          // `❗️ *${$level}* ${$bot}: ${$message}${$context} *${$date}*`,
           { parse_mode: 'MarkdownV2' }
         )
       } catch (err) {

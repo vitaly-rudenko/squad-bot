@@ -5,6 +5,7 @@ import { ApiError } from '../common/errors.js'
 import { registry } from '../registry.js'
 import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from './notifications.js'
 import { saveReceiptSchema } from './schemas.js'
+import { logger } from '../common/logger.js'
 
 export function createReceiptsRouter() {
   const {
@@ -41,12 +42,15 @@ export function createReceiptsRouter() {
       ? { binary, mime }
       : leavePhoto ? undefined : 'delete'
 
+    /** @type {import('./types').Receipt} */
     let receipt
     if (id) {
-      receipt = await receiptsStorage.findById(id)
-      if (!receipt) {
+      const existingReceipt = await receiptsStorage.findById(id)
+      if (!existingReceipt) {
         throw new NotFoundError()
       }
+
+      receipt = existingReceipt
 
       await receiptsStorage.update({
         id,
@@ -74,11 +78,11 @@ export function createReceiptsRouter() {
       })
     }
 
-    await sendReceiptSavedNotification({
+    sendReceiptSavedNotification({
       action: id ? 'update' : 'create',
       editorId: req.user.id,
       receipt,
-    })
+    }).catch((err) => logger.warn({ err, receipt }, 'Could not send a notification'))
 
     res.json(
       formatReceipt(
@@ -118,7 +122,8 @@ export function createReceiptsRouter() {
     await debtsStorage.deleteByReceiptId(receiptId)
     await receiptsStorage.deleteById(receiptId)
 
-    await sendReceiptDeletedNotification({ editorId: req.user.id, receipt })
+    sendReceiptDeletedNotification({ editorId: req.user.id, receipt })
+      .catch((err) => logger.warn({ err, receipt }, 'Could not send a notification'))
 
     res.sendStatus(204)
   })

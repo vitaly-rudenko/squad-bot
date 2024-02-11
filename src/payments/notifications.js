@@ -1,4 +1,3 @@
-import { env } from '../env.js'
 import { logger } from '../common/logger.js'
 import { registry } from '../registry.js'
 import { escapeMd, isNotificationErrorIgnorable } from '../common/telegram.js'
@@ -41,7 +40,6 @@ export async function sendPaymentSavedNotification(
     )
 
     try {
-      if (env.DISABLE_TELEGRAM_API) continue
       await telegram.sendMessage(Number(user.id), message, {
         parse_mode: 'MarkdownV2',
         disable_web_page_preview: true,
@@ -88,7 +86,6 @@ export async function sendPaymentDeletedNotification(
     )
 
     try {
-      if (env.DISABLE_TELEGRAM_API) continue
       await telegram.sendMessage(Number(user.id), message, {
         parse_mode: 'MarkdownV2',
         disable_web_page_preview: true,

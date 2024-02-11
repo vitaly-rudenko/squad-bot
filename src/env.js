@@ -16,28 +16,24 @@ const logLevelSchema = defaulted(union([
 ]), 'info');
 
 const urlSchema = refine(nonempty(string()), 'url', (value) => {
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    return false;
-  }
+  try { new URL(value) } catch { return false }
+  return true
 })
 
 const numberSchema = coerce(number(), nonempty(string()), (value) => Number(value))
 const stringSchema = nonempty(string())
 
 const urlArraySchema = coerce(
-  array(nonempty(urlSchema)),
+  nonempty(array(urlSchema)),
   nonempty(string()),
   (value) => value.split(',').map((item) => item.trim())
 )
 
 const envSchema = type({
+  PORT: numberSchema,
   LOG_LEVEL: logLevelSchema,
   USE_TEST_MODE: optionalBooleanSchema,
   ENABLE_TEST_HTTPS: optionalBooleanSchema,
-  DISABLE_TELEGRAM_API: optionalBooleanSchema,
   REDIS_URL: urlSchema,
   DATABASE_URL: urlSchema,
   LOG_DATABASE_QUERIES: optionalBooleanSchema,

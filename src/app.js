@@ -43,12 +43,12 @@ async function start() {
     logger.warn({}, 'Test mode is enabled')
   }
 
-  registry.value('redis', new Redis(process.env.REDIS_URL || ''))
+  registry.value('redis', new Redis(env.REDIS_URL))
 
-  const pgClient = new pg.Client(process.env.DATABASE_URL)
+  const pgClient = new pg.Client(env.DATABASE_URL)
   await pgClient.connect()
 
-  if (process.env.LOG_DATABASE_QUERIES === 'true') {
+  if (env.LOG_DATABASE_QUERIES) {
     const query = pgClient.query.bind(pgClient)
 
     /** @param {any[]} args */
@@ -61,8 +61,8 @@ async function start() {
 
   const usersStorage = new UsersPostgresStorage(pgClient)
 
-  const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN
-  const tokenSecret = process.env.TOKEN_SECRET
+  const telegramBotToken = env.TELEGRAM_BOT_TOKEN
+  const tokenSecret = env.TOKEN_SECRET
   if (!telegramBotToken || !tokenSecret) {
     throw new Error('Telegram bot token is not defined')
   }
@@ -133,7 +133,7 @@ async function start() {
     const { chatId } = context.state
 
     for (const chatMember of context.message.new_chat_members) {
-      if (!useTestMode && chatMember.is_bot) continue
+      if (!env.USE_TEST_MODE && chatMember.is_bot) continue
 
       const userId = String(chatMember.id)
       try {
@@ -148,7 +148,7 @@ async function start() {
   // TODO: deprecated?
   bot.on('left_chat_member', async (context) => {
     const user = context.message.left_chat_member
-    if (!useTestMode && user.is_bot) return
+    if (!env.USE_TEST_MODE && user.is_bot) return
 
     const { chatId } = context.state
     const userId = String(user.id)
@@ -201,24 +201,18 @@ async function start() {
     wrap(withGroupChat(), rollCallMessage),
   )
 
-  // TODO: add debug chat error logging
-
-  const corsOrigin = process.env.CORS_ORIGIN?.split(',')
-  if (!corsOrigin || corsOrigin?.length === 0) {
-    throw new Error('CORS origin is not set up properly')
-  }
-
   const app = express()
   app.use(express.json())
-  app.use(cors({ origin: corsOrigin }))
+  app.use(cors({ origin: env.CORS_ORIGIN }))
   app.use(createApiRouter())
 
   // @ts-ignore
   app.use((err, req, res, next) => {
-    if (res.headersSent) {
-      return next(err)
+    if (!(err instanceof ApiError)) {
+      logger.error({ err, req }, 'Unhandled API error')
     }
 
+    if (res.headersSent) return
     if (err instanceof ApiError) {
       res.status(err.status).json({
         error: {
@@ -228,22 +222,21 @@ async function start() {
         }
       })
     } else {
-      next(err)
+      res.sendStatus(500)
     }
   })
 
-  const port = Number(process.env.PORT) || 3000
-
-  if (process.env.ENABLE_TEST_HTTPS === 'true') {
-    logger.warn('Starting in test HTTPs mode')
+  if (env.ENABLE_TEST_HTTPS) {
+    logger.warn({}, 'Starting server in test HTTPS mode')
     // https://stackoverflow.com/a/69743888
     const key = fs.readFileSync('./.cert/key.pem', 'utf-8')
     const cert = fs.readFileSync('./.cert/cert.pem', 'utf-8')
     await new Promise(resolve => {
-      https.createServer({ key, cert }, app).listen(port, () => resolve(undefined))
+      https.createServer({ key, cert }, app).listen(env.PORT, () => resolve(undefined))
     })
   } else {
-    await new Promise(resolve => app.listen(port, () => resolve(undefined)))
+    logger.info({}, 'Starting server')
+    await new Promise(resolve => app.listen(env.PORT, () => resolve(undefined)))
   }
 
   logger.info({}, 'Starting telegram bot')
@@ -252,7 +245,7 @@ async function start() {
     process.exit(1)
   })
 
-  if (process.env.DISABLE_MEMBERSHIP_REFRESH_TASK === 'true') return
+  if (env.DISABLE_MEMBERSHIP_REFRESH_TASK) return
 
   const refreshMembershipsJobIntervalMs = 5 * 60_000
 

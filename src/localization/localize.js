@@ -68,7 +68,7 @@ export function replaceVariables(message, replacements) {
       throw new Error(`Missing replacement for variable ${String(variable)}`)
     }
 
-    return String(variable)
+    return String(replacement)
   })
 
   return message

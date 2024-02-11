@@ -57,7 +57,6 @@ export async function sendReceiptSavedNotification(
     )
 
     try {
-      if (env.DISABLE_TELEGRAM_API) continue
       await telegram.sendMessage(Number(user.id), message, {
         parse_mode: 'MarkdownV2',
         disable_web_page_preview: true,
@@ -111,7 +110,6 @@ export async function sendReceiptDeletedNotification(
     )
 
     try {
-      if (env.DISABLE_TELEGRAM_API) continue
       await telegram.sendMessage(Number(user.id), message, {
         parse_mode: 'MarkdownV2',
         disable_web_page_preview: true,

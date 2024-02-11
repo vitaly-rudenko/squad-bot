@@ -3,7 +3,7 @@ import fetch, { FormData, File } from 'node-fetch'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import { uniqueNamesGenerator, names } from 'unique-names-generator'
-import { TOKEN_SECRET } from './env.js'
+import { env } from '../../src/env.js'
 
 const TEST_API_URL = 'http://localhost:3000'
 const nameConfig = {
@@ -190,7 +190,7 @@ function toCapital(str) {
 }
 
 export function createToken({ userId, username, name, locale }) {
-  return jwt.sign({ user: { id: userId, username, name, locale } }, TOKEN_SECRET)
+  return jwt.sign({ user: { id: userId, username, name, locale } }, env.TOKEN_SECRET)
 }
 
 /** @returns {Promise<import('../../src/payments/types').Payment>} */

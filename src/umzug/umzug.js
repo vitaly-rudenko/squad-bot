@@ -1,9 +1,9 @@
-import '../env.js'
 import { Umzug } from 'umzug'
 import pg from 'pg'
 import { PostgresStorage } from './PostgresStorage.js'
+import { env } from '../env.js'
 
-const client = new pg.Client(process.env.DATABASE_URL)
+const client = new pg.Client(env.DATABASE_URL)
 client.connect()
 
 export const umzug = new Umzug({
