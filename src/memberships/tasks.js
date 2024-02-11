@@ -15,6 +15,11 @@ export async function runRefreshMembershipsTask() {
         await unlink(userId, groupId)
       }
     } catch (err) {
+      // bot was kicked from the group
+      // if (err.code === 403) {
+        // TODO: remove all links and the group
+      // }
+
       logger.error({ err, userId, groupId }, 'Could not refresh membership link, unlinking')
 
       try {

@@ -12,6 +12,8 @@ RUN npm ci --omit=optional
 
 COPY . .
 
+RUN touch .env
+
 RUN set -ex; \
   chmod +x ./docker/wait-for; \
   chmod +x ./docker/entrypoint

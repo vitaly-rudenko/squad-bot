@@ -33,13 +33,20 @@ services:
       PORT: "3000"
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
       REDIS_URL: "redis://sb_redis:6379"
-      LOG_LEVEL: "info"
-      DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
+      # security
       TOKEN_SECRET: "$TOKEN_SECRET"
       CORS_ORIGIN: "$CORS_ORIGIN"
+      # telegram
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
       WEB_APP_URL: "$WEB_APP_URL"
       WEB_APP_NAME: "$WEB_APP_NAME"
+      # logging
+      LOG_LEVEL: "info"
+      DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
+      # testing
+      LOG_DATABASE_QUERIES: "$LOG_DATABASE_QUERIES"
+      USE_TEST_MODE: "$USE_TEST_MODE"
+      DISABLE_MEMBERSHIP_REFRESH_TASK: "$DISABLE_MEMBERSHIP_REFRESH_TASK"
     volumes:
       - "./files:/app/files"
     networks:
