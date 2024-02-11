@@ -15,9 +15,11 @@ export class ReceiptsPostgresStorage {
    * @returns {Promise<import('./types').Receipt>}
    */
   async create(receipt, receiptPhoto) {
+    const hasPhoto = receiptPhoto !== undefined
+
     const response = await this._client.query(`
-      INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO receipts (id, created_at, payer_id, amount, description, photo, mime, has_photo)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id;
     `, [
       generateId(),
@@ -27,11 +29,12 @@ export class ReceiptsPostgresStorage {
       receipt.description,
       receiptPhoto?.binary,
       receiptPhoto?.mime,
+      hasPhoto,
     ])
 
     return {
       id: response.rows[0]['id'],
-      hasPhoto: receiptPhoto !== undefined,
+      hasPhoto,
       ...receipt,
     }
   }
@@ -42,14 +45,15 @@ export class ReceiptsPostgresStorage {
    */
   async update(receipt, receiptPhoto) {
     if (receiptPhoto !== undefined) {
-      const binary = receiptPhoto === 'delete' ? null : receiptPhoto.binary
-      const mime = receiptPhoto === 'delete' ? null : receiptPhoto.mime
+      const binary = receiptPhoto === 'delete' ? undefined : receiptPhoto.binary
+      const mime = receiptPhoto === 'delete' ? undefined : receiptPhoto.mime
+      const hasPhoto = receiptPhoto !== 'delete'
 
       await this._client.query(`
         UPDATE receipts
-        SET payer_id = $2, amount = $3, description = $4, photo = $5, mime = $6
+        SET payer_id = $2, amount = $3, description = $4, photo = $5, mime = $6, has_photo = $7
         WHERE id = $1;
-      `, [receipt.id, receipt.payerId, receipt.amount, receipt.description, binary, mime])
+      `, [receipt.id, receipt.payerId, receipt.amount, receipt.description, binary, mime, hasPhoto])
     } else {
       await this._client.query(`
         UPDATE receipts
@@ -154,10 +158,10 @@ export class ReceiptsPostgresStorage {
       Number.isInteger(offset) && `OFFSET ${offset}`
     ].filter(Boolean).join(' ')
 
+    // TODO: make "has_photo" a column included into the index to improve performance
     const response = await this._client.query(`
       SELECT${isDistinct ? ' DISTINCT' : ''} r.id
-        , r.created_at, r.payer_id, r.amount, r.description
-        , (CASE WHEN r.photo IS NULL THEN FALSE ELSE TRUE END) as has_photo
+        , r.created_at, r.payer_id, r.amount, r.description, r.has_photo
       FROM receipts r ${joinClause} ${whereClause} ${paginationClause}
       ORDER BY created_at DESC;
     `, variables)
