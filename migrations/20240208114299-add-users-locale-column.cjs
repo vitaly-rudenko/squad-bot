@@ -3,7 +3,7 @@ module.exports = {
   async up({ context: db }) {
     await db.query(`
       ALTER TABLE users
-      ADD COLUMN locale LOCALE NOT NULL DEFAULT 'uk';
+      ADD COLUMN locale LOCALE NOT NULL DEFAULT 'en';
     `)
   },
 
