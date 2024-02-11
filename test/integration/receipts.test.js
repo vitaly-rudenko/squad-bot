@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
-import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getReceiptPhoto, expectReceiptToShallowEqual, getReceipt, deleteReceipt, getDebts, NO_DEBTS } from './helpers.js'
+import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getReceiptPhoto, expectReceiptToShallowEqual, getReceipt, deleteReceipt, getDebts, NO_DEBTS, createUser } from './helpers.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -18,7 +18,7 @@ const updatedReceiptPhotoBuffer = fs.readFileSync(
 describe('[receipts]', () => {
   describe('POST /receipts', () => {
     it('should upload & return receipt photo', async () => {
-      const [user] = await createUsers(1)
+      const user = await createUser()
 
       await createReceipt(user.id, {
         [user.id]: 1,
@@ -33,7 +33,7 @@ describe('[receipts]', () => {
     })
 
     it('should return 404 when there is no receipt photo', async () => {
-      const [user] = await createUsers(1)
+      const user = await createUser()
 
       const { id: receiptId } = await createReceipt(user.id, { [user.id]: 1 })
       const response = await getReceiptPhoto(receiptId)
@@ -42,7 +42,7 @@ describe('[receipts]', () => {
     })
 
     it('should keep original date and ID of receipt when updated', async () => {
-      const [user] = await createUsers(1)
+      const user = await createUser()
 
       const { id: receiptId } = await createReceipt(user.id, { [user.id]: 10 })
 

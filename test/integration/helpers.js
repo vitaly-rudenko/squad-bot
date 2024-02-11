@@ -120,7 +120,7 @@ export async function getReceipts(userId) {
   return await response.json()
 }
 
-/** @returns {string} */
+/** @returns {Promise<string>} */
 export async function getAuthToken(temporaryAuthToken) {
   const response = await fetch(`${TEST_API_URL}/authenticate?token=${temporaryAuthToken}`)
 

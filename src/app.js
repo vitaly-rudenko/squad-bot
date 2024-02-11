@@ -101,7 +101,7 @@ async function start() {
     usersCache: createRedisCache('users', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
     generateTemporaryAuthToken: createTemporaryAuthTokenGenerator({
       tokenSecret,
-      expiresInSeconds: env.USE_TEST_MODE ? 60 : 5 * 60,
+      expiresInMs: env.USE_TEST_MODE ? 60_000 : 5 * 60_000,
     }),
   })
 

@@ -1,4 +1,3 @@
-import { AlreadyExistsError } from '../common/errors.js'
 import { isDefined } from '../common/utils.js'
 
 export class RollCallsPostgresStorage {
@@ -12,30 +11,22 @@ export class RollCallsPostgresStorage {
    * @returns {Promise<import('./types.js').RollCall>}
    */
   async create(input) {
-    try {
-      const response = await this._client.query(`
-        INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, sort_order)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id;
-      `, [
-        input.groupId,
-        input.messagePattern,
-        input.usersPattern === '*' ? undefined : input.usersPattern,
-        input.excludeSender,
-        input.pollOptions.length > 0 ? input.pollOptions : undefined,
-        input.sortOrder,
-      ])
+    const response = await this._client.query(`
+      INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, sort_order)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id;
+    `, [
+      input.groupId,
+      input.messagePattern,
+      input.usersPattern === '*' ? undefined : input.usersPattern,
+      input.excludeSender,
+      input.pollOptions.length > 0 ? input.pollOptions : undefined,
+      input.sortOrder,
+    ])
 
-      return {
-        id: response.rows[0].id,
-        ...input,
-      }
-    } catch (err) {
-      if (String(err.code) === '23505') {
-        throw new AlreadyExistsError()
-      } else {
-        throw err
-      }
+    return {
+      id: response.rows[0].id,
+      ...input,
     }
   }
 

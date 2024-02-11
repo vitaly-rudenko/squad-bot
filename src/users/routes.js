@@ -2,6 +2,7 @@ import Router from 'express-promise-router'
 import { optional } from 'superstruct'
 import { groupIdSchema } from '../common/schemas.js'
 import { registry } from '../registry.js'
+import { querySchema } from './schemas.js'
 
 export function createUsersRouter() {
   const {
@@ -17,15 +18,18 @@ export function createUsersRouter() {
   })
 
   router.get('/users', async (req, res) => {
+    const query = optional(querySchema).create(req.query.query)
+
     const groupId = optional(groupIdSchema).create(req.query.group_id)
     if (groupId) {
+      // TODO: use a join
       const userIds = await membershipStorage.findUserIdsByGroupId(groupId)
-      const users = await usersStorage.findByIds(userIds)
+      const users = await usersStorage.find({ ids: userIds, query })
       res.json(users)
       return
     }
 
-    const users = await usersStorage.findAll()
+    const users = await usersStorage.find({ query, allowDeprecatedNoConditions: true })
     res.json(users)
   })
 

@@ -14,21 +14,16 @@ export class UsersPostgresStorage {
     `, [user.id, user.username, user.name, user.locale])
   }
 
-  /** @deprecated */
-  async findAll() {
-    return this._find({ allowDeprecatedNoConditions: true })
-  }
-
   /** @param {string} id */
   async findById(id) {
-    const users = await this._find({ ids: [id], limit: 1 })
+    const users = await this.find({ ids: [id], limit: 1 })
     return users.at(0)
   }
 
   /** @param {string[]} ids */
   async findByIds(ids) {
     if (ids.length === 0) return []
-    return this._find({ ids })
+    return this.find({ ids })
   }
 
   /**
@@ -42,38 +37,47 @@ export class UsersPostgresStorage {
 
   /**
    * @param {{
-   *   ids?: string[],
-   *   limit?: number,
-   *   offset?: number,
+   *   query?: string
+   *   ids?: string[]
+   *   limit?: number
+   *   offset?: number
    *   allowDeprecatedNoConditions?: boolean
    * }} options
    */
-  async _find({ ids, limit, offset, allowDeprecatedNoConditions = false } = {}) {
+  async find({ query, ids, limit = 100, offset = 0, allowDeprecatedNoConditions } = {}) {
     const conditions = []
     const variables = []
+
+    if (query !== undefined) {
+      if (query.length < 3) {
+        throw new Error('"query" cannot be shorter than 3 characters')
+      }
+
+      conditions.push(`u.name ILIKE $${variables.length + 1}`)
+      variables.push(`%${query}%`)
+    }
 
     if (ids && Array.isArray(ids)) {
       if (ids.length === 0) {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`u.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...ids)
+      conditions.push(`u.id = ($${variables.length + 1})`)
+      variables.push(ids.length === 1 ? ids[0] : ids)
     }
 
     if (conditions.length === 0 && !allowDeprecatedNoConditions) {
       throw new Error('No conditions were provided for the search')
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
-    const paginationClause = [
-      Number.isInteger(limit) && `LIMIT ${limit}`,
-      Number.isInteger(offset) && `OFFSET ${offset}`
-    ].filter(Boolean).join(' ')
+    const whereClause = conditions.length > 0
+      ? `WHERE (${conditions.join(') AND (')})`
+      : ''
 
     const response = await this._client.query(`
       SELECT u.id, u.name, u.username, u.locale
-      FROM users u ${whereClause} ${paginationClause};
+      FROM users u ${whereClause}
+      LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
     return response.rows.map(row => deserializeUser(row))
