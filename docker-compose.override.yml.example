@@ -1,8 +1,17 @@
 version: '3.7'
 services:
+  # sb_nginx:
+    # profiles:
+      # - donotstart
+
   sb_app:
-  #   profiles:
-  #     - donotstart
+    # profiles:
+    #   - donotstart
+    environment:
+      # testing
+      LOG_DATABASE_QUERIES: "$LOG_DATABASE_QUERIES"
+      USE_TEST_MODE: "$USE_TEST_MODE"
+      DISABLE_MEMBERSHIP_REFRESH_TASK: "$DISABLE_MEMBERSHIP_REFRESH_TASK"
     ports:
       - "3000:3000"
 
@@ -13,3 +22,7 @@ services:
   sb_redis:
     ports:
       - "6379:6379"
+
+  sb_certbot:
+    profiles:
+      - donotstart

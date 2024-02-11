@@ -43,10 +43,6 @@ services:
       # logging
       LOG_LEVEL: "info"
       DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
-      # testing
-      LOG_DATABASE_QUERIES: "$LOG_DATABASE_QUERIES"
-      USE_TEST_MODE: "$USE_TEST_MODE"
-      DISABLE_MEMBERSHIP_REFRESH_TASK: "$DISABLE_MEMBERSHIP_REFRESH_TASK"
     volumes:
       - "./files:/app/files"
     networks:
