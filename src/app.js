@@ -209,7 +209,23 @@ async function start() {
   // @ts-ignore
   app.use((err, req, res, next) => {
     if (!(err instanceof ApiError)) {
-      logger.error({ err, req }, 'Unhandled API error')
+      logger.error({
+        err,
+        req: {
+          url: req.url,
+          ...req.headers ? {
+              headers: {
+              ...req.headers,
+              ...typeof req.headers.authorization === 'string'
+                ? { authorization: req.headers.authorization.slice(0, 10) + '...' }
+                : undefined,
+            }
+          } : undefined,
+          ...Object.keys(req.params).length > 0 ? { params: req.params } : undefined,
+          ...Object.keys(req.query).length > 0 ? { query: req.query } : undefined,
+          ...req.body ? { body: req.body } : undefined,
+        }
+      }, 'Unhandled API error')
     }
 
     if (res.headersSent) return
