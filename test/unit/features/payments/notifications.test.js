@@ -27,11 +27,11 @@ describe('payments/notifications', () => {
         },
         action: 'create',
         editorId: editor.id,
-      }, /** @type {any} */ ({
+      }, {
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
-      }))
+      })
 
       const options = {
         disable_web_page_preview: true,
@@ -83,11 +83,11 @@ describe('payments/notifications', () => {
         },
         action: 'update',
         editorId: editor.id,
-      }, /** @type {any} */ ({
+      }, {
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
-      }))
+      })
 
       const options = {
         disable_web_page_preview: true,
@@ -140,11 +140,11 @@ describe('payments/notifications', () => {
           createdAt: new Date(),
         },
         editorId: editor.id,
-      }, /** @type {any} */ ({
+      }, {
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
-      }))
+      })
 
       const options = {
         disable_web_page_preview: true,

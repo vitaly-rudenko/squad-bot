@@ -115,7 +115,7 @@ export const withChatId = () => {
 
 /**
  * @param {Middleware[]} middlewares
- * @template {(context: T, next: Function) => any} Middleware
+ * @template {(context: T, next: Function) => unknown} Middleware
  * @template {import('telegraf').Context} T
  */
 export function wrap(...middlewares) {
@@ -138,7 +138,7 @@ export function wrap(...middlewares) {
   }
 }
 
-/** @param {import('../types.js').Dependencies} deps */
+/** @param {import('../types.js').Deps<'botInfo' | 'webAppName'>} deps */
 export function createWebAppUrlGenerator({ botInfo, webAppName }) {
   /** @param {string} command */
   return (command) => {

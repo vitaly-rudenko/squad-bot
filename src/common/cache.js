@@ -14,7 +14,7 @@ export class RedisCache {
 
   /**
    * @param {string} key
-   * @param {any} value
+   * @param {unknown} value
    * @returns {Promise<boolean>}
    */
   async set(key, value = true) {

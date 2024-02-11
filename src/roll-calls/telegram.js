@@ -18,7 +18,7 @@ export function createRollCallsFlow() {
     await context.reply(
       localize(locale, isGroup ? 'rollCalls.command.group' : 'rollCalls.command.private', {
         viewUrl: escapeMd(viewUrl),
-        ...createUrl && { createUrl: escapeMd(createUrl) },
+        ...createUrl ? { createUrl: escapeMd(createUrl) } : undefined,
       }),
       { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
     )
@@ -72,7 +72,7 @@ export function createRollCallsFlow() {
       return
     }
 
-    /** @param {any} user */
+    /** @param {import('../users/types').User} user */
     function formatMention(user) {
       if (user.username) {
         return localize(locale, 'rollCalls.mention.withUsername', {

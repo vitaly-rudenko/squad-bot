@@ -1,7 +1,8 @@
+import { localeFromLanguageCode } from '../localization/telegram.js'
 import { registry } from '../registry.js'
 
 export function useUsersFlow() {
-  const { usersStorage, localize } = registry.export()
+  const { usersStorage, usersCache, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const start = async (context) => {
@@ -9,12 +10,7 @@ export function useUsersFlow() {
 
     const { locale } = context.state
 
-    await usersStorage.store({
-      id: String(context.from.id),
-      name: context.from.first_name,
-      ...context.from.username && { username: context.from.username },
-      locale,
-    })
+    await registerTelegramUser(context.from, { usersStorage })
 
     await context.reply(
       localize(locale, 'users.command.start.message'),
@@ -22,7 +18,37 @@ export function useUsersFlow() {
     )
   }
 
-  return { start }
+  /**
+   * @param {import('telegraf').Context} context
+   * @param {Function} next
+   */
+  const useRegisterUser = async (context, next) => {
+    if (!context.from) return
+
+    const { userId } = context.state
+
+    if (!(await usersCache.has(userId))) {
+      await registerTelegramUser(context.from, { usersStorage })
+      await usersCache.set(userId)
+    }
+
+    return next()
+  }
+
+  return { start, useRegisterUser }
+}
+
+/**
+ * @param {import('telegraf/types').User} user
+ * @param {import('../types').Deps<'usersStorage'>} dependencies
+ */
+export async function registerTelegramUser(user, { usersStorage }) {
+  await usersStorage.store({
+    id: String(user.id),
+    name: user.first_name,
+    ...user.username ? { username: user.username } : undefined,
+    locale: localeFromLanguageCode(user.language_code),
+  })
 }
 
 export const withUserId = () => {

@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken'
 
 /**
- * @param {{ tokenSecret: string; useTestMode?: boolean }} input
+ * @param {{ tokenSecret: string; expiresInSeconds: number }} input
  * @returns {import('./types').GenerateTemporaryAuthToken}
  */
-export function createTemporaryAuthTokenGenerator({ tokenSecret, useTestMode = false }) {
+export function createTemporaryAuthTokenGenerator({ tokenSecret, expiresInSeconds }) {
   return (userId) => {
-    return jwt.sign({ userId }, tokenSecret, { expiresIn: useTestMode ? '1 minute' : '5 minutes' })
+    return jwt.sign({ userId }, tokenSecret, { expiresIn: expiresInSeconds })
   }
 }

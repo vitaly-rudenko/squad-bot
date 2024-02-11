@@ -1,4 +1,4 @@
-import { disableTelegramApi } from '../env.js'
+import { env } from '../env.js'
 import { logger } from '../common/logger.js'
 import { registry } from '../registry.js'
 import { escapeMd, isNotificationErrorIgnorable } from '../common/telegram.js'
@@ -11,6 +11,7 @@ import { deduplicateUsers } from '../users/utils.js'
  *   editorId: string
  *   receipt: import('./types.js').Receipt
  * }} input
+ * @param {import('../types').Deps<'localize' | 'debtsStorage' | 'usersStorage' | 'telegram' | 'generateWebAppUrl'>} deps
  */
 export async function sendReceiptSavedNotification(
   { action, editorId, receipt },
@@ -56,7 +57,7 @@ export async function sendReceiptSavedNotification(
     )
 
     try {
-      if (disableTelegramApi) continue
+      if (env.DISABLE_TELEGRAM_API) continue
       await telegram.sendMessage(Number(user.id), message, {
         parse_mode: 'MarkdownV2',
         disable_web_page_preview: true,
@@ -74,6 +75,7 @@ export async function sendReceiptSavedNotification(
  *   editorId: string
  *   receipt: import('./types.js').Receipt
  * }} input
+ * @param {import('../types').Deps<'localize' | 'usersStorage' | 'telegram' | 'debtsStorage'>} deps
  */
 export async function sendReceiptDeletedNotification(
   { editorId, receipt },
@@ -109,7 +111,7 @@ export async function sendReceiptDeletedNotification(
     )
 
     try {
-      if (disableTelegramApi) continue
+      if (env.DISABLE_TELEGRAM_API) continue
       await telegram.sendMessage(Number(user.id), message, {
         parse_mode: 'MarkdownV2',
         disable_web_page_preview: true,

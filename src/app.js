@@ -9,13 +9,11 @@ import express from 'express'
 import { Redis } from 'ioredis'
 
 import { RollCallsPostgresStorage } from './roll-calls/storage.js'
-import { useTestMode } from './env.js'
 import { logger } from './common/logger.js'
 import { createApiRouter } from './api.js'
 import { CardsPostgresStorage } from './cards/storage.js'
 import { createCardsFlow } from './cards/telegram.js'
 import { createRollCallsFlow } from './roll-calls/telegram.js'
-import { string } from 'superstruct'
 import { createTemporaryAuthTokenGenerator } from './auth/utils.js'
 import { createAuthFlow } from './auth/telegram.js'
 import { createCommonFlow, createWebAppUrlGenerator, requirePrivateChat, withChatId, withGroupChat, wrap } from './common/telegram.js'
@@ -28,19 +26,21 @@ import { createPaymentsFlow } from './payments/telegram.js'
 import { ApiError } from './common/errors.js'
 import { GroupsPostgresStorage } from './groups/storage.js'
 import { UsersPostgresStorage } from './users/storage.js'
-import { useUsersFlow, withUserId } from './users/telegram.js'
+import { registerTelegramUser, useUsersFlow, withUserId } from './users/telegram.js'
 import { runRefreshMembershipsTask, unlink } from './memberships/tasks.js'
 import { MembershipPostgresStorage } from './memberships/storage.js'
 import { registry } from './registry.js'
-import { localeFromLanguageCode, withLocale } from './localization/telegram.js'
+import { withLocale } from './localization/telegram.js'
 import { localize } from './localization/localize.js'
 import { ReceiptsPostgresStorage } from './receipts/storage.js'
 import { createReceiptsFlow } from './receipts/telegram.js'
 import { createRedisCache } from './common/cache.js'
+import { createGroupsFlow } from './groups/telegram.js'
+import { env } from './env.js'
 
 async function start() {
-  if (useTestMode) {
-    logger.warn('Test mode is enabled')
+  if (env.USE_TEST_MODE) {
+    logger.warn({}, 'Test mode is enabled')
   }
 
   registry.value('redis', new Redis(process.env.REDIS_URL || ''))
@@ -73,6 +73,9 @@ async function start() {
   process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
   registry.values({
+    webAppName: env.WEB_APP_NAME,
+    webAppUrl: env.WEB_APP_URL,
+    debugChatId: env.DEBUG_CHAT_ID,
     botInfo: await bot.telegram.getMe(),
     cardsStorage: new CardsPostgresStorage(pgClient),
     debtsStorage: new DebtsPostgresStorage(pgClient),
@@ -81,29 +84,25 @@ async function start() {
     receiptsStorage: new ReceiptsPostgresStorage(pgClient),
     rollCallsStorage: new RollCallsPostgresStorage(pgClient),
     telegram: bot.telegram,
-    telegramBotToken,
-    tokenSecret,
     usersStorage,
-    useTestMode,
     version: getAppVersion(),
-    webAppName: string().create(process.env.WEB_APP_NAME),
-    webAppUrl: string().create(process.env.WEB_APP_URL),
   })
 
   registry.create('generateWebAppUrl', (deps) => createWebAppUrlGenerator(deps))
 
   const membershipStorage = new MembershipPostgresStorage(pgClient)
-  const membershipCache = createRedisCache('memberships', useTestMode ? 60_000 : 60 * 60_000)
-
   const groupStorage = new GroupsPostgresStorage(pgClient)
-  const groupCache = createRedisCache('groups', useTestMode ? 60_000 : 60 * 60_000)
-
-  const usersCache = createRedisCache('users', useTestMode ? 60_000 : 60 * 60_000)
 
   registry.values({
     membershipStorage,
     groupStorage,
-    generateTemporaryAuthToken: createTemporaryAuthTokenGenerator({ tokenSecret, useTestMode }),
+    membershipCache: createRedisCache('memberships', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
+    groupCache: createRedisCache('groups', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
+    usersCache: createRedisCache('users', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
+    generateTemporaryAuthToken: createTemporaryAuthTokenGenerator({
+      tokenSecret,
+      expiresInSeconds: env.USE_TEST_MODE ? 60 : 5 * 60,
+    }),
   })
 
   bot.telegram.setMyCommands([
@@ -121,7 +120,7 @@ async function start() {
   })
 
   bot.use((context, next) => {
-    if (!useTestMode && context.from?.is_bot) return
+    if (!env.USE_TEST_MODE && context.from?.is_bot) return
     return next()
   })
 
@@ -138,13 +137,7 @@ async function start() {
 
       const userId = String(chatMember.id)
       try {
-        await usersStorage.store({
-          id: userId,
-          name: chatMember.first_name,
-          ...chatMember.username && { username: chatMember.username },
-          locale: localeFromLanguageCode(chatMember.language_code),
-        })
-
+        await registerTelegramUser(chatMember, { usersStorage })
         await membershipStorage.store(userId, chatId)
       } catch (err) {
         logger.error({ err, chatMember }, 'Could not register new chat member')
@@ -167,51 +160,13 @@ async function start() {
     }
   })
 
-  const { start } = useUsersFlow()
+  const { start, useRegisterUser } = useUsersFlow()
   bot.command('start', requirePrivateChat(), start)
 
-  bot.use(async (context, next) => {
-    if (!context.from) return
+  bot.use(useRegisterUser)
 
-    const { userId, locale } = context.state
-
-    if (!(await usersCache.has(userId))) {
-      await usersStorage.store({
-        id: userId,
-        name: context.from.first_name,
-        ...context.from.username && { username: context.from.username },
-        locale,
-      })
-
-      await usersCache.set(userId)
-    }
-
-    return next()
-  })
-
-  // TODO: is this efficient?
-  // TODO: also need to re-arrange commands to avoid this middleware to be executed unnecessarily
-  bot.use(wrap(withGroupChat(), async (context, next) => {
-    const { userId, chatId } = context.state
-
-    if (!(await groupCache.has(chatId))) {
-      await groupStorage.store({
-        id: chatId,
-        title: (context.chat && 'title' in context.chat)
-          ? context.chat.title
-          : '',
-      })
-
-      await groupCache.set(chatId)
-    }
-
-    if (!(await membershipCache.has(`${userId}_${chatId}`))) {
-      await membershipStorage.store(userId, chatId)
-      await membershipCache.set(`${userId}_${chatId}`)
-    }
-
-    return next()
-  }))
+  const { useRegisterGroupAndMembership } = createGroupsFlow()
+  bot.use(useRegisterGroupAndMembership)
 
   const { cards } = createCardsFlow()
   bot.command('cards', cards)
@@ -268,8 +223,8 @@ async function start() {
       res.status(err.status).json({
         error: {
           code: err.code,
-          ...err.message && { message: err.message },
-          ...err.context && { context: err.context },
+          ...err.message ? { message: err.message } : undefined,
+          ...err.context ? { context: err.context } : undefined,
         }
       })
     } else {

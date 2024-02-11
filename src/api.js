@@ -11,6 +11,7 @@ import { createGroupsRouter } from './groups/routes.js'
 import { createUsersRouter } from './users/routes.js'
 import { registry } from './registry.js'
 import { createPublicReceiptsRouter, createReceiptsRouter } from './receipts/routes.js'
+import { env } from './env.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -23,8 +24,6 @@ export function createApiRouter() {
     botInfo,
     groupStorage,
     membershipStorage,
-    tokenSecret,
-    useTestMode,
   } = registry.export()
 
   const router = Router()
@@ -41,7 +40,7 @@ export function createApiRouter() {
 
   router.use(createPublicReceiptsRouter())
 
-  if (useTestMode) {
+  if (env.USE_TEST_MODE) {
     router.post('/memberships', async (req, res) => {
       const { userId, groupId, title } = createMembershipSchema.create(req.body)
 
@@ -56,7 +55,7 @@ export function createApiRouter() {
     })
   }
 
-  router.use(createAuthMiddleware({ tokenSecret }))
+  router.use(createAuthMiddleware({ tokenSecret: env.TOKEN_SECRET }))
 
   router.use(
     createUsersRouter(),

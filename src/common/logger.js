@@ -1,13 +1,13 @@
 import path from 'path'
 import { pino } from 'pino'
 import { fileURLToPath } from 'url'
-import { logLevel } from '../env.js'
+import { env } from '../env.js'
 import { string } from 'superstruct'
 
-console.log('Log level:', logLevel)
+console.log('Log level:', env.LOG_LEVEL)
 
 export const logger = pino({
-  level: logLevel,
+  level: env.LOG_LEVEL,
   transport: {
     targets: [{
       level: 'error',
@@ -17,7 +17,7 @@ export const logger = pino({
         debugChatId: string().create(process.env.DEBUG_CHAT_ID),
       },
     }, {
-      level: logLevel,
+      level: 'trace',
       target: 'pino-pretty',
       options: {
         colorize: true,

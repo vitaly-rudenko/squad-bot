@@ -7,6 +7,7 @@ import { createUser, createUsersStorage } from '../../helpers/users.js'
 import { localizeMock } from '../../helpers/localization.js'
 import { createDebt, createDebtsStorage } from '../../helpers/debts.js'
 import { escapeMd } from '../../../../src/common/telegram.js'
+import { generateWebAppUrlMock } from '../../helpers/common.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -29,7 +30,7 @@ describe('receipts/notifications', () => {
         },
         action: 'create',
         editorId: editor.id,
-      }, /** @type {any} */ ({
+      }, {
         localize: localizeMock,
         debtsStorage: createDebtsStorage([
           createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
@@ -37,8 +38,8 @@ describe('receipts/notifications', () => {
         ]),
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
-        generateWebAppUrl: (/** @type {any[]} */...args) => `web-app-url(${args.join(', ')})`,
-      }))
+        generateWebAppUrl: generateWebAppUrlMock,
+      })
 
       const options = {
         disable_web_page_preview: true,
@@ -103,7 +104,7 @@ describe('receipts/notifications', () => {
         },
         action: 'update',
         editorId: editor.id,
-      }, /** @type {any} */ ({
+      }, {
         localize: localizeMock,
         debtsStorage: createDebtsStorage([
           createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
@@ -111,8 +112,8 @@ describe('receipts/notifications', () => {
         ]),
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
-        generateWebAppUrl: (/** @type {any[]} */...args) => `web-app-url(${args.join(', ')})`,
-      }))
+        generateWebAppUrl: generateWebAppUrlMock,
+      })
 
       const options = {
         disable_web_page_preview: true,
@@ -178,7 +179,7 @@ describe('receipts/notifications', () => {
           description: 'Hello world!',
         },
         editorId: editor.id,
-      }, /** @type {any} */ ({
+      }, {
         localize: localizeMock,
         debtsStorage: createDebtsStorage([
           createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
@@ -186,7 +187,7 @@ describe('receipts/notifications', () => {
         ]),
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
-      }))
+      })
 
       const options = {
         disable_web_page_preview: true,

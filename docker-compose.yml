@@ -38,7 +38,6 @@ services:
       WEB_APP_NAME: "$WEB_APP_NAME"
       CORS_ORIGIN: "$CORS_ORIGIN"
       PORT: "$PORT"
-      USE_NATIVE_ENV: "true"
       DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
       REDIS_URL: "redis://sb_redis:6379"
     networks:

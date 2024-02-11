@@ -7,6 +7,7 @@ import { NotAuthenticatedError, NotFoundError } from '../common/errors.js'
 import { ApiError } from '../common/errors.js'
 import { registry } from '../registry.js'
 import { createRedisCache } from '../common/cache.js'
+import { env } from '../env.js'
 
 export const temporaryAuthTokenSchema = nonempty(string())
 export const temporaryAuthTokenPayloadSchema = type({ userId: userIdSchema })
@@ -22,16 +23,11 @@ export const authTokenSchema = type({
 })
 
 export function createAuthRouter() {
-  const {
-    telegramBotToken,
-    tokenSecret,
-    usersStorage,
-    useTestMode,
-  } = registry.export()
+  const { usersStorage } = registry.export()
 
   const router = Router()
 
-  const temporaryAuthTokenCache = createRedisCache('tokens', useTestMode ? 60_000 : 5 * 60_000)
+  const temporaryAuthTokenCache = createRedisCache('tokens', env.USE_TEST_MODE ? 60_000 : 5 * 60_000)
 
   router.get('/authenticate', async (req, res) => {
     const temporaryAuthToken = temporaryAuthTokenSchema.create(req.query['token'])
@@ -44,7 +40,8 @@ export function createAuthRouter() {
 
     let userId
     try {
-      ({ userId } = temporaryAuthTokenPayloadSchema.create(jwt.verify(temporaryAuthToken, tokenSecret)))
+      ({ userId } = temporaryAuthTokenPayloadSchema
+        .create(jwt.verify(temporaryAuthToken, env.TOKEN_SECRET)))
     } catch (error) {
       throw new ApiError({
         code: 'INVALID_TEMPORARY_AUTH_TOKEN',
@@ -65,7 +62,7 @@ export function createAuthRouter() {
           username: user.username,
           locale: user.locale,
         }
-      }, tokenSecret)
+      }, env.TOKEN_SECRET)
     )
   })
 
@@ -73,7 +70,7 @@ export function createAuthRouter() {
     try {
       const { initData } = authenticateWebAppSchema.create(req.body)
 
-      if (!checkWebAppSignature(telegramBotToken, initData)) {
+      if (!checkWebAppSignature(env.TELEGRAM_BOT_TOKEN, initData)) {
         throw new ApiError({
           code: 'INVALID_SIGNATURE',
           status: 400,
@@ -99,8 +96,9 @@ export function createAuthRouter() {
           id: user.id,
           name: user.name,
           username: user.username,
+          locale: user.locale,
         }
-      }, tokenSecret))
+      }, env.TOKEN_SECRET))
     } catch (error) {
       console.warn(error)
       next(error)
