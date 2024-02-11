@@ -158,7 +158,6 @@ export class ReceiptsPostgresStorage {
       Number.isInteger(offset) && `OFFSET ${offset}`
     ].filter(Boolean).join(' ')
 
-    // TODO: make "has_photo" a column included into the index to improve performance
     const response = await this._client.query(`
       SELECT${isDistinct ? ' DISTINCT' : ''} r.id
         , r.created_at, r.payer_id, r.amount, r.description, r.has_photo

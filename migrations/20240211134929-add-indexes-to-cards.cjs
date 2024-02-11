@@ -5,11 +5,13 @@ module.exports = {
       await db.query(`
         BEGIN;
 
-        CREATE INDEX cards_user_id_idx
-          ON cards (user_id);
-
+        -- unique index
         CREATE UNIQUE INDEX cards_unique_idx
           ON cards (user_id, number);
+
+        -- search by user
+        CREATE INDEX cards_user_id_idx
+          ON cards (user_id);
 
         COMMIT;
       `)

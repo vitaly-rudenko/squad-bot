@@ -5,11 +5,11 @@ module.exports = {
       await db.query(`
         BEGIN;
 
-        CREATE INDEX payments_deleted_at_from_user_id_idx
+        CREATE INDEX payments_from_user_id_idx
           ON payments (from_user_id, deleted_at)
           INCLUDE (amount);
 
-        CREATE INDEX payments_deleted_at_to_user_id_idx
+        CREATE INDEX payments_to_user_id_idx
           ON payments (to_user_id, deleted_at)
           INCLUDE (amount);
 
@@ -27,8 +27,8 @@ module.exports = {
       await db.query(`
         BEGIN;
 
-        DROP INDEX payments_deleted_at_to_user_id_idx;
-        DROP INDEX payments_deleted_at_from_user_id_idx;
+        DROP INDEX payments_to_user_id_idx;
+        DROP INDEX payments_from_user_id_idx;
 
         COMMIT;
       `)

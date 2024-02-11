@@ -9,16 +9,16 @@ module.exports = {
         ALTER TABLE debts DROP CONSTRAINT debts_pkey;
         ALTER TABLE debts DROP COLUMN id;
 
-        CREATE UNIQUE INDEX debts_pkey
+        CREATE UNIQUE INDEX debts_unique_idx
           ON debts (receipt_id, debtor_id, deleted_at)
           WHERE deleted_at IS NULL;
 
-        -- search debts by receipt
+        -- search by receipt
         CREATE INDEX debts_receipt_id_idx
           ON debts (receipt_id, deleted_at);
 
         -- aggregate debts
-        CREATE INDEX debts_debtor_id_receipt_id_idx
+        CREATE INDEX debts_debtor_id_idx
           ON debts (debtor_id, deleted_at)
           INCLUDE (amount);
 
@@ -36,12 +36,11 @@ module.exports = {
       await db.query(`
         BEGIN;
 
-        DROP INDEX debts_debtor_id_receipt_id_idx;
+        DROP INDEX debts_debtor_id_idx;
         DROP INDEX debts_receipt_id_idx;
-        DROP INDEX debts_pkey;
+        DROP INDEX debts_unique_idx;
 
         ALTER TABLE debts ADD COLUMN id SERIAL PRIMARY KEY;
-        ALTER TABLE debts ADD CONSTRAINT debts_pkey PRIMARY KEY (id);
 
         COMMIT;
       `)
