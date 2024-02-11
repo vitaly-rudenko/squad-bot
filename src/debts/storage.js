@@ -4,12 +4,24 @@ export class DebtsPostgresStorage {
     this._client = client
   }
 
-  /** @param {Omit<import('./types').Debt, 'id'>} input */
-  async store(input) {
+  /** @param {import('./types').Debt[]} inputs */
+  async store(inputs) {
+    if (inputs.length <= 0 || inputs.length > 100) {
+      throw new Error('Cannot store less than 1 or more than 100 debts at once')
+    }
+
+    const values = []
+    const variables = []
+
+    for (const input of inputs) {
+      values.push(`($${variables.length + 1}, $${variables.length + 2}, $${variables.length + 3})`)
+      variables.push(input.debtorId, input.receiptId, input.amount)
+    }
+
     await this._client.query(`
       INSERT INTO debts (debtor_id, receipt_id, amount)
-      VALUES ($1, $2, $3);
-    `, [input.debtorId, input.receiptId, input.amount])
+      VALUES ${values.join(', ')};
+    `, variables)
   }
 
   /** @param {string} receiptId */
@@ -120,7 +132,6 @@ export class DebtsPostgresStorage {
  */
 export function deserializeDebt(row) {
   return {
-    id: row['id'],
     debtorId: row['debtor_id'],
     receiptId: row['receipt_id'],
     amount: row['amount'],

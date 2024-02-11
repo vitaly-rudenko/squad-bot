@@ -1,4 +1,4 @@
-import { object, coerce, array, string, optional, size, trimmed } from 'superstruct'
+import { object, coerce, array, string, optional, size, trimmed, any, type, union, literal } from 'superstruct'
 import { userIdSchema, amountSchema, stringifiedBooleanSchema } from '../common/schemas.js'
 
 export const debtSchema = object({
@@ -22,4 +22,9 @@ export const saveReceiptSchema = object({
   amount: amountSchema,
   debts: size(debtsSchema, 1, 10),
   leave_photo: optional(stringifiedBooleanSchema),
+})
+
+export const photoSchema = type({
+  buffer: any(),
+  mimetype: union([literal('image/jpeg'), literal('image/png')]),
 })

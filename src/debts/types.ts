@@ -1,5 +1,4 @@
 export type Debt = {
-  id: string
   debtorId: string
   receiptId: string
   amount: number

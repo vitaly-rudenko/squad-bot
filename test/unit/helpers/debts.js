@@ -38,7 +38,6 @@ export function createDebtsStorage(debts) {
  */
 export function createDebt(debt) {
   return {
-    id: chance.guid(),
     amount: chance.integer({ min: 1, max: 1000 }),
     debtorId: chance.guid(),
     receiptId: chance.guid(),

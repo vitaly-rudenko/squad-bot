@@ -1,13 +1,13 @@
+import type { Infer } from 'superstruct'
+import type { photoSchema } from './schemas'
+
 export type Receipt = {
   id: string
   payerId: string
   amount: number
   description?: string
-  hasPhoto: boolean
+  photoFilename?: string
   createdAt: Date
 }
 
-export type ReceiptPhoto = {
-  binary: Buffer
-  mime: string
-}
+export type Photo = Infer<typeof photoSchema>

@@ -1,10 +1,14 @@
+import fs from 'fs/promises'
 import multer from 'multer'
 import Router from 'express-promise-router'
 import { NotFoundError } from '../common/errors.js'
 import { ApiError } from '../common/errors.js'
 import { registry } from '../registry.js'
 import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from './notifications.js'
-import { saveReceiptSchema } from './schemas.js'
+import { photoSchema, saveReceiptSchema } from './schemas.js'
+import { optional, refine, size, string } from 'superstruct'
+import { deletePhoto, generateRandomPhotoFilename, savePhoto } from './filesystem.js'
+import path from 'path'
 
 export function createReceiptsRouter() {
   const {
@@ -13,9 +17,15 @@ export function createReceiptsRouter() {
   } = registry.export()
 
   const router = Router()
-  const upload = multer()
+  const upload = multer({
+    limits: {
+      fileSize: 300_000, // 300 kb
+    },
+  })
 
-  // TODO: split into POST / PATCH
+  // TODO: update debts in the same transaction as the receipt
+  // TODO: handle photos as streams, perhaps in a separate endpoint
+  // TODO: split into POST / PATCH?
   router.post('/receipts', upload.single('photo'), async (req, res) => {
     if (req.file && req.file.size > 300_000) { // 300 kb
       throw new ApiError({
@@ -30,34 +40,41 @@ export function createReceiptsRouter() {
       payer_id: payerId,
       description,
       amount,
-      debts,
+      debts: debtsWithoutReceiptId,
       leave_photo: leavePhoto,
     } = saveReceiptSchema.create(req.body)
 
-    const binary = req.file?.buffer
-    const mime = req.file?.mimetype
+    const photo = optional(photoSchema).create(req.file)
 
-    const receiptPhoto = (binary && mime)
-      ? { binary, mime }
-      : leavePhoto ? undefined : 'delete'
+    if (leavePhoto && (photo || !id)) {
+      throw new ApiError({
+        code: 'LEAVE_PHOTO_CONFLICT',
+        status: 400,
+        message: 'Cannot leave photo and upload a new one at the same time or when creating a new receipt',
+      })
+    }
+
+    const photoFilename = photo ? generateRandomPhotoFilename(photo.mimetype) : undefined
 
     /** @type {import('./types').Receipt} */
     let receipt
     if (id) {
-      const existingReceipt = await receiptsStorage.findById(id)
-      if (!existingReceipt) {
+      receipt = /** @type {import('./types').Receipt} */ (await receiptsStorage.findById(id))
+      if (!receipt) {
         throw new NotFoundError()
       }
 
-      receipt = existingReceipt
+      if (receipt.photoFilename && (photo || !leavePhoto)) {
+        await deletePhoto(receipt.photoFilename)
+      }
 
       await receiptsStorage.update({
         id,
         payerId,
         amount,
         description,
-        createdAt: new Date(),
-      }, receiptPhoto)
+        photoFilename: leavePhoto ? receipt.photoFilename : photoFilename,
+      })
 
       await debtsStorage.deleteByReceiptId(id)
     } else {
@@ -65,17 +82,21 @@ export function createReceiptsRouter() {
         payerId,
         amount,
         description,
+        photoFilename,
         createdAt: new Date(),
-      }, receiptPhoto === 'delete' ? undefined : receiptPhoto)
+      })
     }
 
-    // TODO: store in bulk
-    for (const debt of debts) {
-      await debtsStorage.store({
-        receiptId: receipt.id,
-        debtorId: debt.debtorId,
-        amount: debt.amount,
-      })
+    const debts = debtsWithoutReceiptId.map(debt => ({
+      receiptId: receipt.id,
+      debtorId: debt.debtorId,
+      amount: debt.amount,
+    }))
+
+    await debtsStorage.store(debts)
+
+    if (photo && photoFilename) {
+      await savePhoto(photoFilename, photo)
     }
 
     await sendReceiptSavedNotification({
@@ -84,12 +105,7 @@ export function createReceiptsRouter() {
       receipt,
     })
 
-    res.json(
-      formatReceipt(
-        receipt,
-        await debtsStorage.findByReceiptId(receipt.id)
-      )
-    )
+    res.json(formatReceipt(receipt, debts))
   })
 
   router.get('/receipts', async (req, res) => {
@@ -119,6 +135,10 @@ export function createReceiptsRouter() {
       throw new NotFoundError()
     }
 
+    if (receipt.photoFilename) {
+      await deletePhoto(receipt.photoFilename)
+    }
+
     await debtsStorage.deleteByReceiptId(receiptId)
     await receiptsStorage.deleteById(receiptId)
 
@@ -131,19 +151,33 @@ export function createReceiptsRouter() {
 }
 
 export function createPublicReceiptsRouter() {
-  const { receiptsStorage } = registry.export()
-
   const router = Router()
 
-  router.get('/receipts/:receiptId/photo', async (req, res) => {
-    const receiptId = req.params.receiptId
+  const photoFilenameRegex = /^[a-zA-Z0-9]{8,32}\.(jpg|png)$/
+  const photoFilenameSchema = refine(size(string(), 8, 64), 'photoFilename', (value) => photoFilenameRegex.test(value))
 
-    const receiptPhoto = await receiptsStorage.getReceiptPhoto(receiptId)
-    if (!receiptPhoto) {
+  router.get('/photos/:photoFilename', async (req, res) => {
+    let photoPath
+    try {
+      photoPath = path.resolve('files', 'photos', photoFilenameSchema.create(req.params.photoFilename))
+    } catch (error) {
       throw new NotFoundError()
     }
 
-    res.contentType(receiptPhoto.mime).send(receiptPhoto.binary).end()
+    try {
+      await fs.access(photoPath)
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        throw new NotFoundError()
+      }
+
+      throw error
+    }
+
+    // TODO: maybe file access check can be moved here?
+    res
+      .contentType(photoPath.endsWith('.jpg') ? 'image/jpeg' : 'image/png')
+      .sendFile(photoPath)
   })
 
   return router
@@ -160,7 +194,7 @@ function formatReceipt(receipt, debts) {
     payerId: receipt.payerId,
     amount: receipt.amount,
     description: receipt.description,
-    hasPhoto: receipt.hasPhoto,
+    photoFilename: receipt.photoFilename,
     debts: debts
       .filter(debt => debt.receiptId === receipt.id)
       .map(debt => ({

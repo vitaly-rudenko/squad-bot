@@ -4,6 +4,8 @@ import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import { uniqueNamesGenerator, names } from 'unique-names-generator'
 import { env } from '../../src/env.js'
+import path from 'path'
+import fs from 'fs/promises'
 
 const TEST_API_URL = 'http://localhost:3000'
 const nameConfig = {
@@ -80,7 +82,7 @@ export async function createReceipt(payerId, debts, {
 
   const body = new FormData()
   body.set('payer_id', payerId)
-  body.set('amount', amount)
+  body.set('amount', String(amount))
   body.set('debts', JSON.stringify(debts))
 
   if (receiptId) {
@@ -94,8 +96,9 @@ export async function createReceipt(payerId, debts, {
   if (leavePhoto) {
     body.set('leave_photo', 'true')
   } else if (photo) {
-    const photoFile = new File([photo], 'photo.jpg', { type: mime })
-    body.set('photo', photoFile, 'photo.jpg')
+    const filename = mime === 'image/jpeg' ? 'photo.jpg' : 'photo.png'
+    const photoFile = new File([photo], filename, { type: mime })
+    body.set('photo', photoFile, filename)
   }
 
   const response = await fetch(`${TEST_API_URL}/receipts`, {
@@ -147,9 +150,9 @@ export async function deleteReceipt(receiptId, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../src/receipts/types').ReceiptPhoto>} */
-export async function getReceiptPhoto(receiptId) {
-  const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}/photo`)
+/** @returns {Promise<{ binary: ArrayBufferLike; mime: string }>} */
+export async function getPhoto(photoFilename) {
+  const response = await fetch(`${TEST_API_URL}/photos/${photoFilename}`)
 
   if (response.status !== 200) {
     return response
@@ -158,6 +161,18 @@ export async function getReceiptPhoto(receiptId) {
   return {
     mime: response.headers.get('Content-Type'),
     binary: await response.arrayBuffer(),
+  }
+}
+
+export async function doesPhotoExist(photoFilename) {
+  try {
+    await fs.access(path.resolve('files', 'photos', photoFilename))
+    return true
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw error
+    }
+    return false
   }
 }
 
@@ -170,10 +185,13 @@ export function expectReceiptsToEqual(receipts1, receipts2) {
 }
 
 export function expectReceiptToShallowEqual(receipt1, receipt2) {
-  const { id, createdAt, ...receipt } = receipt1
+  const { id, createdAt, photoFilename, ...shallowReceipt1 } = receipt1
+  const { photoFilename: photoFilename2, ...shallowReceipt2 } = receipt2
+
   expect(id).to.be.a.string
+  expect((photoFilename !== undefined) === (photoFilename2 !== undefined)).to.be.true
   expect(Date.parse(createdAt)).to.be.greaterThanOrEqual(Date.now() - 10000)
-  expect(receipt).to.deep.equalInAnyOrder(receipt2)
+  expect(shallowReceipt1).to.deep.equalInAnyOrder(shallowReceipt2)
 }
 
 export function createAuthorizationHeader({

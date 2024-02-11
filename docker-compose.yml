@@ -40,6 +40,8 @@ services:
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
       WEB_APP_URL: "$WEB_APP_URL"
       WEB_APP_NAME: "$WEB_APP_NAME"
+    volumes:
+      - "./files:/app/files"
     networks:
       - "sb_network"
 

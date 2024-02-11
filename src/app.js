@@ -37,6 +37,7 @@ import { createReceiptsFlow } from './receipts/telegram.js'
 import { createRedisCache } from './common/cache.js'
 import { createGroupsFlow } from './groups/telegram.js'
 import { env } from './env.js'
+import { StructError } from 'superstruct'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -237,6 +238,8 @@ async function start() {
           ...err.context ? { context: err.context } : undefined,
         }
       })
+    } else if (err instanceof StructError) {
+      res.sendStatus(400)
     } else {
       res.sendStatus(500)
     }

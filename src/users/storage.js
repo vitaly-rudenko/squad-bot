@@ -92,7 +92,7 @@ function deserializeUser(row) {
   return {
     id: row['id'],
     name: row['name'],
-    username: row['username'],
+    username: row['username'] ?? undefined,
     locale: row['locale'],
   }
 }

@@ -18,4 +18,6 @@ RUN set -ex; \
 
 EXPOSE 3000
 
+VOLUME /app/files
+
 ENTRYPOINT ["./docker/entrypoint"]
