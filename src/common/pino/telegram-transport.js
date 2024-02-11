@@ -17,20 +17,17 @@ export default async function ({ telegramBotToken, debugChatId }) {
     for await (let log of stream) {
       const { level, msg, time, pid, hostname, ...context } = log
 
-      // TODO: handle large contexts that don't fit into single message (perhaps send in a separate message & trimmed?)
       try {
-        await bot.telegram.sendMessage(
-          debugChatId,
-          [
-            `⚠️ *${escapeMd(pino.levels.labels[level].toUpperCase())}*: ${escapeMd(msg)}`,
-            `🤖 ${escapeMd(`@${botInfo.username}`)}`,
-            `📆 ${escapeMd(new Date(time).toISOString())}`,
-            Object.keys(context).length > 0 && `\`\`\`json
-            ${escapeMd(JSON.stringify(context, null, 2))}
-            \`\`\``,
-          ].filter(Boolean).join('\n'),
-          { parse_mode: 'MarkdownV2' }
-        )
+        const message = [
+          `⚠️ *${escapeMd(pino.levels.labels[level].toUpperCase())}*: ${escapeMd(msg.slice(0, 500))}`,
+          `🤖 ${escapeMd(`@${botInfo.username}`)}`,
+          `📆 ${escapeMd(new Date(time).toISOString())}`,
+          Object.keys(context).length > 0 && `\`\`\`json
+          ${escapeMd(JSON.stringify(context, null, 2).slice(0, 3000))}
+          \`\`\``,
+        ].filter(Boolean).join('\n')
+
+        await bot.telegram.sendMessage(debugChatId, message, { parse_mode: 'MarkdownV2' })
       } catch (err) {
         if (err?.code !== 429) {
           console.warn('Could not send log to Telegram:', err)

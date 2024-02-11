@@ -238,7 +238,7 @@ export async function createRollCall(userId, groupId, sortOrder = 1, {
   excludeSender = true,
   pollOptions = [],
 } = {}) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls`, {
+  const response = await fetch(`${TEST_API_URL}/roll-calls`, {
     method: 'POST',
     headers: {
       ...createAuthorizationHeader({ userId }),
@@ -278,7 +278,7 @@ export async function updateRollCall(userId, rollCallId, {
   pollOptions,
   sortOrder,
 } = {}) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls/${rollCallId}`, {
+  const response = await fetch(`${TEST_API_URL}/roll-calls/${rollCallId}`, {
     method: 'PATCH',
     headers: {
       ...createAuthorizationHeader({ userId }),
@@ -298,7 +298,7 @@ export async function updateRollCall(userId, rollCallId, {
 
 /** @returns {Promise<import('../../src/roll-calls/types').RollCall[]>} */
 export async function getRollCalls(groupId, userId) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls?group_id=${groupId}`, {
+  const response = await fetch(`${TEST_API_URL}/roll-calls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),
   })
 
@@ -308,7 +308,7 @@ export async function getRollCalls(groupId, userId) {
 }
 
 export async function deleteRollCall(id, userId) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls/${id}`, {
+  const response = await fetch(`${TEST_API_URL}/roll-calls/${id}`, {
     method: 'DELETE',
     headers: createAuthorizationHeader({ userId }),
   })

@@ -1,7 +1,5 @@
-import { env } from '../env.js'
-import { logger } from '../common/logger.js'
 import { registry } from '../registry.js'
-import { escapeMd, isNotificationErrorIgnorable } from '../common/telegram.js'
+import { escapeMd } from '../common/telegram.js'
 import { isDefined, renderAmount, renderUser } from '../common/utils.js'
 import { deduplicateUsers } from '../users/utils.js'
 import { sendNotification } from '../common/notifications.js'

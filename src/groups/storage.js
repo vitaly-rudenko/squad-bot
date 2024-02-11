@@ -30,7 +30,7 @@ export class GroupsPostgresStorage {
    * }} options
    */
   async _find({ ids, memberUserIds, limit, offset } = {}) {
-    const conditions = ['g.deleted_at IS NULL']
+    const conditions = []
     const variables = []
 
     if (ids && Array.isArray(ids)) {

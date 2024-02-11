@@ -1,4 +1,5 @@
 import { AlreadyExistsError } from '../common/errors.js'
+import { isDefined } from '../common/utils.js'
 
 export class RollCallsPostgresStorage {
   /** @param {import('pg').Client} client */
@@ -16,7 +17,14 @@ export class RollCallsPostgresStorage {
         INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, sort_order)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id;
-      `, [input.groupId, input.messagePattern, input.usersPattern, input.excludeSender, input.pollOptions, input.sortOrder])
+      `, [
+        input.groupId,
+        input.messagePattern,
+        input.usersPattern === '*' ? undefined : input.usersPattern,
+        input.excludeSender,
+        input.pollOptions.length > 0 ? input.pollOptions : undefined,
+        input.sortOrder,
+      ])
 
       return {
         id: response.rows[0].id,
@@ -34,12 +42,12 @@ export class RollCallsPostgresStorage {
   /** @param {Pick<import('./types.js').RollCall, 'id'> & Partial<import('./types.js').RollCall>} input */
   async update(input) {
     const fields = [
-      ['message_pattern', input.messagePattern],
-      ['users_pattern', input.usersPattern],
-      ['exclude_sender', input.excludeSender],
-      ['poll_options', input.pollOptions],
-      ['sort_order', input.sortOrder],
-    ].filter(([_, value]) => value !== undefined)
+      input.messagePattern !== undefined ? ['message_pattern', input.messagePattern] : undefined,
+      input.usersPattern !== undefined ? ['users_pattern', input.usersPattern === '*' ? undefined : input.usersPattern] : undefined,
+      input.excludeSender !== undefined ? ['exclude_sender', input.excludeSender] : undefined,
+      input.pollOptions !== undefined ? ['poll_options', input.pollOptions.length > 0 ? input.pollOptions : undefined] : undefined,
+      input.sortOrder !== undefined ? ['sort_order', input.sortOrder] : undefined,
+    ].filter(isDefined)
 
     if (fields.length > 0) {
       await this._client.query(`
@@ -78,7 +86,7 @@ export class RollCallsPostgresStorage {
    * }} options
    */
   async _find({ ids, groupIds, limit, offset } = {}) {
-    const conditions = ['rc.deleted_at IS NULL']
+    const conditions = []
     const variables = []
 
     if (ids && Array.isArray(ids)) {
@@ -128,9 +136,9 @@ export function deserializeRollCall(row) {
     id: row['id'],
     groupId: row['group_id'],
     messagePattern: row['message_pattern'],
-    usersPattern: row['users_pattern'],
+    usersPattern: row['users_pattern'] ?? '*',
     excludeSender: row['exclude_sender'],
-    pollOptions: row['poll_options'],
+    pollOptions: row['poll_options'] ?? [],
     sortOrder: row['sort_order'],
   }
 }
