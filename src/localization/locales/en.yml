@@ -63,12 +63,12 @@ cards:
 debts:
   command:
     noDebts: '✅ You''re all good\!'
-    ingoingDebt: '\- *{name}*: {amount}'
+    ingoingDebt: '\- {name}: *{amount}*'
     ingoingDebtsOne: '⬅️ {name} owes you *{amount}*'
     ingoingDebtsMany:
       - '⬅️ Owed to you:'
       - '{debts}'
-    outgoingDebt: '\- *{name}*: {amount} – [pay]({payUrl})'
+    outgoingDebt: '\- {name}: *{amount}* – [pay]({payUrl})'
     outgoingDebtsOne: '➡️ You owe *{amount}* to {name} – [pay]({payUrl})'
     outgoingDebtsMany:
       - '➡️ You owe:'
