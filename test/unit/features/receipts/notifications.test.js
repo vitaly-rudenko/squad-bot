@@ -5,7 +5,7 @@ import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from '..
 import { createTelegramMock } from '../../helpers/telegram.js'
 import { createUser, createUsersStorage } from '../../helpers/users.js'
 import { localizeMock } from '../../helpers/localization.js'
-import { createDebt, createDebtsStorage } from '../../helpers/debts.js'
+import { createDebt } from '../../helpers/debts.js'
 import { escapeMd } from '../../../../src/common/telegram.js'
 import { generateWebAppUrlMock } from '../../helpers/common.js'
 import { Markup } from 'telegraf'
