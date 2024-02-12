@@ -1,5 +1,5 @@
-import chai, { expect } from 'chai'
-import { TEST_API_URL, createReceipt, createUser, doesPhotoExist, getPhoto, getReceipts, receiptPhotoBuffer } from './helpers.js'
+import { expect } from 'chai'
+import { TEST_API_URL, createReceipt, createUser, receiptPhotoBuffer } from './helpers.js'
 
 describe('[security]', () => {
   describe('GET /photos', () => {
@@ -47,7 +47,6 @@ describe('[security]', () => {
         'origin-agent-cluster': '?1',
         'referrer-policy': 'no-referrer',
         'strict-transport-security': 'max-age=15552000; includeSubDomains',
-        'vary': 'Origin',
         'x-content-type-options': 'nosniff',
         'x-dns-prefetch-control': 'off',
         'x-download-options': 'noopen',
@@ -78,7 +77,6 @@ describe('[security]', () => {
         'origin-agent-cluster': '?1',
         'referrer-policy': 'no-referrer',
         'strict-transport-security': 'max-age=15552000; includeSubDomains',
-        'vary': 'Origin',
         'x-content-type-options': 'nosniff',
         'x-dns-prefetch-control': 'off',
         'x-download-options': 'noopen',
@@ -86,6 +84,17 @@ describe('[security]', () => {
         'x-permitted-cross-domain-policies': 'none',
         'x-xss-protection': '0',
       })
+    })
+
+    it('disallows CORS from invalid origin', async () => {
+      const response = await fetch(`${TEST_API_URL}/bot`, {
+        headers: {
+          'Origin': 'https://example.com',
+        }
+      })
+
+      expect(response.status).to.eq(403)
+      expect(response.headers.get('access-control-allow-origin')).to.be.null;
     })
   })
 })

@@ -206,7 +206,15 @@ async function start() {
 
   const app = express()
   app.use(helmet())
-  app.use(cors({ origin: env.CORS_ORIGIN }))
+  app.use(cors({
+    origin: (origin, callback) => {
+      if (!origin || env.CORS_ORIGIN.includes(origin)) {
+        callback(null, origin)
+      } else {
+        callback(new ApiError({ code: 'INVALID_CORS_ORIGIN', status: 403 }))
+      }
+    }
+  }))
   app.use(express.json())
 
   app.use(
