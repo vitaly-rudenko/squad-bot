@@ -1,13 +1,22 @@
+import fs from 'fs/promises'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { expect } from 'chai'
 import fetch, { FormData, File } from 'node-fetch'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import { uniqueNamesGenerator, names } from 'unique-names-generator'
 import { env } from '../../src/env.js'
-import path from 'path'
-import fs from 'fs/promises'
 
-const TEST_API_URL = 'http://localhost:3000'
+export const receiptPhotoBuffer = await fs.readFile(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt.png')
+)
+
+export const updatedReceiptPhotoBuffer = await fs.readFile(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt_updated.jpeg')
+)
+
+export const TEST_API_URL = 'http://localhost:3000'
 const nameConfig = {
   dictionaries: [names],
   style: 'lowerCase',

@@ -1,19 +1,9 @@
 import chai, { expect } from 'chai'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
-import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getPhoto, expectReceiptToShallowEqual, getReceipt, deleteReceipt, getDebts, NO_DEBTS, createUser, doesPhotoExist } from './helpers.js'
+import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getPhoto, expectReceiptToShallowEqual, getReceipt, deleteReceipt, getDebts, NO_DEBTS, createUser, doesPhotoExist, receiptPhotoBuffer, updatedReceiptPhotoBuffer } from './helpers.js'
 
 chai.use(deepEqualInAnyOrder)
-
-const receiptPhotoBuffer = fs.readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt.png')
-)
-
-const updatedReceiptPhotoBuffer = fs.readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt_updated.jpeg')
-)
 
 describe('[receipts]', () => {
   describe('POST /receipts', () => {
