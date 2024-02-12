@@ -96,6 +96,6 @@ export async function sendReceiptDeletedNotification(
           )
           : '',
       }
-    ), { telegram })
+    ), {}, { telegram })
   }
 }

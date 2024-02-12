@@ -38,7 +38,7 @@ export async function sendPaymentSavedNotification(
         amount: escapeMd(renderAmount(payment.amount)),
         action: localize(user.locale, `payments.notifications.saved.action.${action}`),
       }
-    ), { telegram })
+    ), {}, { telegram })
   }
 }
 
@@ -73,6 +73,6 @@ export async function sendPaymentDeletedNotification(
         receiver: renderUserMd(receiver),
         amount: escapeMd(renderAmount(payment.amount)),
       }
-    ), { telegram })
+    ), {}, { telegram })
   }
 }
