@@ -35,10 +35,9 @@ receipts:
   notifications:
     saved:
       message:
-        - '📝 {editor} has {action} a *{amount}* receipt {description}'
+        - '📝 {editor} has {action} [a *{amount}* receipt]({receiptUrl}) {description}'
         - '👤 Paid by *{payer}*'
         - '{part}'
-        - '✍️ Edit: {receiptUrl}'
         - ''
         - '/debts \| /receipts \| /payments'
       description: '\({description}\)'
