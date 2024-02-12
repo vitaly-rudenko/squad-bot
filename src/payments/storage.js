@@ -43,18 +43,16 @@ export class PaymentsPostgresStorage {
   /** @param {{ fromUserId?: string; toUserId?: string }} input */
   async _aggregatePayments({ fromUserId, toUserId }) {
     const variables = []
-    const conditions = [
-      'p.deleted_at IS NULL'
-    ]
+    const conditions = ['p.deleted_at IS NULL']
 
     if (fromUserId) {
+      conditions.push(`p.from_user_id = $${variables.length + 1}`)
       variables.push(fromUserId)
-      conditions.push(`p.from_user_id = $${variables.length}`)
     }
 
     if (toUserId) {
+      conditions.push(`p.to_user_id = $${variables.length + 1}`)
       variables.push(toUserId)
-      conditions.push(`p.to_user_id = $${variables.length}`)
     }
 
     const response = await this._client.query(`
@@ -97,8 +95,8 @@ export class PaymentsPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`p.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...ids)
+      conditions.push(`p.id = ANY($${variables.length + 1})`)
+      variables.push(ids)
     }
 
     if (participantUserIds && Array.isArray(participantUserIds)) {
@@ -106,9 +104,8 @@ export class PaymentsPostgresStorage {
         throw new Error('"participantUserIds" cannot be empty')
       }
 
-      const userIdsSql = `(${participantUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`
-      conditions.push(`p.from_user_id IN ${userIdsSql} OR p.to_user_id IN ${userIdsSql}`)
-      variables.push(...participantUserIds)
+      conditions.push(`p.from_user_id = ANY($${variables.length + 1}) OR p.to_user_id = ANY($${variables.length + 1})`)
+      variables.push(participantUserIds)
     }
 
     if (conditions.length === 0) {

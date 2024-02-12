@@ -38,8 +38,8 @@ export class GroupsPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`g.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...ids)
+      conditions.push(`g.id = ANY($${variables.length + 1})`)
+      variables.push(ids)
     }
 
     if (memberUserIds && Array.isArray(memberUserIds)) {
@@ -47,10 +47,9 @@ export class GroupsPostgresStorage {
         throw new Error('"memberUserIds" cannot be empty')
       }
 
-      const userIdsSql = `(${memberUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`
       // TODO: inefficient subquery can be replaced with join?
-      conditions.push(`id IN (SELECT m.group_id FROM memberships m WHERE m.user_id IN ${userIdsSql})`)
-      variables.push(...memberUserIds)
+      conditions.push(`id = ANY(SELECT m.group_id FROM memberships m WHERE m.user_id = ANY($${variables.length + 1}))`)
+      variables.push(memberUserIds)
     }
 
     if (conditions.length === 0) {

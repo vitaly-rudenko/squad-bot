@@ -88,8 +88,8 @@ export class ReceiptsPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`r.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...ids)
+      conditions.push(`r.id = ANY($${variables.length + 1})`)
+      variables.push(ids)
     }
 
     if (participantUserIds && Array.isArray(participantUserIds)) {
@@ -97,9 +97,8 @@ export class ReceiptsPostgresStorage {
         throw new Error('"participantUserIds" cannot be empty')
       }
 
-      const userIdsSql = `(${participantUserIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`
-      conditions.push(`r.payer_id IN ${userIdsSql} OR d.debtor_id IN ${userIdsSql}`)
-      variables.push(...participantUserIds)
+      conditions.push(`r.payer_id = ANY($${variables.length + 1}) OR d.debtor_id = ANY($${variables.length + 1})`)
+      variables.push(participantUserIds)
 
       isDistinct = true
       joins.push('LEFT JOIN debts d ON d.receipt_id = r.id')

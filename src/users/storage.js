@@ -53,7 +53,7 @@ export class UsersPostgresStorage {
         throw new Error('"query" cannot be shorter than 3 characters')
       }
 
-      conditions.push(`u.name ILIKE $${variables.length + 1}`)
+      conditions.push(`u.query ILIKE $${variables.length + 1}`)
       variables.push(`%${query}%`)
     }
 
@@ -62,8 +62,8 @@ export class UsersPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`u.id = ($${variables.length + 1})`)
-      variables.push(ids.length === 1 ? ids[0] : ids)
+      conditions.push(`u.id = ANY($${variables.length + 1})`)
+      variables.push(ids)
     }
 
     if (conditions.length === 0 && !allowDeprecatedNoConditions) {

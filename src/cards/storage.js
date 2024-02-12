@@ -54,8 +54,8 @@ export class CardsPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`c.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...ids)
+      conditions.push(`u.id = ANY($${variables.length + 1})`)
+      variables.push(ids)
     }
 
     if (userIds && Array.isArray(userIds)) {
@@ -63,8 +63,8 @@ export class CardsPostgresStorage {
         throw new Error('"userIds" cannot be empty')
       }
 
-      conditions.push(`c.user_id IN (${userIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...userIds)
+      conditions.push(`c.user_id = ANY($${variables.length + 1})`)
+      variables.push(userIds)
     }
 
     if (conditions.length === 0) {

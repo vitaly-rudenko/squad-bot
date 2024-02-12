@@ -52,10 +52,7 @@ export class DebtsPostgresStorage {
    * }} options
    */
   async _find({ receiptIds, limit = 100, offset = 0 } = {}) {
-    const conditions = [
-      'd.deleted_at IS NULL',
-      'r.deleted_at IS NULL',
-    ]
+    const conditions = ['d.deleted_at IS NULL', 'r.deleted_at IS NULL']
     const variables = []
 
     if (receiptIds && Array.isArray(receiptIds)) {
@@ -63,8 +60,8 @@ export class DebtsPostgresStorage {
         throw new Error('"receiptIds" cannot be empty')
       }
 
-      conditions.push(`d.receipt_id IN (${receiptIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...receiptIds)
+      conditions.push(`d.receipt_id = ANY($${variables.length + 1})`)
+      variables.push(receiptIds)
     }
 
     if (conditions.length === 0) {
@@ -96,20 +93,16 @@ export class DebtsPostgresStorage {
   /** @param {{ fromUserId?: string; toUserId?: string }} input */
   async _aggregateDebts({ fromUserId, toUserId }) {
     const variables = []
-    const conditions = [
-      'd.debtor_id != r.payer_id',
-      'r.deleted_at IS NULL',
-      'd.deleted_at IS NULL'
-    ]
+    const conditions = ['d.debtor_id != r.payer_id', 'r.deleted_at IS NULL', 'd.deleted_at IS NULL']
 
     if (fromUserId) {
+      conditions.push(`d.debtor_id = $${variables.length + 1}`)
       variables.push(fromUserId)
-      conditions.push(`d.debtor_id = $${variables.length}`)
     }
 
     if (toUserId) {
+      conditions.push(`r.payer_id = $${variables.length + 1}`)
       variables.push(toUserId)
-      conditions.push(`r.payer_id = $${variables.length}`)
     }
 
     const response = await this._client.query(`

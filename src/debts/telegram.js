@@ -31,7 +31,7 @@ export function createDebtsFlow() {
       const debtor = users.find(u => u.id === debtorId)
 
       return {
-        debtor: escapeMd(debtor ? renderUser(debtor) : localize(locale, 'unknownUser')),
+        name: escapeMd(debtor ? renderUser(debtor) : localize(locale, 'unknownUser')),
         amount: escapeMd(renderAggregatedDebt(debt)),
       }
     }

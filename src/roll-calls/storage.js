@@ -85,8 +85,8 @@ export class RollCallsPostgresStorage {
         throw new Error('"ids" cannot be empty')
       }
 
-      conditions.push(`rc.id IN (${ids.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...ids)
+      conditions.push(`rc.id = ANY($${variables.length + 1})`)
+      variables.push(ids)
     }
 
     if (groupIds && Array.isArray(groupIds)) {
@@ -94,8 +94,8 @@ export class RollCallsPostgresStorage {
         throw new Error('"groupIds" cannot be empty')
       }
 
-      conditions.push(`rc.group_id IN (${groupIds.map((_, i) => `$${variables.length + i + 1}`).join(', ')})`)
-      variables.push(...groupIds)
+      conditions.push(`rc.group_id = ANY($${variables.length + 1})`)
+      variables.push(groupIds)
     }
 
     if (conditions.length === 0) {
