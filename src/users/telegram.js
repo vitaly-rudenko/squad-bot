@@ -67,9 +67,7 @@ export const withUserId = () => {
 
 /** @param {import('../users/types').User} user */
 export function renderUserMd(user) {
-  const profileUrl = `tg://user?id=${user.id}`
-
   return user.username
     ? escapeMd(`${user.name} (@${user.username})`)
-    : `[${escapeMd(user.name)}](${escapeMd(profileUrl)})`
+    : `[${escapeMd(user.name)}](${escapeMd(`tg://user?id=${user.id}`)})`
 }
