@@ -60,10 +60,9 @@ export const localeFileSchema = object({
     command: object({
       ingoingDebt: _,
       ingoingDebts: _,
-      noIngoingDebts: _,
       outgoingDebt: _,
       outgoingDebts: _,
-      noOutgoingDebts: _,
+      noDebts: _,
       debt: _,
     }),
   }),

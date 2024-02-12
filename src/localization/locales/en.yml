@@ -62,16 +62,15 @@ cards:
       - '➕ Add: {createUrl}'
 debts:
   command:
-    ingoingDebt: '⬅️ {debtor} owes you *{amount}*'
+    ingoingDebt: '⬅️ {name} owes you *{amount}*'
     ingoingDebts:
       - '⬅️ Owed to you:'
       - '{debts}'
-    noIngoingDebts: '✅ Nobody owes you anything'
-    outgoingDebt: '➡️ You owe *{amount}* to {debtor}'
+    outgoingDebt: '➡️ You owe *{amount}* to {name}'
     outgoingDebts:
       - '➡️ You owe:'
       - '{debts}'
-    noOutgoingDebts: '✅ You have no debts'
+    noDebts: '✅ You''re all good\!'
     debt: '\- *{name}*: {amount}'
 rollCalls:
   command:

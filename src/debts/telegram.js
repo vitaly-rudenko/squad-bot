@@ -2,6 +2,7 @@ import { registry } from '../registry.js'
 import { escapeMd } from '../common/telegram.js'
 import { aggregateDebts, renderAggregatedDebt } from './utils.js'
 import { renderUserMd } from '../users/telegram.js'
+import { isDefined } from '../common/utils.js'
 
 export function createDebtsFlow() {
   const { usersStorage, debtsStorage, paymentsStorage, localize } = registry.export()
@@ -44,7 +45,7 @@ export function createDebtsFlow() {
             .map(debt => localize(locale, 'debts.command.debt', debtReplacements(debt)))
             .join('\n')
         })
-      : localize(locale, 'debts.command.noIngoingDebts')
+      : undefined
 
     const outgoingDebtsFormatted = outgoingDebts.length > 0
       ? outgoingDebts.length === 1
@@ -54,13 +55,18 @@ export function createDebtsFlow() {
             .map(debt => localize(locale, 'debts.command.debt', debtReplacements(debt)))
             .join('\n')
         })
-      : localize(locale, 'debts.command.noOutgoingDebts')
+      : undefined
+
+    const noDebts = ingoingDebts.length === 0 && outgoingDebts.length === 0
+      ? localize(locale, 'debts.command.noDebts')
+      : undefined
 
     await context.reply(
       [
         outgoingDebtsFormatted,
         ingoingDebtsFormatted,
-      ].filter(Boolean).map(s => s.trim()).join('\n\n'),
+        noDebts,
+      ].filter(isDefined).map(s => s.trim()).join('\n\n'),
       { parse_mode: 'MarkdownV2' }
     )
   }
