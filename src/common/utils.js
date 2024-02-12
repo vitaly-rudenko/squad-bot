@@ -12,11 +12,6 @@ export function getAppVersion() {
   }
 }
 
-/** @param {import('../users/types').User} user */
-export function renderUser(user) {
-  return user.username ? `${user.name} (@${user.username})` : user.name
-}
-
 /** @param {number} input */
 export function renderAmount(input) {
   if (!Number.isInteger(input)) {

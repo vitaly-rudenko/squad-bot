@@ -1,3 +1,4 @@
+import { escapeMd } from '../common/telegram.js'
 import { localeFromLanguageCode } from '../localization/telegram.js'
 import { registry } from '../registry.js'
 
@@ -62,4 +63,13 @@ export const withUserId = () => {
     context.state.userId = String(context.from.id)
     return next()
   }
+}
+
+/** @param {import('../users/types').User} user */
+export function renderUserMd(user) {
+  const profileUrl = `tg://user?id=${user.id}`
+
+  return user.username
+    ? escapeMd(`${user.name} (@${user.username})`)
+    : `[${escapeMd(user.name)}](${escapeMd(profileUrl)})`
 }

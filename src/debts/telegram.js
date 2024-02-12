@@ -1,7 +1,7 @@
 import { registry } from '../registry.js'
 import { escapeMd } from '../common/telegram.js'
-import { renderUser } from '../common/utils.js'
 import { aggregateDebts, renderAggregatedDebt } from './utils.js'
+import { renderUserMd } from '../users/telegram.js'
 
 export function createDebtsFlow() {
   const { usersStorage, debtsStorage, paymentsStorage, localize } = registry.export()
@@ -31,7 +31,7 @@ export function createDebtsFlow() {
       const debtor = users.find(u => u.id === debtorId)
 
       return {
-        name: escapeMd(debtor ? renderUser(debtor) : localize(locale, 'unknownUser')),
+        name: debtor ? renderUserMd(debtor) : escapeMd(localize(locale, 'unknownUser')),
         amount: escapeMd(renderAggregatedDebt(debt)),
       }
     }

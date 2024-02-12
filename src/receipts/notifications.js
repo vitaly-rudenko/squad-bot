@@ -1,8 +1,9 @@
 import { registry } from '../registry.js'
 import { escapeMd } from '../common/telegram.js'
-import { isDefined, renderAmount, renderUser } from '../common/utils.js'
+import { isDefined, renderAmount } from '../common/utils.js'
 import { deduplicateUsers } from '../users/utils.js'
 import { sendNotification } from '../common/notifications.js'
+import { renderUserMd } from '../users/telegram.js'
 
 /**
  * @param {{
@@ -35,8 +36,8 @@ export async function sendReceiptSavedNotification(
       user.locale,
       'receipts.notifications.saved.message',
       {
-        editor: escapeMd(renderUser(editor)),
-        payer: escapeMd(renderUser(payer)),
+        editor: renderUserMd(editor),
+        payer: renderUserMd(payer),
         action: localize(user.locale, `receipts.notifications.saved.action.${action}`),
         amount: escapeMd(renderAmount(receipt.amount)),
         receiptUrl: escapeMd(generateWebAppUrl(`receipt-${receipt.id}`)),
@@ -84,8 +85,8 @@ export async function sendReceiptDeletedNotification(
       user.locale,
       'receipts.notifications.deleted.message',
       {
-        editor: escapeMd(renderUser(editor)),
-        payer: escapeMd(renderUser(payer)),
+        editor: renderUserMd(editor),
+        payer: renderUserMd(payer),
         amount: escapeMd(renderAmount(receipt.amount)),
         description: receipt.description
           ? localize(
