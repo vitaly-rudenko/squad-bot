@@ -198,10 +198,10 @@ async function start() {
 
   bot.on('message',
     async (context, next) => {
-      if ('text' in context.message && context.message.text.startsWith('/')) return
-      return next()
+      if (!('text' in context.message) || !context.message.text.startsWith('/')) {
+        return next()
+      }
     },
-    // roll calls
     wrap(withGroupChat(), rollCallMessage),
   )
 
