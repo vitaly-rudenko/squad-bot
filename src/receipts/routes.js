@@ -1,4 +1,3 @@
-import fs from 'fs/promises'
 import multer from 'multer'
 import Router from 'express-promise-router'
 import { NotFoundError } from '../common/errors.js'
@@ -6,9 +5,8 @@ import { ApiError } from '../common/errors.js'
 import { registry } from '../registry.js'
 import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from './notifications.js'
 import { photoSchema, saveReceiptSchema } from './schemas.js'
-import { optional, refine, size, string } from 'superstruct'
+import { optional } from 'superstruct'
 import { deletePhoto, generateRandomPhotoFilename, savePhoto } from './filesystem.js'
-import path from 'path'
 
 export function createReceiptsRouter() {
   const {
@@ -145,39 +143,6 @@ export function createReceiptsRouter() {
     await sendReceiptDeletedNotification({ editorId: req.user.id, receipt })
 
     res.sendStatus(204)
-  })
-
-  return router
-}
-
-export function createPublicReceiptsRouter() {
-  const router = Router()
-
-  const photoFilenameRegex = /^[a-zA-Z0-9]{8,32}\.(jpg|png)$/
-  const photoFilenameSchema = refine(size(string(), 8, 64), 'photoFilename', (value) => photoFilenameRegex.test(value))
-
-  router.get('/photos/:photoFilename', async (req, res) => {
-    let photoPath
-    try {
-      photoPath = path.resolve('files', 'photos', photoFilenameSchema.create(req.params.photoFilename))
-    } catch (error) {
-      throw new NotFoundError()
-    }
-
-    try {
-      await fs.access(photoPath)
-    } catch (error) {
-      if (error.code === 'ENOENT') {
-        throw new NotFoundError()
-      }
-
-      throw error
-    }
-
-    // TODO: maybe file access check can be moved here?
-    res
-      .contentType(photoPath.endsWith('.jpg') ? 'image/jpeg' : 'image/png')
-      .sendFile(photoPath)
   })
 
   return router

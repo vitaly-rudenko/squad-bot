@@ -5,6 +5,7 @@ import cors from 'cors'
 import fs from 'fs'
 import https from 'https'
 import pg from 'pg'
+import helmet from 'helmet'
 import express from 'express'
 import { Redis } from 'ioredis'
 
@@ -38,6 +39,7 @@ import { createRedisCache } from './common/cache.js'
 import { createGroupsFlow } from './groups/telegram.js'
 import { env } from './env.js'
 import { StructError } from 'superstruct'
+import path from 'path'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -203,8 +205,30 @@ async function start() {
   )
 
   const app = express()
-  app.use(express.json())
+  app.use(helmet())
   app.use(cors({ origin: env.CORS_ORIGIN }))
+  app.use(express.json())
+
+  app.use(
+    '/photos',
+    express.static(path.join('files', 'photos'), {
+      maxAge: 365 * 24 * 60 * 60_000, // 1 year
+      index: false,
+      lastModified: false,
+      etag: true,
+      immutable: true,
+      redirect: false,
+      acceptRanges: false,
+      cacheControl: true,
+      dotfiles: 'ignore',
+      extensions: false,
+      setHeaders: (res, path) => {
+        res.setHeader('Content-Type', path.endsWith('.jpg') ? 'image/jpeg' : 'image/png')
+      },
+    }),
+    (_, res) => res.sendStatus(404),
+  )
+
   app.use(createApiRouter())
 
   // @ts-ignore

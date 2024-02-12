@@ -10,7 +10,7 @@ import { createPaymentsRouter } from './payments/routes.js'
 import { createGroupsRouter } from './groups/routes.js'
 import { createUsersRouter } from './users/routes.js'
 import { registry } from './registry.js'
-import { createPublicReceiptsRouter, createReceiptsRouter } from './receipts/routes.js'
+import { createReceiptsRouter } from './receipts/routes.js'
 import { env } from './env.js'
 
 export const createMembershipSchema = object({
@@ -37,8 +37,6 @@ export function createApiRouter() {
   router.get('/bot', async (_, res) => res.json(botResponse))
 
   router.use(createAuthRouter())
-
-  router.use(createPublicReceiptsRouter())
 
   if (env.USE_TEST_MODE) {
     router.post('/memberships', async (req, res) => {
