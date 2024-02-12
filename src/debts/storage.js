@@ -35,14 +35,14 @@ export class DebtsPostgresStorage {
 
   /** @param {string} receiptId */
   async findByReceiptId(receiptId) {
-    return this.find({ receiptIds: [receiptId] })
+    return this._find({ receiptIds: [receiptId] })
   }
 
   /** @param {string[]} receiptIds */
   async findByReceiptIds(receiptIds) {
     if (receiptIds.length === 0) return []
     // TODO: improve
-    return this.find({ receiptIds, limit: 10_000 })
+    return this._find({ receiptIds, limit: 1000 })
   }
 
   /**
@@ -52,7 +52,7 @@ export class DebtsPostgresStorage {
    *   offset?: number
    * }} options
    */
-  async find({ receiptIds, limit = 100, offset = 0 } = {}) {
+  async _find({ receiptIds, limit = 100, offset = 0 } = {}) {
     const conditions = ['d.deleted_at IS NULL', 'r.deleted_at IS NULL']
     const variables = []
 

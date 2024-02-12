@@ -12,6 +12,7 @@ payments:
         - '💸 {editor} has {action} a *{amount}* payment'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
+        - ''
         - '/debts \| /receipts \| /payments'
       action:
         create: recorded
@@ -21,6 +22,7 @@ payments:
         - '❌ 💸 {editor} has deleted a *{amount}* payment'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
+        - ''
         - '/debts \| /receipts \| /payments'
 receipts:
   command:
@@ -37,6 +39,7 @@ receipts:
         - '👤 Paid by *{payer}*'
         - '{part}'
         - '✍️ Edit: {receiptUrl}'
+        - ''
         - '/debts \| /receipts \| /payments'
       description: '\({description}\)'
       part: '💵 Your part: *{amount}*'
@@ -47,6 +50,7 @@ receipts:
       message:
         - '❌ 📝 {editor} has deleted a *{amount}* receipt {description}'
         - '👤 Paid by *{payer}*'
+        - ''
         - '/debts \| /receipts \| /payments'
       description: '\({description}\)'
   actions:
