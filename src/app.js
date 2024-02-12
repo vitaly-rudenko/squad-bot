@@ -221,18 +221,10 @@ async function start() {
     '/photos',
     express.static(path.join('files', 'photos'), {
       maxAge: 365 * 24 * 60 * 60_000, // 1 year
+      immutable: true,
       index: false,
       lastModified: false,
-      etag: true,
-      immutable: true,
-      redirect: false,
       acceptRanges: false,
-      cacheControl: true,
-      dotfiles: 'ignore',
-      extensions: false,
-      setHeaders: (res, path) => {
-        res.setHeader('Content-Type', path.endsWith('.jpg') ? 'image/jpeg' : 'image/png')
-      },
     }),
     (_, res) => res.sendStatus(404),
   )
