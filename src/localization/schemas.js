@@ -65,7 +65,6 @@ export const localeFileSchema = object({
       outgoingDebts: _,
       noOutgoingDebts: _,
       debt: _,
-      footer: _,
     }),
   }),
   rollCalls: object({

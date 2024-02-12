@@ -60,7 +60,6 @@ export function createDebtsFlow() {
       [
         outgoingDebtsFormatted,
         ingoingDebtsFormatted,
-        localize(locale, 'debts.command.footer'),
       ].filter(Boolean).map(s => s.trim()).join('\n\n'),
       { parse_mode: 'MarkdownV2' }
     )

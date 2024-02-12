@@ -12,8 +12,6 @@ payments:
         - '💸 {editor} has {action} a *{amount}* payment'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
-        - ''
-        - '/debts \| /receipts \| /payments'
       action:
         create: recorded
         update: edited
@@ -22,8 +20,6 @@ payments:
         - '❌ 💸 {editor} has deleted a *{amount}* payment'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
-        - ''
-        - '/debts \| /receipts \| /payments'
 receipts:
   command:
     message:
@@ -38,8 +34,6 @@ receipts:
         - '📝 {editor} has {action} [a *{amount}* receipt]({receiptUrl}) {description}'
         - '👤 Paid by *{payer}*'
         - '{part}'
-        - ''
-        - '/debts \| /receipts \| /payments'
       description: '\({description}\)'
       part: '💵 Your part: *{amount}*'
       action:
@@ -49,8 +43,6 @@ receipts:
       message:
         - '❌ 📝 {editor} has deleted a *{amount}* receipt {description}'
         - '👤 Paid by *{payer}*'
-        - ''
-        - '/debts \| /receipts \| /payments'
       description: '\({description}\)'
   actions:
     getPhoto: '📷 Get receipt photo'
@@ -80,7 +72,6 @@ debts:
       - '{debts}'
     noOutgoingDebts: '✅ You have no debts'
     debt: '\- *{name}*: {amount}'
-    footer: '/debts \| /receipts \| /payments'
 rollCalls:
   command:
     group:
