@@ -6,6 +6,7 @@ export function createGroupsRouter() {
 
   const router = Router()
 
+  // TODO: hard limit to 100
   router.get('/groups', async (req, res) => {
     res.json(
       await groupStorage.findByMemberUserId(req.user.id)

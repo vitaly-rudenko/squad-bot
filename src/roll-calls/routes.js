@@ -70,6 +70,7 @@ export function createRollCallsRouter() {
     res.sendStatus(201)
   })
 
+  // TODO: hard limit to 100
   router.get('/roll-calls', async (req, res) => {
     const groupId = groupIdSchema.create(req.query.group_id)
     const rollCalls = await rollCallsStorage.findByGroupId(groupId)

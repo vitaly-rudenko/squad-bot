@@ -51,6 +51,7 @@ export function createPaymentsRouter() {
     res.sendStatus(204)
   })
 
+  // TODO: add pagination
   router.get('/payments', async (req, res) => {
     const payments = await paymentsStorage.findByParticipantUserId(req.user.id)
     res.json(payments)

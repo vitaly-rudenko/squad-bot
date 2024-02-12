@@ -17,6 +17,7 @@ export function createUsersRouter() {
     res.json(req.user)
   })
 
+  // TODO: hard limit to 100
   router.get('/users', async (req, res) => {
     const query = optional(querySchema).create(req.query.query)
 

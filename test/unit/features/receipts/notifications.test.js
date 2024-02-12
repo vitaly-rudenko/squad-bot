@@ -8,8 +8,26 @@ import { localizeMock } from '../../helpers/localization.js'
 import { createDebt, createDebtsStorage } from '../../helpers/debts.js'
 import { escapeMd } from '../../../../src/common/telegram.js'
 import { generateWebAppUrlMock } from '../../helpers/common.js'
+import { Markup } from 'telegraf'
 
 chai.use(deepEqualInAnyOrder)
+
+const options = {
+  disable_web_page_preview: true,
+  parse_mode: 'MarkdownV2',
+}
+
+/** @param {string} locale */
+function optionsWithGetPhoto(locale) {
+  return {
+    disable_web_page_preview: true,
+    parse_mode: 'MarkdownV2',
+    ...Markup.inlineKeyboard([
+      Markup.button.callback(`receipts.actions.getPhoto(${locale})`, 'photo:photo.jpg')
+    ])
+  }
+}
+
 
 describe('receipts/notifications', () => {
   describe('sendReceiptSavedNotification()', () => {
@@ -41,11 +59,6 @@ describe('receipts/notifications', () => {
         generateWebAppUrl: generateWebAppUrlMock,
       })
 
-      const options = {
-        disable_web_page_preview: true,
-        parse_mode: 'MarkdownV2',
-      }
-
       expect(telegramMock.sendMessage.args)
         .to.deep.equalInAnyOrder([
           [Number(editor.id), stripIndent`
@@ -59,7 +72,7 @@ describe('receipts/notifications', () => {
                 amount: ₴0
               description: receipts.notifications.saved.description(${editor.locale}):
                 description: Hello world\\!
-          `, options],
+          `, optionsWithGetPhoto(editor.locale)],
           [Number(payer.id), stripIndent`
             receipts.notifications.saved.message(${payer.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
@@ -71,7 +84,7 @@ describe('receipts/notifications', () => {
                 amount: ₴43\\.21
               description: receipts.notifications.saved.description(${payer.locale}):
                 description: Hello world\\!
-          `, options],
+          `, optionsWithGetPhoto(payer.locale)],
           [Number(debtor.id), stripIndent`
             receipts.notifications.saved.message(${debtor.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
@@ -83,7 +96,7 @@ describe('receipts/notifications', () => {
                 amount: ₴12
               description: receipts.notifications.saved.description(${debtor.locale}):
                 description: Hello world\\!
-          `, options]
+          `, optionsWithGetPhoto(debtor.locale)]
         ])
     })
 
@@ -115,11 +128,6 @@ describe('receipts/notifications', () => {
         generateWebAppUrl: generateWebAppUrlMock,
       })
 
-      const options = {
-        disable_web_page_preview: true,
-        parse_mode: 'MarkdownV2',
-      }
-
       expect(telegramMock.sendMessage.args)
         .to.deep.equalInAnyOrder([
           [Number(editor.id), stripIndent`
@@ -133,7 +141,7 @@ describe('receipts/notifications', () => {
                 amount: ₴0
               description: receipts.notifications.saved.description(${editor.locale}):
                 description: Hello world\\!
-          `, options],
+          `, optionsWithGetPhoto(editor.locale)],
           [Number(payer.id), stripIndent`
             receipts.notifications.saved.message(${payer.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
@@ -145,7 +153,7 @@ describe('receipts/notifications', () => {
                 amount: ₴43\\.21
               description: receipts.notifications.saved.description(${payer.locale}):
                 description: Hello world\\!
-          `, options],
+          `, optionsWithGetPhoto(payer.locale)],
           [Number(debtor.id), stripIndent`
             receipts.notifications.saved.message(${debtor.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
@@ -157,7 +165,7 @@ describe('receipts/notifications', () => {
                 amount: ₴12
               description: receipts.notifications.saved.description(${debtor.locale}):
                 description: Hello world\\!
-          `, options]
+          `, optionsWithGetPhoto(debtor.locale)]
         ])
     })
   })
@@ -188,11 +196,6 @@ describe('receipts/notifications', () => {
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
       })
-
-      const options = {
-        disable_web_page_preview: true,
-        parse_mode: 'MarkdownV2',
-      }
 
       expect(telegramMock.sendMessage.args)
         .to.deep.equalInAnyOrder([

@@ -38,6 +38,13 @@ export class DebtsPostgresStorage {
     return this.find({ receiptIds: [receiptId] })
   }
 
+  /** @param {string[]} receiptIds */
+  async findByReceiptIds(receiptIds) {
+    if (receiptIds.length === 0) return []
+    // TODO: improve
+    return this.find({ receiptIds, limit: 10_000 })
+  }
+
   /**
    * @param {{
    *   receiptIds?: string[],

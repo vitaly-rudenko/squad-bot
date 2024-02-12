@@ -14,6 +14,7 @@ export function createCardsRouter() {
 
   const router = Router()
 
+  // TODO: hard limit to 100
   router.get('/cards', async (req, res) => {
     const userId = userIdSchema.create(req.query.user_id)
     const cards = await cardsStorage.findByUserId(userId)

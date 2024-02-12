@@ -106,10 +106,10 @@ export function createReceiptsRouter() {
     res.json(formatReceipt(receipt, debts))
   })
 
+  // TODO: add pagination
   router.get('/receipts', async (req, res) => {
-    // TODO: improve this, perhaps adding pagination & making limit large is good enough?
     const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
-    const debts = await debtsStorage.find({ receiptIds: receipts.map(r => r.id), limit: 10_000 })
+    const debts = await debtsStorage.findByReceiptIds(receipts.map(r => r.id))
 
     res.json(receipts.map((receipt) => formatReceipt(receipt, debts)))
   })
