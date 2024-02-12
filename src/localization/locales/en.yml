@@ -49,6 +49,9 @@ receipts:
         - '👤 Paid by *{payer}*'
         - '/debts \| /receipts \| /payments'
       description: '\({description}\)'
+  actions:
+    getPhoto: '📷 Get receipt photo'
+    sendingPhoto: 'Sending photo...'
 users:
   command:
     start:

@@ -1,3 +1,4 @@
+import { Markup } from 'telegraf'
 import { registry } from '../registry.js'
 import { escapeMd } from '../common/telegram.js'
 import { isDefined, renderAmount } from '../common/utils.js'
@@ -32,29 +33,38 @@ export async function sendReceiptSavedNotification(
   for (const user of users) {
     const debt = debts.find(debt => debt.debtorId === user.id)
 
-    sendNotification(user.id, localize(
-      user.locale,
-      'receipts.notifications.saved.message',
-      {
-        editor: renderUserMd(editor),
-        payer: renderUserMd(payer),
-        action: localize(user.locale, `receipts.notifications.saved.action.${action}`),
-        amount: escapeMd(renderAmount(receipt.amount)),
-        receiptUrl: escapeMd(generateWebAppUrl(`receipt-${receipt.id}`)),
-        part: localize(
-          user.locale,
-          'receipts.notifications.saved.part',
-          { amount: escapeMd(renderAmount(debt ? debt.amount : 0)) },
-        ),
-        description: receipt.description
-          ? localize(
+    sendNotification(
+      user.id,
+      localize(
+        user.locale,
+        'receipts.notifications.saved.message',
+        {
+          editor: renderUserMd(editor),
+          payer: renderUserMd(payer),
+          action: localize(user.locale, `receipts.notifications.saved.action.${action}`),
+          amount: escapeMd(renderAmount(receipt.amount)),
+          receiptUrl: escapeMd(generateWebAppUrl(`receipt-${receipt.id}`)),
+          part: localize(
             user.locale,
-            'receipts.notifications.saved.description',
-            { description: escapeMd(receipt.description) },
-          )
-          : '',
-      }
-    ), { telegram })
+            'receipts.notifications.saved.part',
+            { amount: escapeMd(renderAmount(debt ? debt.amount : 0)) },
+          ),
+          description: receipt.description
+            ? localize(
+              user.locale,
+              'receipts.notifications.saved.description',
+              { description: escapeMd(receipt.description) },
+            )
+            : '',
+        }
+      ),
+      receipt.photoFilename
+        ? Markup.inlineKeyboard([
+          Markup.button.callback(localize(user.locale, 'receipts.actions.getPhoto'), `photo:${receipt.photoFilename}`)
+        ])
+        : undefined,
+      { telegram }
+    )
   }
 }
 

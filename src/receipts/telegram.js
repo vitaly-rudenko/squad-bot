@@ -1,5 +1,9 @@
 import { registry } from '../registry.js'
-import { escapeMd } from '../common/telegram.js'
+import { escapeMd, isNotificationErrorIgnorable } from '../common/telegram.js'
+import { logger } from '../common/logger.js'
+import { getPhotoPath } from './filesystem.js'
+import { createReadStream } from 'fs'
+import { array, nonempty, string } from 'superstruct'
 
 export function createReceiptsFlow() {
   const { localize, generateWebAppUrl } = registry.export()
@@ -23,5 +27,25 @@ export function createReceiptsFlow() {
     )
   }
 
-  return { receipts }
+  const matchSchema = array(nonempty(string()))
+
+  /** @param {import('telegraf').Context} context */
+  const getPhoto = async (context) => {
+    if (!('match' in context)) return
+    const { locale } = context.state
+
+    await context.answerCbQuery(localize(locale, 'receipts.actions.sendingPhoto'))
+    await context.editMessageReplyMarkup(undefined)
+
+    const photoFilename = matchSchema.create(context.match)[1]
+    await context.sendPhoto(
+      { source: createReadStream(getPhotoPath(photoFilename)) },
+    ).catch((err) => {
+      if (!isNotificationErrorIgnorable(err)) {
+        logger.warn({ err, user: context.from, photoFilename }, 'Could not send photo')
+      }
+    })
+  }
+
+  return { receipts, getPhoto }
 }

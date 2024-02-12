@@ -42,6 +42,6 @@ export async function deletePhoto(photoFilename) {
 }
 
 /** @param {string} photoFilename */
-function getPhotoPath(photoFilename) {
+export function getPhotoPath(photoFilename) {
   return path.resolve('files', 'photos', photoFilename)
 }

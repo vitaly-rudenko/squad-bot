@@ -192,8 +192,9 @@ async function start() {
   const { payments } = createPaymentsFlow()
   bot.command('payments', payments)
 
-  const { receipts } = createReceiptsFlow()
+  const { receipts, getPhoto } = createReceiptsFlow()
   bot.command('receipts', receipts)
+  bot.action(/^photo:(.+)$/, getPhoto)
 
   bot.on('message',
     async (context, next) => {
