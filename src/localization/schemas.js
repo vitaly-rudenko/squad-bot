@@ -58,12 +58,13 @@ export const localeFileSchema = object({
   }),
   debts: object({
     command: object({
-      ingoingDebt: _,
-      ingoingDebts: _,
-      outgoingDebt: _,
-      outgoingDebts: _,
       noDebts: _,
-      debt: _,
+      ingoingDebt: _,
+      ingoingDebtsOne: _,
+      ingoingDebtsMany: _,
+      outgoingDebt: _,
+      outgoingDebtsOne: _,
+      outgoingDebtsMany: _,
     }),
   }),
   rollCalls: object({

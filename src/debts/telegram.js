@@ -5,7 +5,7 @@ import { renderUserMd } from '../users/telegram.js'
 import { isDefined } from '../common/utils.js'
 
 export function createDebtsFlow() {
-  const { usersStorage, debtsStorage, paymentsStorage, localize } = registry.export()
+  const { usersStorage, debtsStorage, paymentsStorage, localize, generateWebAppUrl } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const debts = async (context) => {
@@ -34,25 +34,26 @@ export function createDebtsFlow() {
       return {
         name: debtor ? renderUserMd(debtor) : escapeMd(localize(locale, 'unknownUser')),
         amount: escapeMd(renderAggregatedDebt(debt)),
+        payUrl: generateWebAppUrl(`pay-${debtorId}-${debt.amount}`),
       }
     }
 
     const ingoingDebtsFormatted = ingoingDebts.length > 0
       ? ingoingDebts.length === 1
-        ? localize(locale, 'debts.command.ingoingDebt', debtReplacements(ingoingDebts[0]))
-        : localize(locale, 'debts.command.ingoingDebts', {
+        ? localize(locale, 'debts.command.ingoingDebtsOne', debtReplacements(ingoingDebts[0]))
+        : localize(locale, 'debts.command.ingoingDebtsMany', {
           debts: ingoingDebts
-            .map(debt => localize(locale, 'debts.command.debt', debtReplacements(debt)))
+            .map(debt => localize(locale, 'debts.command.ingoingDebt', debtReplacements(debt)))
             .join('\n')
         })
       : undefined
 
     const outgoingDebtsFormatted = outgoingDebts.length > 0
       ? outgoingDebts.length === 1
-        ? localize(locale, 'debts.command.outgoingDebt', debtReplacements(outgoingDebts[0]))
-        : localize(locale, 'debts.command.outgoingDebts', {
+        ? localize(locale, 'debts.command.outgoingDebtsOne', debtReplacements(outgoingDebts[0]))
+        : localize(locale, 'debts.command.outgoingDebtsMany', {
           debts: outgoingDebts
-            .map(debt => localize(locale, 'debts.command.debt', debtReplacements(debt)))
+            .map(debt => localize(locale, 'debts.command.outgoingDebt', debtReplacements(debt)))
             .join('\n')
         })
       : undefined
@@ -67,7 +68,7 @@ export function createDebtsFlow() {
         ingoingDebtsFormatted,
         noDebts,
       ].filter(isDefined).map(s => s.trim()).join('\n\n'),
-      { parse_mode: 'MarkdownV2' }
+      { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
     )
   }
 
