@@ -5,18 +5,10 @@ describe('[security]', () => {
   describe('GET /photos', () => {
     it('does not list photos', async () => {
       expect((await fetch(`${TEST_API_URL}/photos`)).status).to.equal(404)
-      expect(
-        (await fetch(`${TEST_API_URL}/photos/index.html`)).status
-      ).to.equal(404)
-      expect((await fetch(`${TEST_API_URL}/photos/invalid`)).status).to.equal(
-        404
-      )
-      expect(
-        (await fetch(`${TEST_API_URL}/photos/invalid.jpg`)).status
-      ).to.equal(404)
-      expect(
-        (await fetch(`${TEST_API_URL}/photos/invalid.png`)).status
-      ).to.equal(404)
+      expect((await fetch(`${TEST_API_URL}/photos/index.html`)).status).to.equal(404)
+      expect((await fetch(`${TEST_API_URL}/photos/invalid`)).status).to.equal(404)
+      expect((await fetch(`${TEST_API_URL}/photos/invalid.jpg`)).status).to.equal(404)
+      expect((await fetch(`${TEST_API_URL}/photos/invalid.png`)).status).to.equal(404)
     })
 
     it('sends proper headers', async () => {
@@ -42,7 +34,7 @@ describe('[security]', () => {
           "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
         'content-type': 'image/png',
         'cross-origin-opener-policy': 'same-origin',
-        'cross-origin-resource-policy': 'same-origin',
+        'cross-origin-resource-policy': 'cross-origin',
         'keep-alive': 'timeout=5',
         'origin-agent-cluster': '?1',
         'referrer-policy': 'no-referrer',
@@ -72,7 +64,7 @@ describe('[security]', () => {
           "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
         'content-type': 'application/json; charset=utf-8',
         'cross-origin-opener-policy': 'same-origin',
-        'cross-origin-resource-policy': 'same-origin',
+        'cross-origin-resource-policy': 'cross-origin',
         'keep-alive': 'timeout=5',
         'origin-agent-cluster': '?1',
         'referrer-policy': 'no-referrer',
