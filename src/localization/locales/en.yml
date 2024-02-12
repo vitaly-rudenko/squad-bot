@@ -29,13 +29,13 @@ receipts:
       - ''
       - '➕ Record: {createUrl}'
   notifications:
+    part: '💵 Your part: *{amount}*'
     saved:
       message:
         - '📝 {editor} has {action} [a *{amount}* receipt]({receiptUrl}) {description}'
         - '👤 Paid by *{payer}*'
         - '{part}'
       description: '\({description}\)'
-      part: '💵 Your part: *{amount}*'
       action:
         create: recorded
         update: edited
@@ -43,6 +43,7 @@ receipts:
       message:
         - '❌ 📝 {editor} has deleted a *{amount}* receipt {description}'
         - '👤 Paid by *{payer}*'
+        - '{part}'
       description: '\({description}\)'
   actions:
     getPhoto: '📷 Get receipt photo'

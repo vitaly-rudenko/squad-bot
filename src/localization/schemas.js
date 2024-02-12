@@ -25,10 +25,10 @@ export const localeFileSchema = object({
       message: _,
     }),
     notifications: object({
+      part: _,
       saved: object({
         message: _,
         description: _,
-        part: _,
         action: object({
           create: _,
           update: _,

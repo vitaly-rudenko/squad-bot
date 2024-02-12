@@ -46,14 +46,14 @@ describe('receipts/notifications', () => {
           createdAt: new Date(),
           description: 'Hello world!',
         },
+        debts: [
+          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
+          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
+        ],
         action: 'create',
         editorId: editor.id,
       }, {
         localize: localizeMock,
-        debtsStorage: createDebtsStorage([
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
-        ]),
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
         generateWebAppUrl: generateWebAppUrlMock,
@@ -68,7 +68,7 @@ describe('receipts/notifications', () => {
               action: receipts.notifications.saved.action.create(${editor.locale})
               amount: ₴12
               receiptUrl: ${escapeMd(`web-app-url(receipt-fake-receipt-id)`)}
-              part: receipts.notifications.saved.part(${editor.locale}):
+              part: receipts.notifications.part(${editor.locale}):
                 amount: ₴0
               description: receipts.notifications.saved.description(${editor.locale}):
                 description: Hello world\\!
@@ -80,7 +80,7 @@ describe('receipts/notifications', () => {
               action: receipts.notifications.saved.action.create(${payer.locale})
               amount: ₴12
               receiptUrl: ${escapeMd(`web-app-url(receipt-fake-receipt-id)`)}
-              part: receipts.notifications.saved.part(${payer.locale}):
+              part: receipts.notifications.part(${payer.locale}):
                 amount: ₴43\\.21
               description: receipts.notifications.saved.description(${payer.locale}):
                 description: Hello world\\!
@@ -92,7 +92,7 @@ describe('receipts/notifications', () => {
               action: receipts.notifications.saved.action.create(${debtor.locale})
               amount: ₴12
               receiptUrl: ${escapeMd(`web-app-url(receipt-fake-receipt-id)`)}
-              part: receipts.notifications.saved.part(${debtor.locale}):
+              part: receipts.notifications.part(${debtor.locale}):
                 amount: ₴12
               description: receipts.notifications.saved.description(${debtor.locale}):
                 description: Hello world\\!
@@ -115,14 +115,14 @@ describe('receipts/notifications', () => {
           createdAt: new Date(),
           description: 'Hello world!',
         },
+        debts: [
+          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
+          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
+        ],
         action: 'update',
         editorId: editor.id,
       }, {
         localize: localizeMock,
-        debtsStorage: createDebtsStorage([
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
-        ]),
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
         generateWebAppUrl: generateWebAppUrlMock,
@@ -137,7 +137,7 @@ describe('receipts/notifications', () => {
               action: receipts.notifications.saved.action.update(${editor.locale})
               amount: ₴12
               receiptUrl: ${escapeMd(`web-app-url(receipt-fake-receipt-id)`)}
-              part: receipts.notifications.saved.part(${editor.locale}):
+              part: receipts.notifications.part(${editor.locale}):
                 amount: ₴0
               description: receipts.notifications.saved.description(${editor.locale}):
                 description: Hello world\\!
@@ -149,7 +149,7 @@ describe('receipts/notifications', () => {
               action: receipts.notifications.saved.action.update(${payer.locale})
               amount: ₴12
               receiptUrl: ${escapeMd(`web-app-url(receipt-fake-receipt-id)`)}
-              part: receipts.notifications.saved.part(${payer.locale}):
+              part: receipts.notifications.part(${payer.locale}):
                 amount: ₴43\\.21
               description: receipts.notifications.saved.description(${payer.locale}):
                 description: Hello world\\!
@@ -161,7 +161,7 @@ describe('receipts/notifications', () => {
               action: receipts.notifications.saved.action.update(${debtor.locale})
               amount: ₴12
               receiptUrl: ${escapeMd(`web-app-url(receipt-fake-receipt-id)`)}
-              part: receipts.notifications.saved.part(${debtor.locale}):
+              part: receipts.notifications.part(${debtor.locale}):
                 amount: ₴12
               description: receipts.notifications.saved.description(${debtor.locale}):
                 description: Hello world\\!
@@ -186,13 +186,13 @@ describe('receipts/notifications', () => {
           createdAt: new Date(),
           description: 'Hello world!',
         },
+        debts: [
+          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
+          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
+        ],
         editorId: editor.id,
       }, {
         localize: localizeMock,
-        debtsStorage: createDebtsStorage([
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
-        ]),
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
       })
@@ -204,6 +204,8 @@ describe('receipts/notifications', () => {
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
               amount: ₴12
+              part: receipts.notifications.part(${editor.locale}):
+                amount: ₴0
               description: receipts.notifications.deleted.description(${editor.locale}):
                 description: Hello world\\!
           `, options],
@@ -212,6 +214,8 @@ describe('receipts/notifications', () => {
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
               amount: ₴12
+              part: receipts.notifications.part(${payer.locale}):
+                amount: ₴43\\.21
               description: receipts.notifications.deleted.description(${payer.locale}):
                 description: Hello world\\!
           `, options],
@@ -220,6 +224,8 @@ describe('receipts/notifications', () => {
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
               amount: ₴12
+              part: receipts.notifications.part(${debtor.locale}):
+                amount: ₴12
               description: receipts.notifications.deleted.description(${debtor.locale}):
                 description: Hello world\\!
           `, options]

@@ -34,8 +34,8 @@ export function createReceiptsFlow() {
     if (!('match' in context)) return
     const { locale } = context.state
 
-    await context.answerCbQuery(localize(locale, 'receipts.actions.sendingPhoto'))
     await context.editMessageReplyMarkup(undefined)
+    await context.answerCbQuery(localize(locale, 'receipts.actions.sendingPhoto'))
 
     const photoFilename = matchSchema.create(context.match)[1]
     await context.sendPhoto(

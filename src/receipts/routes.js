@@ -101,6 +101,7 @@ export function createReceiptsRouter() {
       action: id ? 'update' : 'create',
       editorId: req.user.id,
       receipt,
+      debts,
     })
 
     res.json(formatReceipt(receipt, debts))
@@ -134,6 +135,8 @@ export function createReceiptsRouter() {
       throw new NotFoundError()
     }
 
+    const debts = await debtsStorage.findByReceiptId(receiptId)
+
     if (receipt.photoFilename) {
       await deletePhoto(receipt.photoFilename)
     }
@@ -141,7 +144,11 @@ export function createReceiptsRouter() {
     await debtsStorage.deleteByReceiptId(receiptId)
     await receiptsStorage.deleteById(receiptId)
 
-    await sendReceiptDeletedNotification({ editorId: req.user.id, receipt })
+    await sendReceiptDeletedNotification({
+      editorId: req.user.id,
+      receipt,
+      debts,
+    })
 
     res.sendStatus(204)
   })

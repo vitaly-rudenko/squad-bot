@@ -11,15 +11,14 @@ import { renderUserMd } from '../users/telegram.js'
  *   action: 'create' | 'update'
  *   editorId: string
  *   receipt: import('./types.js').Receipt
+ *   debts: import('../debts/types').Debt[]
  * }} input
- * @param {import('../types').Deps<'localize' | 'debtsStorage' | 'usersStorage' | 'telegram' | 'generateWebAppUrl'>} deps
+ * @param {import('../types').Deps<'localize' | 'usersStorage' | 'telegram' | 'generateWebAppUrl'>} deps
  */
 export async function sendReceiptSavedNotification(
-  { action, editorId, receipt },
-  { localize, debtsStorage, usersStorage, telegram, generateWebAppUrl } = registry.export()
+  { action, editorId, receipt, debts },
+  { localize, usersStorage, telegram, generateWebAppUrl } = registry.export()
 ) {
-  const debts = await debtsStorage.findByReceiptId(receipt.id)
-
   const [editor, payer, ...debtors] = await usersStorage.findAndMapByIds([
     editorId,
     receipt.payerId,
@@ -46,7 +45,7 @@ export async function sendReceiptSavedNotification(
           receiptUrl: escapeMd(generateWebAppUrl(`receipt-${receipt.id}`)),
           part: localize(
             user.locale,
-            'receipts.notifications.saved.part',
+            'receipts.notifications.part',
             { amount: escapeMd(renderAmount(debt ? debt.amount : 0)) },
           ),
           description: receipt.description
@@ -72,14 +71,14 @@ export async function sendReceiptSavedNotification(
  * @param {{
  *   editorId: string
  *   receipt: import('./types.js').Receipt
+ *   debts: import('../debts/types').Debt[]
  * }} input
- * @param {import('../types').Deps<'localize' | 'usersStorage' | 'telegram' | 'debtsStorage'>} deps
+ * @param {import('../types').Deps<'localize' | 'usersStorage' | 'telegram'>} deps
  */
 export async function sendReceiptDeletedNotification(
-  { editorId, receipt },
-  { localize, usersStorage, telegram, debtsStorage } = registry.export()
+  { editorId, receipt, debts },
+  { localize, usersStorage, telegram } = registry.export()
 ) {
-  const debts = await debtsStorage.findByReceiptId(receipt.id)
   const [editor, payer, ...debtors] = await usersStorage.findAndMapByIds([
     editorId,
     receipt.payerId,
@@ -91,6 +90,8 @@ export async function sendReceiptDeletedNotification(
   const users = deduplicateUsers([editor, payer, ...debtors.filter(isDefined)])
 
   for (const user of users) {
+    const debt = debts.find(debt => debt.debtorId === user.id)
+
     sendNotification(user.id, localize(
       user.locale,
       'receipts.notifications.deleted.message',
@@ -98,6 +99,11 @@ export async function sendReceiptDeletedNotification(
         editor: renderUserMd(editor),
         payer: renderUserMd(payer),
         amount: escapeMd(renderAmount(receipt.amount)),
+        part: localize(
+          user.locale,
+          'receipts.notifications.part',
+          { amount: escapeMd(renderAmount(debt ? debt.amount : 0)) },
+        ),
         description: receipt.description
           ? localize(
             user.locale,
