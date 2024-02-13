@@ -1,15 +1,3 @@
-import { renderAmount } from '../common/utils.js'
-
-/** @param {import('./types').Debt} debt */
-export function renderDebtAmount(debt) {
-  return renderAmount(debt.amount)
-}
-
-/** @param {import('./types').AggregatedDebt} debt */
-export function renderAggregatedDebt(debt) {
-  return renderAmount(debt.amount)
-}
-
 /**
  * @param {{
  *   userId: string
@@ -67,11 +55,7 @@ export async function aggregateDebts({
     if (amount !== undefined && amount !== 0) {
       const [fromUserId, toUserId] = amount > 0 ? [userId, debtUserId] : [debtUserId, userId]
 
-      debts.push({
-        fromUserId,
-        toUserId,
-        amount: Math.abs(amount),
-      })
+      debts.push({ fromUserId, toUserId, amount: Math.abs(amount) })
     }
   }
 

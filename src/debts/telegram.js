@@ -1,8 +1,9 @@
 import { registry } from '../registry.js'
 import { escapeMd } from '../common/telegram.js'
-import { aggregateDebts, renderAggregatedDebt } from './utils.js'
+import { aggregateDebts } from './utils.js'
 import { renderUserMd } from '../users/telegram.js'
-import { isDefined } from '../common/utils.js'
+import { isDefined, renderAmount } from '../common/utils.js'
+import { generatePayCommand } from '../web-app/utils.js'
 
 export function createDebtsFlow() {
   const { usersStorage, debtsStorage, paymentsStorage, localize, generateWebAppUrl } = registry.export()
@@ -33,8 +34,8 @@ export function createDebtsFlow() {
 
       return {
         name: debtor ? renderUserMd(debtor) : escapeMd(localize(locale, 'unknownUser')),
-        amount: escapeMd(renderAggregatedDebt(debt)),
-        payUrl: generateWebAppUrl(`pay-${debtorId}-${debt.amount}`),
+        amount: escapeMd(renderAmount(debt.amount)),
+        payUrl: generateWebAppUrl(generatePayCommand({ toUserId: debtorId, amount: debt.amount })),
       }
     }
 

@@ -17,7 +17,7 @@ import { createCardsFlow } from './cards/telegram.js'
 import { createRollCallsFlow } from './roll-calls/telegram.js'
 import { createTemporaryAuthTokenGenerator } from './auth/utils.js'
 import { createAuthFlow } from './auth/telegram.js'
-import { createCommonFlow, createWebAppUrlGenerator, requirePrivateChat, withChatId, withGroupChat, wrap } from './common/telegram.js'
+import { createCommonFlow, requirePrivateChat, withChatId, withGroupChat, wrap } from './common/telegram.js'
 import { getAppVersion } from './common/utils.js'
 import { createAdminsFlow } from './admins/telegram.js'
 import { DebtsPostgresStorage } from './debts/storage.js'
@@ -40,6 +40,7 @@ import { createGroupsFlow } from './groups/telegram.js'
 import { env } from './env.js'
 import { StructError } from 'superstruct'
 import path from 'path'
+import { createWebAppUrlGenerator } from './web-app/utils.js'
 
 async function start() {
   if (env.USE_TEST_MODE) {
