@@ -3,7 +3,7 @@ export interface Dependencies {
   cardsStorage: import('./cards/storage.js').CardsPostgresStorage
   debtsStorage: import('./debts/storage.js').DebtsPostgresStorage
   generateTemporaryAuthToken: import('./auth/types.js').GenerateTemporaryAuthToken
-  generateWebAppUrl: ReturnType<typeof import('./common/telegram.js').createWebAppUrlGenerator>
+  generateWebAppUrl: ReturnType<typeof import('./web-app/utils.js').createWebAppUrlGenerator>
   groupCache: import('./common/cache.js').RedisCache
   groupStorage: import('./groups/storage.js').GroupsPostgresStorage
   localize: typeof import('./localization/localize.js').localize

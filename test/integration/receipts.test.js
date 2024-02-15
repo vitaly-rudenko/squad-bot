@@ -118,15 +118,13 @@ describe('[receipts]', () => {
     it('should update the receipt (replace photo)', async () => {
       const [user1, user2] = await createUsers(2)
 
-      const { id: receiptId, photoFilename } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
+      const receipt1 = await createReceipt(user1.id, { [user1.id]: 10 },
+        { photo: receiptPhotoBuffer, mime: 'image/png' })
 
-      const photo1 = await getPhoto(receiptId)
+      const receipt2 = await createReceipt(user1.id, { [user2.id]: 5 },
+        { photo: updatedReceiptPhotoBuffer, mime: 'image/jpeg', receiptId: receipt1.id })
 
-      await createReceipt(user1.id, { [user2.id]: 5 }, { photo: updatedReceiptPhotoBuffer, mime: 'image/jpeg', receiptId })
-
-      const receipt = await getReceipt(receiptId, user1.id)
-
-      expectReceiptToShallowEqual(receipt, {
+      expectReceiptToShallowEqual(receipt2, {
         payerId: user1.id,
         amount: 5,
         photoFilename: 'photo.jpg',
@@ -136,12 +134,12 @@ describe('[receipts]', () => {
         }]
       })
 
-      const photo2 = await getPhoto(receipt.photoFilename)
+      const photo = await getPhoto(receipt2.photoFilename)
 
-      expect(photo2.mime).to.equal('image/jpeg')
-      expect(photo2.binary).not.to.deep.equal(photo1.binary)
-      expect(await doesPhotoExist(photoFilename)).to.be.false
-      expect(await doesPhotoExist(receipt.photoFilename)).to.be.true
+      expect(photo.mime).to.equal('image/jpeg')
+      expect(photo.binary).to.deep.eq(updatedReceiptPhotoBuffer.buffer)
+      expect(await doesPhotoExist(receipt1.photoFilename)).to.be.false
+      expect(await doesPhotoExist(receipt2.photoFilename)).to.be.true
     })
   })
 

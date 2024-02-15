@@ -66,7 +66,7 @@ export function createReceiptsRouter() {
         await deletePhoto(receipt.photoFilename)
       }
 
-      await receiptsStorage.update({
+      receipt = await receiptsStorage.update({
         id,
         payerId,
         amount,

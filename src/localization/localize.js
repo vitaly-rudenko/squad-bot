@@ -58,7 +58,7 @@ function flattenLocaleFile(localeFile) {
 
 /**
  * @param {string} message
- * @param {Record<string, string | number> | undefined} [replacements]
+ * @param {Record<string, string | number | undefined>} [replacements]
  * @returns {string}
  */
 export function replaceVariables(message, replacements) {

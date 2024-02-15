@@ -35,11 +35,17 @@ export class ReceiptsPostgresStorage {
 
   /** @param {Omit<import('./types').Receipt, 'createdAt'>} receipt */
   async update(receipt) {
-    await this._client.query(`
+    const response = await this._client.query(`
       UPDATE receipts
       SET payer_id = $2, amount = $3, description = $4, photo_filename = $5
-      WHERE id = $1;
+      WHERE id = $1
+      RETURNING created_at;
     `, [receipt.id, receipt.payerId, receipt.amount, receipt.description, receipt.photoFilename])
+
+    return {
+      ...receipt,
+      createdAt: new Date(response.rows[0]['created_at']),
+    }
   }
 
   /** @param {string} id */
