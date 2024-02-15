@@ -5,10 +5,11 @@ import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from '..
 import { createTelegramMock } from '../../helpers/telegram.js'
 import { createUser, createUsersStorage } from '../../helpers/users.js'
 import { localizeMock } from '../../helpers/localization.js'
-import { createDebt } from '../../helpers/debts.js'
+import { createDebt, createDebtsStorage } from '../../helpers/debts.js'
 import { escapeMd } from '../../../../src/common/telegram.js'
 import { generateWebAppUrlMock } from '../../helpers/common.js'
 import { Markup } from 'telegraf'
+import { createPaymentsStorage } from '../../helpers/payments.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -57,6 +58,8 @@ describe('receipts/notifications', () => {
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
         generateWebAppUrl: generateWebAppUrlMock,
+        debtsStorage: createDebtsStorage([]),
+        paymentsStorage: createPaymentsStorage([]),
       })
 
       expect(telegramMock.sendMessage.args)
@@ -72,6 +75,7 @@ describe('receipts/notifications', () => {
                 amount: ₴0
               description: receipts.notifications.saved.description(${editor.locale}):
                 description: Hello world\\!
+              debts: receipts.notifications.saved.checkDebts(${editor.locale})
           `, optionsWithGetPhoto(editor.locale)],
           [Number(payer.id), stripIndent`
             receipts.notifications.saved.message(${payer.locale}):
@@ -84,6 +88,7 @@ describe('receipts/notifications', () => {
                 amount: ₴43\\.21
               description: receipts.notifications.saved.description(${payer.locale}):
                 description: Hello world\\!
+              debts: receipts.notifications.saved.checkDebts(${payer.locale})
           `, optionsWithGetPhoto(payer.locale)],
           [Number(debtor.id), stripIndent`
             receipts.notifications.saved.message(${debtor.locale}):
@@ -96,6 +101,7 @@ describe('receipts/notifications', () => {
                 amount: ₴12
               description: receipts.notifications.saved.description(${debtor.locale}):
                 description: Hello world\\!
+              debts: receipts.notifications.saved.checkDebts(${debtor.locale})
           `, optionsWithGetPhoto(debtor.locale)]
         ])
     })
@@ -126,6 +132,8 @@ describe('receipts/notifications', () => {
         usersStorage: createUsersStorage([editor, payer, debtor]),
         telegram,
         generateWebAppUrl: generateWebAppUrlMock,
+        debtsStorage: createDebtsStorage([]),
+        paymentsStorage: createPaymentsStorage([]),
       })
 
       expect(telegramMock.sendMessage.args)
@@ -141,6 +149,7 @@ describe('receipts/notifications', () => {
                 amount: ₴0
               description: receipts.notifications.saved.description(${editor.locale}):
                 description: Hello world\\!
+              debts: receipts.notifications.saved.checkDebts(${editor.locale})
           `, optionsWithGetPhoto(editor.locale)],
           [Number(payer.id), stripIndent`
             receipts.notifications.saved.message(${payer.locale}):
@@ -153,6 +162,7 @@ describe('receipts/notifications', () => {
                 amount: ₴43\\.21
               description: receipts.notifications.saved.description(${payer.locale}):
                 description: Hello world\\!
+              debts: receipts.notifications.saved.checkDebts(${payer.locale})
           `, optionsWithGetPhoto(payer.locale)],
           [Number(debtor.id), stripIndent`
             receipts.notifications.saved.message(${debtor.locale}):
@@ -165,6 +175,7 @@ describe('receipts/notifications', () => {
                 amount: ₴12
               description: receipts.notifications.saved.description(${debtor.locale}):
                 description: Hello world\\!
+              debts: receipts.notifications.saved.checkDebts(${debtor.locale})
           `, optionsWithGetPhoto(debtor.locale)]
         ])
     })

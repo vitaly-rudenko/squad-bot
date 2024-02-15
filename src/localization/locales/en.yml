@@ -35,10 +35,14 @@ receipts:
         - '📝 {editor} has {action} [a *{amount}* receipt]({receiptUrl}) {description}'
         - '👤 Paid by *{payer}*'
         - '{part}'
+        - '{debts}'
       description: '\({description}\)'
       action:
         create: recorded
         update: edited
+      ingoingDebt: '⬅️ {name} owes you *{amount}*'
+      outgoingDebt: '➡️ You owe *{amount}* to {name} – [pay]({payUrl})'
+      checkDebts: '↔️ Check your debts: /debts'
     deleted:
       message:
         - '❌ 📝 {editor} has deleted a *{amount}* receipt {description}'

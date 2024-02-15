@@ -18,6 +18,14 @@ export class DebtsMockStorage {
   findByReceiptId(receiptId) {
     return [...this._debts].filter(d => d.receiptId === receiptId)
   }
+
+  aggregateIngoingDebts() {
+    return []
+  }
+
+  aggregateOutgoingDebts() {
+    return []
+  }
 }
 
 /**
