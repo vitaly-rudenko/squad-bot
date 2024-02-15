@@ -244,7 +244,7 @@ async function start() {
         err,
         req: {
           url: req.url,
-          ...req.headers ? {
+          ...req.headers && Object.keys(req.headers).length > 0 ? {
               headers: {
               ...req.headers,
               ...typeof req.headers.authorization === 'string'
@@ -252,9 +252,9 @@ async function start() {
                 : undefined,
             }
           } : undefined,
-          ...Object.keys(req.params).length > 0 ? { params: req.params } : undefined,
-          ...Object.keys(req.query).length > 0 ? { query: req.query } : undefined,
-          ...req.body ? { body: req.body } : undefined,
+          ...req.params && Object.keys(req.params).length > 0 ? { params: req.params } : undefined,
+          ...req.query && Object.keys(req.query).length > 0 ? { query: req.query } : undefined,
+          ...req.body && Object.keys(req.body).length > 0 ? { body: req.body } : undefined,
         }
       }, 'Unhandled API error')
     }
