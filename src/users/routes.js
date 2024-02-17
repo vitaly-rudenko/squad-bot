@@ -6,6 +6,8 @@ import { querySchema } from './schemas.js'
 import { isDefined } from '../common/utils.js'
 import { ApiError } from '../common/errors.js'
 
+const RECENT_USERS_LIMIT = 10
+
 export function createUsersRouter() {
   const {
     usersStorage,
@@ -75,7 +77,7 @@ export function createUsersRouter() {
     }
 
     const sortedUserIds = [...userIdMap.entries()]
-      .slice(0, 10)
+      .slice(0, RECENT_USERS_LIMIT)
       .sort((a, b) => b.at(1) - a.at(1))
       .map(([userId]) => userId)
 
