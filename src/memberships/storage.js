@@ -60,6 +60,22 @@ export class MembershipPostgresStorage {
     return response.rows.map(row => row['user_id'])
   }
 
+  /**
+   * @param {string[]} groupIds
+   * @returns {Promise<string[]>}
+   */
+  async findUserIdsByGroupIds(groupIds) {
+    if (groupIds.length === 0) return []
+
+    const response = await this._client.query(`
+      SELECT m.user_id
+      FROM memberships m
+      WHERE m.group_id = ANY($1);
+    `, [groupIds])
+
+    return response.rows.map(row => row['user_id'])
+  }
+
   /** @param {{ limit: number }} input */
   async findOldest({ limit = 100 }) {
     if (limit <= 0 || limit > 100) {
