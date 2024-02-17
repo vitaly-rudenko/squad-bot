@@ -41,10 +41,9 @@ export class UsersPostgresStorage {
    *   ids?: string[]
    *   limit?: number
    *   offset?: number
-   *   allowDeprecatedNoConditions?: boolean
    * }} options
    */
-  async find({ query, ids, limit = 100, offset = 0, allowDeprecatedNoConditions } = {}) {
+  async find({ query, ids, limit = 100, offset = 0 } = {}) {
     const conditions = []
     const variables = []
 
@@ -66,7 +65,7 @@ export class UsersPostgresStorage {
       variables.push(ids)
     }
 
-    if (conditions.length === 0 && !allowDeprecatedNoConditions) {
+    if (conditions.length === 0) {
       throw new Error('No conditions were provided for the search')
     }
 
