@@ -1,3 +1,5 @@
+import { AlreadyExistsError } from '../common/errors.js'
+
 export class CardsPostgresStorage {
   /** @param {import('pg').Client} client */
   constructor(client) {
@@ -9,15 +11,23 @@ export class CardsPostgresStorage {
    * @return {Promise<import('./types').Card>}
    */
   async create(input) {
-    const response = await this._client.query(`
-      INSERT INTO cards (user_id, bank, number)
-      VALUES ($1, $2, $3)
-      RETURNING id;
-    `, [input.userId, input.bank, input.number])
+    try {
+      const response = await this._client.query(`
+        INSERT INTO cards (user_id, bank, number)
+        VALUES ($1, $2, $3)
+        RETURNING id;
+      `, [input.userId, input.bank, input.number])
 
-    return {
-      id: response.rows[0].id,
-      ...input,
+      return {
+        id: response.rows[0].id,
+        ...input,
+      }
+    } catch (err) {
+      if (err.code === '23505') {
+        throw new AlreadyExistsError()
+      }
+
+      throw err
     }
   }
 
