@@ -281,6 +281,10 @@ async function start() {
     }
   })
 
+  bot.catch((err, context) => {
+    logger.error({ err, context }, 'Unhandled telegram error')
+  })
+
   if (env.ENABLE_TEST_HTTPS) {
     logger.warn({}, 'Starting server in test HTTPS mode')
     // https://stackoverflow.com/a/69743888
