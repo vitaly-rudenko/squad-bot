@@ -52,6 +52,7 @@ receipts:
   actions:
     getPhoto: '📷 Get receipt photo'
     sendingPhoto: 'Sending photo...'
+    failedToSendPhoto: '😓 Photo is no longer available\.'
 users:
   command:
     start:

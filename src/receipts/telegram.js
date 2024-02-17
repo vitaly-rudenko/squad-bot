@@ -34,17 +34,33 @@ export function createReceiptsFlow() {
     if (!('match' in context)) return
     const { locale } = context.state
 
-    await context.editMessageReplyMarkup(undefined)
-    await context.answerCbQuery(localize(locale, 'receipts.actions.sendingPhoto'))
+    await Promise.allSettled([
+      context.editMessageReplyMarkup(undefined).catch(() => {}),
+      context.answerCbQuery(localize(locale, 'receipts.actions.sendingPhoto')),
+    ])
 
+    const reply_to_message_id = context.callbackQuery?.message?.message_id
     const photoFilename = matchSchema.create(context.match)[1]
-    await context.sendPhoto(
-      { source: createReadStream(getPhotoPath(photoFilename)) },
-    ).catch((err) => {
+
+    const source = createReadStream(getPhotoPath(photoFilename))
+    source.on('error', async (err) => {
+      if ('code' in err && err.code !== 'ENOENT') {
+        logger.error({ err, photoFilename }, 'Could not read photo')
+      }
+
+      await context.reply(
+        localize(locale, 'receipts.actions.failedToSendPhoto'),
+        { parse_mode: 'MarkdownV2', reply_to_message_id }
+      )
+    })
+
+    try {
+      await context.sendPhoto({ source }, { reply_to_message_id })
+    } catch (err) {
       if (!isNotificationErrorIgnorable(err)) {
         logger.warn({ err, user: context.from, photoFilename }, 'Could not send photo')
       }
-    })
+    }
   }
 
   return { receipts, getPhoto }

@@ -45,6 +45,7 @@ export const localeFileSchema = object({
     actions: object({
       getPhoto: _,
       sendingPhoto: _,
+      failedToSendPhoto: _,
     }),
   }),
   users: object({
