@@ -39,7 +39,12 @@ export function createCommonFlow() {
   return { version }
 }
 
-const ignoredErrors = ['chat not found', "bot can't initiate conversation with a user"]
+const ignoredErrors = [
+  'chat not found',
+  "bot can't initiate conversation with a user",
+  "bots can't send messages to bots",
+]
+
 /** @param {Error} err */
 export function isNotificationErrorIgnorable(err) {
   return ignoredErrors.some(m => err.message.includes(m))
