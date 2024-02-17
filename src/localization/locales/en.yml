@@ -1,0 +1,113 @@
+payments:
+  command:
+    message:
+      - '💸 *Payments*'
+      - ''
+      - '👀 View: {viewUrl}'
+      - ''
+      - '➕ Record: {createUrl}'
+  notifications:
+    saved:
+      message:
+        - '💸 {editor} has {action} a *{amount}* payment'
+        - '👤 Sender: *{sender}*'
+        - '👤 Receiver: *{receiver}*'
+      action:
+        create: recorded
+        update: edited
+    deleted:
+      message:
+        - '❌ 💸 {editor} has deleted a *{amount}* payment'
+        - '👤 Sender: *{sender}*'
+        - '👤 Receiver: *{receiver}*'
+receipts:
+  command:
+    message:
+      - '📝  *Receipts*'
+      - ''
+      - '👀 View: {viewUrl}'
+      - ''
+      - '➕ Record: {createUrl}'
+  notifications:
+    part: '💵 Your part: *{amount}*'
+    saved:
+      message:
+        - '📝 {editor} has {action} [a *{amount}* receipt]({receiptUrl}) {description}'
+        - '👤 Paid by *{payer}*'
+        - '{part}'
+        - '{debts}'
+      description: '\({description}\)'
+      action:
+        create: recorded
+        update: edited
+      ingoingDebt: '⬅️ {name} owes you *{amount}*'
+      outgoingDebt: '➡️ You owe *{amount}* to {name} – [pay]({payUrl})'
+      checkDebts: '↔️ Check your debts: /debts'
+    deleted:
+      message:
+        - '❌ 📝 {editor} has deleted a *{amount}* receipt {description}'
+        - '👤 Paid by *{payer}*'
+        - '{part}'
+      description: '\({description}\)'
+  actions:
+    getPhoto: '📷 Get receipt photo'
+    sendingPhoto: 'Sending photo...'
+    failedToSendPhoto: '😓 Photo is no longer available\.'
+users:
+  command:
+    start:
+      message: 🎉 Welcome\! Your name and username have been saved\.
+cards:
+  command:
+    message:
+      - '💳 *Cards*'
+      - ''
+      - '👀 View: {viewUrl}'
+      - ''
+      - '➕ Add: {createUrl}'
+debts:
+  command:
+    noDebts: '✅ You''re all good\!'
+    ingoingDebt: '\- {name}: *{amount}*'
+    ingoingDebtsOne: '⬅️ {name} owes you *{amount}*'
+    ingoingDebtsMany:
+      - '⬅️ Owed to you:'
+      - '{debts}'
+    outgoingDebt: '\- {name}: *{amount}* – [pay]({payUrl})'
+    outgoingDebtsOne: '➡️ You owe *{amount}* to {name} – [pay]({payUrl})'
+    outgoingDebtsMany:
+      - '➡️ You owe:'
+      - '{debts}'
+rollCalls:
+  command:
+    group:
+      - '📣 *Roll calls*'
+      - ''
+      - '👀 View: {viewUrl}'
+      - ''
+      - '➕ Record: {createUrl}'
+    private:
+      - '📣 *Roll calls*'
+      - ''
+      - '👀 View: {viewUrl}'
+  noOneToMention: '❌ No one to mention or the bot doesn''t have enough data about this chat'
+  defaultPollTitle: 'Choose an answer'
+  message:
+    withTitle:
+      - '*{title}*'
+      - ''
+      - '{mentions}'
+    withoutTitle: '{mentions}'
+  mention:
+    withUsername: '@{username}'
+    withoutUsername: '[{name}]({profileUrl})'
+admins:
+  titles:
+    command:
+      message:
+        - '👤 *Admin titles*'
+        - ''
+        - '✍️ Edit: {editUrl}'
+groupChatOnly: '❌ This command can only be executed in a group chat'
+privateChatOnly: '❌ This command can only be executed in a private chat'
+unknownUser: 'Unknown user'

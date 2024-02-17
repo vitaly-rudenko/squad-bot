@@ -12,8 +12,11 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "useUnknownInCatchVariables": false,
-    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noEmit": true,
+    "skipLibCheck": true
   },
-  "include": ["types.d.ts", "app.js", "env.js", "logger.js", "app/**/*.js"],
+  "include": ["src/**/*.js", "src/**/*.ts", "test/unit/**/*.js", "src/index.d.ts"],
   "exclude": ["node_modules"]
 }

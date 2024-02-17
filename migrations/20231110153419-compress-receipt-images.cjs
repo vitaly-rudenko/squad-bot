@@ -1,11 +1,11 @@
 module.exports = {
   /** @param {{ context: import('pg').Pool }} context */
   async up({ context: db }) {
-    // not supported
+    // stub
   },
 
   /** @param {{ context: import('pg').Pool }} context */
   async down({ context: db }) {
-    // not supported
+    // stub
   },
 }

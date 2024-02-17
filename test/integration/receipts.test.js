@@ -1,24 +1,14 @@
 import chai, { expect } from 'chai'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
-import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getReceiptPhoto, expectReceiptToShallowEqual, getReceipt, deleteReceipt, getDebts, NO_DEBTS } from './helpers.js'
+import { createUsers, getReceipts, createReceipt, expectReceiptsToEqual, getPhoto, expectReceiptToShallowEqual, getReceipt, deleteReceipt, getDebts, NO_DEBTS, createUser, doesPhotoExist, receiptPhotoBuffer, updatedReceiptPhotoBuffer } from './helpers.js'
 
 chai.use(deepEqualInAnyOrder)
-
-const receiptPhotoBuffer = fs.readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt.png')
-)
-
-const updatedReceiptPhotoBuffer = fs.readFileSync(
-  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt_updated.jpeg')
-)
 
 describe('[receipts]', () => {
   describe('POST /receipts', () => {
     it('should upload & return receipt photo', async () => {
-      const [user] = await createUsers(1)
+      const user = await createUser()
 
       await createReceipt(user.id, {
         [user.id]: 1,
@@ -26,23 +16,24 @@ describe('[receipts]', () => {
 
       const [receipt] = await getReceipts(user.id)
 
-      const { photo, mime } = await getReceiptPhoto(receipt.id)
+      const { binary, mime } = await getPhoto(receipt.photoFilename)
 
       expect(mime).to.equal('image/png')
-      expect(photo).to.deep.equal(receiptPhotoBuffer.buffer)
+      expect(binary).to.deep.equal(receiptPhotoBuffer.buffer)
+      expect(await doesPhotoExist(receipt.photoFilename)).to.be.true
     })
 
     it('should return 404 when there is no receipt photo', async () => {
-      const [user] = await createUsers(1)
+      const user = await createUser()
 
       const { id: receiptId } = await createReceipt(user.id, { [user.id]: 1 })
-      const response = await getReceiptPhoto(receiptId)
+      const response = await getPhoto(receiptId)
 
       expect(response.status).to.equal(404)
     })
 
     it('should keep original date and ID of receipt when updated', async () => {
-      const [user] = await createUsers(1)
+      const user = await createUser()
 
       const { id: receiptId } = await createReceipt(user.id, { [user.id]: 10 })
 
@@ -58,7 +49,7 @@ describe('[receipts]', () => {
         payerId: user.id,
         amount: 20,
         description: 'hello world',
-        hasPhoto: false,
+        photoFilename: undefined,
         debts: [{
           debtorId: user.id,
           amount: 20,
@@ -71,7 +62,7 @@ describe('[receipts]', () => {
 
       const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
 
-      const photo1 = await getReceiptPhoto(receiptId)
+      const photo1 = await getPhoto(receiptId)
 
       await createReceipt(user2.id, { [user1.id]: 10, [user3.id]: 20 }, { leavePhoto: true, description: 'hello world', receiptId })
 
@@ -81,7 +72,7 @@ describe('[receipts]', () => {
         payerId: user2.id,
         amount: 30,
         description: 'hello world',
-        hasPhoto: true,
+        photoFilename: 'photo.jpg',
         debts: [{
           debtorId: user1.id,
           amount: 10,
@@ -91,16 +82,17 @@ describe('[receipts]', () => {
         }]
       })
 
-      const photo2 = await getReceiptPhoto(receiptId)
+      const photo2 = await getPhoto(receiptId)
 
       expect(photo1.mime).to.equal(photo2.mime)
-      expect(photo1.photo).to.deep.equal(photo2.photo)
+      expect(photo1.binary).to.deep.equal(photo2.binary)
+      expect(await doesPhotoExist(receipt.photoFilename)).to.be.true
     })
 
     it('should update the receipt (delete photo)', async () => {
       const [user1, user2] = await createUsers(2)
 
-      const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
+      const { id: receiptId, photoFilename } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
 
       await createReceipt(user2.id, { [user1.id]: 10 }, { description: 'my receipt', receiptId })
 
@@ -110,44 +102,44 @@ describe('[receipts]', () => {
         payerId: user2.id,
         amount: 10,
         description: 'my receipt',
-        hasPhoto: false,
+        photoFilename: undefined,
         debts: [{
           debtorId: user1.id,
           amount: 10,
         }]
       })
 
-      const response = await getReceiptPhoto(receiptId)
+      const response = await getPhoto(receiptId)
 
       expect(response.status).to.equal(404)
+      expect(await doesPhotoExist(photoFilename)).to.be.false
     })
 
     it('should update the receipt (replace photo)', async () => {
       const [user1, user2] = await createUsers(2)
 
-      const { id: receiptId } = await createReceipt(user1.id, { [user1.id]: 10 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
+      const receipt1 = await createReceipt(user1.id, { [user1.id]: 10 },
+        { photo: receiptPhotoBuffer, mime: 'image/png' })
 
-      const photo1 = await getReceiptPhoto(receiptId)
+      const receipt2 = await createReceipt(user1.id, { [user2.id]: 5 },
+        { photo: updatedReceiptPhotoBuffer, mime: 'image/jpeg', receiptId: receipt1.id })
 
-      await createReceipt(user1.id, { [user2.id]: 5 }, { photo: updatedReceiptPhotoBuffer, mime: 'image/jpeg', receiptId })
-
-      const receipt = await getReceipt(receiptId, user1.id)
-
-      expectReceiptToShallowEqual(receipt, {
+      expectReceiptToShallowEqual(receipt2, {
         payerId: user1.id,
         amount: 5,
-        description: null,
-        hasPhoto: true,
+        photoFilename: 'photo.jpg',
         debts: [{
           debtorId: user2.id,
           amount: 5,
         }]
       })
 
-      const photo2 = await getReceiptPhoto(receiptId)
+      const photo = await getPhoto(receipt2.photoFilename)
 
-      expect(photo2.mime).to.equal('image/jpeg')
-      expect(photo2.photo).not.to.deep.equal(photo1.buffer)
+      expect(photo.mime).to.equal('image/jpeg')
+      expect(photo.binary).to.deep.eq(updatedReceiptPhotoBuffer.buffer)
+      expect(await doesPhotoExist(receipt1.photoFilename)).to.be.false
+      expect(await doesPhotoExist(receipt2.photoFilename)).to.be.true
     })
   })
 
@@ -168,8 +160,7 @@ describe('[receipts]', () => {
       const receipt1 = {
         payerId: user1.id,
         amount: 20,
-        hasPhoto: true,
-        description: null,
+        photoFilename: 'photo.jpg',
         debts: [{
           debtorId: user1.id,
           amount: 5,
@@ -191,7 +182,7 @@ describe('[receipts]', () => {
 
       const receipt2 = {
         payerId: user3.id,
-        hasPhoto: false,
+        photoFilename: undefined,
         description: 'hello world',
         amount: 100,
         debts: [{
@@ -257,6 +248,19 @@ describe('[receipts]', () => {
 
       expect((await getReceipts(user1.id))).to.deep.equal([])
       expect((await getReceipts(user2.id))).to.deep.equal([])
+    })
+
+    it('should delete the receipt photo', async () => {
+      const user = await createUser()
+
+      const { id: receiptId, photoFilename } = await createReceipt(user.id, { [user.id]: 1 }, { photo: receiptPhotoBuffer, mime: 'image/png' })
+
+      await deleteReceipt(receiptId, user.id)
+
+      const response = await getPhoto(receiptId)
+
+      expect(response.status).to.equal(404)
+      expect(await doesPhotoExist(photoFilename)).to.be.false
     })
   })
 })

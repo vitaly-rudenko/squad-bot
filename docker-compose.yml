@@ -30,17 +30,21 @@ services:
       - sb_postgres
       - sb_redis
     environment:
-      LOG_LEVEL: "$LOG_LEVEL"
-      DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
+      PORT: "3000"
+      DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
+      REDIS_URL: "redis://sb_redis:6379"
+      # security
       TOKEN_SECRET: "$TOKEN_SECRET"
+      CORS_ORIGIN: "$CORS_ORIGIN"
+      # telegram
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
       WEB_APP_URL: "$WEB_APP_URL"
       WEB_APP_NAME: "$WEB_APP_NAME"
-      CORS_ORIGIN: "$CORS_ORIGIN"
-      PORT: "$PORT"
-      USE_NATIVE_ENV: "true"
-      DATABASE_URL: "postgres://squadbot:p4ssw0rd@sb_postgres:5432/squadbot"
-      REDIS_URL: "redis://sb_redis:6379"
+      # logging
+      LOG_LEVEL: "info"
+      DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
+    volumes:
+      - "./files:/app/files"
     networks:
       - "sb_network"
 

@@ -12,10 +12,14 @@ RUN npm ci --omit=optional
 
 COPY . .
 
+RUN touch .env
+
 RUN set -ex; \
   chmod +x ./docker/wait-for; \
   chmod +x ./docker/entrypoint
 
 EXPOSE 3000
+
+VOLUME /app/files
 
 ENTRYPOINT ["./docker/entrypoint"]

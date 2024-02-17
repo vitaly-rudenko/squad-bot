@@ -1,11 +1,22 @@
+import fs from 'fs/promises'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { expect } from 'chai'
 import fetch, { FormData, File } from 'node-fetch'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import { uniqueNamesGenerator, names } from 'unique-names-generator'
-import { TOKEN_SECRET } from './env.js'
+import { env } from '../../src/env.js'
 
-const TEST_API_URL = 'http://localhost:3000'
+export const receiptPhotoBuffer = await fs.readFile(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt.png')
+)
+
+export const updatedReceiptPhotoBuffer = await fs.readFile(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), './assets/receipt_updated.jpeg')
+)
+
+export const TEST_API_URL = 'http://localhost:3000'
 const nameConfig = {
   dictionaries: [names],
   style: 'lowerCase',
@@ -25,12 +36,12 @@ export function validateResponse(response) {
   }
 }
 
-/** @returns {Promise<import('../../app/users/User.js').User>} */
+/** @returns {Promise<import('../../src/users/types').User>} */
 export async function createUser(index) {
   const userId = [index, generateUserId()].filter(Boolean).join('_')
 
   const response = await fetch(`${TEST_API_URL}/users`, {
-    method: 'POST',
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       ...createAuthorizationHeader({ userId }),
@@ -64,7 +75,7 @@ export async function createUsers(count = 1) {
  *   receiptId?: string
  *   amount?: number
  * }} [input]
- * @returns {Promise<import('../../app/receipts/Receipt.js').Receipt>}
+ * @returns {Promise<import('../../src/receipts/types').Receipt>}
  */
 export async function createReceipt(payerId, debts, {
   leavePhoto = false,
@@ -80,7 +91,7 @@ export async function createReceipt(payerId, debts, {
 
   const body = new FormData()
   body.set('payer_id', payerId)
-  body.set('amount', amount)
+  body.set('amount', String(amount))
   body.set('debts', JSON.stringify(debts))
 
   if (receiptId) {
@@ -94,8 +105,9 @@ export async function createReceipt(payerId, debts, {
   if (leavePhoto) {
     body.set('leave_photo', 'true')
   } else if (photo) {
-    const photoFile = new File([photo], 'photo.jpg', { type: mime })
-    body.set('photo', photoFile, 'photo.jpg')
+    const filename = mime === 'image/jpeg' ? 'photo.jpg' : 'photo.png'
+    const photoFile = new File([photo], filename, { type: mime })
+    body.set('photo', photoFile, filename)
   }
 
   const response = await fetch(`${TEST_API_URL}/receipts`, {
@@ -109,7 +121,7 @@ export async function createReceipt(payerId, debts, {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/receipts/Receipt.js').Receipt[]>} */
+/** @returns {Promise<import('../../src/receipts/types').Receipt[]>} */
 export async function getReceipts(userId) {
   const response = await fetch(`${TEST_API_URL}/receipts`, {
     headers: createAuthorizationHeader({ userId })
@@ -120,13 +132,14 @@ export async function getReceipts(userId) {
   return await response.json()
 }
 
+/** @returns {Promise<string>} */
 export async function getAuthToken(temporaryAuthToken) {
   const response = await fetch(`${TEST_API_URL}/authenticate?token=${temporaryAuthToken}`)
 
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/receipts/Receipt.js').Receipt>} */
+/** @returns {Promise<import('../../src/receipts/types').Receipt>} */
 export async function getReceipt(receiptId, userId) {
   const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}`, {
     headers: createAuthorizationHeader({ userId }),
@@ -146,8 +159,9 @@ export async function deleteReceipt(receiptId, userId) {
   validateResponse(response)
 }
 
-export async function getReceiptPhoto(receiptId) {
-  const response = await fetch(`${TEST_API_URL}/receipts/${receiptId}/photo`)
+/** @returns {Promise<{ binary: ArrayBufferLike; mime: string }>} */
+export async function getPhoto(photoFilename) {
+  const response = await fetch(`${TEST_API_URL}/photos/${photoFilename}`)
 
   if (response.status !== 200) {
     return response
@@ -155,7 +169,19 @@ export async function getReceiptPhoto(receiptId) {
 
   return {
     mime: response.headers.get('Content-Type'),
-    photo: await response.arrayBuffer(),
+    binary: await response.arrayBuffer(),
+  }
+}
+
+export async function doesPhotoExist(photoFilename) {
+  try {
+    await fs.access(path.resolve('files', 'photos', photoFilename))
+    return true
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      throw error
+    }
+    return false
   }
 }
 
@@ -168,29 +194,33 @@ export function expectReceiptsToEqual(receipts1, receipts2) {
 }
 
 export function expectReceiptToShallowEqual(receipt1, receipt2) {
-  const { id, createdAt, ...receipt } = receipt1
+  const { id, createdAt, photoFilename, ...shallowReceipt1 } = receipt1
+  const { photoFilename: photoFilename2, ...shallowReceipt2 } = receipt2
+
   expect(id).to.be.a.string
+  expect((photoFilename !== undefined) === (photoFilename2 !== undefined)).to.be.true
   expect(Date.parse(createdAt)).to.be.greaterThanOrEqual(Date.now() - 10000)
-  expect(receipt).to.deep.equalInAnyOrder(receipt2)
+  expect(shallowReceipt1).to.deep.equalInAnyOrder(shallowReceipt2)
 }
 
 export function createAuthorizationHeader({
   userId,
   username = `username_${userId}`,
   name = toCapital(userId.split('_').slice(1).join(' ')),
+  locale = 'uk',
 }) {
-  return { 'Authorization': `Bearer ${createToken({ userId, username, name })}` }
+  return { 'Authorization': `Bearer ${createToken({ userId, username, name, locale })}` }
 }
 
 function toCapital(str) {
   return str[0].toUpperCase() + str.slice(1)
 }
 
-export function createToken({ userId, username, name }) {
-  return jwt.sign({ user: { id: userId, username, name } }, TOKEN_SECRET)
+export function createToken({ userId, username, name, locale }) {
+  return jwt.sign({ user: { id: userId, username, name, locale } }, env.TOKEN_SECRET)
 }
 
-/** @returns {Promise<import('../../app/payments/Payment.js').Payment>} */
+/** @returns {Promise<import('../../src/payments/types').Payment>} */
 export async function createPayment(fromUserId, toUserId, amount) {
   const payment = { fromUserId, toUserId, amount }
 
@@ -217,7 +247,7 @@ export async function deletePayment(paymentId, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../app/debts/Debt.js').Debt[]>} */
+/** @returns {Promise<import('../../src/debts/types').Debt[]>} */
 export async function getDebts(userId) {
   const response = await fetch(`${TEST_API_URL}/debts`, {
     headers: createAuthorizationHeader({ userId }),
@@ -228,14 +258,14 @@ export async function getDebts(userId) {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall>} */
+/** @returns {Promise<import('../../src/roll-calls/types').RollCall>} */
 export async function createRollCall(userId, groupId, sortOrder = 1, {
   messagePattern = '@channel',
   usersPattern = '*',
   excludeSender = true,
   pollOptions = [],
 } = {}) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls`, {
+  const response = await fetch(`${TEST_API_URL}/roll-calls`, {
     method: 'POST',
     headers: {
       ...createAuthorizationHeader({ userId }),
@@ -267,7 +297,6 @@ export async function createRollCall(userId, groupId, sortOrder = 1, {
  *   pollOptions?: string[]
  *   sortOrder?: number
  * }} input
- * @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall>}
  */
 export async function updateRollCall(userId, rollCallId, {
   messagePattern,
@@ -276,7 +305,7 @@ export async function updateRollCall(userId, rollCallId, {
   pollOptions,
   sortOrder,
 } = {}) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls/${rollCallId}`, {
+  const response = await fetch(`${TEST_API_URL}/roll-calls/${rollCallId}`, {
     method: 'PATCH',
     headers: {
       ...createAuthorizationHeader({ userId }),
@@ -292,13 +321,11 @@ export async function updateRollCall(userId, rollCallId, {
   })
 
   validateResponse(response)
-
-  return await response.json()
 }
 
-/** @returns {Promise<import('../../app/rollcalls/RollCall.js').RollCall[]>} */
+/** @returns {Promise<import('../../src/roll-calls/types').RollCall[]>} */
 export async function getRollCalls(groupId, userId) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls?group_id=${groupId}`, {
+  const response = await fetch(`${TEST_API_URL}/roll-calls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),
   })
 
@@ -308,7 +335,7 @@ export async function getRollCalls(groupId, userId) {
 }
 
 export async function deleteRollCall(id, userId) {
-  const response = await fetch(`${TEST_API_URL}/rollcalls/${id}`, {
+  const response = await fetch(`${TEST_API_URL}/roll-calls/${id}`, {
     method: 'DELETE',
     headers: createAuthorizationHeader({ userId }),
   })
@@ -316,7 +343,7 @@ export async function deleteRollCall(id, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../app/groups/Group.js').Group>} */
+/** @returns {Promise<import('../../src/groups/types').Group>} */
 export async function getGroups(userId) {
   const response = await fetch(`${TEST_API_URL}/groups`, {
     headers: createAuthorizationHeader({ userId }),
@@ -336,8 +363,6 @@ export async function createMembership(userId, groupId, title = 'Fake chat') {
   })
 
   validateResponse(response)
-
-  return await response.json()
 }
 
 export const NO_DEBTS = { ingoingDebts: [], outgoingDebts: [] }
