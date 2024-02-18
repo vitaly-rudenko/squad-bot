@@ -42,7 +42,7 @@ export function createReceiptsFlow() {
 
     const source = createReadStream(getPhotoPath(photoFilename))
     source.on('error', async (err) => {
-      if ('code' in err && err.code !== 'ENOENT') {
+      if (!('code' in err) || err.code !== 'ENOENT') {
         logger.error({ err, photoFilename }, 'Could not read photo')
       }
 

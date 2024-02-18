@@ -28,7 +28,7 @@ receipts:
         - '👤 Paid by *{payer}*'
         - '{part}'
         - '{debts}'
-      description: '\({description}\)'
+      description: '– {description}'
       action:
         create: recorded
         update: edited
@@ -40,7 +40,7 @@ receipts:
         - '❌ 📝 {editor} has deleted a *{amount}* receipt {description}'
         - '👤 Paid by *{payer}*'
         - '{part}'
-      description: '\({description}\)'
+      description: '– {description}'
   actions:
     getPhoto: '📷 Get receipt photo'
     sendingPhoto: 'Sending photo...'
