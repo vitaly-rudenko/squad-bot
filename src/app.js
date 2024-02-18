@@ -188,7 +188,7 @@ async function start() {
   bot.command('login', requirePrivateChat(), login)
 
   const { version } = createCommonFlow()
-  bot.command('version', requirePrivateChat(), version)
+  bot.command('version', version)
 
   const { titles } = createAdminsFlow()
   bot.command('titles', titles)
