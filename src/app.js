@@ -281,8 +281,17 @@ async function start() {
     }
   })
 
-  bot.catch((err, context) => {
-    logger.error({ err, context }, 'Unhandled telegram error')
+  bot.catch(async (err, context) => {
+    logger.error({
+      err,
+      ...context && {
+        context: {
+          ...context.update && Object.keys(context.update).length > 0 ? { update: context.update } : undefined,
+          ...context.botInfo && Object.keys(context.botInfo).length > 0 ? { botInfo: context.botInfo } : undefined,
+          ...context.state && Object.keys(context.state).length > 0 ? { state: context.state } : undefined,
+        }
+      },
+    }, 'Unhandled telegram error')
   })
 
   if (env.ENABLE_TEST_HTTPS) {
