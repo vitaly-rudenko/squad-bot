@@ -9,12 +9,10 @@ export function createCardsFlow() {
     const { locale } = context.state
 
     const viewUrl = generateWebAppUrl('cards')
-    const createUrl = generateWebAppUrl('new-card')
 
     await context.reply(
       localize(locale, 'cards.command.message', {
         viewUrl: escapeMd(viewUrl),
-        createUrl: escapeMd(createUrl),
       }),
       {
         parse_mode: 'MarkdownV2',

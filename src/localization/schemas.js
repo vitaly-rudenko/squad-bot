@@ -73,8 +73,7 @@ export const localeFileSchema = object({
   }),
   rollCalls: object({
     command: object({
-      group: _,
-      private: _,
+      message: _,
     }),
     noOneToMention: _,
     defaultPollTitle: _,

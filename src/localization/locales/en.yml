@@ -1,11 +1,7 @@
 payments:
   command:
     message:
-      - '💸 *Payments*'
-      - ''
-      - '👀 View: {viewUrl}'
-      - ''
-      - '➕ Record: {createUrl}'
+      - '💸 {viewUrl}'
   notifications:
     saved:
       message:
@@ -23,11 +19,7 @@ payments:
 receipts:
   command:
     message:
-      - '📝  *Receipts*'
-      - ''
-      - '👀 View: {viewUrl}'
-      - ''
-      - '➕ Record: {createUrl}'
+      - '📝 {viewUrl}'
   notifications:
     part: '💵 Your part: *{amount}*'
     saved:
@@ -60,11 +52,7 @@ users:
 cards:
   command:
     message:
-      - '💳 *Cards*'
-      - ''
-      - '👀 View: {viewUrl}'
-      - ''
-      - '➕ Add: {createUrl}'
+      - '💳 {viewUrl}'
 debts:
   command:
     noDebts: '✅ You''re all good\!'
@@ -80,16 +68,8 @@ debts:
       - '{debts}'
 rollCalls:
   command:
-    group:
-      - '📣 *Roll calls*'
-      - ''
-      - '👀 View: {viewUrl}'
-      - ''
-      - '➕ Record: {createUrl}'
-    private:
-      - '📣 *Roll calls*'
-      - ''
-      - '👀 View: {viewUrl}'
+    message:
+      - '📣 {viewUrl}'
   noOneToMention: '❌ No one to mention or the bot doesn''t have enough data about this chat'
   defaultPollTitle: 'Choose an answer'
   message:
@@ -105,9 +85,7 @@ admins:
   titles:
     command:
       message:
-        - '👤 *Admin titles*'
-        - ''
-        - '✍️ Edit: {editUrl}'
+        - '🏷 {editUrl}'
 groupChatOnly: '❌ This command can only be executed in a group chat'
 privateChatOnly: '❌ This command can only be executed in a private chat'
 unknownUser: 'Unknown user'

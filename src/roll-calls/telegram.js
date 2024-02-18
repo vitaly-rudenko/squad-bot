@@ -13,12 +13,10 @@ export function createRollCallsFlow() {
     const isGroup = isGroupChat(context)
 
     const viewUrl = isGroup ? generateWebAppUrl(`roll-calls${chatId}`) : generateWebAppUrl('groups')
-    const createUrl = isGroup ? generateWebAppUrl(`new-roll-call${chatId}`) : undefined
 
     await context.reply(
-      localize(locale, isGroup ? 'rollCalls.command.group' : 'rollCalls.command.private', {
+      localize(locale, 'rollCalls.command.message', {
         viewUrl: escapeMd(viewUrl),
-        ...createUrl ? { createUrl: escapeMd(createUrl) } : undefined,
       }),
       { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
     )

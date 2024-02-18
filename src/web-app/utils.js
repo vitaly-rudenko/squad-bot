@@ -1,6 +1,6 @@
 /** @param {import('../types.js').Deps<'botInfo' | 'webAppName'>} deps */
 export function createWebAppUrlGenerator({ botInfo, webAppName }) {
-  /** @param {string} command */
+  /** @param {string} [command] */
   return (command) => {
     const query = command ? `?startapp=${command}` : ''
     return `https://t.me/${botInfo.username}/${webAppName}${query}`

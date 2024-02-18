@@ -13,12 +13,10 @@ export function createReceiptsFlow() {
     const { locale } = context.state
 
     const viewUrl = generateWebAppUrl('receipts')
-    const createUrl = generateWebAppUrl('new-receipt')
 
     await context.reply(
       localize(locale, 'receipts.command.message', {
         viewUrl: escapeMd(viewUrl),
-        createUrl: escapeMd(createUrl),
       }),
       {
         parse_mode: 'MarkdownV2',

@@ -92,12 +92,12 @@ async function start() {
     version: getAppVersion(),
   })
 
-  registry.create('generateWebAppUrl', (deps) => createWebAppUrlGenerator(deps))
-
+  const generateWebAppUrl = createWebAppUrlGenerator(registry.export())
   const membershipStorage = new MembershipPostgresStorage(pgClient)
   const groupStorage = new GroupsPostgresStorage(pgClient)
 
   registry.values({
+    generateWebAppUrl,
     membershipStorage,
     groupStorage,
     membershipCache: createRedisCache('memberships', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),

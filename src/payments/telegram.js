@@ -9,7 +9,6 @@ export function createPaymentsFlow() {
     const { locale } = context.state
 
     const viewUrl = generateWebAppUrl('payments')
-    const createUrl = generateWebAppUrl('new-payment')
 
     await context.reply(
       localize(
@@ -17,7 +16,6 @@ export function createPaymentsFlow() {
         'payments.command.message',
         {
           viewUrl: escapeMd(viewUrl),
-          createUrl: escapeMd(createUrl),
         }
       ),
       {
