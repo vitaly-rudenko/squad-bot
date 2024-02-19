@@ -32,8 +32,8 @@ receipts:
       action:
         create: recorded
         update: edited
-      ingoingDebt: '⬅️ {name} owes you *{amount}*'
-      outgoingDebt: '➡️ You owe *{amount}* to {name} – [pay]({payUrl})'
+      ingoingDebt: '⬅️ {name} now owes you *{amount}*'
+      outgoingDebt: '➡️ You now owe *{amount}* to {name} – [pay]({payUrl})'
       checkDebts: '↔️ Check your debts: /debts'
     deleted:
       message:
