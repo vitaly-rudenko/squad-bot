@@ -1,7 +1,8 @@
 import Router from 'express-promise-router'
 import { literal, object, refine, size, string, trimmed, union } from 'superstruct'
-import { userIdSchema } from '../common/schemas.js'
+import { paginationSchema, userIdSchema } from '../common/schemas.js'
 import { registry } from '../registry.js'
+import { paginationToLimitOffset } from '../common/utils.js'
 
 const cardNumberRegex = /^[0-9]+$/
 export const createCardSchema = object({
@@ -14,10 +15,10 @@ export function createCardsRouter() {
 
   const router = Router()
 
-  // TODO: hard limit to 100
   router.get('/cards', async (req, res) => {
+    const { limit, offset } = paginationToLimitOffset(paginationSchema.create(req.query))
     const userId = userIdSchema.create(req.query.user_id)
-    const cards = await cardsStorage.findByUserId(userId)
+    const cards = await cardsStorage.find({ userIds: [userId], limit, offset })
     res.json(cards)
   })
 

@@ -14,7 +14,7 @@ export function getAppVersion() {
 
 /** @param {number} input */
 export function renderAmount(input) {
-  if (!Number.isInteger(input)) {
+  if (!Number.isSafeInteger(input)) {
     throw new Error('Input must be integer')
   }
 
@@ -31,4 +31,11 @@ export function renderAmount(input) {
  */
 export function isDefined(value) {
   return value !== undefined
+}
+
+/** @param {{ page: number; per_page: number }} pagination */
+export function paginationToLimitOffset({ page, per_page }) {
+  const limit = per_page
+  const offset = (page - 1) * per_page
+  return { limit, offset }
 }

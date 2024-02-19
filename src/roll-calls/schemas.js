@@ -1,7 +1,7 @@
 import { refine, number, array, size, trimmed, string, union, literal, nonempty, object, boolean, optional } from 'superstruct'
 import { userIdSchema, groupIdSchema } from '../common/schemas.js'
 
-export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isInteger(value) && value > 0)
+export const sortOrderSchema = refine(number(), 'natural', (value) => Number.isSafeInteger(value) && value > 0)
 export const pollOptionsSchema = array(size(trimmed(string()), 1, 32))
 export const messagePatternSchema = size(trimmed(string()), 1, 256)
 export const usersPatternSchema = union([

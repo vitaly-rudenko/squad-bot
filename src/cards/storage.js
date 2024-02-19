@@ -42,31 +42,16 @@ export class CardsPostgresStorage {
     `, [userId, cardId])
   }
 
-  /** @param {string} userId */
-  async findByUserId(userId) {
-    return this._find({ userIds: [userId] })
-  }
-
   /**
    * @param {{
-   *   ids?: string[],
    *   userIds?: string[],
    *   limit?: number,
    *   offset?: number
    * }} options
    */
-  async _find({ ids, userIds, limit = 100, offset = 0 } = {}) {
+  async find({ userIds, limit = 100, offset = 0 } = {}) {
     const conditions = []
     const variables = []
-
-    if (ids && Array.isArray(ids)) {
-      if (ids.length === 0) {
-        throw new Error('"ids" cannot be empty')
-      }
-
-      conditions.push(`u.id = ANY($${variables.length + 1})`)
-      variables.push(ids)
-    }
 
     if (userIds && Array.isArray(userIds)) {
       if (userIds.length === 0) {

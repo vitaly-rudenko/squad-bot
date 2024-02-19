@@ -317,7 +317,7 @@ async function start() {
 
   const refreshMembershipsJobIntervalMs = 5 * 60_000
 
-  if (Number.isInteger(refreshMembershipsJobIntervalMs)) {
+  if (Number.isSafeInteger(refreshMembershipsJobIntervalMs)) {
     async function runRefreshMembershipsJob() {
       try {
         await runRefreshMembershipsTask()
