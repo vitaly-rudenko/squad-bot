@@ -74,10 +74,9 @@ rollCalls:
   defaultPollTitle: 'Choose an answer'
   message:
     withTitle:
-      - '*{title}*'
-      - ''
+      - '*{name}: {title}*'
       - '{mentions}'
-    withoutTitle: '{mentions}'
+    withoutTitle: '*{name}* pings {mentions}'
   mention:
     withUsername: '@{username}'
     withoutUsername: '[{name}]({profileUrl})'

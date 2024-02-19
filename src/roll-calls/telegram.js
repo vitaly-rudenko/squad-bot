@@ -84,20 +84,21 @@ export function createRollCallsFlow() {
       }
     }
 
+    const name = context.from?.first_name ?? 'Unknown user'
     const usersToNotify = await usersStorage.findByIds(userIdsToNotify)
     const mentions = usersToNotify.map(formatMention).join(' ')
     const sendPoll = matchedRollCall.pollOptions.length > 0
     const message = (title && !sendPoll)
-      ? localize(locale, 'rollCalls.message.withTitle', { title: escapeMd(title), mentions })
-      : localize(locale, 'rollCalls.message.withoutTitle', { mentions })
+      ? localize(locale, 'rollCalls.message.withTitle', { title: escapeMd(title), mentions, name })
+      : localize(locale, 'rollCalls.message.withoutTitle', { mentions, name })
 
-    await context.reply(message, { parse_mode: 'MarkdownV2' })
+    await context.reply(message, { parse_mode: 'MarkdownV2', disable_web_page_preview: true })
 
     if (sendPoll) {
       await context.replyWithPoll(
         title || localize(locale, 'rollCalls.defaultPollTitle'),
         matchedRollCall.pollOptions,
-        { is_anonymous: false }
+        { is_anonymous: false, disable_notification: true }
       )
     }
   }
