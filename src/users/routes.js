@@ -32,15 +32,18 @@ export function createUsersRouter() {
   router.get('/users', async (req, res) => {
     const { offset, limit } = paginationToLimitOffset(paginationSchema.create(req.query))
 
+    let results
     if (searchByGroupIdSchema.is(req.query)) {
-      res.json(await usersStorage.find({ groupIds: [req.query.group_id], limit, offset }))
+      results = await usersStorage.find({ groupIds: [req.query.group_id], limit, offset })
     } else if (searchByQuerySchema.is(req.query)) {
-      res.json(await usersStorage.find({ query: req.query.query, limit, offset }))
+      results = await usersStorage.find({ query: req.query.query, limit, offset })
     } else if (searchByUserIdsSchema.is(req.query)) {
-      res.json(await usersStorage.find({ ids: req.query.user_ids, limit, offset }))
+      results = await usersStorage.find({ ids: req.query.user_ids, limit, offset })
     } else {
       throw new ApiError({ code: 'INVALID_SEARCH_PARAMETERS', status: 400 })
     }
+
+    res.json(results)
   })
 
   // TODO: optimize & cache this, perhaps make a single query that queries all the tables

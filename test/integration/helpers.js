@@ -323,7 +323,7 @@ export async function updateRollCall(userId, rollCallId, {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../src/roll-calls/types').RollCall[]>} */
+/** @returns {Promise<{ items: import('../../src/roll-calls/types').RollCall[], total: number }>} */
 export async function getRollCalls(groupId, userId) {
   const response = await fetch(`${TEST_API_URL}/roll-calls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),

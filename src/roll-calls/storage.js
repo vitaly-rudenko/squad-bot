@@ -59,13 +59,8 @@ export class RollCallsPostgresStorage {
 
   /** @param {string} id */
   async findById(id) {
-    const results = await this._find({ ids: [id], limit: 1 })
-    return results.at(0)
-  }
-
-  /** @param {string} groupId */
-  async findByGroupId(groupId) {
-    return this._find({ groupIds: [groupId] })
+    const { items } = await this.find({ ids: [id], limit: 1 })
+    return items.at(0)
   }
 
   /**
@@ -76,7 +71,7 @@ export class RollCallsPostgresStorage {
    *   offset?: number
    * }} options
    */
-  async _find({ ids, groupIds, limit = 100, offset = 0 } = {}) {
+  async find({ ids, groupIds, limit = 100, offset = 0 } = {}) {
     const conditions = []
     const variables = []
 
@@ -105,13 +100,27 @@ export class RollCallsPostgresStorage {
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
 
     const response = await this._client.query(`
-      SELECT rc.id, rc.group_id, rc.message_pattern, rc.users_pattern, rc.exclude_sender, rc.poll_options, rc.sort_order
+      SELECT rc.id,
+        rc.group_id,
+        rc.message_pattern,
+        rc.users_pattern,
+        rc.exclude_sender,
+        rc.poll_options,
+        rc.sort_order
       FROM roll_calls rc ${whereClause}
       ORDER BY sort_order DESC
-      LIMIT ${limit} OFFSET ${offset};;
+      LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
-    return response.rows.map(row => deserializeRollCall(row))
+    const { rows: [{ total }]} = await this._client.query(`
+      SELECT COUNT(*)::int AS total
+      FROM roll_calls rc ${whereClause};
+    `, variables)
+
+    return {
+      total,
+      items: response.rows.map(row => deserializeRollCall(row)),
+    }
   }
 }
 

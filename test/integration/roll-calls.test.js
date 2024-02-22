@@ -8,7 +8,9 @@ describe('[roll calls]', () => {
     const user = await createUser()
     await createMembership(user.id, groupId)
 
-    await expect(getRollCalls(groupId, user.id)).to.eventually.deep.eq([])
+    const results = await getRollCalls(groupId, user.id)
+
+    expect(results).to.deep.eq({ total: 0, items: [] })
   })
 
   it('should not allow creating roll calls for groups that you are not a member of', async () => {
@@ -29,10 +31,10 @@ describe('[roll calls]', () => {
     const rollCall3 = await createRollCall(user.id, groupId, 3)
     const rollCall4 = await createRollCall(user.id, groupId, 4)
 
-    const rollCalls = await getRollCalls(groupId, user.id)
+    const results = await getRollCalls(groupId, user.id)
 
-    expect(rollCalls.map(rc => rc.id)).to.deep.eq([rollCall4.id, rollCall3.id, rollCall1.id, rollCall2.id])
-    expect(rollCalls.map(rc => rc.sortOrder)).to.deep.eq([4, 3, 2, 1])
+    expect(results.items.map(rc => rc.id)).to.deep.eq([rollCall4.id, rollCall3.id, rollCall1.id, rollCall2.id])
+    expect(results.items.map(rc => rc.sortOrder)).to.deep.eq([4, 3, 2, 1])
   })
 
   it('should create a basic roll call', async () => {
@@ -61,7 +63,9 @@ describe('[roll calls]', () => {
       pollOptions,
     })
 
-    expect(await getRollCalls(groupId, user.id)).to.deep.equalInAnyOrder([rollCall])
+    const results = await getRollCalls(groupId, user.id)
+
+    expect(results.items).to.deep.equalInAnyOrder([rollCall])
   })
 
   it('should allow creating multiple roll calls', async () => {
@@ -73,7 +77,10 @@ describe('[roll calls]', () => {
     await createRollCall(user.id, groupId, 2)
     await createRollCall(user.id, groupId, 3)
 
-    expect(await getRollCalls(groupId, user.id)).to.have.lengthOf(3)
+    const results = await getRollCalls(groupId, user.id)
+
+    expect(results.total).to.eq(3)
+    expect(results.items).to.have.lengthOf(3)
   })
 
   it('should scope roll calls per group', async () => {
@@ -97,9 +104,18 @@ describe('[roll calls]', () => {
     await createRollCall(user3.id, group3Id, 6)
 
     for (const user of [user1, user2, user3]) {
-      expect(await getRollCalls(group1Id, user.id)).to.have.lengthOf(1)
-      expect(await getRollCalls(group2Id, user.id)).to.have.lengthOf(2)
-      expect(await getRollCalls(group3Id, user.id)).to.have.lengthOf(3)
+      const [results1, results2, results3] = await Promise.all([
+        getRollCalls(group1Id, user.id),
+        getRollCalls(group2Id, user.id),
+        getRollCalls(group3Id, user.id),
+      ])
+
+      expect(results1.items).to.have.lengthOf(1)
+      expect(results1.total).to.eq(1)
+      expect(results2.items).to.have.lengthOf(2)
+      expect(results2.total).to.eq(2)
+      expect(results3.items).to.have.lengthOf(3)
+      expect(results3.total).to.eq(3)
     }
   })
 
@@ -123,14 +139,24 @@ describe('[roll calls]', () => {
     await deleteRollCall(rollCall1.id, user1.id)
     await deleteRollCall(rollCall3.id, user1.id)
 
-    expect(await getRollCalls(group1Id, user1.id)).to.have.lengthOf(1)
-    expect(await getRollCalls(group2Id, user1.id)).to.have.lengthOf(1)
+    let results = await getRollCalls(group1Id, user1.id)
+    expect(results.total).to.eq(1)
+    expect(results.items).to.have.lengthOf(1)
+
+    results = await getRollCalls(group2Id, user1.id)
+    expect(results.total).to.eq(1)
+    expect(results.items).to.have.lengthOf(1)
 
     await deleteRollCall(rollCall2.id, user2.id)
     await deleteRollCall(rollCall4.id, user2.id)
 
-    expect(await getRollCalls(group1Id, user1.id)).to.have.lengthOf(0)
-    expect(await getRollCalls(group2Id, user1.id)).to.have.lengthOf(0)
+    results = await getRollCalls(group1Id, user1.id)
+    expect(results.total).to.eq(0)
+    expect(results.items).to.have.lengthOf(0)
+
+    results = await getRollCalls(group2Id, user1.id)
+    expect(results.total).to.eq(0)
+    expect(results.items).to.have.lengthOf(0)
   })
 
   it('should not allow deleting roll calls of groups that you are not a member of', async () => {
@@ -186,8 +212,8 @@ describe('[roll calls]', () => {
       usersPattern: '*',
     })
 
-    const rollCalls = await getRollCalls(groupId, user.id)
-    const updatedRollCall = rollCalls.find(r => r.id === rollCall.id)
+    let results = await getRollCalls(groupId, user.id)
+    const updatedRollCall = results.items.find(r => r.id === rollCall.id)
 
     expect(updatedRollCall?.id).to.eq(rollCall.id)
     expect(updatedRollCall).to.containSubset({
@@ -198,7 +224,10 @@ describe('[roll calls]', () => {
       usersPattern: '*',
     })
 
-    expect(await getRollCalls(groupId, user.id)).to.deep.eq([updatedRollCall])
+    results = await getRollCalls(groupId, user.id)
+
+    expect(results.total).to.eq(1)
+    expect(results.items).to.deep.eq([updatedRollCall])
   })
 
   it('should keep correct sort order for updated roll calls', async () => {
@@ -216,7 +245,10 @@ describe('[roll calls]', () => {
     await updateRollCall(user.id, rollCall1.id, { sortOrder: 3 })
     await updateRollCall(user.id, rollCall2.id, { sortOrder: 4 })
 
-    expect((await getRollCalls(groupId, user.id)).map(rc => rc.id)).to.deep.eq([
+    const { items, total } = await getRollCalls(groupId, user.id)
+
+    expect(total).to.eq(4)
+    expect(items.map(rc => rc.id)).to.deep.eq([
       rollCall2.id, rollCall1.id, rollCall4.id, rollCall3.id,
     ])
   })

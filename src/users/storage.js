@@ -28,7 +28,6 @@ export class UsersPostgresStorage {
    *   limit?: number
    *   offset?: number
    * }} options
-   * @returns {Promise<import('./types').User[]>}
    */
   async find({ query, ids, groupIds, limit = 100, offset = 0 }) {
     const conditions = []

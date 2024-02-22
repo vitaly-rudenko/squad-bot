@@ -28,10 +28,9 @@ export function createRollCallsFlow() {
    */
   const rollCallMessage = async (context, next) => {
     if (!context.message || !('text' in context.message)) return next()
-
     const { userId, chatId, locale } = context.state
 
-    const rollCalls = await rollCallsStorage.findByGroupId(chatId)
+    const { items: rollCalls } = await rollCallsStorage.find({ groupIds: [chatId] })
 
     const patternMatcher = new PatternMatcher()
     const entryMatchers = new EntryMatchers()
