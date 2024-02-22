@@ -1,9 +1,9 @@
 import Router from 'express-promise-router'
 import { array, nonempty, object, size, string } from 'superstruct'
-import { groupIdSchema } from '../common/schemas.js'
+import { groupIdSchema, paginationSchema } from '../common/schemas.js'
 import { registry } from '../registry.js'
 import { querySchema } from './schemas.js'
-import { isDefined } from '../common/utils.js'
+import { isDefined, paginationToLimitOffset } from '../common/utils.js'
 import { ApiError } from '../common/errors.js'
 
 const RECENT_USERS_LIMIT = 10
@@ -29,29 +29,18 @@ export function createUsersRouter() {
   const searchByQuerySchema = object({ query: querySchema })
   const searchByUserIdsSchema = object({ user_ids: size(array(nonempty(string())), 1, 100) })
 
-  // TODO: hard limit to 100
   router.get('/users', async (req, res) => {
+    const { offset, limit } = paginationToLimitOffset(paginationSchema.create(req.query))
+
     if (searchByGroupIdSchema.is(req.query)) {
-      // TODO: use a join?
-      const userIds = await membershipStorage.findUserIdsByGroupId(req.query.group_id)
-      const users = await usersStorage.find({ ids: userIds })
-      res.json(users)
-      return
+      res.json(await usersStorage.find({ groupIds: [req.query.group_id], limit, offset }))
+    } else if (searchByQuerySchema.is(req.query)) {
+      res.json(await usersStorage.find({ query: req.query.query, limit, offset }))
+    } else if (searchByUserIdsSchema.is(req.query)) {
+      res.json(await usersStorage.find({ ids: req.query.user_ids, limit, offset }))
+    } else {
+      throw new ApiError({ code: 'INVALID_SEARCH_PARAMETERS', status: 400 })
     }
-
-    if (searchByQuerySchema.is(req.query)) {
-      const users = await usersStorage.find({ query: req.query.query })
-      res.json(users)
-      return
-    }
-
-    if (searchByUserIdsSchema.is(req.query)) {
-      const users = await usersStorage.find({ ids: req.query.user_ids })
-      res.json(users)
-      return
-    }
-
-    throw new ApiError({ code: 'INVALID_SEARCH_PARAMETERS', status: 400 })
   })
 
   // TODO: optimize & cache this, perhaps make a single query that queries all the tables

@@ -85,7 +85,7 @@ export function createRollCallsFlow() {
     }
 
     const name = context.from?.first_name ?? 'Unknown user'
-    const usersToNotify = await usersStorage.findByIds(userIdsToNotify)
+    const usersToNotify = await usersStorage.find({ ids: userIdsToNotify })
     const mentions = usersToNotify.map(formatMention).join(' ')
     const sendPoll = matchedRollCall.pollOptions.length > 0
     const message = (title && !sendPoll)

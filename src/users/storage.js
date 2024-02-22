@@ -20,32 +20,20 @@ export class UsersPostgresStorage {
     return users.at(0)
   }
 
-  /** @param {string[]} ids */
-  async findByIds(ids) {
-    if (ids.length === 0) return []
-    return this.find({ ids })
-  }
-
-  /**
-   * @param {string[]} ids
-   * @returns {Promise<(import('./types').User | undefined)[]>}
-   */
-  async findAndMapByIds(ids) {
-    const users = await this.findByIds(ids)
-    return ids.map(id => users.find(u => u.id === id))
-  }
-
   /**
    * @param {{
    *   query?: string
    *   ids?: string[]
+   *   groupIds?: string[]
    *   limit?: number
    *   offset?: number
    * }} options
+   * @returns {Promise<import('./types').User[]>}
    */
-  async find({ query, ids, limit = 100, offset = 0 } = {}) {
+  async find({ query, ids, groupIds, limit = 100, offset = 0 }) {
     const conditions = []
     const variables = []
+    const joins = []
 
     if (query !== undefined) {
       if (query.length < 3) {
@@ -63,19 +51,31 @@ export class UsersPostgresStorage {
 
       conditions.push(`u.id = ANY($${variables.length + 1})`)
       variables.push(ids)
+      limit = Math.min(limit, ids.length)
+    }
+
+    if (groupIds && Array.isArray(groupIds)) {
+      if (groupIds.length === 0) {
+        throw new Error('"groupIds" cannot be empty')
+      }
+
+      joins.push('INNER JOIN memberships m ON m.user_id = u.id')
+      conditions.push(`m.group_id = ANY($${variables.length + 1})`)
+      variables.push(groupIds)
     }
 
     if (conditions.length === 0) {
       throw new Error('No conditions were provided for the search')
     }
 
+    const joinClause = joins.join(' ')
     const whereClause = conditions.length > 0
       ? `WHERE (${conditions.join(') AND (')})`
       : ''
 
     const response = await this._client.query(`
       SELECT u.id, u.name, u.username, u.locale
-      FROM users u ${whereClause}
+      FROM users u ${joinClause} ${whereClause}
       LIMIT ${limit} OFFSET ${offset};
     `, variables)
 

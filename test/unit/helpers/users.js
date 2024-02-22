@@ -19,23 +19,17 @@ export class UsersMockStorage {
     return this._users.get(userId)
   }
 
-  /** @param {string[]} userIds */
-  findByIds(userIds) {
+  /** @param {{ ids: string[] }} options */
+  find({ ids }) {
     const users = []
 
-    for (const userId of userIds) {
+    for (const userId of ids) {
       if (this._users.has(userId)) {
         users.push(this._users.get(userId))
       }
     }
 
     return users
-  }
-
-  /** @param {string[]} userIds */
-  findAndMapByIds(userIds) {
-    const users = this.findByIds(userIds)
-    return userIds.map(id => users.find(u => u.id === id))
   }
 }
 

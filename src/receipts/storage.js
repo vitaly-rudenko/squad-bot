@@ -68,12 +68,6 @@ export class ReceiptsPostgresStorage {
     return receipts.at(0)
   }
 
-  /** @param {string[]} ids */
-  async findByIds(ids) {
-    if (ids.length === 0) return []
-    return this._find({ ids })
-  }
-
   /**
    * @param {{
    *   ids?: string[],

@@ -1,7 +1,7 @@
 import { Markup } from 'telegraf'
 import { registry } from '../registry.js'
 import { escapeMd } from '../common/telegram.js'
-import { isDefined, renderAmount } from '../common/utils.js'
+import { renderAmount } from '../common/utils.js'
 import { deduplicateUsers } from '../users/utils.js'
 import { sendNotification } from '../common/notifications.js'
 import { renderUserMd } from '../users/telegram.js'
@@ -22,12 +22,13 @@ export async function sendReceiptSavedNotification(
   { action, editorId, receipt, debts },
   { localize, usersStorage, telegram, generateWebAppUrl, debtsStorage, paymentsStorage } = registry.export()
 ) {
-  const debtorIds = debts.map(debt => debt.debtorId)
-  const [editor, payer, ...debtors] = await usersStorage.findAndMapByIds([
-    editorId,
-    receipt.payerId,
-    ...debtorIds,
-  ])
+  const users = await usersStorage.find({
+    ids: [editorId, receipt.payerId, ...debts.map(debt => debt.debtorId)],
+  })
+
+  const editor = users.find(u => u.id === editorId)
+  const payer = users.find(u => u.id === receipt.payerId)
+  const debtors = users.filter(u => u.id !== editorId && u.id !== receipt.payerId)
 
   if (!editor || !payer) return
 
@@ -37,13 +38,11 @@ export async function sendReceiptSavedNotification(
     paymentsStorage,
   })
 
-  const users = deduplicateUsers([editor, payer, ...debtors.filter(isDefined)])
-
-  for (const user of users) {
+  for (const user of deduplicateUsers([editor, payer, ...debtors])) {
     const part = debts.find(debt => debt.debtorId === user.id)
     const preparedDebts = prepareDebtsForUser({
       user,
-      debtors: [payer, ...debtors.filter(isDefined)],
+      debtors: [payer, ...debtors],
       ingoingDebts,
       outgoingDebts,
     })
@@ -119,17 +118,17 @@ export async function sendReceiptDeletedNotification(
   { editorId, receipt, debts },
   { localize, usersStorage, telegram } = registry.export()
 ) {
-  const [editor, payer, ...debtors] = await usersStorage.findAndMapByIds([
-    editorId,
-    receipt.payerId,
-    ...debts.map(debt => debt.debtorId),
-  ])
+  const users = await usersStorage.find({
+    ids: [editorId, receipt.payerId, ...debts.map(debt => debt.debtorId)],
+  })
+
+  const editor = users.find(u => u.id === editorId)
+  const payer = users.find(u => u.id === receipt.payerId)
+  const debtors = users.filter(u => u.id !== editorId && u.id !== receipt.payerId)
 
   if (!editor || !payer) return
 
-  const users = deduplicateUsers([editor, payer, ...debtors.filter(isDefined)])
-
-  for (const user of users) {
+  for (const user of deduplicateUsers([editor, payer, ...debtors])) {
     const debt = debts.find(debt => debt.debtorId === user.id)
 
     sendNotification(user.id, localize(
