@@ -80,6 +80,19 @@ export function createRollCallsRouter() {
     res.json({ items, total })
   })
 
+  router.get('/roll-calls/:rollCallId', async (req, res) => {
+    const rollCall = await rollCallsStorage.findById(req.params.rollCallId)
+    if (!rollCall) {
+      throw new NotFoundError()
+    }
+
+    if (!(await membershipStorage.exists(req.user.id, rollCall.groupId))) {
+      throw new NotAuthorizedError()
+    }
+
+    res.json(rollCall)
+  })
+
   router.delete('/roll-calls/:rollCallId', async (req, res) => {
     const rollCall = await rollCallsStorage.findById(req.params.rollCallId)
     if (!rollCall) {
