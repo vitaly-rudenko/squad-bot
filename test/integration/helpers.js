@@ -343,7 +343,7 @@ export async function deleteRollCall(id, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../src/groups/types').Group>} */
+/** @returns {Promise<{ items: import('../../src/groups/types').Group[]; total: number }>} */
 export async function getGroups(userId) {
   const response = await fetch(`${TEST_API_URL}/groups`, {
     headers: createAuthorizationHeader({ userId }),
