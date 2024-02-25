@@ -106,9 +106,10 @@ export class ReceiptsPostgresStorage {
 
     const joinClause = joins.join(' ')
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
+    const distinctClause = isDistinct ? 'DISTINCT ' : ''
 
     const response = await this._client.query(`
-      SELECT${isDistinct ? ' DISTINCT' : ''} r.id
+      SELECT ${distinctClause}r.id
         , r.created_at, r.payer_id, r.amount, r.description, r.photo_filename
       FROM receipts r ${joinClause} ${whereClause}
       ORDER BY created_at DESC
@@ -116,7 +117,7 @@ export class ReceiptsPostgresStorage {
     `, variables)
 
     const { rows: [{ total }] } = await this._client.query(`
-      SELECT COUNT(*)::int AS total
+      SELECT COUNT(${distinctClause}r.id)::int AS total
       FROM receipts r ${joinClause} ${whereClause};
     `, variables)
 
