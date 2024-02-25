@@ -43,7 +43,7 @@ export class UsersPostgresStorage {
       variables.push(`%${query}%`)
     }
 
-    if (ids && Array.isArray(ids)) {
+    if (Array.isArray(ids)) {
       if (ids.length === 0) {
         throw new Error('"ids" cannot be empty')
       }
@@ -53,7 +53,7 @@ export class UsersPostgresStorage {
       limit = Math.min(limit, ids.length)
     }
 
-    if (groupIds && Array.isArray(groupIds)) {
+    if (Array.isArray(groupIds)) {
       if (groupIds.length === 0) {
         throw new Error('"groupIds" cannot be empty')
       }

@@ -34,7 +34,7 @@ export class GroupsPostgresStorage {
     const conditions = []
     const variables = []
 
-    if (ids && Array.isArray(ids)) {
+    if (Array.isArray(ids)) {
       if (ids.length === 0) {
         throw new Error('"ids" cannot be empty')
       }
@@ -43,7 +43,7 @@ export class GroupsPostgresStorage {
       variables.push(ids)
     }
 
-    if (memberUserIds && Array.isArray(memberUserIds)) {
+    if (Array.isArray(memberUserIds)) {
       if (memberUserIds.length === 0) {
         throw new Error('"memberUserIds" cannot be empty')
       }

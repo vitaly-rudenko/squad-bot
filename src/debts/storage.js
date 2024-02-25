@@ -44,7 +44,7 @@ export class DebtsPostgresStorage {
     const conditions = ['d.deleted_at IS NULL', 'r.deleted_at IS NULL']
     const variables = []
 
-    if (receiptIds && Array.isArray(receiptIds)) {
+    if (Array.isArray(receiptIds)) {
       if (receiptIds.length === 0) {
         throw new Error('"receiptIds" cannot be empty')
       }

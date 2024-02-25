@@ -79,7 +79,7 @@ export class PaymentsPostgresStorage {
     const conditions = ['p.deleted_at IS NULL']
     const variables = []
 
-    if (ids && Array.isArray(ids)) {
+    if (Array.isArray(ids)) {
       if (ids.length === 0) {
         throw new Error('"ids" cannot be empty')
       }
@@ -88,7 +88,7 @@ export class PaymentsPostgresStorage {
       variables.push(ids)
     }
 
-    if (participantUserIds && Array.isArray(participantUserIds)) {
+    if (Array.isArray(participantUserIds)) {
       if (participantUserIds.length === 0) {
         throw new Error('"participantUserIds" cannot be empty')
       }

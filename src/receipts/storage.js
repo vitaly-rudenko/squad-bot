@@ -83,7 +83,7 @@ export class ReceiptsPostgresStorage {
 
     let isDistinct = false
 
-    if (ids && Array.isArray(ids)) {
+    if (Array.isArray(ids)) {
       if (ids.length === 0) {
         throw new Error('"ids" cannot be empty')
       }
@@ -92,7 +92,7 @@ export class ReceiptsPostgresStorage {
       variables.push(ids)
     }
 
-    if (participantUserIds && Array.isArray(participantUserIds)) {
+    if (Array.isArray(participantUserIds)) {
       if (participantUserIds.length === 0) {
         throw new Error('"participantUserIds" cannot be empty')
       }

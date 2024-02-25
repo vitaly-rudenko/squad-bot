@@ -53,7 +53,7 @@ export class CardsPostgresStorage {
     const conditions = []
     const variables = []
 
-    if (userIds && Array.isArray(userIds)) {
+    if (Array.isArray(userIds)) {
       if (userIds.length === 0) {
         throw new Error('"userIds" cannot be empty')
       }
