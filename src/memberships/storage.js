@@ -90,7 +90,7 @@ export class MembershipPostgresStorage {
       FROM memberships m ${whereClause}
       ORDER BY m.updated_at ASC
       LIMIT ${limit} OFFSET ${offset};
-    `, [groupIds])
+    `, variables)
 
     return response.rows.map(deserializeMembership)
   }
