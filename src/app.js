@@ -245,7 +245,7 @@ async function start() {
 
   // @ts-ignore
   app.use((err, req, res, next) => {
-    if (!(err instanceof ApiError)) {
+    if (!(err instanceof ApiError) && !(err instanceof StructError)) {
       logger.error({
         err,
         req: {
