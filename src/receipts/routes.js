@@ -7,6 +7,7 @@ import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from './
 import { photoSchema, saveReceiptSchema } from './schemas.js'
 import { optional } from 'superstruct'
 import { deletePhoto, generateRandomPhotoFilename, savePhoto } from './filesystem.js'
+import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 
 export function createReceiptsRouter() {
   const {
@@ -110,7 +111,12 @@ export function createReceiptsRouter() {
   // TODO: add pagination
   router.get('/receipts', async (req, res) => {
     const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
-    const debts = await debtsStorage.findByReceiptIds(receipts.map(r => r.id))
+    const debts = receipts.length > 0
+      ? await debtsStorage.find({
+        receiptIds: receipts.map(r => r.id),
+        limit: receipts.length * MAX_DEBTS_PER_RECEIPT,
+      })
+      : []
 
     res.json(receipts.map((receipt) => formatReceipt(receipt, debts)))
   })
@@ -122,7 +128,7 @@ export function createReceiptsRouter() {
       throw new NotFoundError()
     }
 
-    const debts = await debtsStorage.findByReceiptId(receiptId)
+    const debts = await debtsStorage.find({ receiptIds: [receiptId], limit: MAX_DEBTS_PER_RECEIPT })
 
     res.json(formatReceipt(receipt, debts))
   })
@@ -135,7 +141,7 @@ export function createReceiptsRouter() {
       throw new NotFoundError()
     }
 
-    const debts = await debtsStorage.findByReceiptId(receiptId)
+    const debts = await debtsStorage.find({ receiptIds: [receiptId], limit: MAX_DEBTS_PER_RECEIPT })
 
     if (receipt.photoFilename) {
       await deletePhoto(receipt.photoFilename)

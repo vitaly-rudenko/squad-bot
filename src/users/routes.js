@@ -5,6 +5,7 @@ import { registry } from '../registry.js'
 import { querySchema } from './schemas.js'
 import { isDefined, paginationToLimitOffset } from '../common/utils.js'
 import { ApiError } from '../common/errors.js'
+import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 
 const RECENT_USERS_LIMIT = 10
 
@@ -49,7 +50,12 @@ export function createUsersRouter() {
   // TODO: optimize & cache this, perhaps make a single query that queries all the tables
   router.get('/recent-users', async (req, res) => {
     const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
-    const debts = await debtsStorage.findByReceiptIds(receipts.map(r => r.id))
+    const debts = receipts.length > 0
+      ? await debtsStorage.find({
+        receiptIds: receipts.map(r => r.id),
+        limit: receipts.length * MAX_DEBTS_PER_RECEIPT,
+      })
+      : []
     const payments = await paymentsStorage.find({ participantUserIds: [req.user.id] })
     const groups = await groupStorage.findByMemberUserId(req.user.id)
     const groupUserIds = await membershipStorage.findUserIdsByGroupIds(groups.map(g => g.id))
