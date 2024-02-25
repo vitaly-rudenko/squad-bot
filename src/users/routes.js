@@ -82,7 +82,9 @@ export function createUsersRouter() {
       .sort((a, b) => b.at(1) - a.at(1))
       .map(([userId]) => userId)
 
-    const users = await usersStorage.find({ ids: sortedUserIds })
+    const users = sortedUserIds.length > 0
+      ? await usersStorage.find({ ids: sortedUserIds })
+      : []
 
     res.json(
       sortedUserIds
