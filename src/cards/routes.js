@@ -18,8 +18,9 @@ export function createCardsRouter() {
   router.get('/cards', async (req, res) => {
     const { limit, offset } = paginationToLimitOffset(paginationSchema.create(req.query))
     const userId = userIdSchema.create(req.query.user_id)
-    const cards = await cardsStorage.find({ userIds: [userId], limit, offset })
-    res.json(cards)
+
+    const { total, items } = await cardsStorage.find({ userIds: [userId], limit, offset })
+    res.json({ total, items })
   })
 
   router.post('/cards', async (req, res) => {

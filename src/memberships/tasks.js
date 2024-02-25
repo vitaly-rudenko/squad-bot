@@ -5,7 +5,7 @@ import { isChatMember } from './telegram.js'
 export async function runRefreshMembershipsTask() {
   const { membershipStorage, telegram } = registry.export()
 
-  const memberships = await membershipStorage.findOldest({ limit: 10 })
+  const memberships = await membershipStorage.find({ allowNoConditions: true, limit: 10 })
 
   for (const { userId, groupId } of memberships) {
     try {

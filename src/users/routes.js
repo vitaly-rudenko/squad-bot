@@ -1,10 +1,11 @@
 import Router from 'express-promise-router'
 import { array, nonempty, object, size, string } from 'superstruct'
-import { groupIdSchema } from '../common/schemas.js'
+import { groupIdSchema, paginationSchema } from '../common/schemas.js'
 import { registry } from '../registry.js'
 import { querySchema } from './schemas.js'
-import { isDefined } from '../common/utils.js'
+import { isDefined, paginationToLimitOffset } from '../common/utils.js'
 import { ApiError } from '../common/errors.js'
+import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 
 const RECENT_USERS_LIMIT = 10
 
@@ -29,44 +30,44 @@ export function createUsersRouter() {
   const searchByQuerySchema = object({ query: querySchema })
   const searchByUserIdsSchema = object({ user_ids: size(array(nonempty(string())), 1, 100) })
 
-  // TODO: hard limit to 100
   router.get('/users', async (req, res) => {
+    const { offset, limit } = paginationToLimitOffset(paginationSchema.create(req.query))
+
+    let results
     if (searchByGroupIdSchema.is(req.query)) {
-      // TODO: use a join?
-      const userIds = await membershipStorage.findUserIdsByGroupId(req.query.group_id)
-      const users = await usersStorage.find({ ids: userIds })
-      res.json(users)
-      return
+      results = await usersStorage.find({ groupIds: [req.query.group_id], limit, offset })
+    } else if (searchByQuerySchema.is(req.query)) {
+      results = await usersStorage.find({ query: req.query.query, limit, offset })
+    } else if (searchByUserIdsSchema.is(req.query)) {
+      results = await usersStorage.find({ ids: req.query.user_ids, limit, offset })
+    } else {
+      throw new ApiError({ code: 'INVALID_SEARCH_PARAMETERS', status: 400 })
     }
 
-    if (searchByQuerySchema.is(req.query)) {
-      const users = await usersStorage.find({ query: req.query.query })
-      res.json(users)
-      return
-    }
-
-    if (searchByUserIdsSchema.is(req.query)) {
-      const users = await usersStorage.find({ ids: req.query.user_ids })
-      res.json(users)
-      return
-    }
-
-    throw new ApiError({ code: 'INVALID_SEARCH_PARAMETERS', status: 400 })
+    res.json(results)
   })
 
   // TODO: optimize & cache this, perhaps make a single query that queries all the tables
   router.get('/recent-users', async (req, res) => {
-    const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
-    const debts = await debtsStorage.findByReceiptIds(receipts.map(r => r.id))
-    const payments = await paymentsStorage.findByParticipantUserId(req.user.id)
-    const groups = await groupStorage.findByMemberUserId(req.user.id)
-    const groupUserIds = await membershipStorage.findUserIdsByGroupIds(groups.map(g => g.id))
+    const receipts = await receiptsStorage.find({ participantUserIds: [req.user.id] })
+    const debts = receipts.items.length > 0
+      ? await debtsStorage.find({
+        receiptIds: receipts.items.map(r => r.id),
+        limit: receipts.items.length * MAX_DEBTS_PER_RECEIPT,
+      })
+      : []
+    const payments = await paymentsStorage.find({ participantUserIds: [req.user.id] })
+    const groups = await groupStorage.find({ memberUserIds: [req.user.id] })
+    const groupUserIds = groups.items.length > 0
+      ? (await membershipStorage.find({ groupIds: groups.items.map(g => g.id) }))
+        .map(m => m.userId)
+      : []
 
     const userIds = [
-      ...receipts.map(r => r.payerId),
+      ...receipts.items.map(r => r.payerId),
       ...debts.map(d => d.debtorId),
-      ...payments.map(p => p.fromUserId),
-      ...payments.map(p => p.toUserId),
+      ...payments.items.map(p => p.fromUserId),
+      ...payments.items.map(p => p.toUserId),
       ...groupUserIds,
     ]
 
@@ -81,7 +82,9 @@ export function createUsersRouter() {
       .sort((a, b) => b.at(1) - a.at(1))
       .map(([userId]) => userId)
 
-    const users = await usersStorage.find({ ids: sortedUserIds })
+    const users = sortedUserIds.length > 0
+      ? await usersStorage.find({ ids: sortedUserIds })
+      : []
 
     res.json(
       sortedUserIds

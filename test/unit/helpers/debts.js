@@ -14,16 +14,12 @@ export class DebtsMockStorage {
     }
   }
 
-  /** @param {string} receiptId */
-  findByReceiptId(receiptId) {
-    return [...this._debts].filter(d => d.receiptId === receiptId)
+  /** @param {{ receiptIds: string[] }} options */
+  find({ receiptIds }) {
+    return [...this._debts].filter(d => receiptIds.includes(d.receiptId))
   }
 
-  aggregateIngoingDebts() {
-    return []
-  }
-
-  aggregateOutgoingDebts() {
+  aggregateDebts() {
     return []
   }
 }

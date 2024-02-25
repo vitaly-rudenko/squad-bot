@@ -30,18 +30,8 @@ export class PaymentsPostgresStorage {
     `, [id])
   }
 
-  /** @param {string} userId */
-  async aggregateIngoingPayments(userId) {
-    return this._aggregatePayments({ toUserId: userId })
-  }
-
-  /** @param {string} userId */
-  async aggregateOutgoingPayments(userId) {
-    return this._aggregatePayments({ fromUserId: userId })
-  }
-
   /** @param {{ fromUserId?: string; toUserId?: string }} input */
-  async _aggregatePayments({ fromUserId, toUserId }) {
+  async aggregatePayments({ fromUserId, toUserId }) {
     const variables = []
     const conditions = ['p.deleted_at IS NULL']
 
@@ -53,6 +43,10 @@ export class PaymentsPostgresStorage {
     if (toUserId) {
       conditions.push(`p.to_user_id = $${variables.length + 1}`)
       variables.push(toUserId)
+    }
+
+    if (conditions.length === 0) {
+      throw new Error('No conditions were provided for the search')
     }
 
     const response = await this._client.query(`
@@ -69,13 +63,8 @@ export class PaymentsPostgresStorage {
 
   /** @param {string} id */
   async findById(id) {
-    const payments = await this._find({ ids: [id] })
-    return payments.at(0)
-  }
-
-  /** @param {string} userId */
-  async findByParticipantUserId(userId) {
-    return this._find({ participantUserIds: [userId] })
+    const { items } = await this.find({ ids: [id], limit: 1 })
+    return items.at(0)
   }
 
   /**
@@ -86,11 +75,11 @@ export class PaymentsPostgresStorage {
    *   offset?: number,
    * }} options
    */
-  async _find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
+  async find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
     const conditions = ['p.deleted_at IS NULL']
     const variables = []
 
-    if (ids && Array.isArray(ids)) {
+    if (Array.isArray(ids)) {
       if (ids.length === 0) {
         throw new Error('"ids" cannot be empty')
       }
@@ -99,7 +88,7 @@ export class PaymentsPostgresStorage {
       variables.push(ids)
     }
 
-    if (participantUserIds && Array.isArray(participantUserIds)) {
+    if (Array.isArray(participantUserIds)) {
       if (participantUserIds.length === 0) {
         throw new Error('"participantUserIds" cannot be empty')
       }
@@ -121,7 +110,15 @@ export class PaymentsPostgresStorage {
       LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
-    return response.rows.map(row => deserializePayment(row))
+    const { rows: [{ total }] } = await this._client.query(`
+      SELECT COUNT(*)::int AS total
+      FROM payments p ${whereClause};
+    `, variables)
+
+    return {
+      total,
+      items: response.rows.map(row => deserializePayment(row)),
+    }
   }
 }
 

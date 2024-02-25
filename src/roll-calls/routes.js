@@ -1,8 +1,9 @@
 import Router from 'express-promise-router'
-import { groupIdSchema } from '../common/schemas.js'
+import { groupIdSchema, paginationSchema } from '../common/schemas.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
 import { registry } from '../registry.js'
 import { createRollCallSchema, updateRollCallSchema } from './schemas.js'
+import { paginationToLimitOffset } from '../common/utils.js'
 
 export function createRollCallsRouter() {
   const {
@@ -12,6 +13,7 @@ export function createRollCallsRouter() {
 
   const router = Router()
 
+  // TODO: limit amount of roll calls per group
   router.post('/roll-calls', async (req, res) => {
     const {
       groupId,
@@ -70,11 +72,25 @@ export function createRollCallsRouter() {
     res.sendStatus(201)
   })
 
-  // TODO: hard limit to 100
   router.get('/roll-calls', async (req, res) => {
+    const { limit, offset } = paginationToLimitOffset(paginationSchema.create(req.query))
     const groupId = groupIdSchema.create(req.query.group_id)
-    const rollCalls = await rollCallsStorage.findByGroupId(groupId)
-    res.json(rollCalls)
+
+    const { items, total } = await rollCallsStorage.find({ groupIds: [groupId], limit, offset })
+    res.json({ items, total })
+  })
+
+  router.get('/roll-calls/:rollCallId', async (req, res) => {
+    const rollCall = await rollCallsStorage.findById(req.params.rollCallId)
+    if (!rollCall) {
+      throw new NotFoundError()
+    }
+
+    if (!(await membershipStorage.exists(req.user.id, rollCall.groupId))) {
+      throw new NotAuthorizedError()
+    }
+
+    res.json(rollCall)
   })
 
   router.delete('/roll-calls/:rollCallId', async (req, res) => {

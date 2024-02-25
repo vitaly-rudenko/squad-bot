@@ -25,7 +25,7 @@ export class RedisCache {
       .pexpire(this._key(key), this._ttlMs)
       .exec()
 
-    return result?.[0][1] === 0
+    return result?.[0]?.[1] === 0
   }
 
   /** @param {string} key */

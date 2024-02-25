@@ -16,9 +16,10 @@ export class GroupsPostgresStorage {
     `, [id, title, new Date()])
   }
 
-  /** @param {string} userId */
-  async findByMemberUserId(userId) {
-    return this._find({ memberUserIds: [userId] })
+  /** @param {string} id */
+  async findById(id) {
+    const { items } = await this.find({ ids: [id], limit: 1 })
+    return items.at(0)
   }
 
   /**
@@ -29,11 +30,11 @@ export class GroupsPostgresStorage {
    *   offset?: number,
    * }} options
    */
-  async _find({ ids, memberUserIds, limit = 100, offset = 0 } = {}) {
+  async find({ ids, memberUserIds, limit = 100, offset = 0 } = {}) {
     const conditions = []
     const variables = []
 
-    if (ids && Array.isArray(ids)) {
+    if (Array.isArray(ids)) {
       if (ids.length === 0) {
         throw new Error('"ids" cannot be empty')
       }
@@ -42,7 +43,7 @@ export class GroupsPostgresStorage {
       variables.push(ids)
     }
 
-    if (memberUserIds && Array.isArray(memberUserIds)) {
+    if (Array.isArray(memberUserIds)) {
       if (memberUserIds.length === 0) {
         throw new Error('"memberUserIds" cannot be empty')
       }
@@ -64,7 +65,15 @@ export class GroupsPostgresStorage {
       LIMIT ${limit} OFFSET ${offset};;
     `, variables)
 
-    return response.rows.map(row => deserializeGroup(row))
+    const { rows: [{ total }]} = await this._client.query(`
+      SELECT COUNT(*)::int AS total
+      FROM groups g ${whereClause};
+    `, variables)
+
+    return {
+      total,
+      items: response.rows.map(row => deserializeGroup(row)),
+    }
   }
 }
 

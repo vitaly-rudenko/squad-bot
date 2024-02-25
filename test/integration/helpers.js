@@ -121,7 +121,7 @@ export async function createReceipt(payerId, debts, {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../src/receipts/types').Receipt[]>} */
+/** @returns {Promise<{ items: import('../../src/receipts/types').Receipt[]; total: number }>} */
 export async function getReceipts(userId) {
   const response = await fetch(`${TEST_API_URL}/receipts`, {
     headers: createAuthorizationHeader({ userId })
@@ -323,7 +323,7 @@ export async function updateRollCall(userId, rollCallId, {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../src/roll-calls/types').RollCall[]>} */
+/** @returns {Promise<{ items: import('../../src/roll-calls/types').RollCall[], total: number }>} */
 export async function getRollCalls(groupId, userId) {
   const response = await fetch(`${TEST_API_URL}/roll-calls?group_id=${groupId}`, {
     headers: createAuthorizationHeader({ userId }),
@@ -343,7 +343,7 @@ export async function deleteRollCall(id, userId) {
   validateResponse(response)
 }
 
-/** @returns {Promise<import('../../src/groups/types').Group>} */
+/** @returns {Promise<{ items: import('../../src/groups/types').Group[]; total: number }>} */
 export async function getGroups(userId) {
   const response = await fetch(`${TEST_API_URL}/groups`, {
     headers: createAuthorizationHeader({ userId }),

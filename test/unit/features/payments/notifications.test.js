@@ -6,6 +6,9 @@ import { createTelegramMock } from '../../helpers/telegram.js'
 import { createUser, createUsersStorage } from '../../helpers/users.js'
 import { localizeMock } from '../../helpers/localization.js'
 import { escapeMd } from '../../../../src/common/telegram.js'
+import { generateWebAppUrlMock } from '../../helpers/common.js'
+import { createDebtsStorage } from '../../helpers/debts.js'
+import { createPaymentsStorage } from '../../helpers/payments.js'
 
 chai.use(deepEqualInAnyOrder)
 
@@ -31,6 +34,9 @@ describe('payments/notifications', () => {
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
+        generateWebAppUrl: generateWebAppUrlMock,
+        debtsStorage: createDebtsStorage([]),
+        paymentsStorage: createPaymentsStorage([]),
       })
 
       const options = {
@@ -47,7 +53,8 @@ describe('payments/notifications', () => {
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
               action: payments.notifications.saved.action.create(${editor.locale})
-          `, options],
+              debts: payments.notifications.saved.checkDebts(${editor.locale})
+            `, options],
           [Number(sender.id), stripIndent`
             payments.notifications.saved.message(${sender.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
@@ -55,6 +62,7 @@ describe('payments/notifications', () => {
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
               action: payments.notifications.saved.action.create(${sender.locale})
+              debts: payments.notifications.saved.checkDebts(${sender.locale})
           `, options],
           [Number(receiver.id), stripIndent`
             payments.notifications.saved.message(${receiver.locale}):
@@ -63,6 +71,7 @@ describe('payments/notifications', () => {
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
               action: payments.notifications.saved.action.create(${receiver.locale})
+              debts: payments.notifications.saved.checkDebts(${receiver.locale})
           `, options]
         ])
     })
@@ -87,6 +96,9 @@ describe('payments/notifications', () => {
         localize: localizeMock,
         telegram,
         usersStorage: createUsersStorage([sender, receiver, editor]),
+        generateWebAppUrl: generateWebAppUrlMock,
+        debtsStorage: createDebtsStorage([]),
+        paymentsStorage: createPaymentsStorage([]),
       })
 
       const options = {
@@ -103,6 +115,7 @@ describe('payments/notifications', () => {
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
               action: payments.notifications.saved.action.update(${editor.locale})
+              debts: payments.notifications.saved.checkDebts(${editor.locale})
           `, options],
           [Number(sender.id), stripIndent`
             payments.notifications.saved.message(${sender.locale}):
@@ -111,6 +124,7 @@ describe('payments/notifications', () => {
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
               action: payments.notifications.saved.action.update(${sender.locale})
+              debts: payments.notifications.saved.checkDebts(${sender.locale})
           `, options],
           [Number(receiver.id), stripIndent`
             payments.notifications.saved.message(${receiver.locale}):
@@ -119,6 +133,7 @@ describe('payments/notifications', () => {
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
               action: payments.notifications.saved.action.update(${receiver.locale})
+              debts: payments.notifications.saved.checkDebts(${receiver.locale})
           `, options]
         ])
     })

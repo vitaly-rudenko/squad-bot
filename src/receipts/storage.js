@@ -57,21 +57,10 @@ export class ReceiptsPostgresStorage {
     `, [id])
   }
 
-  /** @param {string} userId */
-  async findByParticipantUserId(userId) {
-    return this._find({ participantUserIds: [userId] })
-  }
-
   /** @param {string} id */
   async findById(id) {
-    const receipts = await this._find({ ids: [id] })
-    return receipts.at(0)
-  }
-
-  /** @param {string[]} ids */
-  async findByIds(ids) {
-    if (ids.length === 0) return []
-    return this._find({ ids })
+    const { items } = await this.find({ ids: [id], limit: 1 })
+    return items.at(0)
   }
 
   /**
@@ -82,14 +71,14 @@ export class ReceiptsPostgresStorage {
    *   offset?: number,
    * }} options
    */
-  async _find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
+  async find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
     const conditions = ['r.deleted_at IS NULL']
     const variables = []
     const joins = []
 
     let isDistinct = false
 
-    if (ids && Array.isArray(ids)) {
+    if (Array.isArray(ids)) {
       if (ids.length === 0) {
         throw new Error('"ids" cannot be empty')
       }
@@ -98,7 +87,7 @@ export class ReceiptsPostgresStorage {
       variables.push(ids)
     }
 
-    if (participantUserIds && Array.isArray(participantUserIds)) {
+    if (Array.isArray(participantUserIds)) {
       if (participantUserIds.length === 0) {
         throw new Error('"participantUserIds" cannot be empty')
       }
@@ -117,16 +106,25 @@ export class ReceiptsPostgresStorage {
 
     const joinClause = joins.join(' ')
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
+    const distinctClause = isDistinct ? 'DISTINCT ' : ''
 
     const response = await this._client.query(`
-      SELECT${isDistinct ? ' DISTINCT' : ''} r.id
+      SELECT ${distinctClause}r.id
         , r.created_at, r.payer_id, r.amount, r.description, r.photo_filename
       FROM receipts r ${joinClause} ${whereClause}
       ORDER BY created_at DESC
       LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
-    return response.rows.map(row => deserializeReceipt(row))
+    const { rows: [{ total }] } = await this._client.query(`
+      SELECT COUNT(${distinctClause}r.id)::int AS total
+      FROM receipts r ${joinClause} ${whereClause};
+    `, variables)
+
+    return {
+      total,
+      items: response.rows.map(row => deserializeReceipt(row)),
+    }
   }
 }
 

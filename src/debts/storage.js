@@ -33,18 +33,6 @@ export class DebtsPostgresStorage {
     `, [receiptId])
   }
 
-  /** @param {string} receiptId */
-  async findByReceiptId(receiptId) {
-    return this._find({ receiptIds: [receiptId] })
-  }
-
-  /** @param {string[]} receiptIds */
-  async findByReceiptIds(receiptIds) {
-    if (receiptIds.length === 0) return []
-    // TODO: improve
-    return this._find({ receiptIds, limit: 1000 })
-  }
-
   /**
    * @param {{
    *   receiptIds?: string[],
@@ -52,11 +40,11 @@ export class DebtsPostgresStorage {
    *   offset?: number
    * }} options
    */
-  async _find({ receiptIds, limit = 100, offset = 0 } = {}) {
+  async find({ receiptIds, limit = 100, offset = 0 } = {}) {
     const conditions = ['d.deleted_at IS NULL', 'r.deleted_at IS NULL']
     const variables = []
 
-    if (receiptIds && Array.isArray(receiptIds)) {
+    if (Array.isArray(receiptIds)) {
       if (receiptIds.length === 0) {
         throw new Error('"receiptIds" cannot be empty')
       }
@@ -81,18 +69,8 @@ export class DebtsPostgresStorage {
     return response.rows.map(row => deserializeDebt(row))
   }
 
-  /** @param {string} userId */
-  async aggregateIngoingDebts(userId) {
-    return this._aggregateDebts({ toUserId: userId })
-  }
-
-  /** @param {string} userId */
-  async aggregateOutgoingDebts(userId) {
-    return this._aggregateDebts({ fromUserId: userId })
-  }
-
   /** @param {{ fromUserId?: string; toUserId?: string }} input */
-  async _aggregateDebts({ fromUserId, toUserId }) {
+  async aggregateDebts({ fromUserId, toUserId }) {
     const variables = []
     const conditions = ['d.debtor_id != r.payer_id', 'r.deleted_at IS NULL', 'd.deleted_at IS NULL']
 

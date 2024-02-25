@@ -1,9 +1,10 @@
 import Router from 'express-promise-router'
 import { object } from 'superstruct'
-import { userIdSchema, amountSchema } from '../common/schemas.js'
+import { userIdSchema, amountSchema, paginationSchema } from '../common/schemas.js'
 import { sendPaymentDeletedNotification, sendPaymentSavedNotification } from './notifications.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
 import { registry } from '../registry.js'
+import { paginationToLimitOffset } from '../common/utils.js'
 
 export const createPaymentSchema = object({
   fromUserId: userIdSchema,
@@ -51,10 +52,10 @@ export function createPaymentsRouter() {
     res.sendStatus(204)
   })
 
-  // TODO: add pagination
   router.get('/payments', async (req, res) => {
-    const payments = await paymentsStorage.findByParticipantUserId(req.user.id)
-    res.json(payments)
+    const { limit, offset } = paginationToLimitOffset(paginationSchema.create(req.query))
+    const { items, total } = await paymentsStorage.find({ participantUserIds: [req.user.id], limit, offset })
+    res.json({ items, total })
   })
 
   return router

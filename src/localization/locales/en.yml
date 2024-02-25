@@ -8,9 +8,13 @@ payments:
         - '💸 {editor} has {action} a *{amount}* payment'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
+        - '{debts}'
       action:
         create: recorded
         update: edited
+      ingoingDebt: '⬅️ {name} now owes you *{amount}*'
+      outgoingDebt: '➡️ You now owe *{amount}* to {name} – [pay]({payUrl})'
+      checkDebts: '↔️ Check your debts: /debts'
     deleted:
       message:
         - '❌ 💸 {editor} has deleted a *{amount}* payment'

@@ -14,6 +14,9 @@ export const localeFileSchema = object({
           create: _,
           update: _,
         }),
+        ingoingDebt: _,
+        outgoingDebt: _,
+        checkDebts: _,
       }),
       deleted: object({
         message: _,

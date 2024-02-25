@@ -28,10 +28,9 @@ export function createRollCallsFlow() {
    */
   const rollCallMessage = async (context, next) => {
     if (!context.message || !('text' in context.message)) return next()
-
     const { userId, chatId, locale } = context.state
 
-    const rollCalls = await rollCallsStorage.findByGroupId(chatId)
+    const { items: rollCalls } = await rollCallsStorage.find({ groupIds: [chatId] })
 
     const patternMatcher = new PatternMatcher()
     const entryMatchers = new EntryMatchers()
@@ -56,7 +55,8 @@ export function createRollCallsFlow() {
 
     let userIdsToNotify
     if (matchedRollCall.usersPattern === '*') {
-      userIdsToNotify = await membershipStorage.findUserIdsByGroupId(chatId)
+      userIdsToNotify = (await membershipStorage.find({ groupIds: [chatId] }))
+        .map(m => m.userId)
     } else {
       userIdsToNotify = matchedRollCall.usersPattern.split(',')
     }
@@ -85,7 +85,7 @@ export function createRollCallsFlow() {
     }
 
     const name = context.from?.first_name ?? 'Unknown user'
-    const usersToNotify = await usersStorage.findByIds(userIdsToNotify)
+    const usersToNotify = await usersStorage.find({ ids: userIdsToNotify })
     const mentions = usersToNotify.map(formatMention).join(' ')
     const sendPoll = matchedRollCall.pollOptions.length > 0
     const message = (title && !sendPoll)

@@ -7,6 +7,9 @@ import { sendReceiptDeletedNotification, sendReceiptSavedNotification } from './
 import { photoSchema, saveReceiptSchema } from './schemas.js'
 import { optional } from 'superstruct'
 import { deletePhoto, generateRandomPhotoFilename, savePhoto } from './filesystem.js'
+import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
+import { paginationSchema } from '../common/schemas.js'
+import { paginationToLimitOffset } from '../common/utils.js'
 
 export function createReceiptsRouter() {
   const {
@@ -107,12 +110,21 @@ export function createReceiptsRouter() {
     res.json(formatReceipt(receipt, debts))
   })
 
-  // TODO: add pagination
   router.get('/receipts', async (req, res) => {
-    const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
-    const debts = await debtsStorage.findByReceiptIds(receipts.map(r => r.id))
+    const { limit, offset } = paginationToLimitOffset(paginationSchema.create(req.query))
 
-    res.json(receipts.map((receipt) => formatReceipt(receipt, debts)))
+    const { items, total } = await receiptsStorage.find({ participantUserIds: [req.user.id], limit, offset })
+    const debts = items.length > 0
+      ? await debtsStorage.find({
+        receiptIds: items.map(r => r.id),
+        limit: items.length * MAX_DEBTS_PER_RECEIPT,
+      })
+      : []
+
+    res.json({
+      items: items.map((receipt) => formatReceipt(receipt, debts)),
+      total,
+    })
   })
 
   router.get('/receipts/:receiptId', async (req, res) => {
@@ -122,7 +134,7 @@ export function createReceiptsRouter() {
       throw new NotFoundError()
     }
 
-    const debts = await debtsStorage.findByReceiptId(receiptId)
+    const debts = await debtsStorage.find({ receiptIds: [receiptId], limit: MAX_DEBTS_PER_RECEIPT })
 
     res.json(formatReceipt(receipt, debts))
   })
@@ -135,7 +147,7 @@ export function createReceiptsRouter() {
       throw new NotFoundError()
     }
 
-    const debts = await debtsStorage.findByReceiptId(receiptId)
+    const debts = await debtsStorage.find({ receiptIds: [receiptId], limit: MAX_DEBTS_PER_RECEIPT })
 
     if (receipt.photoFilename) {
       await deletePhoto(receipt.photoFilename)

@@ -10,16 +10,7 @@ export class PaymentsMockStorage {
     }
   }
 
-  /** @param {string} receiptId */
-  findByReceiptId(receiptId) {
-    return [...this._payments].filter(d => d.receiptId === receiptId)
-  }
-
-  aggregateIngoingPayments() {
-    return []
-  }
-
-  aggregateOutgoingPayments() {
+  aggregatePayments() {
     return []
   }
 }

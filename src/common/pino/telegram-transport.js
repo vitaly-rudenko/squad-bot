@@ -18,8 +18,10 @@ export default async function ({ telegramBotToken, debugChatId }) {
       const { level, msg, time, pid, hostname, ...context } = log
 
       try {
+        const levelLabel = pino.levels.labels[level] ?? 'info'
+
         const message = [
-          `⚠️ *${escapeMd(pino.levels.labels[level].toUpperCase())}*: ${escapeMd(msg.slice(0, 500))}`,
+          `⚠️ *${escapeMd(levelLabel.toUpperCase())}*: ${escapeMd(msg.slice(0, 500))}`,
           `🤖 ${escapeMd(`@${botInfo.username}`)}`,
           `📆 ${escapeMd(new Date(time).toISOString())}`,
           Object.keys(context).length > 0 && `\`\`\`json
