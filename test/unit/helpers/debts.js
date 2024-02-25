@@ -19,11 +19,7 @@ export class DebtsMockStorage {
     return [...this._debts].filter(d => d.receiptId === receiptId)
   }
 
-  aggregateIngoingDebts() {
-    return []
-  }
-
-  aggregateOutgoingDebts() {
+  aggregateDebts() {
     return []
   }
 }

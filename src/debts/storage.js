@@ -81,18 +81,8 @@ export class DebtsPostgresStorage {
     return response.rows.map(row => deserializeDebt(row))
   }
 
-  /** @param {string} userId */
-  async aggregateIngoingDebts(userId) {
-    return this._aggregateDebts({ toUserId: userId })
-  }
-
-  /** @param {string} userId */
-  async aggregateOutgoingDebts(userId) {
-    return this._aggregateDebts({ fromUserId: userId })
-  }
-
   /** @param {{ fromUserId?: string; toUserId?: string }} input */
-  async _aggregateDebts({ fromUserId, toUserId }) {
+  async aggregateDebts({ fromUserId, toUserId }) {
     const variables = []
     const conditions = ['d.debtor_id != r.payer_id', 'r.deleted_at IS NULL', 'd.deleted_at IS NULL']
 
