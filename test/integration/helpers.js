@@ -121,7 +121,7 @@ export async function createReceipt(payerId, debts, {
   return await response.json()
 }
 
-/** @returns {Promise<import('../../src/receipts/types').Receipt[]>} */
+/** @returns {Promise<{ items: import('../../src/receipts/types').Receipt[]; total: number }>} */
 export async function getReceipts(userId) {
   const response = await fetch(`${TEST_API_URL}/receipts`, {
     headers: createAuthorizationHeader({ userId })

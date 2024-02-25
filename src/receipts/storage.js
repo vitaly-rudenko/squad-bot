@@ -57,15 +57,10 @@ export class ReceiptsPostgresStorage {
     `, [id])
   }
 
-  /** @param {string} userId */
-  async findByParticipantUserId(userId) {
-    return this._find({ participantUserIds: [userId] })
-  }
-
   /** @param {string} id */
   async findById(id) {
-    const receipts = await this._find({ ids: [id] })
-    return receipts.at(0)
+    const { items } = await this.find({ ids: [id], limit: 1 })
+    return items.at(0)
   }
 
   /**
@@ -76,7 +71,7 @@ export class ReceiptsPostgresStorage {
    *   offset?: number,
    * }} options
    */
-  async _find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
+  async find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
     const conditions = ['r.deleted_at IS NULL']
     const variables = []
     const joins = []
@@ -120,7 +115,15 @@ export class ReceiptsPostgresStorage {
       LIMIT ${limit} OFFSET ${offset};
     `, variables)
 
-    return response.rows.map(row => deserializeReceipt(row))
+    const { rows: [{ total }] } = await this._client.query(`
+      SELECT COUNT(*)::int AS total
+      FROM receipts r ${joinClause} ${whereClause};
+    `, variables)
+
+    return {
+      total,
+      items: response.rows.map(row => deserializeReceipt(row)),
+    }
   }
 }
 

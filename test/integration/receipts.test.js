@@ -14,7 +14,7 @@ describe('[receipts]', () => {
         [user.id]: 1,
       }, { photo: receiptPhotoBuffer, mime: 'image/png' })
 
-      const [receipt] = await getReceipts(user.id)
+      const { items: [receipt] } = await getReceipts(user.id)
 
       const { binary, mime } = await getPhoto(receipt.photoFilename)
 
@@ -147,10 +147,10 @@ describe('[receipts]', () => {
     it('should returns receipts by user ID', async () => {
       const [user1, user2, user3, user4] = await createUsers(4)
 
-      expect(await getReceipts(user1.id)).to.deep.equalInAnyOrder([])
-      expect(await getReceipts(user2.id)).to.deep.equalInAnyOrder([])
-      expect(await getReceipts(user3.id)).to.deep.equalInAnyOrder([])
-      expect(await getReceipts(user4.id)).to.deep.equalInAnyOrder([])
+      expect(await getReceipts(user1.id)).to.deep.equal({ items: [], total: 0 })
+      expect(await getReceipts(user2.id)).to.deep.equal({ items: [], total: 0 })
+      expect(await getReceipts(user3.id)).to.deep.equal({ items: [], total: 0 })
+      expect(await getReceipts(user4.id)).to.deep.equal({ items: [], total: 0 })
 
       await createReceipt(user1.id, {
         [user1.id]: 5,
@@ -170,10 +170,10 @@ describe('[receipts]', () => {
         }]
       }
 
-      expectReceiptsToEqual(await getReceipts(user1.id), [receipt1])
+      expectReceiptsToEqual((await getReceipts(user1.id)).items, [receipt1])
 
-      expect(await getReceipts(user2.id)).to.deep.equalInAnyOrder(await getReceipts(user1.id))
-      expect(await getReceipts(user3.id)).to.deep.equalInAnyOrder([])
+      expect((await getReceipts(user2.id)).items).to.deep.equalInAnyOrder((await getReceipts(user1.id)).items)
+      expect(await getReceipts(user3.id)).to.deep.equal({ items: [], total: 0 })
 
       await createReceipt(user3.id, {
         [user1.id]: 50,
@@ -194,10 +194,10 @@ describe('[receipts]', () => {
         }]
       }
 
-      expectReceiptsToEqual(await getReceipts(user1.id), [receipt2, receipt1])
-      expectReceiptsToEqual(await getReceipts(user2.id), [receipt1])
-      expectReceiptsToEqual(await getReceipts(user3.id), [receipt2])
-      expect(await getReceipts(user4.id)).to.deep.equalInAnyOrder([])
+      expectReceiptsToEqual((await getReceipts(user1.id)).items, [receipt2, receipt1])
+      expectReceiptsToEqual((await getReceipts(user2.id)).items, [receipt1])
+      expectReceiptsToEqual((await getReceipts(user3.id)).items, [receipt2])
+      expect(await getReceipts(user4.id)).to.deep.equal({ items: [], total: 0 })
     })
   })
 
@@ -212,8 +212,8 @@ describe('[receipts]', () => {
 
       await deleteReceipt(receiptId, user1.id)
 
-      expect(await getReceipts(user1.id)).to.deep.equal([])
-      expect(await getReceipts(user2.id)).to.deep.equal([])
+      expect(await getReceipts(user1.id)).to.deep.equal({ items: [], total: 0 })
+      expect(await getReceipts(user2.id)).to.deep.equal({ items: [], total: 0 })
       expect(await getDebts(user1.id)).to.deep.equalInAnyOrder(NO_DEBTS)
       expect(await getDebts(user2.id)).to.deep.equalInAnyOrder(NO_DEBTS)
     })
@@ -236,18 +236,18 @@ describe('[receipts]', () => {
 
       await deleteReceipt(receipt2Id, user2.id)
 
-      expect((await getReceipts(user1.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])
-      expect((await getReceipts(user2.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])
+      expect((await getReceipts(user1.id)).items.map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])
+      expect((await getReceipts(user2.id)).items.map(r => r.id)).to.deep.equalInAnyOrder([receipt1Id, receipt3Id])
 
       await deleteReceipt(receipt1Id, user1.id)
 
-      expect((await getReceipts(user1.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt3Id])
-      expect((await getReceipts(user2.id)).map(r => r.id)).to.deep.equalInAnyOrder([receipt3Id])
+      expect((await getReceipts(user1.id)).items.map(r => r.id)).to.deep.equalInAnyOrder([receipt3Id])
+      expect((await getReceipts(user2.id)).items.map(r => r.id)).to.deep.equalInAnyOrder([receipt3Id])
 
       await deleteReceipt(receipt3Id, user1.id)
 
-      expect((await getReceipts(user1.id))).to.deep.equal([])
-      expect((await getReceipts(user2.id))).to.deep.equal([])
+      expect((await getReceipts(user1.id))).to.deep.equal({ items: [], total: 0 })
+      expect((await getReceipts(user2.id))).to.deep.equal({ items: [], total: 0 })
     })
 
     it('should delete the receipt photo', async () => {

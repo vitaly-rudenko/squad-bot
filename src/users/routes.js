@@ -49,11 +49,11 @@ export function createUsersRouter() {
 
   // TODO: optimize & cache this, perhaps make a single query that queries all the tables
   router.get('/recent-users', async (req, res) => {
-    const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
-    const debts = receipts.length > 0
+    const receipts = await receiptsStorage.find({ participantUserIds: [req.user.id] })
+    const debts = receipts.items.length > 0
       ? await debtsStorage.find({
-        receiptIds: receipts.map(r => r.id),
-        limit: receipts.length * MAX_DEBTS_PER_RECEIPT,
+        receiptIds: receipts.items.map(r => r.id),
+        limit: receipts.items.length * MAX_DEBTS_PER_RECEIPT,
       })
       : []
     const payments = await paymentsStorage.find({ participantUserIds: [req.user.id] })
@@ -64,7 +64,7 @@ export function createUsersRouter() {
       : []
 
     const userIds = [
-      ...receipts.map(r => r.payerId),
+      ...receipts.items.map(r => r.payerId),
       ...debts.map(d => d.debtorId),
       ...payments.items.map(p => p.fromUserId),
       ...payments.items.map(p => p.toUserId),

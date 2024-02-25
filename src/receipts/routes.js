@@ -8,6 +8,8 @@ import { photoSchema, saveReceiptSchema } from './schemas.js'
 import { optional } from 'superstruct'
 import { deletePhoto, generateRandomPhotoFilename, savePhoto } from './filesystem.js'
 import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
+import { paginationSchema } from '../common/schemas.js'
+import { paginationToLimitOffset } from '../common/utils.js'
 
 export function createReceiptsRouter() {
   const {
@@ -108,17 +110,21 @@ export function createReceiptsRouter() {
     res.json(formatReceipt(receipt, debts))
   })
 
-  // TODO: add pagination
   router.get('/receipts', async (req, res) => {
-    const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
-    const debts = receipts.length > 0
+    const { limit, offset } = paginationToLimitOffset(paginationSchema.create(req.query))
+
+    const { items, total } = await receiptsStorage.find({ participantUserIds: [req.user.id], limit, offset })
+    const debts = items.length > 0
       ? await debtsStorage.find({
-        receiptIds: receipts.map(r => r.id),
-        limit: receipts.length * MAX_DEBTS_PER_RECEIPT,
+        receiptIds: items.map(r => r.id),
+        limit: items.length * MAX_DEBTS_PER_RECEIPT,
       })
       : []
 
-    res.json(receipts.map((receipt) => formatReceipt(receipt, debts)))
+    res.json({
+      items: items.map((receipt) => formatReceipt(receipt, debts)),
+      total,
+    })
   })
 
   router.get('/receipts/:receiptId', async (req, res) => {
