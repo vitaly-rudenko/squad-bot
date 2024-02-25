@@ -55,7 +55,8 @@ export function createRollCallsFlow() {
 
     let userIdsToNotify
     if (matchedRollCall.usersPattern === '*') {
-      userIdsToNotify = await membershipStorage.findUserIdsByGroupId(chatId)
+      userIdsToNotify = (await membershipStorage.find({ groupIds: [chatId] }))
+        .map(m => m.userId)
     } else {
       userIdsToNotify = matchedRollCall.usersPattern.split(',')
     }

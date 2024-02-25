@@ -47,49 +47,52 @@ export class MembershipPostgresStorage {
   }
 
   /**
-   * @param {string} groupId
-   * @returns {Promise<string[]>}
+   * @param {{
+   *   allowNoConditions?: boolean,
+   *   groupIds?: string[],
+   *   userIds?: string[],
+   *   limit?: number,
+   *   offset?: number
+   * }} options
    */
-  async findUserIdsByGroupId(groupId) {
-    const response = await this._client.query(`
-      SELECT m.user_id
-      FROM memberships m
-      WHERE m.group_id = $1;
-    `, [groupId])
+  async find({ allowNoConditions, groupIds, userIds, limit = 100, offset = 0 }) {
+    const conditions = []
+    const variables = []
 
-    return response.rows.map(row => row['user_id'])
-  }
+    if (Array.isArray(groupIds)) {
+      if (groupIds.length === 0) {
+        throw new Error('"groupIds" cannot be empty')
+      }
 
-  /**
-   * @param {string[]} groupIds
-   * @returns {Promise<string[]>}
-   */
-  async findUserIdsByGroupIds(groupIds) {
-    if (groupIds.length === 0) return []
-
-    const response = await this._client.query(`
-      SELECT m.user_id
-      FROM memberships m
-      WHERE m.group_id = ANY($1);
-    `, [groupIds])
-
-    return response.rows.map(row => row['user_id'])
-  }
-
-  /** @param {{ limit: number }} input */
-  async findOldest({ limit = 100 }) {
-    if (limit <= 0 || limit > 100) {
-      throw new Error('Limit must be between 1 and 100')
+      conditions.push(`m.group_id = ANY($${variables.length + 1})`)
+      variables.push(groupIds)
     }
 
-    const response = await this._client.query(`
-      SELECT m.user_id, m.group_id
-      FROM memberships m
-      ORDER BY m.updated_at ASC
-      LIMIT ${limit};
-    `, [])
+    if (Array.isArray(userIds)) {
+      if (userIds.length === 0) {
+        throw new Error('"userIds" cannot be empty')
+      }
 
-    return response.rows.map(row => deserializeMembership(row))
+      conditions.push(`m.user_id = ANY($${variables.length + 1})`)
+      variables.push(userIds)
+    }
+
+    if (!allowNoConditions && conditions.length === 0) {
+      throw new Error('No conditions were provided for the search')
+    }
+
+    const whereClause = conditions.length > 0
+      ? `WHERE (${conditions.join(') AND (')})`
+      : ''
+
+    const response = await this._client.query(`
+      SELECT m.user_id
+      FROM memberships m ${whereClause}
+      ORDER BY m.updated_at ASC
+      LIMIT ${limit} OFFSET ${offset};
+    `, [groupIds])
+
+    return response.rows.map(deserializeMembership)
   }
 }
 

@@ -59,7 +59,8 @@ export function createUsersRouter() {
     const payments = await paymentsStorage.find({ participantUserIds: [req.user.id] })
     const groups = await groupStorage.find({ memberUserIds: [req.user.id] })
     const groupUserIds = groups.items.length > 0
-      ? await membershipStorage.findUserIdsByGroupIds(groups.items.map(g => g.id))
+      ? (await membershipStorage.find({ groupIds: groups.items.map(g => g.id) }))
+        .map(m => m.userId)
       : []
 
     const userIds = [
