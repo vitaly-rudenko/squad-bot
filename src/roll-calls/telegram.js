@@ -89,8 +89,8 @@ export function createRollCallsFlow() {
     const mentions = usersToNotify.map(formatMention).join(' ')
     const sendPoll = matchedRollCall.pollOptions.length > 0
     const message = (title && !sendPoll)
-      ? localize(locale, 'rollCalls.message.withTitle', { title: escapeMd(title), mentions, name })
-      : localize(locale, 'rollCalls.message.withoutTitle', { mentions, name })
+      ? localize(locale, 'rollCalls.message.withTitle', { title: escapeMd(title), mentions, name: escapeMd(name) })
+      : localize(locale, 'rollCalls.message.withoutTitle', { mentions, name: escapeMd(name) })
 
     await context.reply(message, { parse_mode: 'MarkdownV2', disable_web_page_preview: true })
 
