@@ -50,15 +50,15 @@ export function createUsersRouter() {
   router.get('/recent-users', async (req, res) => {
     const receipts = await receiptsStorage.findByParticipantUserId(req.user.id)
     const debts = await debtsStorage.findByReceiptIds(receipts.map(r => r.id))
-    const payments = await paymentsStorage.findByParticipantUserId(req.user.id)
+    const payments = await paymentsStorage.find({ participantUserIds: [req.user.id] })
     const groups = await groupStorage.findByMemberUserId(req.user.id)
     const groupUserIds = await membershipStorage.findUserIdsByGroupIds(groups.map(g => g.id))
 
     const userIds = [
       ...receipts.map(r => r.payerId),
       ...debts.map(d => d.debtorId),
-      ...payments.map(p => p.fromUserId),
-      ...payments.map(p => p.toUserId),
+      ...payments.items.map(p => p.fromUserId),
+      ...payments.items.map(p => p.toUserId),
       ...groupUserIds,
     ]
 

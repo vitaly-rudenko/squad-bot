@@ -12,8 +12,8 @@ export async function aggregateDebts({
 }) {
   const ingoingDebts = await debtsStorage.aggregateIngoingDebts(userId)
   const outgoingDebts = await debtsStorage.aggregateOutgoingDebts(userId)
-  const ingoingPayments = await paymentsStorage.aggregateIngoingPayments(userId)
-  const outgoingPayments = await paymentsStorage.aggregateOutgoingPayments(userId)
+  const ingoingPayments = await paymentsStorage.aggregatePayments({ toUserId: userId })
+  const outgoingPayments = await paymentsStorage.aggregatePayments({ fromUserId: userId })
 
   /** @type {Record<string, number | undefined>} */
   const debtMap = {}
