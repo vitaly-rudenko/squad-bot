@@ -75,12 +75,11 @@ rollCalls:
     message:
       - '📣 {viewUrl}'
   noOneToMention: '❌ No one to mention or the bot doesn''t have enough data about this chat'
-  defaultPollTitle: 'Choose an answer'
-  message:
-    withTitle:
-      - '*{name}: {title}*'
-      - '{mentions}'
-    withoutTitle: '*{name}* pings {mentions}'
+  pollTitle: 'Choose an answer'
+  notification:
+    - '*{sender}*: {message}'
+    - ''
+    - '{mentions}'
   mention:
     withUsername: '@{username}'
     withoutUsername: '[{name}]({profileUrl})'

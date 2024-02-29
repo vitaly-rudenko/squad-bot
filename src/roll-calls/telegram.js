@@ -29,16 +29,16 @@ export function createRollCallsFlow() {
   const rollCallMessage = async (context, next) => {
     if (!context.message || !('text' in context.message)) return next()
     const { userId, chatId, locale } = context.state
-
+    const message = context.message.text
     const { items: rollCalls } = await rollCallsStorage.find({ groupIds: [chatId] })
 
     const patternMatcher = new PatternMatcher()
     const entryMatchers = new EntryMatchers()
 
-    let matchedRollCall, title
+    let matchedRollCall
     for (const rollCall of rollCalls) {
       const result = patternMatcher.match(
-        context.message.text,
+        message,
         new PatternBuilder().build(rollCall.messagePattern),
         entryMatchers,
         { returnCombination: true }
@@ -47,7 +47,6 @@ export function createRollCallsFlow() {
       if (!result) continue
 
       matchedRollCall = rollCall
-      title = result.fields[0]?.value
       break
     }
 
@@ -84,19 +83,21 @@ export function createRollCallsFlow() {
       }
     }
 
-    const name = context.from?.first_name ?? 'Unknown user'
+    const sender = context.from?.first_name ?? localize(locale, 'unknownUser')
     const usersToNotify = await usersStorage.find({ ids: userIdsToNotify })
     const mentions = usersToNotify.map(formatMention).join(' ')
     const sendPoll = matchedRollCall.pollOptions.length > 0
-    const message = (title && !sendPoll)
-      ? localize(locale, 'rollCalls.message.withTitle', { title: escapeMd(title), mentions, name: escapeMd(name) })
-      : localize(locale, 'rollCalls.message.withoutTitle', { mentions, name: escapeMd(name) })
+    const notification = localize(locale, 'rollCalls.notification', {
+      message: escapeMd(message),
+      sender: escapeMd(sender),
+      mentions,
+    })
 
-    await context.reply(message, { parse_mode: 'MarkdownV2', disable_web_page_preview: true })
+    await context.reply(notification, { parse_mode: 'MarkdownV2', disable_web_page_preview: true })
 
     if (sendPoll) {
       await context.replyWithPoll(
-        title || localize(locale, 'rollCalls.defaultPollTitle'),
+        localize(locale, 'rollCalls.pollTitle'),
         matchedRollCall.pollOptions,
         { is_anonymous: false, disable_notification: true }
       )

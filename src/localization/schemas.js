@@ -79,11 +79,8 @@ export const localeFileSchema = object({
       message: _,
     }),
     noOneToMention: _,
-    defaultPollTitle: _,
-    message: object({
-      withTitle: _,
-      withoutTitle: _,
-    }),
+    pollTitle: _,
+    notification: _,
     mention: object({
       withUsername: _,
       withoutUsername: _,
