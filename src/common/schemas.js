@@ -7,8 +7,8 @@ export const amountSchema = refine(
   coerce(number(), trimmed(string()), (value) => Number(value)),
   'amount',
   (value) => (
-    Number.isSafeInteger(value) && value >= 0 && value <= 100_000_00 ||
-    `Expected 'amount' to be a positive integer less than 100,000,00`
+    Number.isSafeInteger(value) && value > 0 && value <= 100_000_00 ||
+    `Expected 'amount' to be a natural number less than 100,000,00`
   )
 )
 
