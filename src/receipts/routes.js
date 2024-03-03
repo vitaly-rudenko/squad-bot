@@ -132,7 +132,12 @@ export function createReceiptsRouter() {
 
   router.get('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
-    const receipt = await receiptsStorage.findById(receiptId)
+    const { items: [receipt] } = await receiptsStorage.find({
+      ids: [receiptId],
+      participantUserIds: [req.user.id],
+      limit: 1,
+    })
+
     if (!receipt) {
       throw new NotFoundError()
     }
