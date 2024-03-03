@@ -14,7 +14,7 @@
     "test:integration": "npm run mocha -- --recursive test/integration",
     "test:integration:dev": "nodemon --delay 1 --exec 'npm run test:integration'",
     "test:new": "npm run jest",
-    "jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "jest": "node --env-file=.env --experimental-vm-modules node_modules/jest/bin/jest.js",
     "umzug": "node --env-file=.env ./src/umzug/cli.js",
     "mocha": "node --env-file=.env node_modules/mocha/bin/mocha",
     "lint": "tsc -p tsconfig.json"
@@ -44,6 +44,7 @@
     "@types/node": "^20.11.16",
     "@types/pg": "^8.11.0",
     "@types/sinon": "^17.0.3",
+    "axios": "^1.6.7",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "chai-subset": "^1.6.0",
