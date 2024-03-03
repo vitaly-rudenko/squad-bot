@@ -111,24 +111,21 @@ describe('/receipts', () => {
 
     it('saves the photo', async () => {
       const user = await createUser()
-      const buffer = Buffer.from('my-photo');
+      const photo = {
+        buffer: Buffer.from('my-photo'),
+        mimetype: 'image/jpeg',
+      };
 
       const receipt = await saveReceipt({
         payerId: user.id,
         amount: 100_00,
         debts: { [user.id]: 100_00 },
-        photo: {
-          buffer,
-          mimetype: 'image/jpeg',
-        },
+        photo,
       }, user)
 
       expect(receipt.photoFilename).toMatch(/[a-zA-Z0-9]{16}.jpg/)
 
-      await expect(getPhoto(receipt.photoFilename)).resolves.toEqual({
-        buffer,
-        mimetype: 'image/jpeg',
-      })
+      await expect(getPhoto(receipt.photoFilename)).resolves.toEqual(photo)
     })
 
     it('fails to create a receipt with mismatched amount', async () => {
