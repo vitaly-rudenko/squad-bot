@@ -69,10 +69,16 @@ async function saveReceipt(input, user) {
   return response.data
 }
 
-/** @param {string} [photoFilename] */
+/**
+ * @param {string} [photoFilename]
+ * @returns {Promise<import('../types').Photo>}
+ */
 async function getPhoto(photoFilename) {
   const response = await api.get(`/photos/${photoFilename}`, { responseType: 'arraybuffer' })
-  return response.data
+  return {
+    buffer: response.data,
+    mimetype: response.headers['content-type'],
+  }
 }
 
 describe('/receipts', () => {
@@ -119,7 +125,10 @@ describe('/receipts', () => {
 
       expect(receipt.photoFilename).toMatch(/[a-zA-Z0-9]{16}.jpg/)
 
-      await expect(getPhoto(receipt.photoFilename)).resolves.toEqual(buffer)
+      await expect(getPhoto(receipt.photoFilename)).resolves.toEqual({
+        buffer,
+        mimetype: 'image/jpeg',
+      })
     })
 
     it('fails to create a receipt with mismatched amount', async () => {
