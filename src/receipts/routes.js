@@ -10,6 +10,7 @@ import { deletePhoto, generateRandomPhotoFilename, savePhoto } from './filesyste
 import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 import { paginationSchema } from '../common/schemas.js'
 import { paginationToLimitOffset } from '../common/utils.js'
+import { validateReceiptIntegrity } from './utils.js'
 
 export function createReceiptsRouter() {
   const {
@@ -44,6 +45,8 @@ export function createReceiptsRouter() {
       debts: debtsWithoutReceiptId,
       leave_photo: leavePhoto,
     } = saveReceiptSchema.create(req.body)
+
+    await validateReceiptIntegrity({ amount, debts: debtsWithoutReceiptId })
 
     const photo = optional(photoSchema).create(req.file)
 
@@ -171,6 +174,7 @@ export function createReceiptsRouter() {
 /**
  * @param {import('./types').Receipt} receipt
  * @param {import('../debts/types').Debt[]} debts
+ * @returns {import('./types').ReceiptWithDebts}
  */
 function formatReceipt(receipt, debts) {
   return {

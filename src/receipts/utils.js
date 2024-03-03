@@ -1,3 +1,5 @@
+import { ApiError } from '../common/errors.js'
+
 /**
  * @param {{
  *   user: import('../users/types').User
@@ -34,6 +36,24 @@ export function prepareDebtsForUser({ user, debtors, ingoingDebts, outgoingDebts
         amount: debt.amount,
       }))
       .filter(isDebtorDefined),
+  }
+}
+
+/**
+ * @param {{
+ *   amount: number
+ *   debts: { debtorId: string; amount: number }[]
+ * }} receipt
+ */
+export function validateReceiptIntegrity({ amount, debts }) {
+  const total = debts.reduce((a, b) => a + b.amount, 0)
+
+  if (total !== amount) {
+    throw new ApiError({
+      code: 'RECEIPT_AMOUNT_MISMATCH',
+      status: 400,
+      message: 'The sum of the debts does not match the receipt amount',
+    })
   }
 }
 
