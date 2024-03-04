@@ -46,7 +46,7 @@ export function createReceiptsRouter() {
       leave_photo: leavePhoto,
     } = saveReceiptSchema.create(req.body)
 
-    await validateReceiptIntegrity({ amount, debts: debtsWithoutReceiptId })
+    await validateReceiptIntegrity({ payerId, amount, debts: debtsWithoutReceiptId }, req.user.id)
 
     const photo = optional(photoSchema).create(req.file)
 

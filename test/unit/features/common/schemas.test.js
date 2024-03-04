@@ -1,10 +1,11 @@
 import { expect } from 'chai'
-import { amountSchema, stringifiedBooleanSchema } from '../../../../src/common/schemas.js'
+import { amountSchema, stringifiedBooleanSchema, zeroableAmountSchema } from '../../../../src/common/schemas.js'
 import { StructError } from 'superstruct'
 
 describe('schemas/receipts', () => {
   describe('amount', () => {
     it('should allow valid values (string)', () => {
+      expect(zeroableAmountSchema.create('0')).to.eq(0)
       expect(amountSchema.create('1')).to.eq(1)
       expect(amountSchema.create('10')).to.eq(10)
       expect(amountSchema.create('1234')).to.eq(1234)
@@ -12,6 +13,8 @@ describe('schemas/receipts', () => {
     })
 
     it('should allow valid values (number)', () => {
+      expect(zeroableAmountSchema.create(0)).to.eq(0)
+
       for (const value of [1, 10, 1234, 100_000_00]) {
         expect(amountSchema.create(value)).to.eq(value)
       }

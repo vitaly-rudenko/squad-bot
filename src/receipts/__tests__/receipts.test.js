@@ -1,35 +1,7 @@
-import jwt from 'jsonwebtoken'
-import { env } from '../../env'
-import { faker } from '@faker-js/faker'
 import { api } from '../../jest/api'
-
-/**
- * @param {Partial<import('../../users/types').User>} [input]
- * @returns {Promise<import('../../users/types').User>}
- */
-async function createUser(input) {
-  const name = faker.person.firstName()
-  const username = faker.internet.userName({ firstName: name }).toLowerCase().replaceAll('.', '_')
-
-  const user = {
-    id: `${username}_${faker.string.nanoid(8)}`,
-    name,
-    username,
-    locale: faker.helpers.arrayElement(['en', 'uk']),
-    ...input,
-  }
-
-  await api.put('/users', {}, { headers: generateAuthHeaders(user) })
-
-  return user
-}
-
-/** @param {import('../../users/types').User} user */
-function generateAuthHeaders(user) {
-  return {
-    'Authorization': `Bearer ${jwt.sign({ user }, env.TOKEN_SECRET)}`,
-  }
-}
+import { access } from 'fs/promises'
+import { getPhotoPath } from '../filesystem'
+import { generateAuthHeaders, createUser, unordered } from '../../jest/helpers'
 
 /**
  * @param {{
@@ -75,10 +47,11 @@ async function saveReceipt(input, user) {
 /**
  * @param {{
  *   payer: import('../../users/types').User
- *   debtors: import('../../users/types').User[]
+ *   debtors?: import('../../users/types').User[]
  * }} input
+ * @param {import('../../users/types').User} [editor]
  */
-async function createReceipt({ payer, debtors }, user) {
+async function createReceipt({ payer, debtors = [payer] }, editor = payer) {
   return saveReceipt({
     payerId: payer.id,
     amount: 25_00 * debtors.length,
@@ -86,7 +59,7 @@ async function createReceipt({ payer, debtors }, user) {
       debts[debtor.id] = 25_00
       return debts
     }, {}),
-  }, user)
+  }, editor)
 }
 
 /**
@@ -120,23 +93,29 @@ async function getReceipts(user) {
 }
 
 /**
- * @param {T} input
- * @returns {T}
- * @template T
+ * @param {string} receiptId
+ * @param {import('../../users/types').User} user
  */
-function unordered(input) {
-  if (typeof input !== 'object' || input === null) {
-    return input
-  }
+async function deleteReceipt(receiptId, user) {
+  await api.delete(`/receipts/${receiptId}`, { headers: generateAuthHeaders(user) })
+}
 
-  if (Array.isArray(input)) {
-    return expect.toIncludeSameMembers(input.map(unordered))
+/**
+ * @param {{
+ *   receiptId?: string
+ *   payerId: string
+ *   description?: string
+ *   amount?: number
+ *   debts?: { [userId: string]: number }
+ *   photo?: boolean | import('../types').Photo
+ * }} input
+ */
+function body(input) {
+  return {
+    amount: 100_00,
+    debts: { [input.payerId]: 100_00 },
+    ...input,
   }
-
-  return Object.entries(input).reduce((result, [key, value]) => {
-    result[key] = unordered(value)
-    return result
-  }, {})
 }
 
 describe('/receipts', () => {
@@ -169,17 +148,9 @@ describe('/receipts', () => {
 
     it('saves the photo', async () => {
       const user = await createUser()
-      const photo = {
-        buffer: Buffer.from('my-photo'),
-        mimetype: 'image/jpeg',
-      };
 
-      const receipt = await saveReceipt({
-        payerId: user.id,
-        amount: 100_00,
-        debts: { [user.id]: 100_00 },
-        photo,
-      }, user)
+      const photo = { buffer: Buffer.from('my-photo'), mimetype: 'image/jpeg' };
+      const receipt = await saveReceipt(body({ payerId: user.id, photo }), user)
 
       expect(receipt.photoFilename).toMatch(/[a-zA-Z0-9]{16}.jpg/)
 
@@ -197,6 +168,7 @@ describe('/receipts', () => {
         },
       }, user)).rejects.toMatchObject({
         response: {
+          status: 400,
           data: {
             error: {
               code: 'RECEIPT_AMOUNT_MISMATCH',
@@ -207,26 +179,118 @@ describe('/receipts', () => {
       })
     })
 
-    it.todo('updates the receipt')
-    it.todo('replaces the photo')
-    it.todo('deletes the photo')
-    it.todo('does not allow to create a receipt without participation')
-    it.todo('does not allow to update a receipt without participation')
+    it('updates the receipt', async () => {
+      const user = await createUser()
+
+      const receipt = await saveReceipt(body({ payerId: user.id }), user)
+
+      const updatedReceipt = await saveReceipt({
+        receiptId: receipt.id,
+        payerId: user.id,
+        amount: 200_00,
+        debts: { [user.id]: 200_00 },
+      }, user)
+
+      await expect(getReceipt(receipt.id, user)).resolves.toStrictEqual(updatedReceipt)
+
+      expect(updatedReceipt).toStrictEqual({
+        id: receipt.id,
+        payerId: user.id,
+        amount: 200_00,
+        createdAt: receipt.createdAt,
+        debts: [
+          { debtorId: user.id, amount: 200_00 },
+        ],
+      })
+    })
+
+    it('replaces the photo', async () => {
+      const user = await createUser()
+
+      const photo = { buffer: Buffer.from('photo-1'), mimetype: 'image/png' }
+      const receipt = await saveReceipt(body({ payerId: user.id, photo }), user)
+
+      const updatedPhoto = { buffer: Buffer.from('photo-2'), mimetype: 'image/jpeg' }
+      const updatedReceipt = await saveReceipt(body({ receiptId: receipt.id, payerId: user.id, photo: updatedPhoto }), user)
+
+      expect(updatedReceipt.photoFilename).not.toEqual(receipt.photoFilename)
+      expect(updatedReceipt.photoFilename).toMatch(/[a-zA-Z0-9]{16}.jpg/)
+
+      await expect(getReceipt(receipt.id, user)).resolves.toStrictEqual(updatedReceipt)
+
+      await expect(access(getPhotoPath(receipt.photoFilename))).rejects.toMatchObject({ code: 'ENOENT' })
+      await expect(access(getPhotoPath(updatedReceipt.photoFilename))).resolves.toBeUndefined()
+
+      await expect(getPhoto(receipt.photoFilename)).rejects.toMatchObject({ response: { status: 404 } })
+      await expect(getPhoto(updatedReceipt.photoFilename)).resolves.toEqual(updatedPhoto)
+    })
+
+    it('deletes the photo', async () => {
+      const user = await createUser()
+
+      const photo = { buffer: Buffer.from('photo-1'), mimetype: 'image/png' }
+      const receipt = await saveReceipt(body({ payerId: user.id, photo }), user)
+
+      const updatedReceipt = await saveReceipt(body({ receiptId: receipt.id, payerId: user.id, photo: false }), user)
+
+      expect(updatedReceipt.photoFilename).toBeUndefined()
+
+      await expect(getReceipt(receipt.id, user)).resolves.toStrictEqual(updatedReceipt)
+
+      await expect(access(getPhotoPath(receipt.photoFilename))).rejects.toMatchObject({ code: 'ENOENT' })
+      await expect(getPhoto(receipt.photoFilename)).rejects.toMatchObject({ response: { status: 404 } })
+    })
+
+    it('does not allow to create a receipt without participation', async () => {
+      const user1 = await createUser()
+      const user2 = await createUser()
+
+      await expect(saveReceipt(body({ payerId: user1.id }), user2)).rejects.toMatchObject({
+        response: {
+          status: 400,
+          data: {
+            error: {
+              code: 'NOT_PARTICIPATED_IN_RECEIPT',
+              message: 'The editor must be a debtor or a payer in the receipt',
+            }
+          }
+        }
+      })
+    })
+
+    it('does not allow to update a receipt without participation', async () => {
+      const user1 = await createUser()
+      const user2 = await createUser()
+
+      const receipt = await saveReceipt(body({ payerId: user1.id }), user1)
+
+      await expect(saveReceipt(body({ receiptId: receipt.id, payerId: user1.id }), user2)).rejects.toMatchObject({
+        response: {
+          status: 400,
+          data: {
+            error: {
+              code: 'NOT_PARTICIPATED_IN_RECEIPT',
+              message: 'The editor must be a debtor or a payer in the receipt',
+            }
+          }
+        }
+      })
+    })
   })
 
   describe('GET /', () => {
     it('returns receipts in which user participated', async () => {
-      const editor = await createUser()
       const payer = await createUser()
       const debtor1 = await createUser()
       const debtor2 = await createUser()
+      const otherUser = await createUser()
 
-      const receipt = await createReceipt({ payer, debtors: [debtor1, debtor2] }, editor)
+      const receipt = await createReceipt({ payer, debtors: [debtor1, debtor2] }, payer)
 
       expect(await getReceipts(payer)).toEqual({ total: 1, items: [unordered(receipt)] })
       expect(await getReceipts(debtor1)).toEqual({ total: 1, items: [unordered(receipt)] })
       expect(await getReceipts(debtor2)).toEqual({ total: 1, items: [unordered(receipt)] })
-      expect(await getReceipts(editor)).toEqual({ total: 0, items: [] })
+      expect(await getReceipts(otherUser)).toEqual({ total: 0, items: [] })
     });
 
     it('returns receipts in descending order of creation', async () => {
@@ -278,6 +342,7 @@ describe('/receipts', () => {
 
       await expect(getReceipt(receipt.id, user2)).rejects.toMatchObject({
         response: {
+          status: 404,
           data: {
             error: {
               code: 'NOT_FOUND',
@@ -293,6 +358,7 @@ describe('/receipts', () => {
 
       await expect(getReceipt('nonexistent', user)).rejects.toMatchObject({
         response: {
+          status: 404,
           data: {
             error: {
               code: 'NOT_FOUND',
@@ -303,7 +369,29 @@ describe('/receipts', () => {
       })
     })
 
-    it.todo('does not return the receipt if it was deleted')
+    it('does not return the receipt if it was deleted', async () => {
+      const payer = await createUser()
+
+      const photo = { buffer: Buffer.from('my-photo'), mimetype: 'image/jpeg' }
+      const receipt = await saveReceipt(body({ payerId: payer.id, photo }), payer)
+
+      await deleteReceipt(receipt.id, payer)
+
+      await expect(access(getPhotoPath(receipt.photoFilename))).rejects.toMatchObject({ code: 'ENOENT' })
+      await expect(getPhoto(receipt.photoFilename)).rejects.toMatchObject({ response: { status: 404 } })
+
+      await expect(getReceipt(receipt.id, payer)).rejects.toMatchObject({
+        response: {
+          status: 404,
+          data: {
+            error: {
+              code: 'NOT_FOUND',
+              message: 'Resource not found',
+            }
+          }
+        }
+      })
+    })
   })
 
   describe('DELETE /:id', () => {

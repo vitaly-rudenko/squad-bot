@@ -1,10 +1,10 @@
 import { object, coerce, array, string, optional, size, trimmed, any, type, union, literal } from 'superstruct'
-import { userIdSchema, amountSchema, stringifiedBooleanSchema } from '../common/schemas.js'
+import { userIdSchema, amountSchema, stringifiedBooleanSchema, zeroableAmountSchema } from '../common/schemas.js'
 import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 
 export const debtSchema = object({
   debtorId: userIdSchema,
-  amount: amountSchema,
+  amount: zeroableAmountSchema,
 })
 
 export const debtsSchema = coerce(

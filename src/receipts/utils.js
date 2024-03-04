@@ -41,11 +41,13 @@ export function prepareDebtsForUser({ user, debtors, ingoingDebts, outgoingDebts
 
 /**
  * @param {{
+ *   payerId: string
  *   amount: number
  *   debts: { debtorId: string; amount: number }[]
  * }} receipt
+ * @param {string} editorId
  */
-export function validateReceiptIntegrity({ amount, debts }) {
+export function validateReceiptIntegrity({ payerId, amount, debts }, editorId) {
   const total = debts.reduce((a, b) => a + b.amount, 0)
 
   if (total !== amount) {
@@ -53,6 +55,14 @@ export function validateReceiptIntegrity({ amount, debts }) {
       code: 'RECEIPT_AMOUNT_MISMATCH',
       status: 400,
       message: 'The sum of the debts does not match the receipt amount',
+    })
+  }
+
+  if (payerId !== editorId && debts.every(debt => debt.debtorId !== editorId)) {
+    throw new ApiError({
+      code: 'NOT_PARTICIPATED_IN_RECEIPT',
+      status: 400,
+      message: 'The editor must be a debtor or a payer in the receipt',
     })
   }
 }
