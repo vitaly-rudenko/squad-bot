@@ -85,10 +85,15 @@ async function getReceipt(receiptId, user) {
 
 /**
  * @param {import('../../users/types').User} user
+ * @param {{ page?: number, per_page?: number }} [params]
  * @returns {Promise<import('../types').ReceiptWithDebts[]>}
  */
-async function getReceipts(user) {
-  const response = await api.get('/receipts', { headers: generateAuthHeaders(user) })
+async function getReceipts(user, params) {
+  const response = await api.get('/receipts', {
+    params,
+    headers: generateAuthHeaders(user),
+  })
+
   return response.data
 }
 
@@ -319,8 +324,42 @@ describe('/receipts', () => {
       expect(await getReceipts(user3)).toEqual({ total: 0, items: [] })
     })
 
-    it.todo('paginates the results')
-    it.todo('excludes deleted receipts')
+    it('paginates the results', async () => {
+      const payer = await createUser()
+
+      const receipt1 = await createReceipt({ payer })
+      const receipt2 = await createReceipt({ payer })
+      const receipt3 = await createReceipt({ payer })
+
+      expect(await getReceipts(payer, { page: 1, per_page: 2 }))
+        .toEqual(expect.objectContaining({
+          items: [unordered(receipt3), unordered(receipt2)],
+          total: 3,
+        }))
+
+      expect(await getReceipts(payer, { page: 2, per_page: 2 }))
+        .toEqual(expect.objectContaining({
+          items: [unordered(receipt1)],
+          total: 3,
+        }))
+
+      expect(await getReceipts(payer, { page: 3, per_page: 2 }))
+        .toEqual(expect.objectContaining({
+          items: [],
+          total: 3,
+        }))
+    })
+
+    it('excludes deleted receipts', async () => {
+      const payer = await createUser()
+
+      const receipt1 = await createReceipt({ payer })
+      const receipt2 = await createReceipt({ payer })
+
+      await deleteReceipt(receipt1.id, payer)
+
+      expect(await getReceipts(payer)).toEqual({ total: 1, items: [unordered(receipt2)] })
+    })
   })
 
   describe('GET /:id', () => {
@@ -395,8 +434,64 @@ describe('/receipts', () => {
   })
 
   describe('DELETE /:id', () => {
-    it.todo('deletes the receipt')
-    it.todo('deletes the photo')
-    it.todo('does not allow to delete a receipt without participation')
+    it('deletes the receipt', async () => {
+      const payer = await createUser()
+      const debtor = await createUser()
+
+      const receipt = await createReceipt({ payer, debtors: [debtor] })
+
+      await deleteReceipt(receipt.id, payer)
+
+      await expect(getReceipt(receipt.id, payer)).rejects.toMatchObject({
+        response: {
+          status: 404,
+          data: {
+            error: {
+              code: 'NOT_FOUND',
+              message: 'Resource not found',
+            }
+          }
+        }
+      })
+
+      await expect(getReceipt(receipt.id, debtor)).rejects.toMatchObject({
+        response: {
+          status: 404,
+        }
+      })
+    })
+
+    it('deletes the photo', async () => {
+      const user = await createUser()
+
+      const photo = { buffer: Buffer.from('my-photo'), mimetype: 'image/jpeg' }
+      const receipt = await saveReceipt(body({ payerId: user.id, photo }), user)
+
+      await deleteReceipt(receipt.id, user)
+
+      await expect(access(getPhotoPath(receipt.photoFilename))).rejects.toMatchObject({ code: 'ENOENT' })
+      await expect(getPhoto(receipt.photoFilename)).rejects.toMatchObject({ response: { status: 404 } })
+    })
+
+    it('does not allow to delete a receipt without participation', async () => {
+      const user1 = await createUser()
+      const user2 = await createUser()
+
+      const receipt = await createReceipt({ payer: user1 })
+
+      await expect(deleteReceipt(receipt.id, user2)).rejects.toMatchObject({
+        response: {
+          status: 404,
+          data: {
+            error: {
+              code: 'NOT_FOUND',
+            }
+          }
+        }
+      })
+
+      // still exists
+      await expect(getReceipt(receipt.id, user1)).resolves.toEqual(unordered(receipt))
+    })
   })
 })

@@ -149,8 +149,12 @@ export function createReceiptsRouter() {
 
   router.delete('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
+    const { items: [receipt] } = await receiptsStorage.find({
+      ids: [receiptId],
+      participantUserIds: [req.user.id],
+      limit: 1,
+    })
 
-    const receipt = await receiptsStorage.findById(receiptId)
     if (!receipt) {
       throw new NotFoundError()
     }
