@@ -20,7 +20,7 @@ function createUsers(number) {
   return Array.from(new Array(number), (_, i) => createUser({ id: `user-${i + 1}` }))
 }
 
-describe('receipts/utils', () => {
+describe('utils', () => {
   describe('prepareDebtsForUser()', () => {
     it('should aggregate debts for a debtor', () => {
       const payer = createUser({ id: 'payer' })

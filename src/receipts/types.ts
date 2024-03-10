@@ -1,5 +1,5 @@
 import type { Infer } from 'superstruct'
-import type { photoSchema } from './schemas'
+import type { photoSchema, saveReceiptSchema } from './schemas'
 
 export type Receipt = {
   id: string
@@ -10,4 +10,15 @@ export type Receipt = {
   createdAt: Date
 }
 
+export type ReceiptWithDebts = Receipt & {
+  debts: { debtorId: string; amount: number }[]
+}
+
 export type Photo = Infer<typeof photoSchema>
+
+export type SaveReceiptInput = Infer<typeof saveReceiptSchema>
+
+export type ScanResult = {
+  amount: number
+  score: number
+}

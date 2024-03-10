@@ -3,14 +3,16 @@ import { refine, coerce, number, string, boolean, nonempty, trimmed, min, type, 
 export const userIdSchema = nonempty(string())
 export const groupIdSchema = nonempty(string())
 
-export const amountSchema = refine(
+export const zeroableAmountSchema = refine(
   coerce(number(), trimmed(string()), (value) => Number(value)),
   'amount',
   (value) => (
     Number.isSafeInteger(value) && value >= 0 && value <= 100_000_00 ||
-    `Expected 'amount' to be a positive integer less than 100,000,00`
+    `Expected 'amount' to be a natural number less than 100,000,00`
   )
 )
+
+export const amountSchema = refine(zeroableAmountSchema, 'natural', (value) => value > 0)
 
 export const stringifiedBooleanSchema = coerce(boolean(), string(), (value) => {
   if (value === 'true') return true

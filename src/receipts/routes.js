@@ -10,6 +10,11 @@ import { deletePhoto, generateRandomPhotoFilename, savePhoto } from './filesyste
 import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 import { paginationSchema } from '../common/schemas.js'
 import { paginationToLimitOffset } from '../common/utils.js'
+import { validateReceiptIntegrity } from './utils.js'
+import { scan } from './ocr/scan.js'
+import { logger } from '../common/logger.js'
+
+const MAX_FILE_SIZE_BYTES = 500_000
 
 export function createReceiptsRouter() {
   const {
@@ -20,7 +25,7 @@ export function createReceiptsRouter() {
   const router = Router()
   const upload = multer({
     limits: {
-      fileSize: 300_000, // 300 kb
+      fileSize: MAX_FILE_SIZE_BYTES,
     },
   })
 
@@ -28,7 +33,7 @@ export function createReceiptsRouter() {
   // TODO: handle photos as streams, perhaps in a separate endpoint
   // TODO: split into POST / PATCH?
   router.post('/receipts', upload.single('photo'), async (req, res) => {
-    if (req.file && req.file.size > 300_000) { // 300 kb
+    if (req.file && req.file.size > MAX_FILE_SIZE_BYTES) { // 300 kb
       throw new ApiError({
         code: 'PHOTO_TOO_LARGE',
         status: 413,
@@ -44,6 +49,8 @@ export function createReceiptsRouter() {
       debts: debtsWithoutReceiptId,
       leave_photo: leavePhoto,
     } = saveReceiptSchema.create(req.body)
+
+    await validateReceiptIntegrity({ payerId, amount, debts: debtsWithoutReceiptId }, req.user.id)
 
     const photo = optional(photoSchema).create(req.file)
 
@@ -129,7 +136,12 @@ export function createReceiptsRouter() {
 
   router.get('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
-    const receipt = await receiptsStorage.findById(receiptId)
+    const { items: [receipt] } = await receiptsStorage.find({
+      ids: [receiptId],
+      participantUserIds: [req.user.id],
+      limit: 1,
+    })
+
     if (!receipt) {
       throw new NotFoundError()
     }
@@ -141,8 +153,12 @@ export function createReceiptsRouter() {
 
   router.delete('/receipts/:receiptId', async (req, res) => {
     const receiptId = req.params.receiptId
+    const { items: [receipt] } = await receiptsStorage.find({
+      ids: [receiptId],
+      participantUserIds: [req.user.id],
+      limit: 1,
+    })
 
-    const receipt = await receiptsStorage.findById(receiptId)
     if (!receipt) {
       throw new NotFoundError()
     }
@@ -165,12 +181,37 @@ export function createReceiptsRouter() {
     res.sendStatus(204)
   })
 
+  router.post('/receipts/scan', upload.single('photo'), async (req, res) => {
+    if (req.file && req.file.size > MAX_FILE_SIZE_BYTES) { // 300 kb
+      throw new ApiError({
+        code: 'PHOTO_TOO_LARGE',
+        status: 413,
+        message: 'Receipt photo is too large',
+      })
+    }
+
+    const photo = photoSchema.create(req.file)
+
+    try {
+      const amounts = await scan(photo)
+      res.json(amounts)
+    } catch (err) {
+      logger.warn({ err }, 'Could not scan photo')
+      throw new ApiError({
+        code: 'SCAN_FAILED',
+        status: 502,
+        message: 'Could not scan photo',
+      })
+    }
+  })
+
   return router
 }
 
 /**
  * @param {import('./types').Receipt} receipt
  * @param {import('../debts/types').Debt[]} debts
+ * @returns {import('./types').ReceiptWithDebts}
  */
 function formatReceipt(receipt, debts) {
   return {
