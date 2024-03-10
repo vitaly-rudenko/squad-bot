@@ -17,3 +17,8 @@ export type ReceiptWithDebts = Receipt & {
 export type Photo = Infer<typeof photoSchema>
 
 export type SaveReceiptInput = Infer<typeof saveReceiptSchema>
+
+export type ScanResult = {
+  amount: number
+  score: number
+}

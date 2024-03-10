@@ -44,6 +44,8 @@ const envSchema = type({
   WEB_APP_URL: urlSchema,
   WEB_APP_NAME: stringSchema,
   CORS_ORIGIN: urlArraySchema,
+  OCR_SPACE_API_KEY: stringSchema,
+  OCR_SPACE_ENDPOINT: urlSchema,
 })
 
 export const env = envSchema.create(process.env)
