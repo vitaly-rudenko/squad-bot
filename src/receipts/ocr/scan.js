@@ -3,9 +3,9 @@ import { env } from '../../env.js'
 
 /**
  * @param {import('../types').Photo} photo
- * @returns {Promise<import('../types').ScanResult[] | undefined>}
+ * @returns {Promise<number[] | undefined>}
  */
-async function scan(photo) {
+export async function scan(photo) {
   const form = new FormData()
   form.set('file', new Blob([photo.buffer], { type: photo.mimetype }), 'photo.jpg')
   form.set('detectOrientation', 'true')
@@ -28,23 +28,25 @@ async function scan(photo) {
   const parsedText = results?.ParsedResults?.[0]?.ParsedText
   if (!parsedText) return undefined
 
-  const scanResults = (parsedText.match(/\b[\d\.,:]+\b/g) ?? [])
+  const amounts = (parsedText.match(/\b[\d\.,:]+\b/g) ?? [])
     .map(number => number.replaceAll(',', '.'))
-    .map(number => ({ amount: Math.trunc(Number(number) * 100), score: scoreAmount(number) }))
-    .filter(({amount}) => Number.isSafeInteger(amount) && amount > 0 && amount < 100_000_00)
-    .filter(({score}) => score >= 0)
-    .reduce((acc, curr) => {
-      const existing = acc.find(({amount}) => amount === curr.amount)
-      if (existing) {
-        existing.score++
-        return acc
-      }
+    .filter(number => probablyAnAmount(number))
+    .sort((a, b) => scoreAmount(b) - scoreAmount(a))
+    .map(Number)
+    .filter(amount => Number.isSafeInteger(amount) && amount > 0 && amount < 100_000)
+    .map(amount => amountToCoins(amount))
 
-      return [...acc, curr]
-    }, /** @type {import('../types').ScanResult[]} */ ([]))
-    .sort((a, b) => b.score - a.score)
+  return [...new Set(amounts)]
+}
 
-  return scanResults
+/** @param {string} input */
+function probablyAnAmount(input) {
+  if (input.includes(':')) return false // time
+  if (input === String(new Date().getFullYear())) return false // current year
+  if (input.startsWith('0')) return false // part of date or time
+  if (input.indexOf('.') !== input.lastIndexOf('.')) return false // date
+
+  return true
 }
 
 /** @param {string} amount */
@@ -52,17 +54,18 @@ function scoreAmount(amount) {
   let score = 0
 
   if (amount.includes('.')) score += 1
-  if (amount.length === 6) score += 1
-  if (amount.length > 2 && amount.length <= 7) score += 1
+  if (amount.length === 5 || amount.length === 6) score += 1
+  if (amount.length >= 2 && amount.length <= 7) score += 1
 
-  if (amount.indexOf('.') !== amount.lastIndexOf('.')) score -= 1
-  if (amount.startsWith('20') && amount.length === 4 && !amount.includes('.')) score -= 1
-  if (amount.startsWith('0')) score -= 1
-  if (amount.length < 2) score -= 1
-  if (amount === String(new Date().getFullYear())) score -= 1
-  if (amount.includes(':')) score -= 1
+  if (amount.startsWith('20') && amount.length === 4) score -= 1
+  if (amount.length === 1) score -= 1
 
   return score
+}
+
+/** @param {number} number */
+function amountToCoins(number) {
+  return Number((number * 100).toFixed(0))
 }
 
 const buffer = readFileSync('/Users/vitaly/Desktop/IMG_1841-min.jpeg')

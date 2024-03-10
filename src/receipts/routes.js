@@ -11,6 +11,8 @@ import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 import { paginationSchema } from '../common/schemas.js'
 import { paginationToLimitOffset } from '../common/utils.js'
 import { validateReceiptIntegrity } from './utils.js'
+import { scan } from './ocr/scan.js'
+import { logger } from '../common/logger.js'
 
 export function createReceiptsRouter() {
   const {
@@ -175,6 +177,30 @@ export function createReceiptsRouter() {
     })
 
     res.sendStatus(204)
+  })
+
+  router.post('/receipts/scan', upload.single('photo'), async (req, res) => {
+    if (req.file && req.file.size > 300_000) { // 300 kb
+      throw new ApiError({
+        code: 'PHOTO_TOO_LARGE',
+        status: 413,
+        message: 'Receipt photo is too large',
+      })
+    }
+
+    const photo = photoSchema.create(req.file)
+
+    try {
+      const amounts = await scan(photo)
+      res.json(amounts)
+    } catch (err) {
+      logger.warn({ err }, 'Could not scan photo')
+      throw new ApiError({
+        code: 'SCAN_FAILED',
+        status: 502,
+        message: 'Could not scan photo',
+      })
+    }
   })
 
   return router

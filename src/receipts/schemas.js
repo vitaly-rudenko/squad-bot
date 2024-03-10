@@ -1,4 +1,4 @@
-import { object, coerce, array, string, optional, size, trimmed, any, type, union, literal } from 'superstruct'
+import { object, coerce, array, string, optional, size, trimmed, any, type, union, literal, define } from 'superstruct'
 import { userIdSchema, amountSchema, stringifiedBooleanSchema, zeroableAmountSchema } from '../common/schemas.js'
 import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 
@@ -26,6 +26,6 @@ export const saveReceiptSchema = object({
 })
 
 export const photoSchema = type({
-  buffer: any(),
+  buffer: define('buffer', (value) => value instanceof Buffer),
   mimetype: union([literal('image/jpeg'), literal('image/png')]),
 })
