@@ -14,6 +14,8 @@ import { validateReceiptIntegrity } from './utils.js'
 import { scan } from './ocr/scan.js'
 import { logger } from '../common/logger.js'
 
+const MAX_FILE_SIZE_BYTES = 500_000
+
 export function createReceiptsRouter() {
   const {
     debtsStorage,
@@ -23,7 +25,7 @@ export function createReceiptsRouter() {
   const router = Router()
   const upload = multer({
     limits: {
-      fileSize: 300_000, // 300 kb
+      fileSize: MAX_FILE_SIZE_BYTES,
     },
   })
 
@@ -31,7 +33,7 @@ export function createReceiptsRouter() {
   // TODO: handle photos as streams, perhaps in a separate endpoint
   // TODO: split into POST / PATCH?
   router.post('/receipts', upload.single('photo'), async (req, res) => {
-    if (req.file && req.file.size > 300_000) { // 300 kb
+    if (req.file && req.file.size > MAX_FILE_SIZE_BYTES) { // 300 kb
       throw new ApiError({
         code: 'PHOTO_TOO_LARGE',
         status: 413,
@@ -180,7 +182,7 @@ export function createReceiptsRouter() {
   })
 
   router.post('/receipts/scan', upload.single('photo'), async (req, res) => {
-    if (req.file && req.file.size > 300_000) { // 300 kb
+    if (req.file && req.file.size > MAX_FILE_SIZE_BYTES) { // 300 kb
       throw new ApiError({
         code: 'PHOTO_TOO_LARGE',
         status: 413,
