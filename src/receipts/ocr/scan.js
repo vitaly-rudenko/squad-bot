@@ -1,4 +1,3 @@
-import { readFileSync } from 'fs'
 import { env } from '../../env.js'
 
 /**
@@ -28,49 +27,47 @@ export async function scan(photo) {
   const parsedText = results?.ParsedResults?.[0]?.ParsedText
   if (!parsedText) return undefined
 
-  const amounts = (parsedText.match(/\b[\d\.,:]+\b/g) ?? [])
-    .map(number => number.replaceAll(',', '.'))
-    .filter(number => probablyAnAmount(number))
-    .sort((a, b) => scoreAmount(b) - scoreAmount(a))
-    .map(Number)
-    .filter(amount => Number.isSafeInteger(amount) && amount > 0 && amount < 100_000)
-    .map(amount => amountToCoins(amount))
-
-  return [...new Set(amounts)]
+  return extractAmounts(parsedText)
 }
 
-/** @param {string} input */
-function probablyAnAmount(input) {
-  if (input.includes(':')) return false // time
-  if (input === String(new Date().getFullYear())) return false // current year
-  if (input.startsWith('0')) return false // part of date or time
-  if (input.indexOf('.') !== input.lastIndexOf('.')) return false // date
+const AMOUNT_SEARCH_REGEX = /(\b| |^)(([\dззiobs]{1,2} )[\dззiobs,\.]{3,}|[\dзiobs,\.]+)(\b| |$)/g
+const AMOUNT_VALIDATION_REGEX = /^\d+(\.\d{2})?$/
+const WHITESPACE_LIKE_REGEX = /[ \f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/g
 
-  return true
+/** @param {string} text */
+export function extractAmounts(text) {
+  text = text.toLowerCase().replaceAll(WHITESPACE_LIKE_REGEX, ' ')
+
+  const matches = text.match(AMOUNT_SEARCH_REGEX)
+  if (!matches) return []
+
+  const currentYear = String(new Date().getFullYear())
+
+  return matches
+    .map(match => match
+      .trim()
+      .replaceAll(',', '.')
+      .replaceAll('з', '3')
+      .replaceAll('з', '3')
+      .replaceAll('i', '1')
+      .replaceAll('o', '0')
+      .replaceAll('s', '5')
+      .replaceAll('b', '6'))
+    .flatMap(number => number.includes(' ') ? [number.replaceAll(' ', ''), ...number.split(' ')] : [number])
+    .filter(number => AMOUNT_VALIDATION_REGEX.test(number) && !number.startsWith('0') && number !== currentYear)
+    .sort((a, b) => scoreAmount(b) - scoreAmount(a))
+    .map(Number)
+    .filter(amount => Number.isFinite(amount) && amount > 0 && amount <= 100_000)
+    .map(amount => amountToCoins(amount))
+    .filter((value, index, self) => self.indexOf(value) === index)
 }
 
 /** @param {string} amount */
 function scoreAmount(amount) {
-  let score = 0
-
-  if (amount.includes('.')) score += 1
-  if (amount.length === 5 || amount.length === 6) score += 1
-  if (amount.length >= 2 && amount.length <= 7) score += 1
-
-  if (amount.startsWith('20') && amount.length === 4) score -= 1
-  if (amount.length === 1) score -= 1
-
-  return score
+  return amount.includes('.') ? 1 : 0
 }
 
 /** @param {number} number */
 function amountToCoins(number) {
   return Number((number * 100).toFixed(0))
 }
-
-const buffer = readFileSync('/Users/vitaly/Desktop/IMG_1841-min.jpeg')
-
-scan({
-  buffer,
-  mimetype: 'image/jpeg',
-}).then(console.log)
