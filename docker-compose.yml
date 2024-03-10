@@ -43,6 +43,9 @@ services:
       # logging
       LOG_LEVEL: "info"
       DEBUG_CHAT_ID: "$DEBUG_CHAT_ID"
+      # OCR
+      OCR_SPACE_API_KEY: "$OCR_SPACE_API_KEY"
+      OCR_SPACE_ENDPOINT: "$OCR_SPACE_ENDPOINT"
     volumes:
       - "./files:/app/files"
     networks:
