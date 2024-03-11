@@ -1,6 +1,6 @@
 {
   "name": "squad-bot",
-  "version": "6.3.0",
+  "version": "6.3.1",
   "description": "Telegram bot assistant for squads",
   "main": "src/app.js",
   "type": "module",
@@ -80,6 +80,7 @@
     "pino": "^7.9.1",
     "pino-abstract-transport": "^1.1.0",
     "pino-pretty": "^7.5.4",
+    "rate-limiter-flexible": "^5.0.0",
     "superstruct": "^1.0.3",
     "telegraf": "^4.15.3",
     "umzug": "^3.0.0"
