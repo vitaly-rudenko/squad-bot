@@ -65,13 +65,14 @@ export class ReceiptsPostgresStorage {
 
   /**
    * @param {{
-   *   ids?: string[],
-   *   participantUserIds?: string[],
-   *   limit?: number,
-   *   offset?: number,
+   *   ids?: string[]
+   *   participantUserIds?: string[]
+   *   limit?: number
+   *   offset?: number
+   *   ascending?: boolean
    * }} options
    */
-  async find({ ids, participantUserIds, limit = 100, offset = 0 } = {}) {
+  async find({ ids, participantUserIds, limit = 100, offset = 0, ascending = false } = {}) {
     const conditions = ['r.deleted_at IS NULL']
     const variables = []
     const joins = []
@@ -112,7 +113,7 @@ export class ReceiptsPostgresStorage {
       SELECT ${distinctClause}r.id
         , r.created_at, r.payer_id, r.amount, r.description, r.photo_filename
       FROM receipts r ${joinClause} ${whereClause}
-      ORDER BY created_at DESC
+      ORDER BY created_at ${ascending ? 'ASC' : 'DESC'}
       LIMIT ${limit} OFFSET ${offset};
     `, variables)
 

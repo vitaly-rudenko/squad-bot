@@ -11,10 +11,12 @@ import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 import { paginationSchema } from '../common/schemas.js'
 import { paginationToLimitOffset } from '../common/utils.js'
 import { validateReceiptIntegrity } from './utils.js'
-import { scan } from './ocr/scan.js'
+import { scan } from './scan.js'
 import { logger } from '../common/logger.js'
+import { DAY_MS, WEEK_MS, createRateLimiterMiddleware } from '../common/rate-limiter.js'
+import { env } from '../env.js'
 
-const MAX_FILE_SIZE_BYTES = 500_000
+const MAX_FILE_SIZE_BYTES = 300_000
 
 export function createReceiptsRouter() {
   const {
@@ -180,6 +182,29 @@ export function createReceiptsRouter() {
 
     res.sendStatus(204)
   })
+
+  if (!env.USE_TEST_MODE) {
+    router.use(createRateLimiterMiddleware({
+      keyPrefix: 'scan',
+      points: 100,
+      durationMs: DAY_MS,
+      calculatePoints: async (userId) => {
+        const { items: [oldestReceipt] } = await receiptsStorage.find({
+          participantUserIds: [userId],
+          ascending: true,
+          limit: 1,
+        })
+
+        const createdAt = oldestReceipt ? oldestReceipt.createdAt.getTime() : Date.now()
+        const diff = Date.now() - createdAt
+
+        if (diff >= 4 * WEEK_MS) return 1 // 100 per day
+        if (diff >= 2 * WEEK_MS) return 2 // 50 per day
+        if (diff >= WEEK_MS) return 4 // 25 per day
+        return 25 // 4 per day
+      }
+    }))
+  }
 
   router.post('/receipts/scan', upload.single('photo'), async (req, res) => {
     if (req.file && req.file.size > MAX_FILE_SIZE_BYTES) { // 300 kb
