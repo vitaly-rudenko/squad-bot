@@ -1,0 +1,144 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`scan extractAmounts() parses real receipts (snapshots) 1`] = `
+[
+  38676,
+  35160,
+  92136,
+  114048,
+  14048,
+  302673,
+  325495,
+  25495,
+  310000,
+  10000,
+  318168,
+  18168,
+  1800,
+  500,
+  100,
+  300,
+]
+`;
+
+exports[`scan extractAmounts() parses real receipts (snapshots) 2`] = `
+[
+  123456,
+  100,
+  13900,
+  22900,
+  200,
+  19800,
+  14900,
+  55400,
+  141800,
+  800,
+  300,
+  589100,
+  1000,
+  1500,
+]
+`;
+
+exports[`scan extractAmounts() parses real receipts (snapshots) 3`] = `
+[
+  36469,
+  666,
+  3779,
+  14000,
+  5050,
+  8290,
+  5350,
+  1000,
+  10000,
+  13500,
+  45000,
+  300,
+  200,
+]
+`;
+
+exports[`scan extractAmounts() parses real receipts (snapshots) 4`] = `
+[
+  155893,
+  4800,
+  9600,
+  15900,
+  9300,
+  17000,
+  51800,
+  151800,
+  123456,
+  3100,
+  12500,
+  300,
+  10000,
+  600,
+  19000,
+  100,
+  2100,
+  2000,
+  1200,
+]
+`;
+
+exports[`scan extractAmounts() parses real receipts (snapshots) 5`] = `
+[
+  123456,
+  1429,
+  816800,
+  16800,
+  2500,
+  9500,
+  115500,
+  15500,
+  27500,
+  44300,
+  10100,
+  100,
+  300,
+  800,
+  200,
+]
+`;
+
+exports[`scan extractAmounts() parses real receipts (snapshots) 6`] = `
+[
+  18310,
+  6500,
+  110500,
+  10500,
+  218000,
+  18000,
+  36000,
+  53000,
+  1831000,
+  100,
+  300,
+  200,
+]
+`;
+
+exports[`scan extractAmounts() parses real receipts (snapshots) 7`] = `
+[
+  450,
+  7878,
+  5150,
+  2832,
+  6019,
+  3178,
+  4498,
+  3229,
+  3700,
+  33000,
+  33100,
+  300,
+  1200,
+  100,
+  200,
+  6500,
+  4800,
+  2800,
+  30000,
+]
+`;
