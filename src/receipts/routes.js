@@ -14,7 +14,7 @@ import { validateReceiptIntegrity } from './utils.js'
 import { scan } from './ocr/scan.js'
 import { logger } from '../common/logger.js'
 
-const MAX_FILE_SIZE_BYTES = 500_000
+const MAX_FILE_SIZE_BYTES = 300_000
 
 export function createReceiptsRouter() {
   const {
