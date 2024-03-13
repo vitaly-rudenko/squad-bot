@@ -57,16 +57,22 @@ export function extractAmounts(text) {
     .flatMap(number => number.includes(' ') ? [number.replaceAll(' ', ''), ...number.split(' ')] : [number])
     .filter(number => AMOUNT_VALIDATION_REGEX.test(number) && (!number.startsWith('0') || number.startsWith('0.')) && number !== currentYear)
     .flatMap(number => !number.includes('.') && number.length >= 5 ? [number, `${number.slice(0, -2)}.${number.slice(-2)}`] : [number]) // 79900 => 799.00 & 79900.00
-    .sort((a, b) => scoreAmount(b) - scoreAmount(a))
+    .sort((a, b) => scoreRawAmount(b) - scoreRawAmount(a))
     .map(Number)
     .filter(amount => Number.isFinite(amount) && amount > 0 && amount <= 100_000)
+    .sort((a, b) => scoreParsedAmount(b) - scoreParsedAmount(a))
     .map(amount => amountToCoins(amount))
     .filter((value, index, self) => self.indexOf(value) === index)
 }
 
 /** @param {string} amount */
-function scoreAmount(amount) {
+function scoreRawAmount(amount) {
   return amount.includes('.') ? 1 : 0
+}
+
+/** @param {number} amount */
+function scoreParsedAmount(amount) {
+  return amount >= 10 && amount <= 1000 ? 1 : 0
 }
 
 /** @param {number} number */
