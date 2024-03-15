@@ -16,7 +16,7 @@ import { logger } from '../common/logger.js'
 import { DAY_MS, WEEK_MS, createRateLimiterMiddleware } from '../common/rate-limiter.js'
 import { env } from '../env.js'
 
-const MAX_FILE_SIZE_BYTES = 300_000
+const MAX_FILE_SIZE_BYTES = 400_000
 
 export function createReceiptsRouter() {
   const {
