@@ -1,6 +1,6 @@
 # Squad Bot
 
-![Screenshot](docs/screenshot.png)
+![Screenshot](docs/screenshot.jpg)
 
 ## Description
 
