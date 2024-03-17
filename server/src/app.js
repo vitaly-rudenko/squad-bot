@@ -15,7 +15,7 @@ import { createApiRouter } from './api.js'
 import { CardsPostgresStorage } from './cards/storage.js'
 import { createCardsFlow } from './cards/telegram.js'
 import { createRollCallsFlow } from './roll-calls/telegram.js'
-import { createTemporaryAuthTokenGenerator } from './auth/utils.js'
+import { createCodeGenerator } from './auth/utils.js'
 import { createAuthFlow } from './auth/telegram.js'
 import { createCommonFlow, requirePrivateChat, withChatId, withGroupChat, wrap } from './common/telegram.js'
 import { getAppVersion } from './common/utils.js'
@@ -103,7 +103,7 @@ async function start() {
     membershipCache: createRedisCache('memberships', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
     groupCache: createRedisCache('groups', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
     usersCache: createRedisCache('users', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
-    generateTemporaryAuthToken: createTemporaryAuthTokenGenerator({
+    generateCode: createCodeGenerator({
       tokenSecret,
       expiresInMs: env.USE_TEST_MODE ? 60_000 : 5 * 60_000,
     }),

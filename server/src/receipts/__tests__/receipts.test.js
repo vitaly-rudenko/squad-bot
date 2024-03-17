@@ -58,7 +58,7 @@ async function createReceipt({ payer, debtors = [payer] }, editor = payer) {
     debts: debtors.reduce((debts, debtor) => {
       debts[debtor.id] = 25_00
       return debts
-    }, {}),
+    }, /** @type {Record<String, number>} */ ({})),
   }, editor)
 }
 

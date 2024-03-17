@@ -17,7 +17,9 @@ export function unordered(input) {
     return expect.toIncludeSameMembers(input.map(unordered))
   }
 
+  // @ts-expect-error Unknown type
   return Object.entries(input).reduce((result, [key, value]) => {
+    // @ts-expect-error Unknown type
     result[key] = unordered(value)
     return result
   }, {})

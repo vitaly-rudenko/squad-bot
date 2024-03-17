@@ -17,7 +17,7 @@ const en = flattenLocaleFile(
 )
 
 /**
- * @param {import('./types.js').Locale} _locale
+ * @param {string} _locale
  * @param {import('./types.js').MessageKey} key
  * @param {Record<string, number | string | undefined>} [replacements]
  * @returns {string}

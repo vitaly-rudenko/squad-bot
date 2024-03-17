@@ -134,7 +134,7 @@ export async function getReceipts(userId) {
 
 /** @returns {Promise<string>} */
 export async function getAuthToken(temporaryAuthToken) {
-  const response = await fetch(`${TEST_API_URL}/authenticate?token=${temporaryAuthToken}`)
+  const response = await fetch(`${TEST_API_URL}/authenticate?code=${temporaryAuthToken}`)
 
   return await response.json()
 }

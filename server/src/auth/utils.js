@@ -2,9 +2,9 @@ import jwt from 'jsonwebtoken'
 
 /**
  * @param {{ tokenSecret: string; expiresInMs: number }} input
- * @returns {import('./types').GenerateTemporaryAuthToken}
+ * @returns {import('./types').generateCode}
  */
-export function createTemporaryAuthTokenGenerator({ tokenSecret, expiresInMs }) {
+export function createCodeGenerator({ tokenSecret, expiresInMs }) {
   return (userId) => {
     return jwt.sign({ userId }, tokenSecret, { expiresIn: `${expiresInMs} ms` })
   }

@@ -1,13 +1,13 @@
 import { registry } from '../registry.js'
 
 export function createAuthFlow() {
-  const { generateTemporaryAuthToken, webAppUrl } = registry.export()
+  const { generateCode, webAppUrl } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const login = async (context) => {
     const { userId } = context.state
 
-    await context.reply(`${webAppUrl}/?token=${generateTemporaryAuthToken(userId)}`)
+    await context.reply(`${webAppUrl}/?code=${generateCode(userId)}`)
   }
 
   return { login }
