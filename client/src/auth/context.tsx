@@ -63,6 +63,9 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
           setCurrentUser(payload.user)
         } catch (error) {
           console.warn('Invalid auth token, could not parse user:', authToken, error)
+
+          clearSession()
+          setTimeout(() => window.location.reload(), 100)
         }
       }
 
@@ -71,9 +74,11 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, [code, webApp?.initData])
 
   const logOut = useCallback(async () => {
-    clearSession()
     setAuthToken(undefined)
     setCurrentUser(undefined)
+
+    clearSession()
+    setTimeout(() => window.location.reload(), 100)
   }, [])
 
   const value: Auth = (authToken && currentUser) ? {

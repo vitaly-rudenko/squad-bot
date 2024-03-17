@@ -86,9 +86,7 @@ export async function callApi(endpoint: string, init?: RequestInit): Promise<Res
         })
 
         clearSession()
-        setTimeout(() => {
-          window.location.reload()
-        }, 2000)
+        setTimeout(() => window.location.reload(), 2000)
       }
     } else if (error instanceof TypeError) {
       toastId = createToast('Request failed, please check your internet connection', {
