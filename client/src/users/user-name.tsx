@@ -10,7 +10,7 @@ export const UserName: FC<{ user: User | undefined; className?: string }> = ({ u
     locale: 'en',
   }
 
-  const showUsername: boolean = Boolean(user.username)
+  const showUsername = !!user.username
 
   return <div className={cn('flex items-baseline flex-row items-baseline gap-0.5', className)}
     title={user.username ? `${user.name} (@${user.username})` : user.name}>

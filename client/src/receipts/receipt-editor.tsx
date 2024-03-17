@@ -274,7 +274,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
         amount: formatAmount(receipt.amount),
         payer: users.find(u => u.id === receipt.payerId) ?? '',
         description: receipt.description ?? '',
-        photo: Boolean(receipt.photoFilename),
+        photo: !!receipt.photoFilename,
         debts: receipt.debts
           .map(debt => ({
             user: users.find(u => u.id === debt.debtorId)!,
