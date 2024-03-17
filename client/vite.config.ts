@@ -5,7 +5,7 @@ import { TanStackRouterVite } from '@tanstack/router-vite-plugin'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  base: "/squad-bot-v2/",
+  base: "/squad-bot/",
   // https://stackoverflow.com/a/69743888
   ...process.env.ENABLE_TEST_HTTPS === 'true' && {
     server: {
