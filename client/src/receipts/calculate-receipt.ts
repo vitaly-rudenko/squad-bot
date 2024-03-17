@@ -86,6 +86,7 @@ export function calculateReceipt(input: CalculateReceiptInput): CalculatedReceip
     return {
       error: false,
       total,
+      amountMismatch: undefined,
       ...backfillAmount !== 0 && { backfillAmount },
       amount: {
         error: false,
