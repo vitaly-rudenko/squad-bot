@@ -33,7 +33,7 @@ export function createAuthRouter() {
     const code = temporaryAuthTokenSchema.create(req.query['code'])
     if (!(await codeCache.set(code))) {
       throw new ApiError({
-        code: 'CODE_CAN_ONLY_BE_USED_ONCE',
+        code: 'INVALID_CODE',
         status: 400,
       })
     }
@@ -44,7 +44,7 @@ export function createAuthRouter() {
         .create(jwt.verify(code, env.TOKEN_SECRET)))
     } catch (err) {
       throw new ApiError({
-        code: 'INVALID_TEMPORARY_AUTH_TOKEN',
+        code: 'INVALID_CODE',
         status: 400,
       })
     }

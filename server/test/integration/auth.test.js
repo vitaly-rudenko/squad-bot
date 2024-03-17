@@ -30,7 +30,7 @@ describe('[auth]', () => {
 
       expect(response).to.deep.equal({
         error: {
-          code: 'CODE_CAN_ONLY_BE_USED_ONCE'
+          code: 'INVALID_CODE'
         }
       })
     })
@@ -43,7 +43,7 @@ describe('[auth]', () => {
 
       expect(response).to.deep.equal({
         error: {
-          code: 'INVALID_TEMPORARY_AUTH_TOKEN'
+          code: 'INVALID_CODE'
         }
       })
     })
@@ -61,7 +61,7 @@ describe('[auth]', () => {
 
       expect(response).to.deep.equal({
         error: {
-          code: 'INVALID_TEMPORARY_AUTH_TOKEN'
+          code: 'INVALID_CODE'
         }
       })
     })
