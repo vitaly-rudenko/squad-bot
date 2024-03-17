@@ -69,7 +69,7 @@ export const UserCombobox: FC<{
     }
   }, [open])
 
-  return <Popover open={open && !disabled} onOpenChange={open => setOpen(open)}>
+  return <Popover open={!!open && !disabled} onOpenChange={open => setOpen(open)}>
     <PopoverTrigger asChild>
       <Button
         disabled={disabled}
@@ -115,8 +115,8 @@ export const UserCombobox: FC<{
             </CommandItem>
           ))}
 
-          {isRemoteSearchEnabled && !isQueryValid && <CommandItem>Type at least 3 characters to search</CommandItem>}
-          {searchResults.length > 0 && isSearching && <CommandItem>Searching...</CommandItem>}
+          {!!isRemoteSearchEnabled && !isQueryValid && <CommandItem>Type at least 3 characters to search</CommandItem>}
+          {searchResults.length > 0 && !!isSearching && <CommandItem>Searching...</CommandItem>}
         </CommandGroup>
       </Command>
     </PopoverContent>

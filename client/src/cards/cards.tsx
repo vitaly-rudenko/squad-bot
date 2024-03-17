@@ -51,11 +51,13 @@ export const Cards: FC = () => {
           <span className='truncate'>Cards</span>
           <RefreshCcw className='w-4 h-4 self-center shrink-0' />
         </div>
-        {isCurrentUser && <Link to='/cards/$cardId' params={{ cardId: 'new' }} className='group animation-appear'>
-          <Button variant='link' className='p-0 h-auto flex flex-row gap-1 items-baseline'>
-            <Plus className='w-4 h-4 self-center shrink-0' /><span>Add a card</span>
-          </Button>
-        </Link>}
+        {!!isCurrentUser && (
+          <Link to='/cards/$cardId' params={{ cardId: 'new' }} className='group animation-appear'>
+            <Button variant='link' className='p-0 h-auto flex flex-row gap-1 items-baseline'>
+              <Plus className='w-4 h-4 self-center shrink-0' /><span>Add a card</span>
+            </Button>
+          </Link>
+        )}
       </div>
 
       <UserCombobox

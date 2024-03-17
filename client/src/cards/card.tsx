@@ -65,23 +65,25 @@ export const Card: FC<{
     </CardHeader>
 
     {/* Action buttons */}
-    {hasActionButtons && <div className={cn(
-      'transition-[height]',
-      activated ? 'h-10' : 'h-0'
-    )}>
-      <Separator />
-      <CardFooter className='flex flex-row items-stretch p-0 h-full'>
-        <Button className='grow basis-1' variant='link' onClick={handleCopy}>
-          Copy
-        </Button>
-        {onDelete && <>
-          <Separator orientation='vertical' />
-          <Button className='grow basis-1 text-destructive' variant='link' onClick={onDelete}>
-            Delete
+    {!!hasActionButtons && (
+      <div className={cn(
+        'transition-[height]',
+        activated ? 'h-10' : 'h-0'
+      )}>
+        <Separator />
+        <CardFooter className='flex flex-row items-stretch p-0 h-full'>
+          <Button className='grow basis-1' variant='link' onClick={handleCopy}>
+            Copy
           </Button>
-        </>}
-      </CardFooter>
-    </div>}
+          {!!onDelete && <>
+            <Separator orientation='vertical' />
+            <Button className='grow basis-1 text-destructive' variant='link' onClick={onDelete}>
+              Delete
+            </Button>
+          </>}
+        </CardFooter>
+      </div>
+    )}
   </CardComponent>
 }
 

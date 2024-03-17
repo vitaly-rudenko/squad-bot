@@ -8,8 +8,9 @@ module.exports = {
   ],
   ignorePatterns: ['dist', '.eslintrc.cjs', '*.gen.ts'],
   parser: '@typescript-eslint/parser',
-  plugins: ['react-refresh'],
+  plugins: ['react-refresh', 'react'],
   rules: {
+    'react/jsx-no-leaked-render': ['error', { validStrategies: ['coerce', 'ternary'] }],
     'react-refresh/only-export-components': [
       'warn',
       { allowConstantExport: true },

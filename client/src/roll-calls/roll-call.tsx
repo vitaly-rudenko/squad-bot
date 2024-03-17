@@ -74,7 +74,7 @@ export const RollCall: FC<{
             </div>
           </>)}
 
-          {rollCall.excludeSender && <>
+          {!!rollCall.excludeSender && <>
             <Separator />
 
             <div className='flex flex-row items-baseline gap-1.5'>

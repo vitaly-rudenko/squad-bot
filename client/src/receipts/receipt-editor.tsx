@@ -387,9 +387,11 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   onClick={handlePhotoInteraction}>
                   {field.value ? <>
                     {!photoPreviewLoaded && (photoSrc ? <Spinner invert /> : <Image />)}
-                    {photoSrc && <img
+                    {!!photoSrc && (
+                      <img
                       className={cn('animation-appear w-full h-full rounded-sm object-cover', !photoPreviewLoaded && 'hidden')}
-                      onLoad={() => setPhotoPreviewLoaded(true)} src={photoSrc} />}
+                      onLoad={() => setPhotoPreviewLoaded(true)} src={photoSrc} />
+                    )}
                   </> : <ImageOff />}
                 </Button>
               </>}
@@ -466,7 +468,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                 />
               )}
 
-              {validAmount && <Calculations input={{ amount: validAmount }} />}
+              {!!validAmount && <Calculations input={{ amount: validAmount }} />}
             </div>
           </CardContent>
           <CardContent className='flex flex-col pt-3 bg-secondary py-3 gap-2'>
@@ -500,27 +502,29 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                           </FormLabel>
                         </div>
 
-                        {$debt.enabled && <FormControl>
-                          <div className={cn(
-                            'flex flex-col justify-center flex-auto relative w-20 transition-[width] animation-right-left',
-                            isMagicalAmount($debt.amount) ? 'has-[:focus]:w-64' : '',
-                          )}>
-                            <Input type='text' focusOnEnd
-                                className={cn(isError && 'border-destructive')}
-                                placeholder={isValid ? formatAmount(debt.total) : ''} value={$debt.amount}
-                                onChange={(event) => {
-                                  form.setValue('debts', field.value.with(i, {
-                                    ...$debt,
-                                    amount: sanitizeMagicAmount(event.target.value)
-                                  }))
-                                }} />
-                            {isValid && debt.automatic && <PoweredByMagic />}
-                          </div>
-                        </FormControl>}
+                        {!!$debt.enabled && (
+                          <FormControl>
+                            <div className={cn(
+                              'flex flex-col justify-center flex-auto relative w-20 transition-[width] animation-right-left',
+                              isMagicalAmount($debt.amount) ? 'has-[:focus]:w-64' : '',
+                            )}>
+                              <Input type='text' focusOnEnd
+                                  className={cn(isError && 'border-destructive')}
+                                  placeholder={isValid ? formatAmount(debt.total) : ''} value={$debt.amount}
+                                  onChange={(event) => {
+                                    form.setValue('debts', field.value.with(i, {
+                                      ...$debt,
+                                      amount: sanitizeMagicAmount(event.target.value)
+                                    }))
+                                  }} />
+                              {!!isValid && !!debt.automatic && <PoweredByMagic />}
+                            </div>
+                          </FormControl>
+                        )}
                       </FormItem>
 
                       {/* Amount suggestions */}
-                      {$debt.enabled && amountSuggestions !== undefined && amountSuggestions.length > 0 && (
+                      {!!$debt.enabled && amountSuggestions !== undefined && amountSuggestions.length > 0 && (
                         <AmountSuggestions
                           variant='outline'
                           suggestions={amountSuggestions}
@@ -529,7 +533,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                         />
                       )}
 
-                      {isValid && <Calculations input={{ debt }} />}
+                      {!!isValid && <Calculations input={{ debt }} />}
                     </div>
 
                     <Separator />
@@ -549,7 +553,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
           <CardContent className='flex flex-col py-3 gap-2'>
             {/* Shared expenses */}
             {$sharedExpenses === undefined && <>
-              {amountToSplitEvenly && (
+              {!!amountToSplitEvenly && (
                 <Button variant='link' className='flex flex-row items-center justify-start gap-2 p-0' onClick={() => form.setValue('sharedExpenses', '')}>
                   <Divide className='w-4 h-4'/>
                     <span>Split remaining <span className={cn(calculated.amountMismatch && 'text-destructive')}>₴{formatAmount(amountToSplitEvenly)}</span> evenly</span>
@@ -587,7 +591,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                           onChange={(event) => {
                             form.setValue('sharedExpenses', sanitizeMagicAmount(event.target.value))
                           }} />
-                      {validSharedExpenses?.automatic && <PoweredByMagic />}
+                      {!!validSharedExpenses?.automatic && <PoweredByMagic />}
                     </div>
                   </FormControl>}
                 </FormItem>
@@ -602,7 +606,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   />
                 )}
 
-                {validSharedExpenses && <Calculations input={{ sharedExpenses: validSharedExpenses }} />}
+                {!!validSharedExpenses && <Calculations input={{ sharedExpenses: validSharedExpenses }} />}
               </div>
             </>}/>}
 
@@ -657,13 +661,13 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   />
                 </div>
 
-                {validTipAmount && <Calculations input={{ tipAmount: validTipAmount }} />}
+                {!!validTipAmount && <Calculations input={{ tipAmount: validTipAmount }} />}
               </div>}
             </>}
           </CardContent>
           <CardFooter className='flex flex-col items-stretch bg-secondary gap-3 pt-3 rounded-b-md'>
             {/* Amount mismatch */}
-            {criticalAmountMismatch && (
+            {!!criticalAmountMismatch && (
               <div className='flex flex-row items-center justify-between gap-3 text-destructive'>
                 <div className='flex flex-row items-center gap-2 flex-auto'>
                   <AlertCircle className='w-4 h-4' />
@@ -676,10 +680,12 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
               </div>
             )}
 
-            {saveMutation.error && <div className='flex flex-row items-center gap-2 flex-auto text-destructive'>
-              <AlertCircle className='w-4 h-4' />
-              <span>{saveMutation.error.message}</span>
-            </div>}
+            {!!saveMutation.error && (
+              <div className='flex flex-row items-center gap-2 flex-auto text-destructive'>
+                <AlertCircle className='w-4 h-4' />
+                <span>{saveMutation.error.message}</span>
+              </div>
+            )}
 
             {/* Save button */}
             <Button type='submit' disabled={!isValid}>
@@ -688,7 +694,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                 : <>Save receipt</>}
             </Button>
 
-            {receiptId && (
+            {!!receiptId && (
               <Button variant='destructive' onClick={() => setDeleteAlertOpen(true)}>
                 Delete the receipt
               </Button>

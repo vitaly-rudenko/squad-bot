@@ -161,7 +161,7 @@ export const TitleEditor: FC<{ groupId: string }> = ({ groupId }) => {
                           focusOnEnd
                           maxLength={16}
                           value={$admin.title}
-                          disabled={admin && !admin.editable}
+                          disabled={!!admin && !admin.editable}
                           placeholder={admin ? 'admin' : ''}
                           className={cn($admin.errorMessage && 'border-destructive')}
                           onChange={(event) => {
@@ -193,7 +193,7 @@ export const TitleEditor: FC<{ groupId: string }> = ({ groupId }) => {
                       <FormDescription className='animation-top-down'>Bot will promote this user to admin to set title.</FormDescription>
                     )}
 
-                    {admin && !admin.editable && (
+                    {!!admin && !admin.editable && (
                       <FormDescription>
                         {admin.isCreator
                           ? <>Creator's title cannot be changed.</>

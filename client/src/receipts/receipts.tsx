@@ -93,7 +93,7 @@ export const Receipts: FC = () => {
         </>}
       </div>
 
-      {users && <Pagination page={page} totalPages={totalPages} setPage={setPage} />}
+      {!!users && <Pagination page={page} totalPages={totalPages} setPage={setPage} />}
     </div>
   </>
 }

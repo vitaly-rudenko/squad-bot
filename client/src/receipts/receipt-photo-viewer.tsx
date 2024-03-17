@@ -46,7 +46,7 @@ export const ReceiptPhotoViewer: FC<{
           !loaded && 'collapse',
         )}
         style={{ transform: `rotate(${totalRotation}deg)` }}>
-        {photoSrc && (
+        {!!photoSrc && (
           <img
             className={cn(
               'transition-[width] duration-500 max-w-none w-[100%]',
@@ -60,7 +60,7 @@ export const ReceiptPhotoViewer: FC<{
         )}
       </div>
 
-      {loaded && <>
+      {!!loaded && <>
         <div className='backdrop-blur flex flex-col z-3 absolute top-5 right-5 text-white bg-black/30 rounded-md opacity-70 animation-appear'>
           <Button variant='ghost' size='icon' onClick={() => rotate(90)}>
             <RotateCw />
@@ -79,8 +79,8 @@ export const ReceiptPhotoViewer: FC<{
         </div>
 
         <DialogFooter className='z-2 animation-appear'>
-          {onReplace && <Button variant='secondary' onClick={onReplace}>Replace</Button>}
-          {onDelete && <Button variant='destructive' onClick={onDelete}>Delete</Button>}
+          {!!onReplace && <Button variant='secondary' onClick={onReplace}>Replace</Button>}
+          {!!onDelete && <Button variant='destructive' onClick={onDelete}>Delete</Button>}
           <Button variant='default' className='w-20' onClick={handleClose}>Close</Button>
         </DialogFooter>
       </>}

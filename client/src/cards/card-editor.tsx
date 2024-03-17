@@ -123,7 +123,7 @@ export const CardEditor: FC = () => {
                   </div>
                 </FormItem>
                 {field.value.length > 0 && <FormDescription className='animation-down-top'>
-                  {formatCardNumber(field.value)}{validation?.card?.niceType && <span className='animation-appear'> ({validation.card.niceType})</span>}
+                  {formatCardNumber(field.value)}{!!validation?.card?.niceType && <span className='animation-appear'> ({validation.card.niceType})</span>}
                 </FormDescription>}
               </>)}
             />

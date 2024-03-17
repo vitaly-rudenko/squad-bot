@@ -39,7 +39,7 @@ export const Receipt: FC<{
       <CardHeader>
         <div className='flex flex-row justify-between items-baseline'>
           <div className='overflow-hidden flex flex-row gap-1.5 items-baseline'>
-            {isTip && <Coins className='self-center shrink-0 w-4 h-4' />}
+            {!!isTip && <Coins className='self-center shrink-0 w-4 h-4' />}
             {receipt.photoFilename !== undefined && <Image className='self-center shrink-0 w-4 h-4' />}
             <span className={cn(description ? 'font-medium' : 'text-primary/70', 'truncate')}>{description ?? '(no description)'}</span>
           </div>

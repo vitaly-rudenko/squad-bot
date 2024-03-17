@@ -20,6 +20,6 @@ export const UserName: FC<{ user: User | undefined; className?: string }> = ({ u
     )}>
       <span className={cn(showUsername && 'pr-0.5')}>{user.name}</span>
     </span>
-    {showUsername && <span className='truncate text-xs text-primary/70'>@{user.username}</span>}
+    {!!showUsername && <span className='truncate text-xs text-primary/70'>@{user.username}</span>}
   </div>
 }

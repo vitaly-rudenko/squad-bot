@@ -50,14 +50,16 @@ export const Navigation: FC = () => {
     />
 
     <NavigationMenu className='flex flex-col'>
-      {auth.currentUser && <NavigationMenuItem className='grow flex flex-row justify-start'>
-        <Button variant='link'
-          className={cn('p-0 h-auto flex flex-row gap-1.5 items-baseline hover:no-underline', webApp && 'pointer-events-none')}
-          onClick={() => setLogOutAlertOpen(true)}>
-          <timeOfTheDay.icon className='w-4 h-4 self-center' />
-          <span>Good {timeOfTheDay.name}, {auth.currentUser.name}</span>
-        </Button>
-      </NavigationMenuItem>}
+      {!!auth.currentUser && (
+        <NavigationMenuItem className='grow flex flex-row justify-start'>
+          <Button variant='link'
+            className={cn('p-0 h-auto flex flex-row gap-1.5 items-baseline hover:no-underline', webApp && 'pointer-events-none')}
+            onClick={() => setLogOutAlertOpen(true)}>
+            <timeOfTheDay.icon className='w-4 h-4 self-center' />
+            <span>Good {timeOfTheDay.name}, {auth.currentUser.name}</span>
+          </Button>
+        </NavigationMenuItem>
+      )}
 
       <NavigationMenuList className='flex flex-row gap-1 justify-start'>
         {routes.map(route => (

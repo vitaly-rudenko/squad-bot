@@ -191,7 +191,7 @@ export const PaymentEditor: FC<{
         </CardFooter>
       </Card>
 
-      {showCards && (
+      {!!showCards && (
         <div className='flex flex-col gap-2 pt-3 transition animation-down-top'>
           <div className='text-xl'>{$toUser.name}'s cards</div>
           {cards ? <>
