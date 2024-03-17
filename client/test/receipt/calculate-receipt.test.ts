@@ -25,6 +25,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 10000,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": false,
@@ -88,6 +89,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 10000,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": false,
@@ -164,6 +166,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 7500,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": true,
@@ -228,6 +231,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 7500,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": false,
@@ -291,6 +295,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 10000,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": false,
@@ -345,6 +350,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 7500,
         },
+        "amountMismatch": undefined,
         "backfillAmount": 500,
         "debts": [
           {
@@ -395,6 +401,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 7500,
         },
+        "amountMismatch": undefined,
         "backfillAmount": 500,
         "debts": [
           {
@@ -448,6 +455,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 8000,
         },
+        "amountMismatch": undefined,
         "backfillAmount": 400,
         "debts": [
           {
@@ -512,6 +520,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 8000,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": false,
@@ -744,6 +753,7 @@ describe('calculateReceipt()', () => {
           "magic": true,
           "value": 8050,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": false,
@@ -818,6 +828,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 10000,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": false,
@@ -900,6 +911,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 10000,
         },
+        "amountMismatch": undefined,
         "debts": [],
         "error": false,
         "total": 10000,
@@ -1458,6 +1470,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 10000,
         },
+        "amountMismatch": undefined,
         "debts": [],
         "error": false,
         "total": 10000,
@@ -1484,6 +1497,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 14000,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": true,
@@ -1545,6 +1559,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 2525,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": true,
@@ -1602,6 +1617,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 500,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": true,
@@ -1701,6 +1717,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 10000,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": true,
@@ -1776,6 +1793,7 @@ describe('calculateReceipt()', () => {
           "magic": false,
           "value": 10000,
         },
+        "amountMismatch": undefined,
         "debts": [
           {
             "automatic": false,
