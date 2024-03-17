@@ -11,7 +11,7 @@ import { cn } from '@/utils/cn'
 export const Route = createRootRoute({
   validateSearch: (search: Record<string, unknown>) => {
     return {
-      code: typeof search.token === 'string' ? search.token : undefined,
+      code: typeof search.code === 'string' ? search.code : undefined,
     }
   },
   component: RootComponent,

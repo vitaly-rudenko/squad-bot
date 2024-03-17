@@ -27,13 +27,13 @@ export function createAuthRouter() {
 
   const router = Router()
 
-  const temporaryAuthTokenCache = createRedisCache('tokens', env.USE_TEST_MODE ? 60_000 : 5 * 60_000)
+  const codeCache = createRedisCache('codes', env.USE_TEST_MODE ? 60_000 : 5 * 60_000)
 
   router.get('/authenticate', async (req, res) => {
-    const temporaryAuthToken = temporaryAuthTokenSchema.create(req.query['token'])
-    if (!(await temporaryAuthTokenCache.set(temporaryAuthToken))) {
+    const code = temporaryAuthTokenSchema.create(req.query['code'])
+    if (!(await codeCache.set(code))) {
       throw new ApiError({
-        code: 'TEMPORARY_AUTH_TOKEN_CAN_ONLY_BE_USED_ONCE',
+        code: 'INVALID_CODE',
         status: 400,
       })
     }
@@ -41,10 +41,10 @@ export function createAuthRouter() {
     let userId
     try {
       ({ userId } = temporaryAuthTokenPayloadSchema
-        .create(jwt.verify(temporaryAuthToken, env.TOKEN_SECRET)))
+        .create(jwt.verify(code, env.TOKEN_SECRET)))
     } catch (err) {
       throw new ApiError({
-        code: 'INVALID_TEMPORARY_AUTH_TOKEN',
+        code: 'INVALID_CODE',
         status: 400,
       })
     }

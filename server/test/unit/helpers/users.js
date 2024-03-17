@@ -51,6 +51,6 @@ export function createUser() {
     id: String(chance.integer({ min: 100000, max: 999999 })),
     name: chance.name({ prefix: true }),
     username: chance.name().replaceAll(' ', '_').toLowerCase(),
-    locale: /** @type {import('../../../src/localization/types').Locale} */ (chance.locale()),
+    locale: chance.locale(),
   }
 }

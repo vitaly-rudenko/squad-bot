@@ -10,7 +10,7 @@ function createUser(user) {
     id: faker.string.numeric({ length: 12 }),
     name: faker.person.firstName(),
     username: faker.internet.userName(),
-    locale: /** @type {import('../../localization/types').Locale} */ (faker.string.alpha({ length: 2 })),
+    locale: faker.string.alpha({ length: 2 }),
     ...user,
   }
 }

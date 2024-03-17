@@ -1,1 +1,1 @@
-export type GenerateTemporaryAuthToken = (userId: string) => string
+export type generateCode = (userId: string) => string

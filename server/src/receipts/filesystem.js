@@ -41,7 +41,8 @@ export async function deletePhoto(photoFilename) {
   }
 }
 
-/** @param {string} photoFilename */
+/** @param {string} [photoFilename] */
 export function getPhotoPath(photoFilename) {
+  if (!photoFilename) throw new Error('Photo filename is required')
   return path.resolve('files', 'photos', photoFilename)
 }

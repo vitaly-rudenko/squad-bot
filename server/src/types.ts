@@ -2,7 +2,7 @@ export interface Dependencies {
   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>
   cardsStorage: import('./cards/storage.js').CardsPostgresStorage
   debtsStorage: import('./debts/storage.js').DebtsPostgresStorage
-  generateTemporaryAuthToken: import('./auth/types.js').GenerateTemporaryAuthToken
+  generateCode: import('./auth/types.js').generateCode
   generateWebAppUrl: ReturnType<typeof import('./web-app/utils.js').createWebAppUrlGenerator>
   groupCache: import('./common/cache.js').RedisCache
   groupStorage: import('./groups/storage.js').GroupsPostgresStorage
