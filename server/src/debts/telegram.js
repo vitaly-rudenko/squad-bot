@@ -25,7 +25,7 @@ export function createDebtsFlow() {
       ...outgoingDebts.flatMap(d => [d.fromUserId, d.toUserId]),
     ])]
 
-    const users = await usersStorage.find({ ids: userIds })
+    const users = userIds.length > 0 ? await usersStorage.find({ ids: userIds }) : []
 
     /** @param {import('./types').AggregatedDebt} debt */
     function debtReplacements(debt) {
