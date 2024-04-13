@@ -51,6 +51,10 @@ services:
     networks:
       - "global_network"
 
+networks:
+  global_network:
+    external: true
+
 volumes:
   sb_postgres_data:
     driver: local
