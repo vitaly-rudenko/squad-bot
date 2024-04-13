@@ -1,9 +1,5 @@
 version: '3.7'
 services:
-  # sb_nginx:
-    # profiles:
-      # - donotstart
-
   sb_app:
     # profiles:
     #   - donotstart
@@ -22,7 +18,3 @@ services:
   sb_redis:
     ports:
       - "6379:6379"
-
-  sb_certbot:
-    profiles:
-      - donotstart

@@ -1,25 +1,5 @@
 version: '3.7'
 services:
-  sb_nginx:
-    container_name: sb_nginx
-    restart: unless-stopped
-    build:
-      context: nginx
-      dockerfile: Dockerfile
-      args:
-        APP_URL: "http://sb_app:3000"
-        DOMAIN: "$DOMAIN"
-        SUBDOMAIN: "$SUBDOMAIN"
-    depends_on:
-      - sb_app
-    volumes:
-      - "./nginx/certificates/letsencrypt:/etc/letsencrypt:ro"
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - "sb_network"
-
   sb_app:
     container_name: sb_app
     restart: unless-stopped
@@ -49,7 +29,7 @@ services:
     volumes:
       - "./files:/app/files"
     networks:
-      - "sb_network"
+      - "global_network"
 
   sb_postgres:
     container_name: sb_postgres
@@ -62,27 +42,15 @@ services:
     volumes:
       - "sb_postgres_data:/var/lib/postgresql/data"
     networks:
-      - "sb_network"
+      - "global_network"
 
   sb_redis:
     container_name: sb_redis
     restart: unless-stopped
     image: redis
     networks:
-      - "sb_network"
-
-  sb_certbot:
-    container_name: certbot
-    image: certbot/certbot
-    volumes:
-      - "./nginx/certificates/letsencrypt:/etc/letsencrypt:delegated"
-      - "./nginx/certificates/certbot/www:/var/www/certbot:delegated"
-      - "./nginx/logs/misc/letsencrypt:/var/log/letsencrypt:delegated"
+      - "global_network"
 
 volumes:
   sb_postgres_data:
     driver: local
-
-networks:
-  sb_network:
-    driver: bridge
