@@ -45,7 +45,7 @@ export function createApiRouter() {
       await groupStorage.store({
         id: groupId,
         title,
-        socialLinkFixEnabledAt: undefined,
+        socialLinkFixEnabledAt: undefined, // do not update
       })
 
       await membershipStorage.store(userId, groupId)
