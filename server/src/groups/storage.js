@@ -4,16 +4,19 @@ export class GroupsPostgresStorage {
     this._client = client
   }
 
-  /** @param {import('./types').Group} group */
+  /** @param {Omit<import('./types').Group, 'socialLinkFixEnabledAt'> & { socialLinkFixEnabledAt: Date | null | undefined }} group */
   async store(group) {
-    const { id, title } = group
+    const { id, title, socialLinkFixEnabledAt } = group
 
     await this._client.query(`
-      INSERT INTO groups (id, title, updated_at)
-      VALUES ($1, $2, $3)
+      INSERT INTO groups (id, title, updated_at, social_link_fix_enabled_at)
+      VALUES ($1, $2, $3, $4)
       ON CONFLICT (id) DO UPDATE
-      SET (title, updated_at) = ($2, $3);
-    `, [id, title, new Date()])
+      SET title = $2
+        , updated_at = $3
+        , social_link_fix_enabled_at = ${socialLinkFixEnabledAt === undefined ? 'groups.social_link_fix_enabled_at' : '$4'}
+      ;
+    `, [id, title, new Date(), socialLinkFixEnabledAt]);
   }
 
   /** @param {string} id */
@@ -60,7 +63,7 @@ export class GroupsPostgresStorage {
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
 
     const response = await this._client.query(`
-      SELECT g.id, g.title, g.updated_at
+      SELECT g.id, g.title, g.updated_at, g.social_link_fix_enabled_at
       FROM groups g ${whereClause}
       LIMIT ${limit} OFFSET ${offset};;
     `, variables)
@@ -85,5 +88,6 @@ function deserializeGroup(row) {
   return {
     id: row['id'],
     title: row['title'],
+    socialLinkFixEnabledAt: row['social_link_fix_enabled_at'] ? new Date(row['social_link_fix_enabled_at']) : null,
   }
 }
