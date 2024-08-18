@@ -28,5 +28,12 @@ export function fixSocialLinkUrl(url) {
     return parsedUrl.toString()
   }
 
+  if (['vm.tiktok.com', 'www.vm.tiktok.com'].some(h => parsedUrl.hostname === h)
+    && /^\/\w+\/?$/.test(parsedUrl.pathname)) {
+      parsedUrl.hostname = 'vm.vxtiktok.com'
+      parsedUrl.search = ''
+      return parsedUrl.toString()
+  }
+
   return undefined
 }
