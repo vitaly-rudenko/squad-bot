@@ -30,7 +30,10 @@ export function useUsersFlow() {
 
     if (!(await usersCache.has(userId))) {
       await registerTelegramUser(context.from, { usersStorage })
-      await usersCache.set(userId)
+
+      const user = await usersStorage.findById(userId)
+      if (!user) throw new Error(`Could not find User by userId: ${userId}`)
+      await usersCache.set(userId, user)
     }
 
     return next()

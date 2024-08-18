@@ -31,7 +31,7 @@ export function createAuthRouter() {
 
   router.get('/authenticate', async (req, res) => {
     const code = temporaryAuthTokenSchema.create(req.query['code'])
-    if (!(await codeCache.set(code))) {
+    if (!(await codeCache.set(code, true))) {
       throw new ApiError({
         code: 'INVALID_CODE',
         status: 400,

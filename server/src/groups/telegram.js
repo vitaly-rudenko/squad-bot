@@ -20,7 +20,7 @@ export function createGroupsFlow() {
 
     if (!(await membershipCache.has(`${userId}_${chatId}`))) {
       await membershipStorage.store(userId, chatId)
-      await membershipCache.set(`${userId}_${chatId}`)
+      await membershipCache.set(`${userId}_${chatId}`, true)
     }
 
     return next()

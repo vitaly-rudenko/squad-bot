@@ -1,5 +1,6 @@
 import { registry } from '../registry.js'
 
+/** @template T */
 export class RedisCache {
   /**
    * @param {import('ioredis').default} redis
@@ -14,10 +15,10 @@ export class RedisCache {
 
   /**
    * @param {string} key
-   * @param {unknown} value
+   * @param {T} value
    * @returns {Promise<boolean>}
    */
-  async set(key, value = true) {
+  async set(key, value) {
     const result = await this._redis
       .multi()
       .exists(this._key(key))
@@ -28,7 +29,7 @@ export class RedisCache {
     return result?.[0]?.[1] === 0
   }
 
-  /** @param {string} key */
+  /** @param {string} key @returns {Promise<T | undefined>} */
   async get(key) {
     const result = await this._redis.get(this._key(key))
     return result ? JSON.parse(result) : undefined
@@ -53,6 +54,7 @@ export class RedisCache {
 /**
  * @param {string} prefix
  * @param {number} ttlMs
+ * @returns {RedisCache<any>}
  */
 export function createRedisCache(prefix, ttlMs) {
   const { redis } = registry.export()
