@@ -10,8 +10,6 @@ module.exports = {
 
   /** @param {{ context: import('pg').Pool }} context */
   async down({ context: db }) {
-    await db.query(`
-      DROP TABLE chats;
-    `)
+    // noop
   },
 }
