@@ -1,3 +1,4 @@
+import { isGroupChat, isPrivateChat } from '../common/telegram.js'
 import { registry } from '../registry.js'
 import { fixSocialLinkUrl } from './fix-social-link-url.js'
 
@@ -28,17 +29,25 @@ export function createSocialLinkFixFlow() {
   const socialLinkFixMessage = async (context, next) => {
     if (!context.message || !('text' in context.message)) return next()
     const { chatId } = context.state
+    if (!chatId) return
 
-    let group = await groupCache.get(chatId)
-    if (!group) {
-      group = await groupStorage.findById(chatId)
-      if (group) {
-        await groupCache.set(chatId, group)
+    // Check if social link fix is enabled if message belongs to a group chat
+    if (isGroupChat(context)) {
+      let group = await groupCache.get(chatId)
+      if (!group) {
+        group = await groupStorage.findById(chatId)
+        if (group) {
+          await groupCache.set(chatId, group)
+        }
       }
-    }
 
-    if (!group) return
-    if (!group.socialLinkFixEnabledAt) return
+      if (!group) return
+      if (!group.socialLinkFixEnabledAt) return
+    } else if (isPrivateChat(context)) {
+      // no checks
+    } else {
+      return // unsupported chat type
+    }
 
     const urlEntities = context.message.entities?.filter(e => e.type === 'url')
     if (!urlEntities || urlEntities.length === 0) return

@@ -215,7 +215,7 @@ async function start() {
       }
     },
     wrap(withGroupChat(), rollCallMessage),
-    wrap(withGroupChat(), socialLinkFixMessage),
+    wrap(withChatId(), socialLinkFixMessage),
   )
 
   const app = express()
