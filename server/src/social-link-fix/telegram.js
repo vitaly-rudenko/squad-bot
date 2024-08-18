@@ -2,11 +2,11 @@ import { registry } from '../registry.js'
 import { fixSocialLinkUrl } from './fix-social-link-url.js'
 
 export function createSocialLinkFixFlow() {
-  const { groupCache, groupStorage } = registry.export()
+  const { groupCache, groupStorage, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const toggleSocialLinkFix = async (context) => {
-    const { chatId } = context.state
+    const { chatId, locale } = context.state
 
     const group = await groupStorage.findById(chatId)
     if (!group) return
@@ -18,7 +18,7 @@ export function createSocialLinkFixFlow() {
     })
     await groupCache.delete(chatId)
 
-    await context.reply(group.socialLinkFixEnabledAt ? 'Social link fix has been disabled' : 'Social link fix has been enabled')
+    await context.reply(localize(locale, group.socialLinkFixEnabledAt ? 'socialLinkFix.disabled' : 'socialLinkFix.enabled'))
   }
 
   /**
@@ -44,7 +44,7 @@ export function createSocialLinkFixFlow() {
     if (!urlEntities || urlEntities.length === 0) return
     if (urlEntities.length !== 1) return // Only support one link currently
     const { offset, length } = urlEntities[0]
-    
+
     const fixedSocialLinkUrl = fixSocialLinkUrl(context.message.text.slice(offset, offset + length))
     if (!fixedSocialLinkUrl) return
 
@@ -53,8 +53,6 @@ export function createSocialLinkFixFlow() {
       disable_notification: true,
       allow_sending_without_reply: true,
     })
-
-    console.log('Fixing social link in', group)
   }
 
   return {

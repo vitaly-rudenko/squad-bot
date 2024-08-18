@@ -117,6 +117,7 @@ async function start() {
     { command: 'cards', description: 'Bank cards' },
     { command: 'titles', description: 'Admin titles' },
     { command: 'rollcalls', description: 'Roll calls' },
+    { command: 'toggle_social_link_fix', description: 'Fix link previews' },
     { command: 'start', description: 'Update user info' },
   ])
 

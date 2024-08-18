@@ -88,6 +88,9 @@ admins:
     command:
       message:
         - '🏷 {editUrl}'
+socialLinkFix:
+  enabled: '✅ Previews for Twitter, Instagram and YouTube links will now be fixed'
+  disabled: '❌ Previews for Twitter, Instagram and YouTube links will no longer be fixed'
 groupChatOnly: '❌ This command can only be executed in a group chat'
 privateChatOnly: '❌ This command can only be executed in a private chat'
 unknownUser: 'Unknown user'
