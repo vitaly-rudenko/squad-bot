@@ -13,9 +13,12 @@ export function createGroupsFlow() {
         title: (context.chat && 'title' in context.chat)
           ? context.chat.title
           : '',
+        socialLinkFixEnabledAt: undefined, // do not update
       })
 
-      await groupCache.set(chatId)
+      const group = await groupStorage.findById(chatId)
+      if (!group) throw new Error(`Could not find Group by chatId: ${chatId}`)
+      await groupCache.set(chatId, group)
     }
 
     if (!(await membershipCache.has(`${userId}_${chatId}`))) {

@@ -41,6 +41,7 @@ import { env } from './env.js'
 import { StructError } from 'superstruct'
 import path from 'path'
 import { createWebAppUrlGenerator } from './web-app/utils.js'
+import { createSocialLinkFixFlow } from './social-link-fix/telegram.js'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -203,6 +204,9 @@ async function start() {
   bot.command('receipts', receipts)
   bot.action(/^photo:(.+)$/, getPhoto)
 
+  const { toggleSocialLinkFix, socialLinkFixMessage } = createSocialLinkFixFlow()
+  bot.command('toggle_social_link_fix', toggleSocialLinkFix)
+
   bot.on('message',
     async (context, next) => {
       if (!('text' in context.message) || !context.message.text.startsWith('/')) {
@@ -210,6 +214,7 @@ async function start() {
       }
     },
     wrap(withGroupChat(), rollCallMessage),
+    wrap(withGroupChat(), socialLinkFixMessage),
   )
 
   const app = express()
