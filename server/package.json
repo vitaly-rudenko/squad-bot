@@ -1,6 +1,6 @@
 {
   "name": "squad-bot",
-  "version": "6.3.1",
+  "version": "6.4.0",
   "description": "Telegram bot assistant for squads",
   "main": "src/app.js",
   "type": "module",
@@ -57,6 +57,7 @@
     "node-fetch": "^3.2.0",
     "nodemon": "^3.0.3",
     "sinon": "^13.0.1",
+    "typescript": "^5.5.4",
     "unique-names-generator": "^4.7.1"
   },
   "dependencies": {

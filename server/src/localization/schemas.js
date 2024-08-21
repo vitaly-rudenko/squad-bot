@@ -93,6 +93,10 @@ export const localeFileSchema = object({
       }),
     }),
   }),
+  socialLinkFix: object({
+    enabled: _,
+    disabled: _,
+  }),
   groupChatOnly: _,
   privateChatOnly: _,
   unknownUser: _,
