@@ -42,6 +42,7 @@ import { StructError } from 'superstruct'
 import path from 'path'
 import { createWebAppUrlGenerator } from './web-app/utils.js'
 import { createSocialLinkFixFlow } from './social-link-fix/telegram.js'
+import { createExportFlow } from './export/telegram.js'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -118,6 +119,7 @@ async function start() {
     { command: 'titles', description: 'Admin titles' },
     { command: 'rollcalls', description: 'Roll calls' },
     { command: 'toggle_social_link_fix', description: 'Fix link previews' },
+    { command: 'export', description: 'Export your receipts in a CSV format' },
     { command: 'start', description: 'Update user info' },
   ])
 
@@ -207,6 +209,9 @@ async function start() {
 
   const { toggleSocialLinkFix, socialLinkFixMessage } = createSocialLinkFixFlow()
   bot.command('toggle_social_link_fix', toggleSocialLinkFix)
+
+  const { exportReceiptsCsv } = createExportFlow()
+  bot.command('export', requirePrivateChat(), exportReceiptsCsv)
 
   bot.on('message',
     async (context, next) => {

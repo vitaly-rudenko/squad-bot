@@ -1,1 +1,1 @@
-export const MAX_DEBTS_PER_RECEIPT = 10;
+export const MAX_DEBTS_PER_RECEIPT = 25;
