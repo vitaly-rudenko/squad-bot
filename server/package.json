@@ -1,6 +1,6 @@
 {
   "name": "squad-bot",
-  "version": "6.4.0",
+  "version": "6.5.0",
   "description": "Telegram bot assistant for squads",
   "main": "src/app.js",
   "type": "module",
@@ -67,6 +67,7 @@
     "@vitalyrudenko/dependency-registry": "^2.0.0-beta.2",
     "@vitalyrudenko/templater": "^1.0.0-pre.4",
     "cors": "^2.8.5",
+    "csv-stringify": "^6.5.2",
     "express": "^4.18.2",
     "express-promise-router": "^4.1.1",
     "helmet": "^7.1.0",
