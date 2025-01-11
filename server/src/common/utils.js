@@ -39,3 +39,8 @@ export function paginationToLimitOffset({ page, per_page }) {
   const offset = (page - 1) * per_page
   return { limit, offset }
 }
+
+/** @template T @param {T[]} array */
+export function unique(array) {
+  return [...new Set(array)]
+}

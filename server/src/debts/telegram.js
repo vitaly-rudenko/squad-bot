@@ -2,7 +2,7 @@ import { registry } from '../registry.js'
 import { escapeMd } from '../common/telegram.js'
 import { aggregateDebts } from './utils.js'
 import { renderUserMd } from '../users/telegram.js'
-import { isDefined, renderAmount } from '../common/utils.js'
+import { isDefined, renderAmount, unique } from '../common/utils.js'
 import { generatePayCommand } from '../web-app/utils.js'
 
 export function createDebtsFlow() {
@@ -20,10 +20,10 @@ export function createDebtsFlow() {
       paymentsStorage,
     })
 
-    const userIds = [...new Set([
+    const userIds = unique([
       ...ingoingDebts.flatMap(d => [d.fromUserId, d.toUserId]),
       ...outgoingDebts.flatMap(d => [d.fromUserId, d.toUserId]),
-    ])]
+    ])
 
     const users = userIds.length > 0 ? await usersStorage.find({ ids: userIds }) : []
 

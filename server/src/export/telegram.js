@@ -1,32 +1,47 @@
 import { stringify } from 'csv-stringify/sync'
 import { MAX_DEBTS_PER_RECEIPT } from '../debts/constants.js'
 import { registry } from '../registry.js'
+import { unique } from '../common/utils.js'
+
+// TODO: export payments
+// TODO: export cards
+// TODO: export groups (roll calls and titles)
+
+/** Not an exact amount, an estimation */
+const MAX_EXPORT_ROWS = 10_000
+
+/** Not an exact amount, an estimation */
+const MAX_EXPORT_COLUMNS = 1_000
 
 export function createExportFlow() {
-  const { receiptsStorage, debtsStorage, usersStorage } = registry.export()
+  const { receiptsStorage, debtsStorage, usersStorage, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const exportReceiptsCsv = async (context) => {
+    const { userId, locale } = context.state
+
     const { items: receipts } = await receiptsStorage.find({
-      limit: 1000,
-      participantUserIds: [context.state.userId],
+      limit: MAX_EXPORT_ROWS,
+      participantUserIds: [userId],
     })
 
-    // TODO: Add message
-    if (receipts.length === 0) return
+    if (receipts.length === 0) {
+      await context.reply(localize(locale, 'export.receipts.command.noReceipts'))
+      return
+    }
 
     const debts = await debtsStorage.find({
       receiptIds: receipts.map(r => r.id),
       limit: receipts.length * MAX_DEBTS_PER_RECEIPT,
     })
 
-    const users = await usersStorage.find({
-      limit: 100,
-      ids: [
-        context.state.userId,
-        ...receipts.map(r => r.payerId),
-        ...debts.map(d => d.debtorId),
-      ]
+    const userIds = unique([userId, ...receipts.map(r => r.payerId), ...debts.map(d => d.debtorId)])
+
+    const unsortedUsers = await usersStorage.find({ ids: userIds, limit: MAX_EXPORT_COLUMNS })
+    const users = userIds.map(userId => {
+      const user = unsortedUsers.find(u => u.id === userId)
+      if (!user) throw new Error(`Could not find User by userId: ${userId}`)
+      return user
     })
 
     /** @param {string} userId */
@@ -46,7 +61,13 @@ export function createExportFlow() {
 
     /** @type {string[][]} */
     const rows = [
-      ['Date', 'Description', 'Amount', 'Payer', ...users.map(user => renderUser(user.id))],
+      [
+        localize(locale, 'export.receipts.columns.date'),
+        localize(locale, 'export.receipts.columns.description'),
+        localize(locale, 'export.receipts.columns.amount'),
+        localize(locale, 'export.receipts.columns.payer'),
+        ...users.map(user => renderUser(user.id))
+      ],
     ]
 
     for (const receipt of receipts) {
@@ -65,9 +86,11 @@ export function createExportFlow() {
     }
 
     const csv = stringify(rows)
+    const filename = `${localize(locale, 'export.receipts.filenamePrefix')}_${new Date().toISOString().split('.')[0].replaceAll(/[^\d]+/g, '-')}.csv`
 
     await context.replyWithDocument(
-      { source: Buffer.from(csv), filename: `receipts-${Date.now()}.csv` }
+      { source: Buffer.from(csv), filename },
+      { caption: localize(locale, 'export.receipts.command.message') }
     )
   }
 

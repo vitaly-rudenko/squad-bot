@@ -83,6 +83,17 @@ rollCalls:
   mention:
     withUsername: '@{username}'
     withoutUsername: '[{name}]({profileUrl})'
+export:
+  receipts:
+    command:
+      message: '✅ Your export is ready'
+      noReceipts: '❌ You don''t have any receipts'
+    columns:
+      date: 'Date'
+      description: 'Description'
+      amount: 'Amount'
+      payer: 'Payer'
+    filenamePrefix: 'receipts'
 admins:
   titles:
     command:

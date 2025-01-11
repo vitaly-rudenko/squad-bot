@@ -86,6 +86,21 @@ export const localeFileSchema = object({
       withoutUsername: _,
     }),
   }),
+  export: object({
+    receipts: object({
+      command: object({
+        message: _,
+        noReceipts: _,
+      }),
+      columns: object({
+        date: _,
+        description: _,
+        amount: _,
+        payer: _,
+      }),
+      filenamePrefix: _,
+    })
+  }),
   admins: object({
     titles: object({
       command: object({
