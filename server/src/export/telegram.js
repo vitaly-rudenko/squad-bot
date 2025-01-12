@@ -56,7 +56,12 @@ export function createExportFlow() {
 
     /** @param {Date} date */
     function formatDate(date) {
-      return date.toISOString().replace('T', ' ').split('.')[0]
+      return date.toISOString().replace('T', ' ').split('.')[0].split(':').slice(0, -1).join(':')
+    }
+
+    /** @param {number} amount */
+    function formatAmount(amount) {
+      return (amount / 100).toFixed(2).replace('.', ',')
     }
 
     /** @type {string[][]} */
@@ -76,11 +81,11 @@ export function createExportFlow() {
       rows.push([
         formatDate(receipt.createdAt),
         receipt.description ?? '',
-        (receipt.amount / 100).toFixed(2),
+        formatAmount(receipt.amount),
         renderUser(receipt.payerId),
         ...users.map(user => {
           const debt = receiptDebts.find(d => d.debtorId === user.id)
-          return debt ? (debt.amount / 100).toFixed(2) : ''
+          return debt ? formatAmount(debt.amount) : ''
         })
       ])
     }

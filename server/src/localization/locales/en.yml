@@ -89,7 +89,7 @@ export:
       message: '✅ Your export is ready'
       noReceipts: '❌ You don''t have any receipts'
     columns:
-      date: 'Date'
+      date: 'Date (UTC)'
       description: 'Description'
       amount: 'Amount'
       payer: 'Payer'
