@@ -12,8 +12,8 @@ export class RollCallsPostgresStorage {
    */
   async create(input) {
     const response = await this._client.query(`
-      INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, sort_order)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO roll_calls (group_id, message_pattern, users_pattern, exclude_sender, poll_options, is_multiselect_poll, is_anonymous_poll, sort_order)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING id;
     `, [
       input.groupId,
@@ -21,6 +21,8 @@ export class RollCallsPostgresStorage {
       input.usersPattern === '*' ? undefined : input.usersPattern,
       input.excludeSender,
       input.pollOptions.length > 0 ? input.pollOptions : undefined,
+      input.isMultiselectPoll,
+      input.isAnonymousPoll,
       input.sortOrder,
     ])
 
@@ -37,6 +39,8 @@ export class RollCallsPostgresStorage {
       input.usersPattern !== undefined ? ['users_pattern', input.usersPattern === '*' ? undefined : input.usersPattern] : undefined,
       input.excludeSender !== undefined ? ['exclude_sender', input.excludeSender] : undefined,
       input.pollOptions !== undefined ? ['poll_options', input.pollOptions.length > 0 ? input.pollOptions : undefined] : undefined,
+      input.isMultiselectPoll !== undefined ? ['is_multiselect_poll', input.isMultiselectPoll] : undefined,
+      input.isAnonymousPoll !== undefined ? ['is_anonymous_poll', input.isAnonymousPoll] : undefined,
       input.sortOrder !== undefined ? ['sort_order', input.sortOrder] : undefined,
     ].filter(isDefined)
 
@@ -106,6 +110,8 @@ export class RollCallsPostgresStorage {
         rc.users_pattern,
         rc.exclude_sender,
         rc.poll_options,
+        rc.is_multiselect_poll,
+        rc.is_anonymous_poll,
         rc.sort_order
       FROM roll_calls rc ${whereClause}
       ORDER BY sort_order DESC
@@ -136,6 +142,8 @@ export function deserializeRollCall(row) {
     usersPattern: row['users_pattern'] ?? '*',
     excludeSender: row['exclude_sender'],
     pollOptions: row['poll_options'] ?? [],
+    isMultiselectPoll: row['is_multiselect_poll'],
+    isAnonymousPoll: row['is_anonymous_poll'],
     sortOrder: row['sort_order'],
   }
 }

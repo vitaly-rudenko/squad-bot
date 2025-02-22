@@ -5,5 +5,7 @@ export type RollCall = {
   usersPattern: string
   excludeSender: boolean
   pollOptions: string[]
+  isMultiselectPoll: boolean
+  isAnonymousPoll: boolean
   sortOrder: number
 }

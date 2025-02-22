@@ -99,7 +99,11 @@ export function createRollCallsFlow() {
       await context.replyWithPoll(
         localize(locale, 'rollCalls.pollTitle'),
         matchedRollCall.pollOptions,
-        { is_anonymous: false, disable_notification: true }
+        {
+          is_anonymous: matchedRollCall.isAnonymousPoll,
+          allows_multiple_answers: matchedRollCall.isMultiselectPoll,
+          disable_notification: true,
+        }
       )
     }
   }

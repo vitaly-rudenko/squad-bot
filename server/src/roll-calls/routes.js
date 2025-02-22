@@ -21,6 +21,8 @@ export function createRollCallsRouter() {
       usersPattern,
       excludeSender,
       pollOptions,
+      isMultiselectPoll,
+      isAnonymousPoll,
       sortOrder,
     } = createRollCallSchema.create(req.body)
 
@@ -35,6 +37,8 @@ export function createRollCallsRouter() {
         messagePattern,
         usersPattern,
         pollOptions,
+        isMultiselectPoll,
+        isAnonymousPoll,
         sortOrder,
       })
     )
@@ -53,6 +57,8 @@ export function createRollCallsRouter() {
       usersPattern,
       excludeSender,
       pollOptions,
+      isMultiselectPoll,
+      isAnonymousPoll,
       sortOrder,
     } = updateRollCallSchema.create(req.body)
 
@@ -66,6 +72,8 @@ export function createRollCallsRouter() {
       messagePattern,
       usersPattern,
       pollOptions,
+      isMultiselectPoll,
+      isAnonymousPoll,
       sortOrder,
     })
 

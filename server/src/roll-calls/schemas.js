@@ -19,6 +19,8 @@ export const createRollCallSchema = object({
   usersPattern: usersPatternSchema,
   excludeSender: boolean(),
   pollOptions: pollOptionsSchema,
+  isMultiselectPoll: boolean(),
+  isAnonymousPoll: boolean(),
   sortOrder: sortOrderSchema,
 })
 
@@ -27,5 +29,7 @@ export const updateRollCallSchema = object({
   usersPattern: optional(usersPatternSchema),
   excludeSender: optional(boolean()),
   pollOptions: optional(pollOptionsSchema),
+  isMultiselectPoll: optional(boolean()),
+  isAnonymousPoll: optional(boolean()),
   sortOrder: optional(sortOrderSchema),
 })

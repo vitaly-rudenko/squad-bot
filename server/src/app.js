@@ -286,7 +286,12 @@ async function start() {
         }
       })
     } else if (err instanceof StructError) {
-      res.sendStatus(400)
+      res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: err.message,
+        }
+      })
     } else {
       res.sendStatus(500)
     }
