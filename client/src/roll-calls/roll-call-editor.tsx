@@ -32,6 +32,8 @@ const formSchema = object({
   })),
   excludeSender: boolean(),
   pollOptions: union([array(string()), literal(false)]),
+  isMultiselectPoll: boolean(),
+  isAnonymousPoll: boolean(),
 })
 
 type FormState = Infer<typeof formSchema>
@@ -42,6 +44,8 @@ const defaultValues: FormState = {
   receivers: [],
   excludeSender: true,
   pollOptions: false,
+  isMultiselectPoll: false,
+  isAnonymousPoll: false,
 }
 
 const examples = [
@@ -102,6 +106,8 @@ export const RollCallEditor: FC<{
         pingType: rollCall.usersPattern === '*' ? 'everyone' : 'selected',
         excludeSender: rollCall.excludeSender,
         pollOptions: rollCall.pollOptions.length === 0 ? false : rollCall.pollOptions,
+        isMultiselectPoll: rollCall.isMultiselectPoll,
+        isAnonymousPoll: rollCall.isAnonymousPoll,
         receivers: users.map(user => ({
           user,
           enabled: userIds.includes(user.id),
@@ -135,6 +141,8 @@ export const RollCallEditor: FC<{
           : formState.receivers.filter(r => r.enabled === (formState.pingType !== 'exclude')).map(r => r.user.id).join(','),
         excludeSender: formState.excludeSender,
         pollOptions: formState.pollOptions || [],
+        isMultiselectPoll: formState.isMultiselectPoll,
+        isAnonymousPoll: formState.isAnonymousPoll,
         sortOrder: rollCall?.sortOrder ?? (rollCalls.items.at(0)?.sortOrder ?? 0) + 1,
       })
 
@@ -335,6 +343,44 @@ export const RollCallEditor: FC<{
                     </div>
                   </FormItem>
                 ))}
+
+                {field.value !== false && <div className='flex flex-row'>
+                  {/* Multi-select poll */}
+                  <FormField
+                    control={form.control}
+                    name='isMultiselectPoll'
+                    render={({ field }) => <>
+                      <FormItem className='flex flex-row gap-3 space-y-0 items-stretch grow'>
+                        <div className='flex flex-row flex-auto items-center w-32 min-w-0 h-10'>
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className='p-2 cursor-pointer overflow-hidden'>Multi-select poll</FormLabel>
+                        </div>
+                      </FormItem>
+                  </>} />
+
+                  {/* Anonymous poll */}
+                  <FormField
+                    control={form.control}
+                    name='isAnonymousPoll'
+                    render={({ field }) => <>
+                      <FormItem className='flex flex-row gap-3 space-y-0 items-stretch grow'>
+                        <div className='flex flex-row flex-auto items-center w-32 min-w-0 h-10'>
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className='p-2 cursor-pointer overflow-hidden'>Anonymous poll</FormLabel>
+                        </div>
+                      </FormItem>
+                  </>} />
+                </div>}
             </>} />
           </CardContent>
 

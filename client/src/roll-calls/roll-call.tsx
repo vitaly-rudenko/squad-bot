@@ -7,7 +7,7 @@ import { UserName } from '@/users/user-name'
 import { cn } from '@/utils/cn'
 import { Separator } from '@/components/separator'
 import { Button } from '@/components/button'
-import { ArrowDown, ArrowUp, CheckCheck, LayoutList, UserMinus } from 'lucide-react'
+import { ArrowDown, ArrowUp, CheckCheck, EyeOff, LayoutList, ListChecks, UserMinus } from 'lucide-react'
 import { parseMessagePattern } from './utils'
 
 export const RollCall: FC<{
@@ -48,6 +48,20 @@ export const RollCall: FC<{
                   {i > 0 && ', '}<PollOption option={option} />
               </Fragment>)}</span>
             </div>
+
+            {!!rollCall.isMultiselectPoll && <>
+              <div className='flex flex-row items-baseline gap-1.5'>
+                <ListChecks className='w-4 h-4 self-center' />
+                <span>Multi-select poll</span>
+              </div>
+            </>}
+
+            {!!rollCall.isAnonymousPoll && <>
+              <div className='flex flex-row items-baseline gap-1.5'>
+                <EyeOff className='w-4 h-4 self-center' />
+                <span>Anonymous poll</span>
+              </div>
+            </>}
           </>)}
         </div>
       </CardHeader>

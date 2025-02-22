@@ -52,6 +52,8 @@ type SaveRollCallInput = {
   usersPattern: string
   excludeSender: boolean
   pollOptions: string[]
+  isMultiselectPoll: boolean
+  isAnonymousPoll: boolean
   sortOrder: number
 }
 
@@ -110,6 +112,8 @@ function deserialize(raw: any): RollCall {
     usersPattern: raw.usersPattern,
     excludeSender: raw.excludeSender,
     pollOptions: raw.pollOptions,
+    isMultiselectPoll: raw.isMultiselectPoll,
+    isAnonymousPoll: raw.isAnonymousPoll,
     sortOrder: raw.sortOrder,
   }
 }
