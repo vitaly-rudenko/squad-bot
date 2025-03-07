@@ -213,6 +213,13 @@ async function start() {
   const { exportReceiptsCsv } = createExportFlow()
   bot.command('export', requirePrivateChat(), exportReceiptsCsv)
 
+  bot.action('delete_message', async (context) => {
+    const { locale } = context.state
+
+    await context.deleteMessage()
+    await context.answerCbQuery(localize(locale, 'messageWasDeleted'))
+  })
+
   bot.on('message',
     async (context, next) => {
       if (!('text' in context.message) || !context.message.text.startsWith('/')) {

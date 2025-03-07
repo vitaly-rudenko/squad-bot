@@ -1,3 +1,4 @@
+import { Markup } from 'telegraf'
 import { isGroupChat, isPrivateChat } from '../common/telegram.js'
 import { registry } from '../registry.js'
 import { fixSocialLinkUrl } from './fix-social-link-url.js'
@@ -61,6 +62,9 @@ export function createSocialLinkFixFlow() {
       reply_to_message_id: context.message.message_id,
       disable_notification: true,
       allow_sending_without_reply: true,
+      ...Markup.inlineKeyboard([
+        Markup.button.callback('Delete', 'delete_message'),
+      ])
     })
   }
 

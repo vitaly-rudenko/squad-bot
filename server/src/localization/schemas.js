@@ -115,4 +115,5 @@ export const localeFileSchema = object({
   groupChatOnly: _,
   privateChatOnly: _,
   unknownUser: _,
+  messageWasDeleted: _,
 })
