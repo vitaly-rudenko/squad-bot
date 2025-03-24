@@ -5,7 +5,7 @@ import { type, string, optional, assert, unknown } from 'superstruct'
 // TODO: move to env
 export const API_URL = window.location.host === 'vitaly-rudenko.github.io'
   ? 'https://squad-bot.vitaly-rudenko.com'
-  : `${window.location.protocol}//192.168.0.104:3000`
+  : `${window.location.protocol}//localhost:3000`
 
 const TIMEOUT_MS = 30_000
 

@@ -12,8 +12,8 @@ services:
 
   sb_postgres:
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   sb_redis:
     ports:
-      - "6379:6379"
+      - "6380:6379"
