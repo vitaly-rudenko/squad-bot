@@ -43,7 +43,7 @@ export const RollCall: FC<{
             <Separator />
 
             <div className='flex flex-row items-baseline gap-1.5'>
-              <LayoutList className='w-4 h-4 self-center' />
+              <LayoutList className='w-4 h-4 self-center shrink-0' />
               <span>Poll: {rollCall.pollOptions.map((option, i) => <Fragment key={i}>
                   {i > 0 && ', '}<PollOption option={option} />
               </Fragment>)}</span>
@@ -51,14 +51,14 @@ export const RollCall: FC<{
 
             {!!rollCall.isMultiselectPoll && <>
               <div className='flex flex-row items-baseline gap-1.5'>
-                <ListChecks className='w-4 h-4 self-center' />
+                <ListChecks className='w-4 h-4 self-center shrink-0' />
                 <span>Multi-select poll</span>
               </div>
             </>}
 
             {!!rollCall.isAnonymousPoll && <>
               <div className='flex flex-row items-baseline gap-1.5'>
-                <EyeOff className='w-4 h-4 self-center' />
+                <EyeOff className='w-4 h-4 self-center shrink-0' />
                 <span>Anonymous poll</span>
               </div>
             </>}

@@ -23,6 +23,8 @@ import { Textarea } from '@/components/textarea'
 import { optionalTitle, parseMessagePattern } from './utils'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/select'
 
+const MAX_POLL_OPTIONS = 10
+
 const formSchema = object({
   messagePattern: string(),
   pingType: union([literal('everyone'), literal('selected'), literal('exclude')]),
@@ -311,7 +313,7 @@ export const RollCallEditor: FC<{
                   </div>
                 </>}
 
-                {field.value !== false && [...field.value, ''].map((option, index) => (
+                {field.value !== false && [...field.value, ...field.value.length < MAX_POLL_OPTIONS ? [''] : []].map((option, index) => (
                   <FormItem className='flex flex-col animation-top-down' key={index}>
                     <div className='flex flex-row gap-1'>
                       <Input
