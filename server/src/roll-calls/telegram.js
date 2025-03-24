@@ -97,7 +97,7 @@ export function createRollCallsFlow() {
 
     if (sendPoll) {
       await context.replyWithPoll(
-        localize(locale, 'rollCalls.pollTitle'),
+        localize(locale, matchedRollCall.isMultiselectPoll ? 'rollCalls.pollTitleMultiselect' : 'rollCalls.pollTitle'),
         matchedRollCall.pollOptions,
         {
           is_anonymous: matchedRollCall.isAnonymousPoll,

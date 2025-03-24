@@ -80,6 +80,7 @@ export const localeFileSchema = object({
     }),
     noOneToMention: _,
     pollTitle: _,
+    pollTitleMultiselect: _,
     notification: _,
     mention: object({
       withUsername: _,

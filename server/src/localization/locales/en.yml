@@ -76,6 +76,7 @@ rollCalls:
       - '📣 {viewUrl}'
   noOneToMention: '❌ No one to mention or the bot doesn''t have enough data about this chat'
   pollTitle: 'Choose an answer'
+  pollTitleMultiselect: 'Choose answers'
   notification:
     - '*{sender}*: {message}'
     - ''
