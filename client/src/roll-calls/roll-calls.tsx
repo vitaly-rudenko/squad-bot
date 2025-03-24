@@ -2,7 +2,7 @@ import { Button } from '@/components/button'
 import { Pagination } from '@/navigation/pagination'
 import { cn } from '@/utils/cn'
 import { Link, useRouter } from '@tanstack/react-router'
-import { RefreshCcw, Plus } from 'lucide-react'
+import { RefreshCcw, Plus, ArrowLeft } from 'lucide-react'
 import { FC, useCallback, useEffect, useState } from 'react'
 import { useDeleteRollCallMutation, useRollCallsQuery, useSwapRollCallsMutation } from './api'
 import { useGroupQuery } from '@/groups/api'
@@ -50,6 +50,10 @@ export const RollCalls: FC<{
     }
   }, [deleteMutation.isSuccess, refetch])
 
+  if (!group) {
+    return <Skeleton className='h-[20rem]' />
+  }
+
   return <>
     <Alert
       title='Delete roll call?'
@@ -73,9 +77,11 @@ export const RollCalls: FC<{
         </Link>
       </div>
 
-      {group
-        ? <div className='text-sm font-medium text-primary'>{group.title}</div>
-        : <Skeleton className='h-[1.25rem]' />}
+      <Button variant='link' className='p-0 h-auto flex flex-row gap-1 items-baseline justify-start'
+        onClick={() => router.navigate({ to: '/groups' })}>
+        <ArrowLeft className='w-4 h-4 self-center shrink-0' />
+        <span className='truncate'>{group.title}</span>
+      </Button>
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} hideByDefault />
 
