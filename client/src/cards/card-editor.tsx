@@ -17,6 +17,7 @@ import { Trash2 } from 'lucide-react'
 import { formatCardNumber } from './utils'
 import { ApiError } from '@/utils/api'
 import { useDebounce } from '@uidotdev/usehooks'
+import { useTranslation } from 'react-i18next'
 
 const formSchema = object({
   number: size(string(), 16),
@@ -31,6 +32,7 @@ const defaultValues: FormState = {
 }
 
 export const CardEditor: FC = () => {
+  const { t } = useTranslation('cards')
   const router = useRouter()
 
   // TODO: this is a hacky fix to avoid clicking on "Add card" button when the bank is selected because touch event passes through
@@ -57,7 +59,7 @@ export const CardEditor: FC = () => {
   }, [])
 
   const onSubmit = useCallback(async (formState: FormState) => {
-    const toastId = createToast('Adding the card...', { type: 'loading' })
+    const toastId = createToast(t('Adding the card...'), { type: 'loading' })
 
     try {
       await createMutation.mutateAsync({
@@ -65,20 +67,20 @@ export const CardEditor: FC = () => {
         bank: formState.bank,
       })
 
-      createToast(`The card has been saved`, { type: 'success', toastId })
+      createToast(t(`The card has been saved`), { type: 'success', toastId })
 
       await router.navigate({ to: '/cards' })
     } catch (error) {
       if (error instanceof ApiError && error.code === 'ALREADY_EXISTS') {
         createMutation.reset()
-        createToast('You have already added this card', { type: 'error', toastId })
+        createToast(t('You have already added this card'), { type: 'error', toastId })
         return
       }
 
       console.error(error)
       dismissToast(toastId)
     }
-  }, [createMutation, router])
+  }, [createMutation, router, t])
 
   if (!validateCard) {
     return <Skeleton className='h-[16rem] animation-down-top' />
@@ -92,7 +94,7 @@ export const CardEditor: FC = () => {
           !createMutation.isIdle && 'grayscale opacity-70 pointer-events-none',
         )}>
           <CardHeader>
-            <CardTitle className='leading-normal truncate'>Add a card</CardTitle>
+            <CardTitle className='leading-normal truncate'>{t('Add a card')}</CardTitle>
           </CardHeader>
 
           <CardContent className='flex flex-col gap-3 pb-3'>
@@ -102,7 +104,7 @@ export const CardEditor: FC = () => {
               name='number'
               render={({ field }) => (<>
                 <FormItem className='flex flex-col'>
-                  <FormLabel>Card number</FormLabel>
+                  <FormLabel>{t('Card number')}</FormLabel>
                   <div className='flex flex-row grow'>
                     <Input focusOnEnd
                       type='tel'
@@ -136,11 +138,11 @@ export const CardEditor: FC = () => {
                 <FormItem className='flex flex-col'>
                   <Select onValueChange={field.onChange} defaultValue={field.value} open={bankSelectOpen} onOpenChange={setBankSelectOpen}>
                     <SelectTrigger>
-                      <SelectValue placeholder='Bank' />
+                      <SelectValue placeholder={t('Bank')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='monobank'>Monobank</SelectItem>
-                      <SelectItem value='privatbank'>Privatbank</SelectItem>
+                      <SelectItem value='monobank'>{t('Monobank')}</SelectItem>
+                      <SelectItem value='privatbank'>{t('Privatbank')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormItem>
@@ -150,7 +152,7 @@ export const CardEditor: FC = () => {
 
           <CardFooter className='flex flex-col items-stretch bg-secondary gap-3 pt-3'>
             {/* Save button */}
-            <Button type='submit' disabled={!valid || bankSelectOpenDebounced}>Add {$bank === 'privatbank' ? 'Privatbank' : 'Monobank'} card</Button>
+            <Button type='submit' disabled={!valid || bankSelectOpenDebounced}>{t('Add ')}{$bank === 'privatbank' ? t('Privatbank') : t('Monobank')}{t(' card')}</Button>
           </CardFooter>
         </Card>
       </form>

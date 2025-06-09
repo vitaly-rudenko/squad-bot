@@ -1,0 +1,23 @@
+{
+  "Cards": "Картки",
+  "Adding the card...": "Додаю картку...",
+  "You have already added this card": "Ця картка вже існує",
+  "Card number": "Номер картки",
+  "Bank": "Банк",
+  "Monobank": "Монобанк",
+  "Privatbank": "Приватбанк",
+  "Could not copy the card number": "Не вдалося скопіювати номер картки",
+  "Copied card number to the clipboard": "Номер картки було скопійовано",
+  "Could not copy card number": "Не вдалося скопіювати номер картки",
+  "Copy": "Скопіювати",
+  "Delete": "Видалити",
+  "Card has been deleted": "Картка була видалена",
+  "Delete card?": "Видалити картку?",
+  "Yes, delete it": "Так, видалити її",
+  "Add a card": "Додати картку",
+  "Select user": "Обрати користувача",
+  "You haven't added any cards yet.": "Додай свою картку щоб вона тут зʼявилась.",
+  "hasn't added any cards yet.": "ще не додав(ла) свою картку.",
+  "Add ": "Додати картку ",
+  " card": ""
+}

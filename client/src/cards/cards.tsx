@@ -10,10 +10,12 @@ import { createToast } from '@/utils/toast'
 import { Alert } from '@/components/alert-dialog'
 import { useRequiredAuth } from '@/auth/hooks'
 import { UserCombobox } from '@/users/user-combobox'
+import { useTranslation } from 'react-i18next'
 
 const perPage = 15
 
 export const Cards: FC = () => {
+  const { t } = useTranslation('cards')
   const { currentUser } = useRequiredAuth()
 
   const [user, setUser] = useState(currentUser)
@@ -27,18 +29,18 @@ export const Cards: FC = () => {
 
   useEffect(() => {
     if (deleteMutation.isSuccess) {
-      createToast('Card has been deleted', { type: 'success' })
+      createToast(t('Card has been deleted'), { type: 'success' })
       setDeleteId(undefined)
       refetch()
     }
-  }, [deleteMutation.isSuccess, refetch])
+  }, [deleteMutation.isSuccess, refetch, t])
 
   const isCurrentUser = user.id === currentUser.id
 
   return <>
     <Alert
-      title='Delete card?'
-      confirm='Yes, delete it'
+      title={t('Delete card?')}
+      confirm={t('Yes, delete it')}
       disabled={deleteMutation.isPending}
       open={deleteId !== undefined}
       onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
@@ -48,13 +50,13 @@ export const Cards: FC = () => {
     <div className='animation-down-top flex flex-col gap-3'>
       <div className='flex flex-row justify-between items-baseline gap-3'>
         <div className='flex flex-row gap-2 items-baseline text-xl font-medium cursor-pointer overflow-hidden' onClick={() => refetch()}>
-          <span className='truncate'>Cards</span>
+          <span className='truncate'>{t('Cards')}</span>
           <RefreshCcw className='w-4 h-4 self-center shrink-0' />
         </div>
         {!!isCurrentUser && (
           <Link to='/cards/$cardId' params={{ cardId: 'new' }} className='group animation-appear'>
             <Button variant='link' className='p-0 h-auto flex flex-row gap-1 items-baseline'>
-              <Plus className='w-4 h-4 self-center shrink-0' /><span>Add a card</span>
+              <Plus className='w-4 h-4 self-center shrink-0' /><span>{t('Add a card')}</span>
             </Button>
           </Link>
         )}
@@ -63,7 +65,7 @@ export const Cards: FC = () => {
       <UserCombobox
         selectedUser={user}
         onSelect={(user) => user && setUser(user)}
-        placeholder='Select user'
+        placeholder={t('Select user')}
       />
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} hideByDefault />
@@ -76,12 +78,12 @@ export const Cards: FC = () => {
           {cards.total === 0 && (
             isCurrentUser
               ? <div className='flex flex-col gap-3'>
-                  <span>You haven't added any cards yet.</span>
+                  <span>{t('You haven\'t added any cards yet.')}</span>
                   <Link to='/cards/$cardId' params={{ cardId: 'new' }}>
-                    <Button>Add a card</Button>
+                    <Button>{t('Add a card')}</Button>
                   </Link>
                 </div>
-              : <div>{user.name} hasn't added any cards yet.</div>
+              : <div>{user.name} {t('hasn\'t added any cards yet.')}</div>
           )}
           {cards.items.map((card) => (
             <Card key={card.id}

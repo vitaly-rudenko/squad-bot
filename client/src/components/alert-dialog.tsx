@@ -3,6 +3,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
 import { cn } from "@/utils/cn"
 import { buttonVariants } from "@/components/button"
+import { useTranslation } from 'react-i18next'
 
 const AlertDialog = AlertDialogPrimitive.Root
 
@@ -132,14 +133,16 @@ const Alert: React.FC<{
   onConfirm: () => unknown
   onCancel: () => unknown
 }> = ({ open, disabled, title, confirm, onConfirm, onCancel }) => {
+  const { t } = useTranslation('alert')
+
   return <AlertDialog open={open}>
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>{title}</AlertDialogTitle>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel onClick={() => onCancel()} disabled={disabled}>Cancel</AlertDialogCancel>
-        <AlertDialogAction onClick={() => onConfirm()} disabled={disabled}>{confirm || 'Yes'}</AlertDialogAction>
+        <AlertDialogCancel onClick={() => onCancel()} disabled={disabled}>{t('Cancel')}</AlertDialogCancel>
+        <AlertDialogAction onClick={() => onConfirm()} disabled={disabled}>{confirm || t('Yes')}</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

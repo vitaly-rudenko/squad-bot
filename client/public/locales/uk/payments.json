@@ -1,0 +1,15 @@
+{
+  "Payments": "Перекази",
+  "Record a payment": "Створити переказ",
+  "Edit": "Редагувати",
+  "Delete": "Видалити",
+  "Saving the payment...": "Зберігаю переказ...",
+  "Select sender": "Обрати відправника",
+  "Select receiver": "Обрати отримувача",
+  "Enter amount": "Сума переказу",
+  "Save ": "Зберегти переказ на ",
+  " payment": "",
+  "Save payment": "Зберегти переказ",
+  "'s cards": "",
+  "User hasn't added any cards yet.": "Користувач ще не додав(ла) свою картку."
+}

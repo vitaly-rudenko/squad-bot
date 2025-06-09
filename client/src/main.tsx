@@ -5,8 +5,8 @@ import ReactDOM from 'react-dom/client'
 import { routeTree } from './routeTree.gen'
 import { Route as RootRoute } from './routes/__root'
 import { Button } from '@/components/button'
+import './i18n'
 import './globals.css'
-
 
 Sentry.init({
   dsn: 'https://c19e2274848860ddce13b7109e7edec9@o4509468471721984.ingest.de.sentry.io/4509468473163856',

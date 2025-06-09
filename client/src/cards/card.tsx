@@ -8,30 +8,33 @@ import { FC, useCallback, useState } from 'react'
 import { ArrowDownLeftFromSquare, Cat } from 'lucide-react'
 import { createToast } from '@/utils/toast'
 import { formatCardNumber } from './utils'
+import { useTranslation } from 'react-i18next'
 
 export const Card: FC<{
   card: CardType
   onDelete?: () => unknown
 }> = ({ card, onDelete }) => {
+  const { t } = useTranslation('cards')
+
   const [activated, setActivated] = useState(false)
 
   const handleCopy = useCallback(() => {
     if (!card) return
     if (!navigator?.clipboard?.writeText) {
-      createToast('Could not copy the card number', { type: 'error' })
+      createToast(t('Could not copy the card number'), { type: 'error' })
       return
     }
 
     try {
       navigator.clipboard.writeText(card.number)
-      createToast('Copied card number to the clipboard', { type: 'success' })
+      createToast(t('Copied card number to the clipboard'), { type: 'success' })
     } catch (error) {
-      createToast('Could not copy card number', {
+      createToast(t('Could not copy card number'), {
         ...error instanceof Error && { description: error.message },
         type: 'error'
       })
     }
-  }, [card])
+  }, [card, t])
 
   const hasActionButtons = onDelete !== undefined
 
@@ -73,12 +76,12 @@ export const Card: FC<{
         <Separator />
         <CardFooter className='flex flex-row items-stretch p-0 h-full'>
           <Button className='grow basis-1' variant='link' onClick={handleCopy}>
-            Copy
+            {t('Copy')}
           </Button>
           {!!onDelete && <>
             <Separator orientation='vertical' />
             <Button className='grow basis-1 text-destructive' variant='link' onClick={onDelete}>
-              Delete
+              {t('Delete')}
             </Button>
           </>}
         </CardFooter>
