@@ -22,7 +22,8 @@ export const UserCombobox: FC<{
   deselectable?: true
   disabled?: boolean
   onSelect: (user: User | undefined) => unknown
-}> = ({ variant = 'combobox', placeholder, selectedUser, deselectable, users, exclude, disabled, onSelect }) => {
+  footerNote?: string
+}> = ({ variant = 'combobox', placeholder, selectedUser, deselectable, users, exclude, disabled, onSelect, footerNote }) => {
   const { currentUser } = useRequiredAuth()
   const recentUsers = useRecentUsers()
 
@@ -117,6 +118,8 @@ export const UserCombobox: FC<{
 
           {!!isRemoteSearchEnabled && !isQueryValid && <CommandItem>Type at least 3 characters to search</CommandItem>}
           {searchResults.length > 0 && !!isSearching && <CommandItem>Searching...</CommandItem>}
+
+          {!!footerNote && <CommandItem className={cn('text-primary/90 italic')}>{footerNote}</CommandItem>}
         </CommandGroup>
       </Command>
     </PopoverContent>
