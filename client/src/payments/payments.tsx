@@ -9,6 +9,7 @@ import { Alert } from '@/components/alert-dialog'
 import { cn } from '@/utils/cn'
 import { createToast } from '@/utils/toast'
 import { useUsersQuery } from '@/users/api'
+import { DebtsWidget } from '@/debts/debts-widget'
 
 const perPage = 15
 
@@ -55,6 +56,8 @@ export const Payments: FC = () => {
           </Button>
         </Link>
       </div>
+
+      <DebtsWidget refreshKey={payments?.total} />
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} hideByDefault />
 
