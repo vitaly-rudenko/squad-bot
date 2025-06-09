@@ -2,6 +2,7 @@ import { Pagination as PaginationRoot, PaginationContent, PaginationItem, Pagina
 import { cn } from '@/utils/cn'
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { FC, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export const Pagination: FC<{
   totalPages: number
@@ -9,6 +10,8 @@ export const Pagination: FC<{
   setPage: (page: number) => void
   hideByDefault?: true
 }> = ({ page, setPage, totalPages, hideByDefault }) => {
+  const { t } = useTranslation('navigation')
+
   const [wasPageChanged, setWasPageChanged] = useState(false)
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export const Pagination: FC<{
       <PaginationItem className={cn(page === 1 && 'text-primary/70')}>
         <PaginationLink className='flex flex-row gap-2 w-auto' onClick={() => setPage(1)}>
           <ChevronsLeft className='w-4 h-4 shrink-0' />
-          <span>First</span>
+          <span>{t('First')}</span>
         </PaginationLink>
       </PaginationItem>
       {suggestions.map(suggestion => (
@@ -44,7 +47,7 @@ export const Pagination: FC<{
       ))}
       <PaginationItem className={cn(page === totalPages && 'text-primary/70')}>
         <PaginationLink className='flex flex-row gap-2 w-auto' onClick={() => setPage(totalPages)}>
-          <span>Last</span>
+          <span>{t('Last')}</span>
           <ChevronsRight className='w-4 h-4 shrink-0' />
         </PaginationLink>
       </PaginationItem>

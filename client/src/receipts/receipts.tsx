@@ -13,7 +13,7 @@ import { useUsersQuery } from '@/users/api'
 import { DebtsWidget } from '@/debts/debts-widget'
 import { useTranslation } from 'react-i18next'
 
-const perPage = 15
+const perPage = 1
 
 export const Receipts: FC = () => {
   const { t } = useTranslation('receipts')
