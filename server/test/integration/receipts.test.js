@@ -50,6 +50,8 @@ describe('[receipts]', () => {
         amount: 20,
         description: 'hello world',
         photoFilename: undefined,
+        createdByUserId: user.id,
+        updatedByUserId: user.id,
         debts: [{
           debtorId: user.id,
           amount: 20,
@@ -73,6 +75,8 @@ describe('[receipts]', () => {
         amount: 30,
         description: 'hello world',
         photoFilename: 'photo.jpg',
+        createdByUserId: user1.id,
+        updatedByUserId: user2.id,
         debts: [{
           debtorId: user1.id,
           amount: 10,
@@ -103,6 +107,8 @@ describe('[receipts]', () => {
         amount: 10,
         description: 'my receipt',
         photoFilename: undefined,
+        createdByUserId: user1.id,
+        updatedByUserId: user2.id,
         debts: [{
           debtorId: user1.id,
           amount: 10,
@@ -128,6 +134,8 @@ describe('[receipts]', () => {
         payerId: user1.id,
         amount: 5,
         photoFilename: 'photo.jpg',
+        createdByUserId: user1.id,
+        updatedByUserId: user1.id,
         debts: [{
           debtorId: user2.id,
           amount: 5,
@@ -161,6 +169,8 @@ describe('[receipts]', () => {
         payerId: user1.id,
         amount: 20,
         photoFilename: 'photo.jpg',
+        createdByUserId: user1.id,
+        updatedByUserId: user1.id,
         debts: [{
           debtorId: user1.id,
           amount: 5,
@@ -185,6 +195,8 @@ describe('[receipts]', () => {
         photoFilename: undefined,
         description: 'hello world',
         amount: 100,
+        createdByUserId: user3.id,
+        updatedByUserId: user3.id,
         debts: [{
           debtorId: user1.id,
           amount: 50,

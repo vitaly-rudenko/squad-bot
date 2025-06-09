@@ -439,6 +439,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                         selectedUser={field.value || undefined}
                         placeholder='Select payer'
                         onSelect={user => form.setValue('payer', user ?? '')}
+                        footerNote='Add user to receipt to select as payer.'
                       />
                     </FormItem>
                   )}

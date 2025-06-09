@@ -8,6 +8,9 @@ export type Receipt = {
   description?: string
   photoFilename?: string
   createdAt: Date
+  updatedAt: Date
+  createdByUserId: string
+  updatedByUserId: string
 }
 
 export type ReceiptWithDebts = Receipt & {
@@ -20,8 +23,3 @@ export type Photo = {
 }
 
 export type SaveReceiptInput = Infer<typeof saveReceiptSchema>
-
-export type ScanResult = {
-  amount: number
-  score: number
-}

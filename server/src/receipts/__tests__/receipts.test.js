@@ -143,7 +143,10 @@ describe('/receipts', () => {
         id: expect.any(String),
         payerId: payer.id,
         amount: 100_00,
-        createdAt: expect.any(String),
+        createdAt: receipt.createdAt,
+        updatedAt: receipt.updatedAt,
+        createdByUserId: payer.id,
+        updatedByUserId: payer.id,
         debts: [
           { debtorId: debtor1.id, amount: 75_25 },
           { debtorId: debtor2.id, amount: 24_75 },
@@ -203,10 +206,16 @@ describe('/receipts', () => {
         payerId: user.id,
         amount: 200_00,
         createdAt: receipt.createdAt,
+        updatedAt: updatedReceipt.updatedAt,
+        createdByUserId: user.id,
+        updatedByUserId: user.id,
         debts: [
           { debtorId: user.id, amount: 200_00 },
         ],
       })
+
+      expect(receipt.createdAt).toEqual(updatedReceipt.createdAt)
+      expect(receipt.updatedAt).not.toEqual(updatedReceipt.updatedAt)
     })
 
     it('replaces the photo', async () => {

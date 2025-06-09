@@ -16,6 +16,7 @@ exports[`scan extractAmounts() parses real receipts (snapshots) 1`] = `
   310000,
   318168,
   500,
+  202400,
   100,
   300,
 ]
@@ -95,6 +96,7 @@ exports[`scan extractAmounts() parses real receipts (snapshots) 5`] = `
   123456,
   816800,
   115500,
+  202400,
   100,
   300,
   800,
@@ -113,6 +115,7 @@ exports[`scan extractAmounts() parses real receipts (snapshots) 6`] = `
   110500,
   218000,
   1831000,
+  202400,
   100,
   300,
   200,

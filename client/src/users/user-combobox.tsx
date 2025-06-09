@@ -22,7 +22,8 @@ export const UserCombobox: FC<{
   deselectable?: true
   disabled?: boolean
   onSelect: (user: User | undefined) => unknown
-}> = ({ variant = 'combobox', placeholder, selectedUser, deselectable, users, exclude, disabled, onSelect }) => {
+  footerNote?: string
+}> = ({ variant = 'combobox', placeholder, selectedUser, deselectable, users, exclude, disabled, onSelect, footerNote }) => {
   const { currentUser } = useRequiredAuth()
   const recentUsers = useRecentUsers()
 
@@ -90,7 +91,11 @@ export const UserCombobox: FC<{
     </PopoverTrigger>
     <PopoverContent onOpenAutoFocus={event => event.preventDefault()} className='p-0 m-5'>
       <Command shouldFilter={false}>
-        <CommandInput value={query} onValueChange={setQuery} placeholder='Search users...' />
+        <CommandInput
+          value={query}
+          onValueChange={(value) => value.startsWith('@') ? setQuery(value.slice(1)) : setQuery(value)}
+          placeholder='Search users...'
+        />
         <CommandEmpty>{isSearching ? 'Searching...' : 'User not found.'}</CommandEmpty>
         <CommandGroup className='max-h-[30vh] overflow-y-auto'>
           {searchResults.map(user => (
@@ -117,6 +122,8 @@ export const UserCombobox: FC<{
 
           {!!isRemoteSearchEnabled && !isQueryValid && <CommandItem>Type at least 3 characters to search</CommandItem>}
           {searchResults.length > 0 && !!isSearching && <CommandItem>Searching...</CommandItem>}
+
+          {!!footerNote && <CommandItem className={cn('text-primary/90 italic')}>{footerNote}</CommandItem>}
         </CommandGroup>
       </Command>
     </PopoverContent>

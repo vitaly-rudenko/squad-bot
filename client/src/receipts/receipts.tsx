@@ -10,8 +10,9 @@ import { Alert } from '@/components/alert-dialog'
 import { cn } from '@/utils/cn'
 import { createToast } from '@/utils/toast'
 import { useUsersQuery } from '@/users/api'
+import { DebtsWidget } from '@/debts/debts-widget'
 
-const perPage = 15
+const perPage = 1
 
 export const Receipts: FC = () => {
   const router = useRouter()
@@ -68,6 +69,8 @@ export const Receipts: FC = () => {
           </Button>
         </Link>
       </div>
+
+      <DebtsWidget refreshKey={receipts?.total} />
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} hideByDefault />
 

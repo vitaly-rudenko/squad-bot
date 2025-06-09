@@ -38,6 +38,7 @@ const defaultValues: FormState = {
 
 export const PaymentEditor: FC<{
   toUser?: User
+  fromUser?: User
   amount?: number
 }> = (props) => {
   const router = useRouter()
@@ -89,11 +90,15 @@ export const PaymentEditor: FC<{
       fromUser: currentUser,
       ...recentUser && { toUser: recentUser },
       ...props.toUser && { toUser: props.toUser },
+      ...props.fromUser && {
+        fromUser: props.fromUser,
+        toUser: props.toUser ?? currentUser,
+      },
       ...props.amount && { amount: formatAmount(props.amount) },
     })
 
     return true
-  }, [currentUser, form, props.amount, props.toUser, recentUsers])
+  }, [currentUser, form, props.amount, props.toUser, props.fromUser, recentUsers])
 
   useEffect(() => {
     if (!recentUsers || !$toUser || $toUser.id === currentUser.id) {

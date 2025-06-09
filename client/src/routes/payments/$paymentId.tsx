@@ -7,6 +7,7 @@ import { coerce, number, optional, string, type } from 'superstruct'
 const searchSchema = type({
   amount: optional(coerce(number(), string(), (value) => Number(value))),
   to_user_id: optional(coerce(string(), number(), (value) => String(value))),
+  from_user_id: optional(coerce(string(), number(), (value) => String(value))),
 })
 
 export const Route = createFileRoute('/payments/$paymentId')({
@@ -17,10 +18,15 @@ export const Route = createFileRoute('/payments/$paymentId')({
 function PaymentComponent() {
   const search = Route.useSearch()
   const toUser = useUserQuery(search.to_user_id)
+  const fromUser = useUserQuery(search.from_user_id)
 
   if (search.to_user_id && !toUser) {
     return <SpinnerArea />
   }
 
-  return <PaymentEditor toUser={toUser} amount={search.amount} />
+  if (search.from_user_id && !fromUser) {
+    return <SpinnerArea />
+  }
+
+  return <PaymentEditor toUser={toUser} fromUser={fromUser} amount={search.amount} />
 }

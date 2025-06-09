@@ -1,6 +1,6 @@
 {
   "name": "squad-bot",
-  "version": "6.6.1",
+  "version": "7.0.0",
   "description": "Telegram bot assistant for squads",
   "main": "src/app.js",
   "type": "module",

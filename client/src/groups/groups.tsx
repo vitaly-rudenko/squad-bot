@@ -5,6 +5,7 @@ import { RefreshCcw } from 'lucide-react'
 import { Pagination } from '@/navigation/pagination'
 import { Group, GroupSkeleton } from './group'
 import { useRouter } from '@tanstack/react-router'
+import { Card } from '@/components/card'
 
 const perPage = 15
 
@@ -23,6 +24,10 @@ export const Groups: FC = () => {
           <RefreshCcw className='w-4 h-4 self-center' />
         </div>
       </div>
+
+      <Card className={cn('px-3 py-1 bg-secondary border-none italic shadow-none text-primary/90')}>
+        <a className='underline' href='https://t.me/groupsquadbot'>@groupsquadbot</a> only sees users that have sent at least one message to the group.
+      </Card>
 
       <Pagination page={page} totalPages={totalPages} setPage={setPage} hideByDefault />
 
