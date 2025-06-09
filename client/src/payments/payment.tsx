@@ -11,6 +11,7 @@ import { formatAmount } from '@/utils/format-amount'
 import { formatDateTime } from '@/utils/format-date-time'
 import { ArrowLeftToLine, ArrowRightFromLine } from 'lucide-react'
 import { FC, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export const Payment: FC<{
   users: User[]
@@ -18,6 +19,8 @@ export const Payment: FC<{
   onEdit: () => unknown
   onDelete: () => unknown
 }> = ({ users, payment, onEdit, onDelete }) => {
+  const { t } = useTranslation('payments')
+
   const { currentUser } = useRequiredAuth()
   const [activated, setActivated] = useState(false)
 
@@ -64,11 +67,11 @@ export const Payment: FC<{
       <Separator />
       <CardFooter className='flex flex-row items-stretch p-0 h-full'>
         <Button className='grow basis-1 flex flex-row gap-2' variant='link' disabled onClick={onEdit}>
-          Edit
+          {t('Edit')}
         </Button>
         <Separator orientation='vertical' />
         <Button className='grow basis-1 flex flex-row gap-2 text-destructive' variant='link' onClick={onDelete}>
-          Delete
+          {t('Delete')}
         </Button>
       </CardFooter>
     </div>

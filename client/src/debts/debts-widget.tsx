@@ -8,8 +8,11 @@ import { formatAmount } from '@/utils/format-amount'
 import { Skeleton } from '@/components/skeleton'
 import { Ribbon } from '@/receipts/ribbon'
 import { useDebtsQuery } from './api'
+import { useTranslation } from 'react-i18next'
 
 export const DebtsWidget: FC<{ refreshKey?: unknown }> = (props) => {
+  const { t } = useTranslation('debts')
+
   const router = useRouter()
   const { data: debts, refetch } = useDebtsQuery()
 
@@ -36,8 +39,9 @@ export const DebtsWidget: FC<{ refreshKey?: unknown }> = (props) => {
   }
 
   return <Ribbon className='py-1'>
-    {flattenedDebts.map(debt => <>
+    {flattenedDebts.map(debt => (
       <Badge
+        key={`${debt.type}_${debt.userId}`}
         className={cn(
           'relative h-7 cursor-pointer justify-center',
           debt.type === 'ingoing'
@@ -64,10 +68,10 @@ export const DebtsWidget: FC<{ refreshKey?: unknown }> = (props) => {
               : <ArrowRightFromLine className='w-4 h-4' />}
           </span>
           <span>
-            ₴{formatAmount(debt.amount)} {debt.type === 'ingoing' ? 'from' : 'to'} {users.find(u => u.id === debt.userId)?.name}
+            ₴{formatAmount(debt.amount)} {debt.type === 'ingoing' ? t('from') : t('to')} {users.find(u => u.id === debt.userId)?.name}
           </span>
         </div>
       </Badge>
-    </>)}
+    ))}
   </Ribbon>
 }

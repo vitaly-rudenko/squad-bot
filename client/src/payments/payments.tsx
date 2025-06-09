@@ -10,10 +10,13 @@ import { cn } from '@/utils/cn'
 import { createToast } from '@/utils/toast'
 import { useUsersQuery } from '@/users/api'
 import { DebtsWidget } from '@/debts/debts-widget'
+import { useTranslation } from 'react-i18next'
 
 const perPage = 15
 
 export const Payments: FC = () => {
+  const { t } = useTranslation('payments')
+
   const [page, setPage] = useState(1)
   const { data: payments, refetch, isRefetching, isSuccess } = usePaymentsQuery({ page, perPage })
   const totalPages = Math.max(1, payments ? Math.ceil(payments.total / perPage) : 1)
@@ -47,12 +50,12 @@ export const Payments: FC = () => {
     <div className='animation-down-top flex flex-col gap-3'>
       <div className='flex flex-row justify-between items-baseline'>
         <div className='flex flex-row gap-2 items-baseline text-xl font-medium cursor-pointer' onClick={() => refetch()}>
-          <span>Payments</span>
+          <span>{t('Payments')}</span>
           <RefreshCcw className='w-4 h-4 self-center shrink-0' />
         </div>
         <Link to='/payments/$paymentId' params={{ paymentId: 'new' }} className='group'>
           <Button variant='link' className='p-0 h-auto flex flex-row gap-1 items-baseline'>
-            <Plus className='w-4 h-4 self-center shrink-0' /><span>Record a payment</span>
+            <Plus className='w-4 h-4 self-center shrink-0' /><span>{t('Record a payment')}</span>
           </Button>
         </Link>
       </div>

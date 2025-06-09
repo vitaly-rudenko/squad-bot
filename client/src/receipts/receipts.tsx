@@ -11,10 +11,12 @@ import { cn } from '@/utils/cn'
 import { createToast } from '@/utils/toast'
 import { useUsersQuery } from '@/users/api'
 import { DebtsWidget } from '@/debts/debts-widget'
+import { useTranslation } from 'react-i18next'
 
 const perPage = 15
 
 export const Receipts: FC = () => {
+  const { t } = useTranslation('receipts')
   const router = useRouter()
 
   const [page, setPage] = useState(1)
@@ -59,13 +61,13 @@ export const Receipts: FC = () => {
     <div className='animation-down-top flex flex-col gap-3'>
       <div className='flex flex-row justify-between items-baseline'>
         <div className='flex flex-row gap-2 items-baseline text-xl font-medium cursor-pointer' onClick={() => refetch()}>
-          <span>Receipts</span>
+          <span>{t('Receipts')}</span>
           <RefreshCcw className='w-4 h-4 self-center shrink-0' />
         </div>
         <Link to='/receipts/$receiptId' params={{ receiptId: 'new' }} className='group'>
           <Button variant='link' className='p-0 h-auto flex flex-row gap-1 items-baseline'>
             <Plus className='w-4 h-4 self-center shrink-0' />
-            <span>Record a receipt</span>
+            <span>{t('Record a receipt')}</span>
           </Button>
         </Link>
       </div>

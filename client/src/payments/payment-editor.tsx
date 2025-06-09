@@ -23,6 +23,7 @@ import { useCardsMutation } from '@/cards/api'
 import { Card as CardComponent, CardSkeleton } from '@/cards/card'
 import type { User } from '@/users/types'
 import { isValidAmount } from '@/utils/is-valid-amount'
+import { useTranslation } from 'react-i18next'
 
 type FormState = {
   fromUser: User | ''
@@ -41,6 +42,7 @@ export const PaymentEditor: FC<{
   fromUser?: User
   amount?: number
 }> = (props) => {
+  const { t } = useTranslation('payments')
   const router = useRouter()
 
   const { currentUser } = useRequiredAuth()
@@ -67,7 +69,7 @@ export const PaymentEditor: FC<{
   const submit = form.handleSubmit(async (form) => {
     if (!isDefined(amount) || form.fromUser === '' || form.toUser === '') return
 
-    const toastId = createToast('Saving the payment...', { type: 'loading' })
+    const toastId = createToast(t('Saving the payment...'), { type: 'loading' })
 
     await createMutation.mutateAsync({
       fromUserId: form.fromUser.id,
@@ -122,7 +124,7 @@ export const PaymentEditor: FC<{
         !createMutation.isIdle && 'grayscale opacity-70 pointer-events-none',
       )}>
         <CardHeader>
-          <CardTitle>Record a payment</CardTitle>
+          <CardTitle>{t('Record a payment')}</CardTitle>
         </CardHeader>
         <CardContent className='flex flex-col gap-3 pb-3'>
           {/* Sender */}
@@ -133,7 +135,7 @@ export const PaymentEditor: FC<{
               <FormItem className='flex flex-col flex-auto min-w-0'>
                 <UserCombobox
                   selectedUser={field.value || undefined}
-                  placeholder='Select sender'
+                  placeholder={t('Select sender')}
                   onSelect={user => {
                     form.setValue('toUser', user?.id === currentUser.id ? $fromUser : currentUser)
                     form.setValue('fromUser', user ?? '')
@@ -158,7 +160,7 @@ export const PaymentEditor: FC<{
               render={({ field }) => (
                 <FormItem className='flex flex-col flex-auto'>
                   <div className='flex flex-col justify-center relative'>
-                    <Input type='text' value={field.value} placeholder={isDefined(suggestedAmount) ? formatAmount(suggestedAmount) : 'Enter amount'}
+                    <Input type='text' value={field.value} placeholder={isDefined(suggestedAmount) ? formatAmount(suggestedAmount) : t('Enter amount')}
                       className={cn(field.value !== '' && enteredAmountError && 'border-destructive')}
                       onChange={(event) => form.setValue('amount', sanitizeMagicAmount(event.target.value))} />
                     {(isMagicalAmount($amount) || (isDefined(suggestedAmount) && field.value === '')) && <PoweredByMagic />}
@@ -176,7 +178,7 @@ export const PaymentEditor: FC<{
               <FormItem className='flex flex-col flex-auto min-w-0'>
                 <UserCombobox
                   selectedUser={field.value || undefined}
-                  placeholder='Select receiver'
+                  placeholder={t('Select receiver')}
                   onSelect={user => {
                     form.setValue('fromUser', user?.id === currentUser.id ? $toUser : currentUser)
                     form.setValue('toUser', user ?? '')
@@ -190,18 +192,18 @@ export const PaymentEditor: FC<{
           {/* Save button */}
           <Button type='submit' disabled={!valid || !createMutation.isIdle}>
             {isDefined(amount) && amount > 0
-              ? <>Save ₴{formatAmount(amount)} payment</>
-              : <>Save payment</>}
+              ? <>{t('Save ')}₴{formatAmount(amount)}{t(' payment')}</>
+              : <>{t('Save payment')}</>}
           </Button>
         </CardFooter>
       </Card>
 
       {!!showCards && (
         <div className='flex flex-col gap-2 pt-3 transition animation-down-top'>
-          <div className='text-xl'>{$toUser.name}'s cards</div>
+          <div className='text-xl'>{$toUser.name}{t('\'s cards')}</div>
           {cards ? <>
             {cards.total === 0 && (
-              <div>User hasn't added any cards yet.</div>
+              <div>{t('User hasn\'t added any cards yet.')}</div>
             )}
             {cards.items.map((card) => (
               <CardComponent key={card.id} card={card} />
