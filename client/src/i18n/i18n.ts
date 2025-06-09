@@ -19,7 +19,9 @@ i18n
     },
 
     backend: {
-      loadPath: '/squad-bot/locales/{{lng}}/{{ns}}.json'
+      ...window.location.host === 'vitaly-rudenko.github.io' && {
+        loadPath: '/squad-bot/locales/{{lng}}/{{ns}}.json'
+      }
     },
   })
 

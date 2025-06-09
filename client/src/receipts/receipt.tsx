@@ -13,6 +13,7 @@ import { getReceiptPhotoUrl } from './get-receipt-photo-url'
 import type { User } from '@/users/types'
 import { parseDescription } from './utils'
 import { useTranslation } from 'react-i18next'
+import { useI18n } from '@/i18n/hooks'
 
 export const Receipt: FC<{
   users: User[]
@@ -22,6 +23,8 @@ export const Receipt: FC<{
   onPhotoView: (photoUrl: string) => unknown
 }> = ({ users, receipt, onEdit, onDelete, onPhotoView }) => {
   const { t } = useTranslation('receipts')
+  const { language } = useI18n()
+
   const [activated, setActivated] = useState(false)
 
   const payer = users.find(u => u.id === receipt.payerId)
@@ -46,7 +49,7 @@ export const Receipt: FC<{
             <span className={cn(description ? 'font-medium' : 'text-primary/70', 'truncate')}>{description ?? t('(no description)')}</span>
           </div>
           <div className={cn('whitespace-nowrap text-primary/70', activated && 'animation-right-left')}>
-            {formatDateTime(receipt.createdAt, { expand: activated })}
+            {formatDateTime(receipt.createdAt, { expand: activated, language })}
           </div>
         </div>
         <div className='flex flex-row justify-between items-baseline gap-3'>

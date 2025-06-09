@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom/client'
 import { routeTree } from './routeTree.gen'
 import { Route as RootRoute } from './routes/__root'
 import { Button } from '@/components/button'
-import './i18n'
+import './i18n/i18n'
 import './globals.css'
 
 Sentry.init({

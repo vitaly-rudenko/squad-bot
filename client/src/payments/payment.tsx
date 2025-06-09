@@ -12,6 +12,7 @@ import { formatDateTime } from '@/utils/format-date-time'
 import { ArrowLeftToLine, ArrowRightFromLine } from 'lucide-react'
 import { FC, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useI18n } from '@/i18n/hooks'
 
 export const Payment: FC<{
   users: User[]
@@ -20,6 +21,7 @@ export const Payment: FC<{
   onDelete: () => unknown
 }> = ({ users, payment, onEdit, onDelete }) => {
   const { t } = useTranslation('payments')
+  const { language } = useI18n()
 
   const { currentUser } = useRequiredAuth()
   const [activated, setActivated] = useState(false)
@@ -53,7 +55,7 @@ export const Payment: FC<{
             <span className='overflow-hidden'><UserName user={participant} /></span>
           </div>
           <div className={cn('whitespace-nowrap text-primary/70', activated && 'animation-right-left')}>
-            {formatDateTime(payment.createdAt, { expand: activated })}
+            {formatDateTime(payment.createdAt, { expand: activated, language })}
           </div>
         </div>
       </CardHeader>
