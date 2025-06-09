@@ -91,7 +91,11 @@ export const UserCombobox: FC<{
     </PopoverTrigger>
     <PopoverContent onOpenAutoFocus={event => event.preventDefault()} className='p-0 m-5'>
       <Command shouldFilter={false}>
-        <CommandInput value={query} onValueChange={setQuery} placeholder='Search users...' />
+        <CommandInput
+          value={query}
+          onValueChange={(value) => value.startsWith('@') ? setQuery(value.slice(1)) : setQuery(value)}
+          placeholder='Search users...'
+        />
         <CommandEmpty>{isSearching ? 'Searching...' : 'User not found.'}</CommandEmpty>
         <CommandGroup className='max-h-[30vh] overflow-y-auto'>
           {searchResults.map(user => (
