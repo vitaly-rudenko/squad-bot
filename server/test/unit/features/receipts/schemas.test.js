@@ -84,11 +84,12 @@ describe('schemas/receipts', () => {
         saveReceiptSchema.create({
           ...minimalReceipt,
           debts: JSON.stringify(Object.fromEntries(
-            Array.from(new Array(10), (_, i) => [`fake-user-${i + 1}`, '100'])
+            Array.from(new Array(25), (_, i) => [`fake-user-${i + 1}`, '100'])
           )),
         }).debts
-      ).to.deep.eq(Array.from(new Array(10), (_, i) => ({ debtorId: `fake-user-${i + 1}`, amount: 100 })))
+      ).to.deep.eq(Array.from(new Array(25), (_, i) => ({ debtorId: `fake-user-${i + 1}`, amount: 100 })))
 
+      // Empty: fails
       expect(
         () => saveReceiptSchema.create({
           ...minimalReceipt,
@@ -96,11 +97,12 @@ describe('schemas/receipts', () => {
         })
       ).to.throw(StructError)
 
+      // Too many debts: fails
       expect(
         () => saveReceiptSchema.create({
           ...minimalReceipt,
           debts: JSON.stringify(Object.fromEntries(
-            Array.from(new Array(11), (_, i) => [`fake-user-${i + 1}`, '100'])
+            Array.from(new Array(26), (_, i) => [`fake-user-${i + 1}`, '100'])
           )),
         })
       ).to.throw(StructError)

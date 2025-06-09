@@ -30,9 +30,10 @@ export const generateUserId = () => {
   return `${uniqueNamesGenerator(nameConfig)}_${crypto.randomBytes(3).toString('hex')}`
 }
 
-export function validateResponse(response) {
+export async function validateResponse(response) {
   if (!String(response.status).startsWith('2')) {
-    throw new Error(`Invalid response: ${response.status} (${response.statusText})`)
+    const json = await response.json().catch(() => null)
+    throw new Error(`Invalid response: ${response.status} (${response.statusText}, response: ${JSON.stringify(json, null)})`)
   }
 }
 
@@ -48,7 +49,7 @@ export async function createUser(index) {
     }
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -116,7 +117,7 @@ export async function createReceipt(payerId, debts, {
     body,
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -127,7 +128,7 @@ export async function getReceipts(userId) {
     headers: createAuthorizationHeader({ userId })
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -145,7 +146,7 @@ export async function getReceipt(receiptId, userId) {
     headers: createAuthorizationHeader({ userId }),
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -156,7 +157,7 @@ export async function deleteReceipt(receiptId, userId) {
     method: 'DELETE',
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 }
 
 /** @returns {Promise<{ binary: ArrayBufferLike; mime: string }>} */
@@ -194,12 +195,13 @@ export function expectReceiptsToEqual(receipts1, receipts2) {
 }
 
 export function expectReceiptToShallowEqual(receipt1, receipt2) {
-  const { id, createdAt, photoFilename, ...shallowReceipt1 } = receipt1
+  const { id, createdAt, updatedAt, photoFilename, ...shallowReceipt1 } = receipt1
   const { photoFilename: photoFilename2, ...shallowReceipt2 } = receipt2
 
   expect(id).to.be.a.string
   expect((photoFilename !== undefined) === (photoFilename2 !== undefined)).to.be.true
   expect(Date.parse(createdAt)).to.be.greaterThanOrEqual(Date.now() - 10000)
+  expect(Date.parse(updatedAt)).to.be.greaterThanOrEqual(Date.now() - 10000)
   expect(shallowReceipt1).to.deep.equalInAnyOrder(shallowReceipt2)
 }
 
@@ -233,7 +235,7 @@ export async function createPayment(fromUserId, toUserId, amount) {
     body: JSON.stringify(payment)
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -244,7 +246,7 @@ export async function deletePayment(paymentId, userId) {
     headers: createAuthorizationHeader({ userId }),
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 }
 
 /** @returns {Promise<import('../../src/debts/types').Debt[]>} */
@@ -253,7 +255,7 @@ export async function getDebts(userId) {
     headers: createAuthorizationHeader({ userId }),
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -264,6 +266,8 @@ export async function createRollCall(userId, groupId, sortOrder = 1, {
   usersPattern = '*',
   excludeSender = true,
   pollOptions = [],
+  isMultiselectPoll = false,
+  isAnonymousPoll = false,
 } = {}) {
   const response = await fetch(`${TEST_API_URL}/roll-calls`, {
     method: 'POST',
@@ -278,10 +282,12 @@ export async function createRollCall(userId, groupId, sortOrder = 1, {
       excludeSender,
       pollOptions,
       sortOrder,
+      isMultiselectPoll,
+      isAnonymousPoll,
     })
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -320,7 +326,7 @@ export async function updateRollCall(userId, rollCallId, {
     })
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 }
 
 /** @returns {Promise<{ items: import('../../src/roll-calls/types').RollCall[], total: number }>} */
@@ -329,7 +335,7 @@ export async function getRollCalls(groupId, userId) {
     headers: createAuthorizationHeader({ userId }),
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -340,7 +346,7 @@ export async function deleteRollCall(id, userId) {
     headers: createAuthorizationHeader({ userId }),
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 }
 
 /** @returns {Promise<{ items: import('../../src/groups/types').Group[]; total: number }>} */
@@ -349,7 +355,7 @@ export async function getGroups(userId) {
     headers: createAuthorizationHeader({ userId }),
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 
   return await response.json()
 }
@@ -362,7 +368,7 @@ export async function createMembership(userId, groupId, title = 'Fake chat') {
     body: JSON.stringify({ userId, groupId, title })
   })
 
-  validateResponse(response)
+  await validateResponse(response)
 }
 
 export const NO_DEBTS = { ingoingDebts: [], outgoingDebts: [] }

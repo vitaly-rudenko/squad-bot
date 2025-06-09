@@ -18,7 +18,7 @@ describe('[roll calls]', () => {
     const user = await createUser()
 
     await expect(createRollCall(user.id, groupId))
-      .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden)')
+      .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden, response: {"error":{"code":"NOT_AUTHORIZED","message":"Access denied"}})')
   })
 
   it('should sort roll calls by sort order values', async () => {
@@ -172,9 +172,9 @@ describe('[roll calls]', () => {
     const rollCall2 = await createRollCall(user2.id, group2Id, 2)
 
     await expect(deleteRollCall(rollCall1.id, user2.id))
-      .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden)')
+      .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden, response: {"error":{"code":"NOT_AUTHORIZED","message":"Access denied"}})')
     await expect(deleteRollCall(rollCall2.id, user1.id))
-      .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden)')
+      .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden, response: {"error":{"code":"NOT_AUTHORIZED","message":"Access denied"}})')
   })
 
   it('should restrict updating', async () => {
@@ -190,7 +190,7 @@ describe('[roll calls]', () => {
     })
 
     await expect(updateRollCall(otherUser.id, rollCall.id, { excludeSender: false }))
-      .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden)')
+      .to.eventually.be.rejectedWith('Invalid response: 403 (Forbidden, response: {"error":{"code":"NOT_AUTHORIZED","message":"Access denied"}})')
   })
 
   it('should allow updating roll calls', async () => {
