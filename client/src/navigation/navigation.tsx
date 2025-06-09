@@ -1,4 +1,4 @@
-import { FC, useEffect, useMemo, useState } from 'react'
+import { FC, useMemo, useState } from 'react'
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList } from '@/components/navigation-menu'
 import { Link } from '@tanstack/react-router'
 import { Button } from '@/components/button'

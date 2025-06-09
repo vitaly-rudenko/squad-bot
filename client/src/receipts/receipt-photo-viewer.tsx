@@ -4,6 +4,7 @@ import { Spinner } from '@/components/spinner'
 import { cn } from '@/utils/cn'
 import { RotateCw, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { ElementRef, FC, useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export const ReceiptPhotoViewer: FC<{
   open: boolean
@@ -12,6 +13,8 @@ export const ReceiptPhotoViewer: FC<{
   onDelete?: () => unknown
   onReplace?: () => unknown
 }> = ({ open, photoSrc, onClose, onDelete, onReplace }) => {
+  const { t } = useTranslation('receipts')
+
   const [img, setImg] = useState<ElementRef<'img'> | null>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -79,9 +82,9 @@ export const ReceiptPhotoViewer: FC<{
         </div>
 
         <DialogFooter className='z-2 animation-appear'>
-          {!!onReplace && <Button variant='secondary' onClick={onReplace}>Replace</Button>}
-          {!!onDelete && <Button variant='destructive' onClick={onDelete}>Delete</Button>}
-          <Button variant='default' className='w-20' onClick={handleClose}>Close</Button>
+          {!!onReplace && <Button variant='secondary' onClick={onReplace}>{t('Replace')}</Button>}
+          {!!onDelete && <Button variant='destructive' onClick={onDelete}>{t('Delete')}</Button>}
+          <Button variant='default' className='w-20' onClick={handleClose}>{t('Close')}</Button>
         </DialogFooter>
       </>}
     </DialogContent>
