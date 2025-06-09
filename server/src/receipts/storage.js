@@ -10,42 +10,37 @@ export class ReceiptsPostgresStorage {
   }
 
   /**
-   * @param {Omit<import('./types').Receipt, 'id'>} receipt
+   * @param {Omit<import('./types').Receipt, 'id' | 'createdAt' | 'updatedAt' | 'updatedByUserId'>} receipt
    * @returns {Promise<import('./types').Receipt>}
    */
   async create(receipt) {
-    const response = await this._client.query(`
-      INSERT INTO receipts (id, payer_id, amount, description, photo_filename, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id;
+    const { rows } = await this._client.query(`
+      INSERT INTO receipts (id, payer_id, amount, description, photo_filename, created_by_user_id, updated_by_user_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      RETURNING *;
     `, [
       generateId(),
       receipt.payerId,
       receipt.amount,
       receipt.description,
       receipt.photoFilename,
-      receipt.createdAt,
+      receipt.createdByUserId,
+      receipt.createdByUserId,
     ])
 
-    return {
-      id: response.rows[0]['id'],
-      ...receipt,
-    }
+    return deserializeReceipt(rows[0])
   }
 
-  /** @param {Omit<import('./types').Receipt, 'createdAt'>} receipt */
+  /** @param {Omit<import('./types').Receipt, 'createdByUserId' | 'createdAt' | 'updatedAt'>} receipt */
   async update(receipt) {
-    const response = await this._client.query(`
+    const { rows } = await this._client.query(`
       UPDATE receipts
-      SET payer_id = $2, amount = $3, description = $4, photo_filename = $5
+      SET payer_id = $2, amount = $3, description = $4, photo_filename = $5, updated_by_user_id = $6, updated_at = NOW()
       WHERE id = $1
-      RETURNING created_at;
-    `, [receipt.id, receipt.payerId, receipt.amount, receipt.description, receipt.photoFilename])
+      RETURNING *;
+    `, [receipt.id, receipt.payerId, receipt.amount, receipt.description, receipt.photoFilename, receipt.updatedByUserId])
 
-    return {
-      ...receipt,
-      createdAt: new Date(response.rows[0]['created_at']),
-    }
+    return deserializeReceipt(rows[0])
   }
 
   /** @param {string} id */
@@ -111,7 +106,9 @@ export class ReceiptsPostgresStorage {
 
     const response = await this._client.query(`
       SELECT ${distinctClause}r.id
-        , r.created_at, r.payer_id, r.amount, r.description, r.photo_filename
+        , r.payer_id, r.amount, r.description, r.photo_filename
+        , r.created_by_user_id, r.updated_by_user_id
+        , r.created_at, r.updated_at
       FROM receipts r ${joinClause} ${whereClause}
       ORDER BY created_at ${ascending ? 'ASC' : 'DESC'}
       LIMIT ${limit} OFFSET ${offset};
@@ -137,9 +134,12 @@ function deserializeReceipt(row) {
   return {
     id: row['id'],
     createdAt: new Date(row['created_at']),
+    updatedAt: new Date(row['updated_at']),
     payerId: row['payer_id'],
     amount: row['amount'],
     description: row['description'] ?? undefined,
     photoFilename: row['photo_filename'] ?? undefined,
+    createdByUserId: row['created_by_user_id'],
+    updatedByUserId: row['updated_by_user_id'],
   }
 }

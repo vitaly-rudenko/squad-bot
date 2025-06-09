@@ -45,6 +45,9 @@ describe('receipts/notifications', () => {
           payerId: payer.id,
           photoFilename: 'photo.jpg',
           createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: editor.id,
+          updatedByUserId: editor.id,
           description: 'Hello world!',
         },
         debts: [
@@ -119,6 +122,9 @@ describe('receipts/notifications', () => {
           payerId: payer.id,
           photoFilename: 'photo.jpg',
           createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: editor.id,
+          updatedByUserId: editor.id,
           description: 'Hello world!',
         },
         debts: [
@@ -195,6 +201,9 @@ describe('receipts/notifications', () => {
           payerId: payer.id,
           photoFilename: 'photo.jpg',
           createdAt: new Date(),
+          updatedAt: new Date(),
+          createdByUserId: editor.id,
+          updatedByUserId: editor.id,
           description: 'Hello world!',
         },
         debts: [

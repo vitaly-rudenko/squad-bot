@@ -84,6 +84,7 @@ export function createReceiptsRouter() {
         amount,
         description,
         photoFilename: leavePhoto ? receipt.photoFilename : photoFilename,
+        updatedByUserId: req.user.id,
       })
 
       await debtsStorage.deleteByReceiptId(id)
@@ -93,7 +94,7 @@ export function createReceiptsRouter() {
         amount,
         description,
         photoFilename,
-        createdAt: new Date(),
+        createdByUserId: req.user.id,
       })
     }
 
@@ -242,6 +243,9 @@ function formatReceipt(receipt, debts) {
   return {
     id: receipt.id,
     createdAt: receipt.createdAt,
+    updatedAt: receipt.updatedAt,
+    createdByUserId: receipt.createdByUserId,
+    updatedByUserId: receipt.updatedByUserId,
     payerId: receipt.payerId,
     amount: receipt.amount,
     description: receipt.description,
@@ -251,6 +255,6 @@ function formatReceipt(receipt, debts) {
       .map(debt => ({
         debtorId: debt.debtorId,
         amount: debt.amount,
-      }))
+      })),
   }
 }
