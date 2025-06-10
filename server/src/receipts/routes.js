@@ -184,10 +184,10 @@ export function createReceiptsRouter() {
     res.sendStatus(204)
   })
 
-  if (!env.USE_TEST_MODE) {
-    router.use(createRateLimiterMiddleware({
+  router.post('/receipts/scan',
+    createRateLimiterMiddleware({
       keyPrefix: 'scan',
-      points: 100,
+      points: env.USE_TEST_MODE ? Infinity : 100,
       durationMs: DAY_MS,
       calculatePoints: async (userId) => {
         const { items: [oldestReceipt] } = await receiptsStorage.find({
@@ -204,32 +204,32 @@ export function createReceiptsRouter() {
         if (diff >= WEEK_MS) return 4 // 25 per day
         return 25 // 4 per day
       }
-    }))
-  }
+    }),
+    upload.single('photo'),
+    async (req, res) => {
+      if (req.file && req.file.size > MAX_FILE_SIZE_BYTES) { // 300 kb
+        throw new ApiError({
+          code: 'PHOTO_TOO_LARGE',
+          status: 413,
+          message: 'Receipt photo is too large',
+        })
+      }
 
-  router.post('/receipts/scan', upload.single('photo'), async (req, res) => {
-    if (req.file && req.file.size > MAX_FILE_SIZE_BYTES) { // 300 kb
-      throw new ApiError({
-        code: 'PHOTO_TOO_LARGE',
-        status: 413,
-        message: 'Receipt photo is too large',
-      })
+      const photo = photoSchema.create(req.file)
+
+      try {
+        const amounts = await scan(photo)
+        res.json(amounts)
+      } catch (err) {
+        logger.warn({ err }, 'Could not scan photo')
+        throw new ApiError({
+          code: 'SCAN_FAILED',
+          status: 502,
+          message: 'Could not scan photo',
+        })
+      }
     }
-
-    const photo = photoSchema.create(req.file)
-
-    try {
-      const amounts = await scan(photo)
-      res.json(amounts)
-    } catch (err) {
-      logger.warn({ err }, 'Could not scan photo')
-      throw new ApiError({
-        code: 'SCAN_FAILED',
-        status: 502,
-        message: 'Could not scan photo',
-      })
-    }
-  })
+  )
 
   return router
 }
