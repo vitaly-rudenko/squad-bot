@@ -1,0 +1,23 @@
+{
+  "Cards": "Cards",
+  "Adding the card...": "Adding the card...",
+  "You have already added this card": "You have already added this card",
+  "Card number": "Card number",
+  "Bank": "Bank",
+  "Monobank": "Monobank",
+  "Privatbank": "Privatbank",
+  "Could not copy the card number": "Could not copy the card number",
+  "Copied card number to the clipboard": "Copied card number to the clipboard",
+  "Could not copy card number": "Could not copy card number",
+  "Copy": "Copy",
+  "Delete": "Delete",
+  "Card has been deleted": "Card has been deleted",
+  "Delete card?": "Delete card?",
+  "Yes, delete it": "Yes, delete it",
+  "Add a card": "Add a card",
+  "Select user": "Select user",
+  "You haven't added any cards yet.": "You haven't added any cards yet.",
+  "hasn't added any cards yet.": "hasn't added any cards yet.",
+  "Add ": "Add ",
+  " card": " card"
+}
