@@ -44,3 +44,28 @@ export function paginationToLimitOffset({ page, per_page }) {
 export function unique(array) {
   return [...new Set(array)]
 }
+
+/**
+ * Split array into groups.
+ * Try make each group as large is possible, but less than `max`.
+ * Group size must be at least `min`, unless array size is smaller.
+ * Last group can be small.
+ *
+ * @param {T[]} array 
+ * @param {{ min: number; max: number }} param1 
+ * @returns {T[][]}
+ * @template T
+ */
+export function splitArrayIntoGroups(array, { min, max }) {
+  let groupSize = max
+  while (array.length % groupSize < min && array.length % groupSize !== 0) {
+    groupSize--
+  }
+
+  const groups = []
+  for (let i = 0; i < array.length; i += groupSize) {
+    groups.push(array.slice(i, i + groupSize))
+  }
+
+  return groups
+}

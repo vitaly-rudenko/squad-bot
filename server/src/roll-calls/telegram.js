@@ -2,6 +2,7 @@
 import { PatternBuilder, PatternMatcher, EntryMatchers } from '@vitalyrudenko/templater'
 import { registry } from '../registry.js'
 import { escapeMd, isGroupChat } from '../common/telegram.js'
+import { splitArrayIntoGroups } from '../common/utils.js'
 
 export function createRollCallsFlow() {
   const { rollCallsStorage, membershipStorage, usersStorage, localize, generateWebAppUrl } = registry.export()
@@ -96,15 +97,20 @@ export function createRollCallsFlow() {
     await context.reply(notification, { parse_mode: 'MarkdownV2', disable_web_page_preview: true })
 
     if (sendPoll) {
-      await context.replyWithPoll(
-        localize(locale, matchedRollCall.isMultiselectPoll ? 'rollCalls.pollTitleMultiselect' : 'rollCalls.pollTitle'),
-        matchedRollCall.pollOptions,
-        {
-          is_anonymous: matchedRollCall.isAnonymousPoll,
-          allows_multiple_answers: matchedRollCall.isMultiselectPoll,
-          disable_notification: true,
-        }
-      )
+      // Telegram has limits for polls: min options count is 2, max options count is 10
+      const pollOptionsGroups = splitArrayIntoGroups(matchedRollCall.pollOptions, { min: 2, max: 10 })
+
+      for (const pollOptions of pollOptionsGroups) {
+        await context.replyWithPoll(
+          localize(locale, matchedRollCall.isMultiselectPoll ? 'rollCalls.pollTitleMultiselect' : 'rollCalls.pollTitle'),
+          pollOptions,
+          {
+            is_anonymous: matchedRollCall.isAnonymousPoll,
+            allows_multiple_answers: matchedRollCall.isMultiselectPoll,
+            disable_notification: true,
+          }
+        )
+      }
     }
   }
 
