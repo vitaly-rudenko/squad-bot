@@ -79,8 +79,11 @@ export const localeFileSchema = object({
       message: _,
     }),
     noOneToMention: _,
+    notApplicablePollOption: _,
     pollTitle: _,
     pollTitleMultiselect: _,
+    groupPollTitle: _,
+    groupPollTitleMultiselect: _,
     notification: _,
     mention: object({
       withUsername: _,

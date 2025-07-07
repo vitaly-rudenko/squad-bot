@@ -4,6 +4,9 @@ import { registry } from '../registry.js'
 import { escapeMd, isGroupChat } from '../common/telegram.js'
 import { splitArrayIntoGroups } from '../common/utils.js'
 
+const MIN_POLL_OPTIONS_PER_POLL = 2
+const MAX_POLL_OPTIONS_PER_POLL = 10
+
 export function createRollCallsFlow() {
   const { rollCallsStorage, membershipStorage, usersStorage, localize, generateWebAppUrl } = registry.export()
 
@@ -98,11 +101,20 @@ export function createRollCallsFlow() {
 
     if (sendPoll) {
       // Telegram has limits for polls: min options count is 2, max options count is 10
-      const pollOptionsGroups = splitArrayIntoGroups(matchedRollCall.pollOptions, { min: 2, max: 10 })
+      // When option count is more than 10, we split them into multiple polls
+      // To avoid forcing people to pick an option, we add "N/A" option to each poll
+      const pollOptionsGroups = matchedRollCall.pollOptions.length > MAX_POLL_OPTIONS_PER_POLL
+        ? splitArrayIntoGroups(matchedRollCall.pollOptions, { min: MIN_POLL_OPTIONS_PER_POLL, max: MAX_POLL_OPTIONS_PER_POLL - 1 })
+          .map(pollOptions => [...pollOptions, localize(locale, 'rollCalls.notApplicablePollOption')])
+        : [matchedRollCall.pollOptions]
 
-      for (const pollOptions of pollOptionsGroups) {
+      for (const [i, pollOptions] of pollOptionsGroups.entries()) {
         await context.replyWithPoll(
-          localize(locale, matchedRollCall.isMultiselectPoll ? 'rollCalls.pollTitleMultiselect' : 'rollCalls.pollTitle'),
+          pollOptionsGroups.length > 1
+            ? localize(locale,
+              matchedRollCall.isMultiselectPoll ? 'rollCalls.groupPollTitleMultiselect' : 'rollCalls.groupPollTitle',
+              { group: i + 1, groups: pollOptionsGroups.length })
+            : localize(locale, matchedRollCall.isMultiselectPoll ? 'rollCalls.pollTitleMultiselect' : 'rollCalls.pollTitle'),
           pollOptions,
           {
             is_anonymous: matchedRollCall.isAnonymousPoll,

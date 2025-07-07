@@ -77,6 +77,9 @@ rollCalls:
   noOneToMention: '❌ No one to mention or the bot doesn''t have enough data about this chat'
   pollTitle: 'Choose an answer'
   pollTitleMultiselect: 'Choose answers'
+  groupPollTitle: 'Choose an answer ({group} / {groups})'
+  groupPollTitleMultiselect: 'Choose answers ({group} / {groups})'
+  notApplicablePollOption: 'N/A'
   notification:
     - '*{sender}*: {message}'
     - ''
