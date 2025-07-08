@@ -1,7 +1,3 @@
-import { isDefined } from '@/utils/is-defined'
-
-const tipMarkers = ['🍵', 'tip', '(tip)', 'чай', '(чай)', 'чаевые', '(чаевые)', 'чайові', '(чайові)']
-
 export function parseDescription(input?: string | undefined): { description: string | undefined; isTip: boolean } {
   if (!input) {
     return {
@@ -10,17 +6,12 @@ export function parseDescription(input?: string | undefined): { description: str
     }
   }
 
-  const lowercased = input.toLowerCase()
-  const tipMarker = tipMarkers.find(m => lowercased.startsWith(m) || lowercased.endsWith(m))
-  const isTip = isDefined(tipMarker)
+  // As defined in src/receipts/receipt-editor.tsx#L149
+  const isTip = input.endsWith(' (tip)') || input === 'Tip'
 
   return isTip ? {
     isTip: true,
-    description: (
-      lowercased.startsWith(tipMarker)
-        ? input.slice(tipMarker.length)
-        : input.slice(0, -tipMarker.length)
-    ).trim() || undefined,
+    description: input.endsWith(' (tip)') ? input.slice(0, -' (tip)'.length) : undefined,
   } : {
     isTip: false,
     description: input,
