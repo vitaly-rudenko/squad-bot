@@ -1,5 +1,5 @@
 export type RollCall = {
-  id: string
+  id: number
   groupId: string
   messagePattern: string
   usersPattern: string

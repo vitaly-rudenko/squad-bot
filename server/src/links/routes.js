@@ -28,7 +28,7 @@ export function createLinksRouter() {
   })
 
   router.patch('/links/:linkId', async (req, res) => {
-    const linkId = req.params.linkId
+    const linkId = Number(req.params.linkId)
 
     const link = await linksStorage.findById(linkId)
     if (!link) {
@@ -59,7 +59,9 @@ export function createLinksRouter() {
   })
 
   router.get('/links/:linkId', async (req, res) => {
-    const link = await linksStorage.findById(req.params.linkId)
+    const linkId = Number(req.params.linkId)
+
+    const link = await linksStorage.findById(linkId)
     if (!link) {
       throw new NotFoundError()
     }
@@ -72,7 +74,9 @@ export function createLinksRouter() {
   })
 
   router.delete('/links/:linkId', async (req, res) => {
-    const link = await linksStorage.findById(req.params.linkId)
+    const linkId = Number(req.params.linkId)
+
+    const link = await linksStorage.findById(linkId)
     if (!link) {
       throw new NotFoundError()
     }
@@ -81,7 +85,7 @@ export function createLinksRouter() {
       throw new NotAuthorizedError()
     }
 
-    await linksStorage.deleteById(req.params.linkId)
+    await linksStorage.deleteById(linkId)
     res.sendStatus(204)
   })
 }

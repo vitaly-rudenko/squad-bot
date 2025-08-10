@@ -53,7 +53,7 @@ export class RollCallsPostgresStorage {
     }
   }
 
-  /** @param {string} id */
+  /** @param {number} id */
   async deleteById(id) {
     await this._client.query(`
       DELETE FROM roll_calls
@@ -61,7 +61,7 @@ export class RollCallsPostgresStorage {
     `, [id])
   }
 
-  /** @param {string} id */
+  /** @param {number} id */
   async findById(id) {
     const { items } = await this.find({ ids: [id], limit: 1 })
     return items.at(0)
@@ -69,7 +69,7 @@ export class RollCallsPostgresStorage {
 
   /**
    * @param {{
-   *   ids?: string[],
+   *   ids?: number[],
    *   groupIds?: string[],
    *   limit?: number,
    *   offset?: number

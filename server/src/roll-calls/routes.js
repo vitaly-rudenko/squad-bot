@@ -45,7 +45,7 @@ export function createRollCallsRouter() {
   })
 
   router.patch('/roll-calls/:rollCallId', async (req, res) => {
-    const rollCallId = req.params.rollCallId
+    const rollCallId = Number(req.params.rollCallId)
 
     const rollCall = await rollCallsStorage.findById(rollCallId)
     if (!rollCall) {
@@ -89,7 +89,9 @@ export function createRollCallsRouter() {
   })
 
   router.get('/roll-calls/:rollCallId', async (req, res) => {
-    const rollCall = await rollCallsStorage.findById(req.params.rollCallId)
+    const rollCallId = Number(req.params.rollCallId)
+
+    const rollCall = await rollCallsStorage.findById(rollCallId)
     if (!rollCall) {
       throw new NotFoundError()
     }
@@ -102,7 +104,9 @@ export function createRollCallsRouter() {
   })
 
   router.delete('/roll-calls/:rollCallId', async (req, res) => {
-    const rollCall = await rollCallsStorage.findById(req.params.rollCallId)
+    const rollCallId = Number(req.params.rollCallId)
+
+    const rollCall = await rollCallsStorage.findById(rollCallId)
     if (!rollCall) {
       throw new NotFoundError()
     }
@@ -111,7 +115,7 @@ export function createRollCallsRouter() {
       throw new NotAuthorizedError()
     }
 
-    await rollCallsStorage.deleteById(req.params.rollCallId)
+    await rollCallsStorage.deleteById(rollCallId)
     res.sendStatus(204)
   })
 
