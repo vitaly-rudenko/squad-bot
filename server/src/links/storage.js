@@ -13,7 +13,7 @@ export class LinksPostgresStorage {
   async create(input) {
     const response = await this._client.query(`
       INSERT INTO links (group_id, label, url)
-      VALUES ($1, $2)
+      VALUES ($1, $2, $3)
       RETURNING id;
     `, [
       input.groupId,

@@ -1,5 +1,5 @@
 import Router from 'express-promise-router'
-import { registry } from '../registry'
+import { registry } from '../registry.js'
 import { createLinkSchema, updateLinkSchema } from './schemas.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
 import { paginationToLimitOffset } from '../common/utils.js'
@@ -88,4 +88,6 @@ export function createLinksRouter() {
     await linksStorage.deleteById(linkId)
     res.sendStatus(204)
   })
+
+  return router
 }

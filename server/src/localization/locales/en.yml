@@ -90,16 +90,15 @@ rollCalls:
 links:
   command:
     message:
-      - '🔗 Links:'
-      - '{links}'
+      - '🔗 {links}'
       - ''
-      - '✏️ [Manage]({viewUrl})'
-    linksListItem: '- [{label}]({url})'
-    linksListDelimiter: '\n'
+      - '✏️ [Manage links]({viewUrl})'
+    linksListItem: '[{label}]({url})'
+    linksListDelimiter: ', '
     noLinks:
-      - '🔗 There are no links in this group chat yet\.'
+      - '❌ There are no links in this group chat yet\.'
       - ''
-      - '✏️ [Manage]({viewUrl})'
+      - '✏️ [Manage links]({viewUrl})'
 export:
   receipts:
     command:

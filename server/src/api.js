@@ -12,6 +12,7 @@ import { createUsersRouter } from './users/routes.js'
 import { registry } from './registry.js'
 import { createReceiptsRouter } from './receipts/routes.js'
 import { env } from './env.js'
+import { createLinksRouter } from './links/routes.js'
 
 export const createMembershipSchema = object({
   userId: userIdSchema,
@@ -63,6 +64,7 @@ export function createApiRouter() {
     createPaymentsRouter(),
     createDebtsRouter(),
     createRollCallsRouter(),
+    createLinksRouter(),
     createGroupsRouter(),
     createAdminsRouter(),
     createCardsRouter(),
