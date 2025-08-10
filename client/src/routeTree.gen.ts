@@ -13,7 +13,9 @@ import { Route as PaymentsPaymentIdImport } from './routes/payments/$paymentId'
 import { Route as CardsCardIdImport } from './routes/cards/$cardId'
 import { Route as GroupsGroupIdTitlesIndexImport } from './routes/groups/$groupId/titles/index'
 import { Route as GroupsGroupIdRollCallsIndexImport } from './routes/groups/$groupId/roll-calls/index'
+import { Route as GroupsGroupIdLinksIndexImport } from './routes/groups/$groupId/links/index'
 import { Route as GroupsGroupIdRollCallsRollCallIdImport } from './routes/groups/$groupId/roll-calls/$rollCallId'
+import { Route as GroupsGroupIdLinksLinkIdImport } from './routes/groups/$groupId/links/$linkId'
 
 // Create/Update Routes
 
@@ -68,11 +70,21 @@ const GroupsGroupIdRollCallsIndexRoute =
     getParentRoute: () => rootRoute,
   } as any)
 
+const GroupsGroupIdLinksIndexRoute = GroupsGroupIdLinksIndexImport.update({
+  path: '/groups/$groupId/links/',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const GroupsGroupIdRollCallsRollCallIdRoute =
   GroupsGroupIdRollCallsRollCallIdImport.update({
     path: '/groups/$groupId/roll-calls/$rollCallId',
     getParentRoute: () => rootRoute,
   } as any)
+
+const GroupsGroupIdLinksLinkIdRoute = GroupsGroupIdLinksLinkIdImport.update({
+  path: '/groups/$groupId/links/$linkId',
+  getParentRoute: () => rootRoute,
+} as any)
 
 // Populate the FileRoutesByPath interface
 
@@ -110,8 +122,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReceiptsIndexImport
       parentRoute: typeof rootRoute
     }
+    '/groups/$groupId/links/$linkId': {
+      preLoaderRoute: typeof GroupsGroupIdLinksLinkIdImport
+      parentRoute: typeof rootRoute
+    }
     '/groups/$groupId/roll-calls/$rollCallId': {
       preLoaderRoute: typeof GroupsGroupIdRollCallsRollCallIdImport
+      parentRoute: typeof rootRoute
+    }
+    '/groups/$groupId/links/': {
+      preLoaderRoute: typeof GroupsGroupIdLinksIndexImport
       parentRoute: typeof rootRoute
     }
     '/groups/$groupId/roll-calls/': {
@@ -136,7 +156,9 @@ export const routeTree = rootRoute.addChildren([
   GroupsIndexRoute,
   PaymentsIndexRoute,
   ReceiptsIndexRoute,
+  GroupsGroupIdLinksLinkIdRoute,
   GroupsGroupIdRollCallsRollCallIdRoute,
+  GroupsGroupIdLinksIndexRoute,
   GroupsGroupIdRollCallsIndexRoute,
   GroupsGroupIdTitlesIndexRoute,
 ])

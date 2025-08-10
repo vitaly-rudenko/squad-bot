@@ -46,6 +46,7 @@ export const Groups: FC = () => {
               group={group}
               onRollCalls={() => router.navigate({ to: '/groups/$groupId/roll-calls', params: { groupId: group.id } })}
               onTitles={() => router.navigate({ to: '/groups/$groupId/titles', params: { groupId: group.id } })}
+              onLinks={() => router.navigate({ to: '/groups/$groupId/links', params: { groupId: group.id } })}
             />
           ))}
         </> : <GroupSkeleton />}

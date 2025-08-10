@@ -12,7 +12,8 @@ export const Group: FC<{
   group: GroupType
   onRollCalls: () => unknown
   onTitles: () => unknown
-}> = ({ group, onRollCalls, onTitles }) => {
+  onLinks: () => unknown
+}> = ({ group, onRollCalls, onTitles, onLinks }) => {
   const { data: users } = useUsersQuery({ groupId: group.id })
   const [activated, setActivated] = useState(false)
 
@@ -61,6 +62,10 @@ export const Group: FC<{
         <Separator orientation='vertical' />
         <Button className='grow basis-1 flex flex-row gap-2' variant='link' onClick={onTitles}>
           Titles
+        </Button>
+        <Separator orientation='vertical' />
+        <Button className='grow basis-1 flex flex-row gap-2' variant='link' onClick={onLinks}>
+          Links
         </Button>
       </CardFooter>
     </div>

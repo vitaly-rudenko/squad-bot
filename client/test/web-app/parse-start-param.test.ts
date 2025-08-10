@@ -47,4 +47,9 @@ describe('parseStartParam()', () => {
     expect(parseStartParam('roll-call-1234567890-fake-roll-call-id'))
       .toEqual({ type: 'roll-call', params: { groupId: '-1234567890', rollCallId: 'fake-roll-call-id' } })
   })
+
+  it('parses link commands', () => {
+    expect(parseStartParam('links-1234567890'))
+      .toEqual({ type: 'links', params: { groupId: '-1234567890' } })
+  })
 })

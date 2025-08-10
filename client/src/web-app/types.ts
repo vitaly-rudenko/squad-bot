@@ -9,3 +9,4 @@ export type Command =
   | { type: 'card', params: { cardId: string } }
   | { type: 'roll-calls', params: { groupId: string } }
   | { type: 'roll-call', params: { groupId: string, rollCallId: string } }
+  | { type: 'links', params: { groupId: string } }

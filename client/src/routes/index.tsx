@@ -20,6 +20,8 @@ function IndexComponent() {
     return <Navigate to='/groups/$groupId/roll-calls' params={command.params} />
   if (command?.type === 'titles')
     return <Navigate to='/groups/$groupId/titles' params={command.params} />
+  if (command?.type === 'links')
+    return <Navigate to='/groups/$groupId/links' params={command.params} />
 
   if (command?.type === 'receipt')
     return <Navigate to='/receipts/$receiptId' params={command.params} />

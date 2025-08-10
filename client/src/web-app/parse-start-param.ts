@@ -9,6 +9,8 @@ export function parseStartParam(startParam?: string): Command | undefined {
     return { type: 'titles', params: { groupId: startParam.slice(6) } }
   if (startParam?.startsWith('roll-calls'))
     return { type: 'roll-calls', params: { groupId: startParam.slice(10) } }
+  if (startParam?.startsWith('links'))
+    return { type: 'links', params: { groupId: startParam.slice(5) } }
 
   if (startParam === 'new-receipt')
     return { type: 'receipt', params: { receiptId: 'new' } }
