@@ -17,7 +17,7 @@ import { createCardsFlow } from './cards/telegram.js'
 import { createRollCallsFlow } from './roll-calls/telegram.js'
 import { createCodeGenerator } from './auth/utils.js'
 import { createAuthFlow } from './auth/telegram.js'
-import { createCommonFlow, requirePrivateChat, withChatId, withGroupChat, wrap } from './common/telegram.js'
+import { createCommonFlow, requireGroupChat, requirePrivateChat, withChatId, withGroupChat, wrap } from './common/telegram.js'
 import { getAppVersion } from './common/utils.js'
 import { createAdminsFlow } from './admins/telegram.js'
 import { DebtsPostgresStorage } from './debts/storage.js'
@@ -43,6 +43,8 @@ import path from 'path'
 import { createWebAppUrlGenerator } from './web-app/utils.js'
 import { createSocialLinkFixFlow } from './social-link-fix/telegram.js'
 import { createExportFlow } from './export/telegram.js'
+import { LinksPostgresStorage } from './links/storage.js'
+import { createLinksFlow } from './links/telegram.js'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -86,6 +88,7 @@ async function start() {
     cardsStorage: new CardsPostgresStorage(pgClient),
     debtsStorage: new DebtsPostgresStorage(pgClient),
     localize,
+    linksStorage: new LinksPostgresStorage(pgClient),
     paymentsStorage: new PaymentsPostgresStorage(pgClient),
     receiptsStorage: new ReceiptsPostgresStorage(pgClient),
     rollCallsStorage: new RollCallsPostgresStorage(pgClient),
@@ -118,6 +121,7 @@ async function start() {
     { command: 'cards', description: 'Bank cards' },
     { command: 'titles', description: 'Admin titles' },
     { command: 'rollcalls', description: 'Roll calls' },
+    { command: 'links', description: 'Links' },
     { command: 'toggle_social_link_fix', description: 'Fix link previews' },
     { command: 'export', description: 'Export your receipts in a CSV format' },
     { command: 'start', description: 'Update user info' },
@@ -187,6 +191,9 @@ async function start() {
 
   const { rollCalls, rollCallMessage } = createRollCallsFlow()
   bot.command('rollcalls', rollCalls)
+
+  const { links } = createLinksFlow()
+  bot.command('links', requireGroupChat(), links)
 
   const { login } = createAuthFlow()
   bot.command('login', requirePrivateChat(), login)

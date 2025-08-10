@@ -90,6 +90,14 @@ export const localeFileSchema = object({
       withoutUsername: _,
     }),
   }),
+  links: object({
+    command: object({
+      message: _,
+      linksListItem: _,
+      linksListDelimiter: _,
+      noLinks: _,
+    }),
+  }),
   export: object({
     receipts: object({
       command: object({

@@ -10,6 +10,7 @@ export interface Dependencies {
   groupCache: import('./common/cache.js').RedisCache<Group>
   groupStorage: import('./groups/storage.js').GroupsPostgresStorage
   localize: typeof import('./localization/localize.js').localize
+  linksStorage: import('./links/storage.js').LinksPostgresStorage,
   membershipCache: import('./common/cache.js').RedisCache<true>
   membershipStorage: import('./memberships/storage.js').MembershipPostgresStorage
   paymentsStorage: import('./payments/storage.js').PaymentsPostgresStorage

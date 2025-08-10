@@ -87,6 +87,19 @@ rollCalls:
   mention:
     withUsername: '@{username}'
     withoutUsername: '[{name}]({profileUrl})'
+links:
+  command:
+    message:
+      - '🔗 Links:'
+      - '{links}'
+      - ''
+      - '✏️ [Manage]({viewUrl})'
+    linksListItem: '- [{label}]({url})'
+    linksListDelimiter: '\n'
+    noLinks:
+      - '🔗 There are no links in this group chat yet\.'
+      - ''
+      - '✏️ [Manage]({viewUrl})'
 export:
   receipts:
     command:
