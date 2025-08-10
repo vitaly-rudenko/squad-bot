@@ -56,7 +56,7 @@ export const Links: FC<{
         </div>
         <RouterLink to='/groups/$groupId/links/$linkId' params={{ groupId, linkId: 'new' }} className='group'>
           <Button variant='link' className='p-0 h-auto flex flex-row gap-1 items-baseline'>
-            <Plus className='w-4 h-4 self-center shrink-0' /><span>Add Link</span>
+            <Plus className='w-4 h-4 self-center shrink-0' /><span>Add a link</span>
           </Button>
         </RouterLink>
       </div>
