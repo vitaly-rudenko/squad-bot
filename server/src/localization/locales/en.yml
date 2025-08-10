@@ -94,11 +94,11 @@ links:
       - ''
       - '✏️ [Manage links]({viewUrl})'
     linksListItem: '[{label}]({url})'
-    linksListDelimiter: '\n'
+    linksListDelimiter: '\\n'
     noLinks:
       - '❌ There are no links in this group chat yet\.'
       - ''
-      - '✏️ [To add a link]({viewUrl})'
+      - '✏️ [Add a link]({viewUrl})'
 export:
   receipts:
     command:
