@@ -94,7 +94,8 @@ links:
       - ''
       - '✏️ [Manage links]({viewUrl})'
     linksListItem: '[{label}]({url})'
-    linksListDelimiter: '\n'
+    # js-yaml seems to escape characters like "\n", so this is a workaround
+    linksListDelimiter: ['', '']
     noLinks:
       - '❌ There are no links in this group chat yet\.'
       - ''
