@@ -94,7 +94,7 @@ links:
       - ''
       - '✏️ [Manage links]({viewUrl})'
     linksListItem: '[{label}]({url})'
-    linksListDelimiter: ', '
+    linksListDelimiter: '\n'
     noLinks:
       - '❌ There are no links in this group chat yet\.'
       - ''
