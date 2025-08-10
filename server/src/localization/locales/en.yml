@@ -90,7 +90,7 @@ rollCalls:
 links:
   command:
     message:
-      - '🔗 {links}'
+      - '{links}'
       - ''
       - '✏️ [Manage links]({viewUrl})'
     linksListItem: '[{label}]({url})'
@@ -98,7 +98,7 @@ links:
     noLinks:
       - '❌ There are no links in this group chat yet\.'
       - ''
-      - '✏️ [Manage links]({viewUrl})'
+      - '✏️ [To add a link]({viewUrl})'
 export:
   receipts:
     command:
