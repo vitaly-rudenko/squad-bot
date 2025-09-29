@@ -13,8 +13,6 @@ services:
   sb_postgres:
     ports:
       - "5433:5432"
-    volumes:
-      - "./local/postgres-data:/var/lib/postgresql/data"
 
   sb_redis:
     ports:
