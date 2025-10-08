@@ -4,19 +4,23 @@ export class GroupsPostgresStorage {
     this._client = client
   }
 
-  /** @param {Omit<import('./types').Group, 'socialLinkFixEnabledAt'> & { socialLinkFixEnabledAt: Date | null | undefined }} group */
+  /** @param {Omit<import('./types').Group, 'socialLinkFixEnabledAt' | 'pollAnswerNotificationsEnabledAt'> & { socialLinkFixEnabledAt?: Date | null, pollAnswerNotificationsEnabledAt?: Date | null }} group */
   async store(group) {
-    const { id, title, socialLinkFixEnabledAt } = group
+    const { id, title, socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt } = group
 
-    await this._client.query(`
-      INSERT INTO groups (id, title, updated_at, social_link_fix_enabled_at)
-      VALUES ($1, $2, $3, $4)
+    await this._client.query(
+      `
+      INSERT INTO groups (id, title, updated_at, social_link_fix_enabled_at, poll_answer_notifications_enabled_at)
+      VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (id) DO UPDATE
       SET title = $2
         , updated_at = $3
         , social_link_fix_enabled_at = ${socialLinkFixEnabledAt === undefined ? 'groups.social_link_fix_enabled_at' : '$4'}
+        , poll_answer_notifications_enabled_at = ${pollAnswerNotificationsEnabledAt === undefined ? 'groups.poll_answer_notifications_enabled_at' : '$5'}
       ;
-    `, [id, title, new Date(), socialLinkFixEnabledAt]);
+    `,
+      [id, title, new Date(), socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt],
+    )
   }
 
   /** @param {string} id */
@@ -62,16 +66,24 @@ export class GroupsPostgresStorage {
 
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
 
-    const response = await this._client.query(`
-      SELECT g.id, g.title, g.updated_at, g.social_link_fix_enabled_at
+    const response = await this._client.query(
+      `
+      SELECT g.id, g.title, g.updated_at, g.social_link_fix_enabled_at, g.poll_answer_notifications_enabled_at
       FROM groups g ${whereClause}
-      LIMIT ${limit} OFFSET ${offset};;
-    `, variables)
+      LIMIT ${limit} OFFSET ${offset};
+    `,
+      variables,
+    )
 
-    const { rows: [{ total }]} = await this._client.query(`
+    const {
+      rows: [{ total }],
+    } = await this._client.query(
+      `
       SELECT COUNT(*)::int AS total
       FROM groups g ${whereClause};
-    `, variables)
+    `,
+      variables,
+    )
 
     return {
       total,
@@ -89,5 +101,8 @@ function deserializeGroup(row) {
     id: row['id'],
     title: row['title'],
     socialLinkFixEnabledAt: row['social_link_fix_enabled_at'] ? new Date(row['social_link_fix_enabled_at']) : null,
+    pollAnswerNotificationsEnabledAt: row['poll_answer_notifications_enabled_at']
+      ? new Date(row['poll_answer_notifications_enabled_at'])
+      : null,
   }
 }
