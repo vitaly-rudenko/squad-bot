@@ -124,6 +124,11 @@ export const localeFileSchema = object({
     enabled: _,
     disabled: _,
   }),
+  pollAnswerNotifications: object({
+    message: _,
+    enabled: _,
+    disabled: _,
+  }),
   groupChatOnly: _,
   privateChatOnly: _,
   unknownUser: _,

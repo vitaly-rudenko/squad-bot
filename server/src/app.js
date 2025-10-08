@@ -17,7 +17,14 @@ import { createCardsFlow } from './cards/telegram.js'
 import { createRollCallsFlow } from './roll-calls/telegram.js'
 import { createCodeGenerator } from './auth/utils.js'
 import { createAuthFlow } from './auth/telegram.js'
-import { createCommonFlow, requireGroupChat, requirePrivateChat, withChatId, withGroupChat, wrap } from './common/telegram.js'
+import {
+  createCommonFlow,
+  requireGroupChat,
+  requirePrivateChat,
+  withChatId,
+  withGroupChat,
+  wrap,
+} from './common/telegram.js'
 import { getAppVersion } from './common/utils.js'
 import { createAdminsFlow } from './admins/telegram.js'
 import { DebtsPostgresStorage } from './debts/storage.js'
@@ -45,6 +52,7 @@ import { createSocialLinkFixFlow } from './social-link-fix/telegram.js'
 import { createExportFlow } from './export/telegram.js'
 import { LinksPostgresStorage } from './links/storage.js'
 import { createLinksFlow } from './links/telegram.js'
+import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/telegram.js'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -122,17 +130,18 @@ async function start() {
     { command: 'titles', description: 'Admin titles' },
     { command: 'rollcalls', description: 'Roll calls' },
     { command: 'links', description: 'Links' },
-    { command: 'toggle_social_link_fix', description: 'Fix link previews' },
+    { command: 'toggle_social_link_fix', description: 'Toggle previews for social links' },
+    { command: 'toggle_poll_answer_notifications', description: 'Toggle notifications for poll answers' },
     { command: 'export', description: 'Export your receipts in a CSV format' },
     { command: 'start', description: 'Update user info' },
   ])
 
-  process.on('uncaughtException', (err) => {
+  process.on('uncaughtException', err => {
     logger.error({ err }, 'Uncaught exception')
     process.exit(1)
   })
 
-  process.on('unhandledRejection', (err) => {
+  process.on('unhandledRejection', err => {
     logger.error({ err }, 'Unhandled rejection')
     process.exit(1)
   })
@@ -147,7 +156,7 @@ async function start() {
   bot.use(withLocale())
 
   // TODO: deprecated?
-  bot.on('new_chat_members', async (context) => {
+  bot.on('new_chat_members', async context => {
     const { chatId } = context.state
 
     for (const chatMember of context.message.new_chat_members) {
@@ -164,7 +173,7 @@ async function start() {
   })
 
   // TODO: deprecated?
-  bot.on('left_chat_member', async (context) => {
+  bot.on('left_chat_member', async context => {
     const user = context.message.left_chat_member
     if (!env.USE_TEST_MODE && user.is_bot) return
 
@@ -220,14 +229,19 @@ async function start() {
   const { exportReceiptsCsv } = createExportFlow()
   bot.command('export', requirePrivateChat(), exportReceiptsCsv)
 
-  bot.action('delete_message', async (context) => {
+  const { togglePollAnswerNotifications, pollAnswer } = createPollAnswerNotificationsFlow()
+  bot.command('toggle_poll_answer_notifications', togglePollAnswerNotifications)
+  bot.on('poll_answer', pollAnswer)
+
+  bot.action('delete_message', async context => {
     const { locale } = context.state
 
     await context.deleteMessage()
     await context.answerCbQuery(localize(locale, 'messageWasDeleted'))
   })
 
-  bot.on('message',
+  bot.on(
+    'message',
     async (context, next) => {
       if (!('text' in context.message) || !context.message.text.startsWith('/')) {
         return next()
@@ -238,20 +252,24 @@ async function start() {
   )
 
   const app = express()
-  app.use(helmet({
-    crossOriginResourcePolicy: {
-      policy: 'cross-origin',
-    }
-  }))
-  app.use(cors({
-    origin: (origin, callback) => {
-      if (!origin || env.CORS_ORIGIN.includes(origin)) {
-        callback(null, origin)
-      } else {
-        callback(new ApiError({ code: 'INVALID_CORS_ORIGIN', status: 403 }))
-      }
-    }
-  }))
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: {
+        policy: 'cross-origin',
+      },
+    }),
+  )
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || env.CORS_ORIGIN.includes(origin)) {
+          callback(null, origin)
+        } else {
+          callback(new ApiError({ code: 'INVALID_CORS_ORIGIN', status: 403 }))
+        }
+      },
+    }),
+  )
   app.use(express.json())
 
   app.use(
@@ -271,23 +289,28 @@ async function start() {
   // @ts-ignore
   app.use((err, req, res, next) => {
     if (!(err instanceof ApiError) && !(err instanceof StructError)) {
-      logger.error({
-        err,
-        req: {
-          url: req.url,
-          ...req.headers && Object.keys(req.headers).length > 0 ? {
-              headers: {
-              ...req.headers,
-              ...typeof req.headers.authorization === 'string'
-                ? { authorization: req.headers.authorization.slice(0, 10) + '...' }
-                : undefined,
-            }
-          } : undefined,
-          ...req.params && Object.keys(req.params).length > 0 ? { params: req.params } : undefined,
-          ...req.query && Object.keys(req.query).length > 0 ? { query: req.query } : undefined,
-          ...req.body && Object.keys(req.body).length > 0 ? { body: req.body } : undefined,
-        }
-      }, 'Unhandled API error')
+      logger.error(
+        {
+          err,
+          req: {
+            url: req.url,
+            ...(req.headers && Object.keys(req.headers).length > 0
+              ? {
+                  headers: {
+                    ...req.headers,
+                    ...(typeof req.headers.authorization === 'string'
+                      ? { authorization: req.headers.authorization.slice(0, 10) + '...' }
+                      : undefined),
+                  },
+                }
+              : undefined),
+            ...(req.params && Object.keys(req.params).length > 0 ? { params: req.params } : undefined),
+            ...(req.query && Object.keys(req.query).length > 0 ? { query: req.query } : undefined),
+            ...(req.body && Object.keys(req.body).length > 0 ? { body: req.body } : undefined),
+          },
+        },
+        'Unhandled API error',
+      )
     }
 
     if (res.headersSent) return
@@ -295,16 +318,16 @@ async function start() {
       res.status(err.status).json({
         error: {
           code: err.code,
-          ...err.message ? { message: err.message } : undefined,
-          ...err.context ? { context: err.context } : undefined,
-        }
+          ...(err.message ? { message: err.message } : undefined),
+          ...(err.context ? { context: err.context } : undefined),
+        },
       })
     } else if (err instanceof StructError) {
       res.status(400).json({
         error: {
           code: 'VALIDATION_ERROR',
           message: err.message,
-        }
+        },
       })
     } else {
       res.sendStatus(500)
@@ -312,16 +335,19 @@ async function start() {
   })
 
   bot.catch(async (err, context) => {
-    logger.error({
-      err,
-      ...context && {
-        context: {
-          ...context.update && Object.keys(context.update).length > 0 ? { update: context.update } : undefined,
-          ...context.botInfo && Object.keys(context.botInfo).length > 0 ? { botInfo: context.botInfo } : undefined,
-          ...context.state && Object.keys(context.state).length > 0 ? { state: context.state } : undefined,
-        }
+    logger.error(
+      {
+        err,
+        ...(context && {
+          context: {
+            ...(context.update && Object.keys(context.update).length > 0 ? { update: context.update } : undefined),
+            ...(context.botInfo && Object.keys(context.botInfo).length > 0 ? { botInfo: context.botInfo } : undefined),
+            ...(context.state && Object.keys(context.state).length > 0 ? { state: context.state } : undefined),
+          },
+        }),
       },
-    }, 'Unhandled telegram error')
+      'Unhandled telegram error',
+    )
   })
 
   if (env.ENABLE_TEST_HTTPS) {
@@ -338,7 +364,7 @@ async function start() {
   }
 
   logger.info({}, 'Starting telegram bot')
-  bot.launch().catch((err) => {
+  bot.launch().catch(err => {
     logger.fatal({ err }, 'Could not launch telegram bot')
     process.exit(1)
   })
@@ -354,10 +380,7 @@ async function start() {
       } catch (err) {
         logger.error({ err }, 'Could not refresh memberships')
       } finally {
-        logger.debug(
-          { refreshMembershipsJobIntervalMs },
-          'Scheduling next automatic memberships refresh job'
-        )
+        logger.debug({ refreshMembershipsJobIntervalMs }, 'Scheduling next automatic memberships refresh job')
         setTimeout(runRefreshMembershipsJob, refreshMembershipsJobIntervalMs)
       }
     }
@@ -368,7 +391,7 @@ async function start() {
 
 start()
   .then(() => logger.info({}, 'Started!'))
-  .catch((err) => {
+  .catch(err => {
     logger.fatal({ err }, 'Unexpected starting error')
     process.exit(1)
   })

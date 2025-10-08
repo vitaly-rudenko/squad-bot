@@ -119,6 +119,10 @@ admins:
 socialLinkFix:
   enabled: '✅ Previews for Twitter, Instagram and YouTube links will now be fixed'
   disabled: '❌ Previews for Twitter, Instagram and YouTube links will no longer be fixed'
+pollAnswerNotifications:
+  message: '{answerer} has voted in the poll\.'
+  enabled: '✅ Notifications for poll answers are now enabled'
+  disabled: '❌ Notifications for poll answers are now disabled'
 groupChatOnly: '❌ This command can only be executed in a group chat'
 privateChatOnly: '❌ This command can only be executed in a private chat'
 unknownUser: 'Unknown user'
