@@ -120,7 +120,11 @@ socialLinkFix:
   enabled: '✅ Previews for Twitter, Instagram and YouTube links will now be fixed'
   disabled: '❌ Previews for Twitter, Instagram and YouTube links will no longer be fixed'
 pollAnswerNotifications:
-  message: '{answerer} has voted in the poll\.'
+  voted: '*{voter}* has voted in the poll: {pollOptions}'
+  retracted: '*{voter}* has retracted their vote\.'
+  pollOptionsListItem: '*{pollOption}*'
+  pollOptionsListDelimiter: ', '
+  unknownPollOption: 'unknown'
   enabled: '✅ Notifications for poll answers are now enabled'
   disabled: '❌ Notifications for poll answers are now disabled'
 groupChatOnly: '❌ This command can only be executed in a group chat'

@@ -1,8 +1,10 @@
 import { isGroupChat } from '../common/telegram.js'
 import { registry } from '../registry.js'
 
+// TODO: Use database for storing polls instead of relying on cache
+
 export function createPollAnswerNotificationsFlow() {
-  const { groupCache, groupStorage, localize } = registry.export()
+  const { groupCache, groupStorage, telegram, localize, pollsCache } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const togglePollAnswerNotifications = async context => {
@@ -26,34 +28,57 @@ export function createPollAnswerNotificationsFlow() {
     )
   }
 
+  // TODO: Store this in Redis instead of memory
+  /** @type {Map<string, number>} */
+  const latestPollMessageIds = new Map()
+
   /** @param {import('telegraf').Context} context */
   const pollAnswer = async context => {
-    const { chatId, locale } = context.state
+    if (!context.pollAnswer) return
+    if (!context.pollAnswer.user) return
 
-    console.log('pollAnswer', context.message, context.pollAnswer)
+    const pollId = context.pollAnswer.poll_id
+    const userId = context.pollAnswer.user.id
 
-    if (!context.message) return
-    if (!context.pollAnswer?.user) return
+    const poll = await pollsCache.get(pollId)
+    if (!poll) return
 
-    const isGroup = isGroupChat(context)
-    if (!isGroup) return
-
-    const group = await groupStorage.findById(chatId)
+    const group = await groupStorage.findById(poll.chatId)
     if (!group) return
     if (!group.pollAnswerNotificationsEnabledAt) return
 
-    await context
-      .reply(
-        localize(locale, 'pollAnswerNotifications.message', {
-          answerer: context.pollAnswer.user.first_name ?? localize(locale, 'unknownUser'),
-        }),
+    const latestPollMessageId = latestPollMessageIds.get(`${pollId}:${userId}`)
+    if (latestPollMessageId) {
+      await telegram.deleteMessage(poll.chatId, latestPollMessageId).catch(() => {})
+    }
+
+    const message = await telegram.sendMessage(
+      poll.chatId,
+      localize(
+        poll.locale,
+        context.pollAnswer.option_ids.length > 0
+          ? 'pollAnswerNotifications.voted'
+          : 'pollAnswerNotifications.retracted',
         {
-          reply_to_message_id: context.message.message_id,
-          disable_notification: true,
-          allow_sending_without_reply: false,
+          voter: context.pollAnswer.user.first_name ?? localize(poll.locale, 'unknownUser'),
+          pollOptions: context.pollAnswer.option_ids
+            .map(
+              optionId =>
+                poll.pollOptions[optionId] || localize(poll.locale, 'pollAnswerNotifications.unknownPollOption'),
+            )
+            .map(pollOption => localize(poll.locale, 'pollAnswerNotifications.pollOptionsListItem', { pollOption }))
+            .join(localize(poll.locale, 'pollAnswerNotifications.pollOptionsListDelimiter')),
         },
-      )
-      .catch(() => {})
+      ),
+      {
+        reply_to_message_id: Number(poll.messageId),
+        disable_notification: true,
+        allow_sending_without_reply: true,
+        parse_mode: 'MarkdownV2',
+      },
+    )
+
+    latestPollMessageIds.set(`${pollId}:${userId}`, message.message_id)
   }
 
   return {

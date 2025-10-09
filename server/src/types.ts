@@ -1,5 +1,6 @@
 import { Group } from './groups/types.js'
 import { User } from './users/types.js'
+import { Poll } from './polls/types.js'
 
 export interface Dependencies {
   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>
@@ -10,7 +11,7 @@ export interface Dependencies {
   groupCache: import('./common/cache.js').RedisCache<Group>
   groupStorage: import('./groups/storage.js').GroupsPostgresStorage
   localize: typeof import('./localization/localize.js').localize
-  linksStorage: import('./links/storage.js').LinksPostgresStorage,
+  linksStorage: import('./links/storage.js').LinksPostgresStorage
   membershipCache: import('./common/cache.js').RedisCache<true>
   membershipStorage: import('./memberships/storage.js').MembershipPostgresStorage
   paymentsStorage: import('./payments/storage.js').PaymentsPostgresStorage
@@ -19,6 +20,7 @@ export interface Dependencies {
   rollCallsStorage: import('./roll-calls/storage.js').RollCallsPostgresStorage
   telegram: import('telegraf').Telegram
   usersCache: import('./common/cache.js').RedisCache<User>
+  pollsCache: import('./common/cache.js').RedisCache<Poll>
   usersStorage: import('./users/storage.js').UsersPostgresStorage
   version: string
   webAppName: string

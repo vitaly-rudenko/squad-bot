@@ -116,6 +116,7 @@ async function start() {
     membershipCache: createRedisCache('memberships', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
     groupCache: createRedisCache('groups', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
     usersCache: createRedisCache('users', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
+    pollsCache: createRedisCache('polls', env.USE_TEST_MODE ? 60_000 : 24 * 60 * 60_000),
     generateCode: createCodeGenerator({
       tokenSecret,
       expiresInMs: env.USE_TEST_MODE ? 60_000 : 5 * 60_000,
@@ -147,7 +148,7 @@ async function start() {
   })
 
   bot.use((context, next) => {
-    if (!env.USE_TEST_MODE && context.from?.is_bot) return
+    if (!env.USE_TEST_MODE && (context.from?.is_bot || context.pollAnswer?.user?.is_bot)) return
     return next()
   })
 

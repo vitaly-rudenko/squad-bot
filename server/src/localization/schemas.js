@@ -1,6 +1,6 @@
 import { string, array, object, coerce } from 'superstruct'
 
-const _ = coerce(string(), array(string()), (value) => value.join('\n'))
+const _ = coerce(string(), array(string()), value => value.join('\n'))
 
 export const localeFileSchema = object({
   payments: object({
@@ -111,7 +111,7 @@ export const localeFileSchema = object({
         payer: _,
       }),
       filenamePrefix: _,
-    })
+    }),
   }),
   admins: object({
     titles: object({
@@ -125,7 +125,11 @@ export const localeFileSchema = object({
     disabled: _,
   }),
   pollAnswerNotifications: object({
-    message: _,
+    voted: _,
+    retracted: _,
+    pollOptionsListItem: _,
+    pollOptionsListDelimiter: _,
+    unknownPollOption: _,
     enabled: _,
     disabled: _,
   }),

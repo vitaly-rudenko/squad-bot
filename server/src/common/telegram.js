@@ -7,33 +7,29 @@ const GROUP_CHAT_TYPES = ['group', 'supergroup']
 
 /**  @param {import('telegraf').Context} context */
 export function isGroupChat(context) {
-  return (
-    context.chat !== undefined &&
-    GROUP_CHAT_TYPES.includes(context.chat.type)
-  )
+  return context.chat !== undefined && GROUP_CHAT_TYPES.includes(context.chat.type)
 }
 
 /**  @param {import('telegraf').Context} context */
 export function isPrivateChat(context) {
-  return (
-    context.chat !== undefined &&
-    context.chat.type === 'private'
-  )
+  return context.chat !== undefined && context.chat.type === 'private'
 }
 
 export function createCommonFlow() {
   const { version: appVersion } = registry.export()
 
   /** @param {import('telegraf').Context} context */
-  const version = async (context) => {
+  const version = async context => {
     if (!context.from || !context.chat) return
 
-    await context.reply([
-      `Version: ${appVersion}`,
-      `Bot ID: ${context.botInfo.id}`,
-      `User ID: ${context.from.id}`,
-      `Chat ID: ${context.chat.id} (${context.chat.type})`,
-    ].join('\n'))
+    await context.reply(
+      [
+        `Version: ${appVersion}`,
+        `Bot ID: ${context.botInfo.id}`,
+        `User ID: ${context.from.id}`,
+        `Chat ID: ${context.chat.id} (${context.chat.type})`,
+      ].join('\n'),
+    )
   }
 
   return { version }
@@ -134,7 +130,7 @@ export function wrap(...middlewares) {
         return middleware(context, next)
       } else {
         let interrupt = true
-        await middleware(context, async () => interrupt = false)
+        await middleware(context, async () => (interrupt = false))
         if (interrupt) break
       }
     }

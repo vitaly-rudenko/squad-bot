@@ -6,17 +6,15 @@ export function useUsersFlow() {
   const { usersStorage, usersCache, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
-  const start = async (context) => {
-    if (!context.from) return
+  const start = async context => {
+    const telegramUser = context.from || context.pollAnswer?.user
+    if (!telegramUser) return
 
     const { locale } = context.state
 
-    await registerTelegramUser(context.from, { usersStorage })
+    await registerTelegramUser(telegramUser, { usersStorage })
 
-    await context.reply(
-      localize(locale, 'users.command.start.message'),
-      { parse_mode: 'MarkdownV2' }
-    )
+    await context.reply(localize(locale, 'users.command.start.message'), { parse_mode: 'MarkdownV2' })
   }
 
   /**
@@ -24,12 +22,13 @@ export function useUsersFlow() {
    * @param {Function} next
    */
   const useRegisterUser = async (context, next) => {
-    if (!context.from) return
+    const telegramUser = context.from || context.pollAnswer?.user
+    if (!telegramUser) return
 
     const { userId } = context.state
 
     if (!(await usersCache.has(userId))) {
-      await registerTelegramUser(context.from, { usersStorage })
+      await registerTelegramUser(telegramUser, { usersStorage })
 
       const user = await usersStorage.findById(userId)
       if (!user) throw new Error(`Could not find User by userId: ${userId}`)
@@ -50,7 +49,7 @@ export async function registerTelegramUser(user, { usersStorage }) {
   await usersStorage.store({
     id: String(user.id),
     name: user.first_name,
-    ...user.username ? { username: user.username } : undefined,
+    ...(user.username ? { username: user.username } : undefined),
     locale: localeFromLanguageCode(user.language_code),
   })
 }
@@ -61,9 +60,10 @@ export const withUserId = () => {
    * @param {Function} next
    */
   return async (context, next) => {
-    if (!context.from) return // ignore
+    const userId = context.from?.id || context.pollAnswer?.user?.id
+    if (!userId) return // ignore
 
-    context.state.userId = String(context.from.id)
+    context.state.userId = String(userId)
     return next()
   }
 }

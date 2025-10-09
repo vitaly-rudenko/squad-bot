@@ -12,9 +12,9 @@ export const withLocale = () => {
    * @param {Function} next
    */
   return async (context, next) => {
-    if (!context.from) return
+    const languageCode = context.from?.language_code || context.pollAnswer?.user?.language_code || undefined
+    context.state.locale = localeFromLanguageCode(languageCode)
 
-    context.state.locale = localeFromLanguageCode(context.from.language_code)
     return next()
   }
 }
@@ -24,8 +24,5 @@ export const withLocale = () => {
  * @return {import('./types').Locale}
  */
 export function localeFromLanguageCode(languageCode) {
-  return (
-    languageCode && languageCodeLocaleMap[languageCode] ||
-    defaultLocale
-  )
+  return (languageCode && languageCodeLocaleMap[languageCode]) || defaultLocale
 }
