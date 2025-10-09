@@ -1,4 +1,4 @@
-import { isGroupChat } from '../common/telegram.js'
+import { escapeMd, isGroupChat } from '../common/telegram.js'
 import { registry } from '../registry.js'
 
 // TODO: Use database for storing polls instead of relying on cache
@@ -60,13 +60,17 @@ export function createPollAnswerNotificationsFlow() {
           ? 'pollAnswerNotifications.voted'
           : 'pollAnswerNotifications.retracted',
         {
-          voter: context.pollAnswer.user.first_name ?? localize(poll.locale, 'unknownUser'),
+          voter: escapeMd(context.pollAnswer.user.first_name ?? localize(poll.locale, 'unknownUser')),
           pollOptions: context.pollAnswer.option_ids
             .map(
               optionId =>
                 poll.pollOptions[optionId] || localize(poll.locale, 'pollAnswerNotifications.unknownPollOption'),
             )
-            .map(pollOption => localize(poll.locale, 'pollAnswerNotifications.pollOptionsListItem', { pollOption }))
+            .map(pollOption =>
+              localize(poll.locale, 'pollAnswerNotifications.pollOptionsListItem', {
+                pollOption: escapeMd(pollOption),
+              }),
+            )
             .join(localize(poll.locale, 'pollAnswerNotifications.pollOptionsListDelimiter')),
         },
       ),
