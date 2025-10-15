@@ -16,7 +16,7 @@ export function createCardsFlow() {
       }),
       {
         parse_mode: 'MarkdownV2',
-        disable_web_page_preview: true,
+        link_preview_options: { is_disabled: true }
       }
     )
   }

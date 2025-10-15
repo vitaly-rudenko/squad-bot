@@ -23,7 +23,7 @@ export function createRollCallsFlow() {
       localize(locale, 'rollCalls.command.message', {
         viewUrl: escapeMd(viewUrl),
       }),
-      { parse_mode: 'MarkdownV2', disable_web_page_preview: true },
+      { parse_mode: 'MarkdownV2', link_preview_options: { is_disabled: true } },
     )
   }
 
@@ -94,7 +94,7 @@ export function createRollCallsFlow() {
       mentions,
     })
 
-    await context.reply(notification, { parse_mode: 'MarkdownV2', disable_web_page_preview: true })
+    await context.reply(notification, { parse_mode: 'MarkdownV2', link_preview_options: { is_disabled: true } })
 
     if (sendPoll) {
       // Telegram has limits for polls: min options count is 2, max options count is 10

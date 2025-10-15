@@ -9,7 +9,7 @@ export function createDebtsFlow() {
   const { usersStorage, debtsStorage, paymentsStorage, localize, generateWebAppUrl } = registry.export()
 
   /** @param {import('telegraf').Context} context */
-  const debts = async (context) => {
+  const debts = async context => {
     const { userId, locale } = context.state
     const user = await usersStorage.findById(userId)
     if (!user) return
@@ -39,37 +39,37 @@ export function createDebtsFlow() {
       }
     }
 
-    const ingoingDebtsFormatted = ingoingDebts.length > 0
-      ? ingoingDebts.length === 1
-        ? localize(locale, 'debts.command.ingoingDebtsOne', debtReplacements(ingoingDebts[0]))
-        : localize(locale, 'debts.command.ingoingDebtsMany', {
-          debts: ingoingDebts
-            .map(debt => localize(locale, 'debts.command.ingoingDebt', debtReplacements(debt)))
-            .join('\n')
-        })
-      : undefined
+    const ingoingDebtsFormatted =
+      ingoingDebts.length > 0
+        ? ingoingDebts.length === 1
+          ? localize(locale, 'debts.command.ingoingDebtsOne', debtReplacements(ingoingDebts[0]))
+          : localize(locale, 'debts.command.ingoingDebtsMany', {
+              debts: ingoingDebts
+                .map(debt => localize(locale, 'debts.command.ingoingDebt', debtReplacements(debt)))
+                .join('\n'),
+            })
+        : undefined
 
-    const outgoingDebtsFormatted = outgoingDebts.length > 0
-      ? outgoingDebts.length === 1
-        ? localize(locale, 'debts.command.outgoingDebtsOne', debtReplacements(outgoingDebts[0]))
-        : localize(locale, 'debts.command.outgoingDebtsMany', {
-          debts: outgoingDebts
-            .map(debt => localize(locale, 'debts.command.outgoingDebt', debtReplacements(debt)))
-            .join('\n')
-        })
-      : undefined
+    const outgoingDebtsFormatted =
+      outgoingDebts.length > 0
+        ? outgoingDebts.length === 1
+          ? localize(locale, 'debts.command.outgoingDebtsOne', debtReplacements(outgoingDebts[0]))
+          : localize(locale, 'debts.command.outgoingDebtsMany', {
+              debts: outgoingDebts
+                .map(debt => localize(locale, 'debts.command.outgoingDebt', debtReplacements(debt)))
+                .join('\n'),
+            })
+        : undefined
 
-    const noDebts = ingoingDebts.length === 0 && outgoingDebts.length === 0
-      ? localize(locale, 'debts.command.noDebts')
-      : undefined
+    const noDebts =
+      ingoingDebts.length === 0 && outgoingDebts.length === 0 ? localize(locale, 'debts.command.noDebts') : undefined
 
     await context.reply(
-      [
-        outgoingDebtsFormatted,
-        ingoingDebtsFormatted,
-        noDebts,
-      ].filter(isDefined).map(s => s.trim()).join('\n\n'),
-      { parse_mode: 'MarkdownV2', disable_web_page_preview: true }
+      [outgoingDebtsFormatted, ingoingDebtsFormatted, noDebts]
+        .filter(isDefined)
+        .map(s => s.trim())
+        .join('\n\n'),
+      { parse_mode: 'MarkdownV2', link_preview_options: { is_disabled: true } },
     )
   }
 

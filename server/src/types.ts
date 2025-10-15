@@ -1,6 +1,7 @@
 import { Group } from './groups/types.js'
 import { User } from './users/types.js'
 import { Poll } from './polls/types.js'
+import { SocialLink } from './social-link-fix/types.js'
 
 export interface Dependencies {
   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>
@@ -22,6 +23,8 @@ export interface Dependencies {
   usersCache: import('./common/cache.js').RedisCache<User>
   pollsCache: import('./common/cache.js').RedisCache<Poll>
   usersStorage: import('./users/storage.js').UsersPostgresStorage
+  telegramClient: import('telegram').TelegramClient | undefined
+  socialLinksCache: import('./common/cache.js').RedisCache<SocialLink>
   version: string
   webAppName: string
   webAppUrl: string

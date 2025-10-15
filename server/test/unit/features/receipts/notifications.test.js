@@ -14,21 +14,18 @@ import { createPaymentsStorage } from '../../helpers/payments.js'
 chai.use(deepEqualInAnyOrder)
 
 const options = {
-  disable_web_page_preview: true,
+  link_preview_options: { is_disabled: true },
   parse_mode: 'MarkdownV2',
 }
 
 /** @param {string} locale */
 function optionsWithGetPhoto(locale) {
   return {
-    disable_web_page_preview: true,
+    link_preview_options: { is_disabled: true },
     parse_mode: 'MarkdownV2',
-    ...Markup.inlineKeyboard([
-      Markup.button.callback(`receipts.actions.getPhoto(${locale})`, 'photo:photo.jpg')
-    ])
+    ...Markup.inlineKeyboard([Markup.button.callback(`receipts.actions.getPhoto(${locale})`, 'photo:photo.jpg')]),
   }
 }
-
 
 describe('receipts/notifications', () => {
   describe('sendReceiptSavedNotification()', () => {
@@ -38,36 +35,40 @@ describe('receipts/notifications', () => {
       const payer = createUser()
       const debtor = createUser()
 
-      await sendReceiptSavedNotification({
-        receipt: {
-          id: 'fake-receipt-id',
-          amount: 1200,
-          payerId: payer.id,
-          photoFilename: 'photo.jpg',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdByUserId: editor.id,
-          updatedByUserId: editor.id,
-          description: 'Hello world!',
+      await sendReceiptSavedNotification(
+        {
+          receipt: {
+            id: 'fake-receipt-id',
+            amount: 1200,
+            payerId: payer.id,
+            photoFilename: 'photo.jpg',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            createdByUserId: editor.id,
+            updatedByUserId: editor.id,
+            description: 'Hello world!',
+          },
+          debts: [
+            createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
+            createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
+          ],
+          action: 'create',
+          editorId: editor.id,
         },
-        debts: [
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
-        ],
-        action: 'create',
-        editorId: editor.id,
-      }, {
-        localize: localizeMock,
-        usersStorage: createUsersStorage([editor, payer, debtor]),
-        telegram,
-        generateWebAppUrl: generateWebAppUrlMock,
-        debtsStorage: createDebtsStorage([]),
-        paymentsStorage: createPaymentsStorage([]),
-      })
+        {
+          localize: localizeMock,
+          usersStorage: createUsersStorage([editor, payer, debtor]),
+          telegram,
+          generateWebAppUrl: generateWebAppUrlMock,
+          debtsStorage: createDebtsStorage([]),
+          paymentsStorage: createPaymentsStorage([]),
+        },
+      )
 
-      expect(telegramMock.sendMessage.args)
-        .to.deep.equalInAnyOrder([
-          [Number(editor.id), stripIndent`
+      expect(telegramMock.sendMessage.args).to.deep.equalInAnyOrder([
+        [
+          Number(editor.id),
+          stripIndent`
             receipts.notifications.saved.message(${editor.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -79,8 +80,12 @@ describe('receipts/notifications', () => {
               description: receipts.notifications.saved.description(${editor.locale}):
                 description: Hello world\\!
               debts: receipts.notifications.saved.checkDebts(${editor.locale})
-          `, optionsWithGetPhoto(editor.locale)],
-          [Number(payer.id), stripIndent`
+          `,
+          optionsWithGetPhoto(editor.locale),
+        ],
+        [
+          Number(payer.id),
+          stripIndent`
             receipts.notifications.saved.message(${payer.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -92,8 +97,12 @@ describe('receipts/notifications', () => {
               description: receipts.notifications.saved.description(${payer.locale}):
                 description: Hello world\\!
               debts: receipts.notifications.saved.checkDebts(${payer.locale})
-          `, optionsWithGetPhoto(payer.locale)],
-          [Number(debtor.id), stripIndent`
+          `,
+          optionsWithGetPhoto(payer.locale),
+        ],
+        [
+          Number(debtor.id),
+          stripIndent`
             receipts.notifications.saved.message(${debtor.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -105,8 +114,10 @@ describe('receipts/notifications', () => {
               description: receipts.notifications.saved.description(${debtor.locale}):
                 description: Hello world\\!
               debts: receipts.notifications.saved.checkDebts(${debtor.locale})
-          `, optionsWithGetPhoto(debtor.locale)]
-        ])
+          `,
+          optionsWithGetPhoto(debtor.locale),
+        ],
+      ])
     })
 
     it('notifies participants on update', async () => {
@@ -115,36 +126,40 @@ describe('receipts/notifications', () => {
       const payer = createUser()
       const debtor = createUser()
 
-      await sendReceiptSavedNotification({
-        receipt: {
-          id: 'fake-receipt-id',
-          amount: 1200,
-          payerId: payer.id,
-          photoFilename: 'photo.jpg',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdByUserId: editor.id,
-          updatedByUserId: editor.id,
-          description: 'Hello world!',
+      await sendReceiptSavedNotification(
+        {
+          receipt: {
+            id: 'fake-receipt-id',
+            amount: 1200,
+            payerId: payer.id,
+            photoFilename: 'photo.jpg',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            createdByUserId: editor.id,
+            updatedByUserId: editor.id,
+            description: 'Hello world!',
+          },
+          debts: [
+            createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
+            createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
+          ],
+          action: 'update',
+          editorId: editor.id,
         },
-        debts: [
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
-        ],
-        action: 'update',
-        editorId: editor.id,
-      }, {
-        localize: localizeMock,
-        usersStorage: createUsersStorage([editor, payer, debtor]),
-        telegram,
-        generateWebAppUrl: generateWebAppUrlMock,
-        debtsStorage: createDebtsStorage([]),
-        paymentsStorage: createPaymentsStorage([]),
-      })
+        {
+          localize: localizeMock,
+          usersStorage: createUsersStorage([editor, payer, debtor]),
+          telegram,
+          generateWebAppUrl: generateWebAppUrlMock,
+          debtsStorage: createDebtsStorage([]),
+          paymentsStorage: createPaymentsStorage([]),
+        },
+      )
 
-      expect(telegramMock.sendMessage.args)
-        .to.deep.equalInAnyOrder([
-          [Number(editor.id), stripIndent`
+      expect(telegramMock.sendMessage.args).to.deep.equalInAnyOrder([
+        [
+          Number(editor.id),
+          stripIndent`
             receipts.notifications.saved.message(${editor.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -156,8 +171,12 @@ describe('receipts/notifications', () => {
               description: receipts.notifications.saved.description(${editor.locale}):
                 description: Hello world\\!
               debts: receipts.notifications.saved.checkDebts(${editor.locale})
-          `, optionsWithGetPhoto(editor.locale)],
-          [Number(payer.id), stripIndent`
+          `,
+          optionsWithGetPhoto(editor.locale),
+        ],
+        [
+          Number(payer.id),
+          stripIndent`
             receipts.notifications.saved.message(${payer.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -169,8 +188,12 @@ describe('receipts/notifications', () => {
               description: receipts.notifications.saved.description(${payer.locale}):
                 description: Hello world\\!
               debts: receipts.notifications.saved.checkDebts(${payer.locale})
-          `, optionsWithGetPhoto(payer.locale)],
-          [Number(debtor.id), stripIndent`
+          `,
+          optionsWithGetPhoto(payer.locale),
+        ],
+        [
+          Number(debtor.id),
+          stripIndent`
             receipts.notifications.saved.message(${debtor.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -182,8 +205,10 @@ describe('receipts/notifications', () => {
               description: receipts.notifications.saved.description(${debtor.locale}):
                 description: Hello world\\!
               debts: receipts.notifications.saved.checkDebts(${debtor.locale})
-          `, optionsWithGetPhoto(debtor.locale)]
-        ])
+          `,
+          optionsWithGetPhoto(debtor.locale),
+        ],
+      ])
     })
   })
 
@@ -194,32 +219,36 @@ describe('receipts/notifications', () => {
       const payer = createUser()
       const debtor = createUser()
 
-      await sendReceiptDeletedNotification({
-        receipt: {
-          id: 'fake-receipt-id',
-          amount: 1200,
-          payerId: payer.id,
-          photoFilename: 'photo.jpg',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdByUserId: editor.id,
-          updatedByUserId: editor.id,
-          description: 'Hello world!',
+      await sendReceiptDeletedNotification(
+        {
+          receipt: {
+            id: 'fake-receipt-id',
+            amount: 1200,
+            payerId: payer.id,
+            photoFilename: 'photo.jpg',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            createdByUserId: editor.id,
+            updatedByUserId: editor.id,
+            description: 'Hello world!',
+          },
+          debts: [
+            createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
+            createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
+          ],
+          editorId: editor.id,
         },
-        debts: [
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: payer.id, amount: 4321 }),
-          createDebt({ receiptId: 'fake-receipt-id', debtorId: debtor.id, amount: 1200 }),
-        ],
-        editorId: editor.id,
-      }, {
-        localize: localizeMock,
-        usersStorage: createUsersStorage([editor, payer, debtor]),
-        telegram,
-      })
+        {
+          localize: localizeMock,
+          usersStorage: createUsersStorage([editor, payer, debtor]),
+          telegram,
+        },
+      )
 
-      expect(telegramMock.sendMessage.args)
-        .to.deep.equalInAnyOrder([
-          [Number(editor.id), stripIndent`
+      expect(telegramMock.sendMessage.args).to.deep.equalInAnyOrder([
+        [
+          Number(editor.id),
+          stripIndent`
             receipts.notifications.deleted.message(${editor.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -228,8 +257,12 @@ describe('receipts/notifications', () => {
                 amount: ₴0
               description: receipts.notifications.deleted.description(${editor.locale}):
                 description: Hello world\\!
-          `, options],
-          [Number(payer.id), stripIndent`
+          `,
+          options,
+        ],
+        [
+          Number(payer.id),
+          stripIndent`
             receipts.notifications.deleted.message(${payer.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -238,8 +271,12 @@ describe('receipts/notifications', () => {
                 amount: ₴43\\.21
               description: receipts.notifications.deleted.description(${payer.locale}):
                 description: Hello world\\!
-          `, options],
-          [Number(debtor.id), stripIndent`
+          `,
+          options,
+        ],
+        [
+          Number(debtor.id),
+          stripIndent`
             receipts.notifications.deleted.message(${debtor.locale}):
               editor: ${escapeMd(`${editor.name} (@${editor.username})`)}
               payer: ${escapeMd(`${payer.name} (@${payer.username})`)}
@@ -248,8 +285,10 @@ describe('receipts/notifications', () => {
                 amount: ₴12
               description: receipts.notifications.deleted.description(${debtor.locale}):
                 description: Hello world\\!
-          `, options]
-        ])
+          `,
+          options,
+        ],
+      ])
     })
   })
 })
