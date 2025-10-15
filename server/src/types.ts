@@ -23,7 +23,7 @@ export interface Dependencies {
   usersCache: import('./common/cache.js').RedisCache<User>
   pollsCache: import('./common/cache.js').RedisCache<Poll>
   usersStorage: import('./users/storage.js').UsersPostgresStorage
-  telegramClient: import('telegram').TelegramClient | undefined
+  telegramClient: import('telegram').TelegramClient | null
   socialLinksCache: import('./common/cache.js').RedisCache<SocialLink>
   version: string
   webAppName: string

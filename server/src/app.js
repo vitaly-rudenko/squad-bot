@@ -80,9 +80,8 @@ async function start() {
   const usersStorage = new UsersPostgresStorage(pgClient)
 
   // Advanced Telegram capabilities
-  /** @type {import('telegram').TelegramClient | undefined} */
-  let telegramClient
-
+  /** @type {import('telegram').TelegramClient | null} */
+  let telegramClient = null
   if (env.TELEGRAM_APP_ID && env.TELEGRAM_APP_HASH && env.TELEGRAM_SESSION_STRING) {
     try {
       const telegramAppId = Number(process.env.TELEGRAM_APP_ID)
@@ -103,12 +102,12 @@ async function start() {
       logger.info({}, 'Caching Telegram Client dialogs')
       await _telegramClient.getDialogs({ limit: undefined })
 
-      registry.values({ telegramClient: _telegramClient })
       telegramClient = _telegramClient
     } catch (err) {
       logger.error({ err }, 'Failed to start Telegram Client')
     }
   }
+  registry.values({ telegramClient })
 
   const telegramBotToken = env.TELEGRAM_BOT_TOKEN
   const tokenSecret = env.TOKEN_SECRET
