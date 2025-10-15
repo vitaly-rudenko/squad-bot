@@ -62,7 +62,12 @@ export function createSocialLinkFixFlow() {
     const url = context.message.text.slice(offset, offset + length)
 
     // Advanced integration for Instagram links
-    if (telegramClient && url.includes('instagram.com')) {
+    if (
+      telegramClient &&
+      env.TELEGRAM_INSTAGRAM_INTEGRATION_BOT_ID &&
+      env.TELEGRAM_WHITELISTED_CHAT_IDS_FOR_INSTAGRAM_INTEGRATION?.includes(chatId) &&
+      url.includes('instagram.com')
+    ) {
       try {
         logger.info({ url }, 'Using advanced Instagram integration')
 

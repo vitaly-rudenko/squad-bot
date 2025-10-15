@@ -107,7 +107,7 @@ export const withChatId = () => {
    */
   return async (context, next) => {
     if (context.chat) {
-      context.state.chatId = context.chat.id
+      context.state.chatId = String(context.chat.id)
     }
 
     return next()

@@ -41,6 +41,10 @@ const optionalNumberSchema = coerce(optional(number()), optional(string()), valu
 const stringSchema = nonempty(string())
 const optionalStringSchema = coerce(optional(string()), optional(string()), value => value || undefined)
 
+const optionalStringArraySchema = coerce(optional(array(string())), optional(string()), value =>
+  value ? value.split(',') : undefined,
+)
+
 const urlArraySchema = coerce(nonempty(array(urlSchema)), nonempty(string()), value =>
   value.split(',').map(item => item.trim()),
 )
@@ -54,7 +58,7 @@ const envSchema = type({
   DATABASE_URL: urlSchema,
   LOG_DATABASE_QUERIES: optionalBooleanSchema,
   DISABLE_MEMBERSHIP_REFRESH_TASK: optionalBooleanSchema,
-  DEBUG_CHAT_ID: numberSchema,
+  DEBUG_CHAT_ID: stringSchema,
   TELEGRAM_BOT_TOKEN: stringSchema,
   TOKEN_SECRET: stringSchema,
   WEB_APP_URL: urlSchema,
@@ -66,6 +70,7 @@ const envSchema = type({
   TELEGRAM_APP_HASH: optionalStringSchema,
   TELEGRAM_SESSION_STRING: optionalStringSchema,
   TELEGRAM_INSTAGRAM_INTEGRATION_BOT_ID: optionalNumberSchema,
+  TELEGRAM_WHITELISTED_CHAT_IDS_FOR_INSTAGRAM_INTEGRATION: optionalStringArraySchema,
 })
 
 export const env = envSchema.create(process.env)
