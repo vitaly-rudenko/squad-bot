@@ -143,6 +143,9 @@ export function createSocialLinkFixFlow() {
         await telegram
           .setMessageReaction(Number(socialLink.sourceChatId), Number(socialLink.sourceMessageId), [])
           .catch(() => {})
+
+        // Mark as read
+        await telegramClient.markAsRead(socialLink.targetChatId, undefined, { clearMentions: true }).catch(() => {})
       }
 
       // Some messages are sent like this (e.g. replies from bot)
@@ -179,6 +182,9 @@ export function createSocialLinkFixFlow() {
             .setMessageReaction(Number(socialLink.sourceChatId), Number(socialLink.sourceMessageId), [])
             .catch(() => {})
         }
+
+        // Mark as read
+        await telegramClient.markAsRead(socialLink.targetChatId, undefined, { clearMentions: true }).catch(() => {})
       }
     } catch (err) {
       logger.error({ err }, 'Failed to handle Telegram Client event')
