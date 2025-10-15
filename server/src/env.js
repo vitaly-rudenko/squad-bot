@@ -1,32 +1,44 @@
-import { literal, union, defaulted, coerce, boolean, optional, type, refine, string, number, nonempty, array } from 'superstruct';
+import {
+  literal,
+  union,
+  defaulted,
+  coerce,
+  boolean,
+  optional,
+  type,
+  refine,
+  string,
+  number,
+  nonempty,
+  array,
+} from 'superstruct'
 
 const optionalBooleanSchema = coerce(
   boolean(),
   optional(union([literal('true'), literal('false')])),
-  (value) => value === 'true'
-);
+  value => value === 'true',
+)
 
-const logLevelSchema = defaulted(union([
-  literal('trace'),
-  literal('debug'),
-  literal('info'),
-  literal('warn'),
-  literal('error'),
-  literal('fatal'),
-]), 'info');
+const logLevelSchema = defaulted(
+  union([literal('trace'), literal('debug'), literal('info'), literal('warn'), literal('error'), literal('fatal')]),
+  'info',
+)
 
-const urlSchema = refine(nonempty(string()), 'url', (value) => {
-  try { new URL(value) } catch { return false }
+const urlSchema = refine(nonempty(string()), 'url', value => {
+  try {
+    new URL(value)
+  } catch {
+    return false
+  }
   return true
 })
 
-const numberSchema = coerce(number(), nonempty(string()), (value) => Number(value))
+const numberSchema = coerce(number(), nonempty(string()), value => Number(value))
 const stringSchema = nonempty(string())
+const optionalStringSchema = coerce(string(), optional(string()), value => value || undefined)
 
-const urlArraySchema = coerce(
-  nonempty(array(urlSchema)),
-  nonempty(string()),
-  (value) => value.split(',').map((item) => item.trim())
+const urlArraySchema = coerce(nonempty(array(urlSchema)), nonempty(string()), value =>
+  value.split(',').map(item => item.trim()),
 )
 
 const envSchema = type({
@@ -46,6 +58,10 @@ const envSchema = type({
   CORS_ORIGIN: urlArraySchema,
   OCR_SPACE_API_KEY: stringSchema,
   OCR_SPACE_ENDPOINT: urlSchema,
+  TELEGRAM_APP_ID: optionalStringSchema,
+  TELEGRAM_APP_HASH: optionalStringSchema,
+  TELEGRAM_SESSION_STRING: optionalStringSchema,
+  TELEGRAM_INSTAGRAM_INTEGRATION_BOT_ID: numberSchema,
 })
 
 export const env = envSchema.create(process.env)

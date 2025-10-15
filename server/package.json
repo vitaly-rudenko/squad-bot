@@ -1,6 +1,6 @@
 {
   "name": "squad-bot",
-  "version": "8.1.1",
+  "version": "9.0.0",
   "description": "Telegram bot assistant for squads",
   "main": "src/app.js",
   "type": "module",
@@ -17,7 +17,8 @@
     "jest": "node --env-file=.env --experimental-vm-modules node_modules/jest/bin/jest.js",
     "umzug": "node --env-file=.env ./src/umzug/cli.js",
     "mocha": "node --env-file=.env node_modules/mocha/bin/mocha",
-    "lint": "tsc -p tsconfig.json"
+    "lint": "tsc -p tsconfig.json",
+    "login": "node --env-file=.env --experimental-strip-types login.ts"
   },
   "repository": {
     "type": "git",
@@ -85,6 +86,7 @@
     "rate-limiter-flexible": "^5.0.0",
     "superstruct": "^1.0.3",
     "telegraf": "^4.16.3",
+    "telegram": "^2.26.22",
     "umzug": "^3.0.0"
   }
 }
