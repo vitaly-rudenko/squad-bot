@@ -19,7 +19,7 @@ export function createLinksFlow() {
         }),
         {
           parse_mode: 'MarkdownV2',
-          disable_web_page_preview: true,
+          link_preview_options: { is_disabled: true },
         },
       )
     } else {
@@ -35,7 +35,7 @@ export function createLinksFlow() {
             )
             .join(localize(locale, 'links.command.linksListDelimiter')),
         }),
-        { parse_mode: 'MarkdownV2', disable_web_page_preview: true },
+        { parse_mode: 'MarkdownV2', link_preview_options: { is_disabled: true } },
       )
     }
   }

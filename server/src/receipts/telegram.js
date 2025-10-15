@@ -9,7 +9,7 @@ export function createReceiptsFlow() {
   const { localize, generateWebAppUrl } = registry.export()
 
   /** @param {import('telegraf').Context} context */
-  const receipts = async (context) => {
+  const receipts = async context => {
     const { locale } = context.state
 
     const viewUrl = generateWebAppUrl('receipts')
@@ -20,15 +20,15 @@ export function createReceiptsFlow() {
       }),
       {
         parse_mode: 'MarkdownV2',
-        disable_web_page_preview: true,
-      }
+        link_preview_options: { is_disabled: true }
+      },
     )
   }
 
   const matchSchema = array(nonempty(string()))
 
   /** @param {import('telegraf').Context} context */
-  const getPhoto = async (context) => {
+  const getPhoto = async context => {
     if (!('match' in context)) return
     const { locale } = context.state
 
@@ -41,19 +41,22 @@ export function createReceiptsFlow() {
     const photoFilename = matchSchema.create(context.match)[1]
 
     const source = createReadStream(getPhotoPath(photoFilename))
-    source.on('error', async (err) => {
+    source.on('error', async err => {
       if (!('code' in err) || err.code !== 'ENOENT') {
         logger.error({ err, photoFilename }, 'Could not read photo')
       }
 
-      await context.reply(
-        localize(locale, 'receipts.actions.failedToSendPhoto'),
-        { parse_mode: 'MarkdownV2', reply_to_message_id }
-      )
+      await context.reply(localize(locale, 'receipts.actions.failedToSendPhoto'), {
+        parse_mode: 'MarkdownV2',
+        ...(reply_to_message_id && { reply_parameters: { message_id: reply_to_message_id } }),
+      })
     })
 
     try {
-      await context.sendPhoto({ source }, { reply_to_message_id })
+      await context.sendPhoto(
+        { source },
+        { ...(reply_to_message_id && { reply_parameters: { message_id: reply_to_message_id } }) },
+      )
     } catch (err) {
       if (!isNotificationErrorIgnorable(err)) {
         logger.warn({ err, user: context.from, photoFilename }, 'Could not send photo')

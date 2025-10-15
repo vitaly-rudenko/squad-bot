@@ -1,4 +1,4 @@
-import { escapeMd, isGroupChat } from '../common/telegram.js'
+import { escapeMd } from '../common/telegram.js'
 import { registry } from '../registry.js'
 
 // TODO: Use database for storing polls instead of relying on cache
@@ -75,9 +75,10 @@ export function createPollAnswerNotificationsFlow() {
         },
       ),
       {
-        reply_to_message_id: Number(poll.messageId),
-        disable_notification: true,
-        allow_sending_without_reply: true,
+        reply_parameters: {
+          message_id: Number(poll.messageId),
+          allow_sending_without_reply: true,
+        },
         parse_mode: 'MarkdownV2',
       },
     )
