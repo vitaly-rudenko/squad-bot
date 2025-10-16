@@ -66,7 +66,7 @@ export function createSocialLinkFixFlow() {
       telegramClient &&
       env.TELEGRAM_INSTAGRAM_INTEGRATION_BOT_ID &&
       env.TELEGRAM_WHITELISTED_CHAT_IDS_FOR_INSTAGRAM_INTEGRATION?.includes(chatId) &&
-      url.startsWith('https://instagram.com/reel/')
+      (url.startsWith('https://instagram.com/reel/') || url.startsWith('https://www.instagram.com/reel/'))
     ) {
       try {
         logger.info({ url }, 'Using advanced Instagram integration')
