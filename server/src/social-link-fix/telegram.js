@@ -61,15 +61,18 @@ export function createSocialLinkFixFlow() {
 
     const url = context.message.text.slice(offset, offset + length)
 
-    // Advanced integration for Instagram links
+    // Advanced integration for SocialLinks
     if (
       telegramClient &&
       env.TELEGRAM_INSTAGRAM_INTEGRATION_BOT_ID &&
       env.TELEGRAM_WHITELISTED_CHAT_IDS_FOR_INSTAGRAM_INTEGRATION?.includes(chatId) &&
-      (url.startsWith('https://instagram.com/reel/') || url.startsWith('https://www.instagram.com/reel/'))
+      (url.startsWith('https://instagram.com/reel/') ||
+        url.startsWith('https://www.instagram.com/reel/') ||
+        url.startsWith('https://youtube.com/shorts/') ||
+        url.startsWith('https://m.youtube.com/shorts/'))
     ) {
       try {
-        logger.info({ url }, 'Using advanced Instagram integration')
+        logger.info({ url }, 'Using advanced integration for SocialLinks')
 
         const results = await telegramClient.forwardMessages(env.TELEGRAM_INSTAGRAM_INTEGRATION_BOT_ID, {
           fromPeer: chatId,
@@ -96,7 +99,7 @@ export function createSocialLinkFixFlow() {
 
         return
       } catch (err) {
-        logger.error({ err, url }, 'Failed to handle advanced Instagram integration')
+        logger.error({ err, url }, 'Failed to handle advanced integration for SocialLinks')
 
         // Continue with the rudimentary approach
       }
@@ -125,13 +128,13 @@ export function createSocialLinkFixFlow() {
       if (event.className === 'UpdateNewMessage') {
         const messageId = event.message.id
         const messageText = event.message.message
-        if (!messageText.includes('instagram.com')) return
+        if (!messageText.includes('instagram.com') && !messageText.includes('youtube.com')) return
 
         const url = messageText
         const socialLink = await socialLinksCache.get(url)
         if (!socialLink) return
 
-        logger.info({ messageText, socialLink }, 'Received SocialLink update from advanced Instagram integration')
+        logger.info({ messageText, socialLink }, 'Received SocialLink update from advanced integration')
 
         // Forward message from the bot to the original chat
         await telegramClient.forwardMessages(socialLink.sourceChatId, {
@@ -160,7 +163,7 @@ export function createSocialLinkFixFlow() {
         const socialLink = await socialLinksCache.get(key)
         if (!socialLink) return
 
-        logger.info({ messageText, socialLink }, 'Received SocialLink update from advanced Instagram integration')
+        logger.info({ messageText, socialLink }, 'Received SocialLink update from advanced integration')
 
         if (messageText.includes('Processing...')) {
           // Set a reaction instead of sending a message
