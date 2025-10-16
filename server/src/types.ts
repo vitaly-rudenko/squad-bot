@@ -28,7 +28,7 @@ export interface Dependencies {
   version: string
   webAppName: string
   webAppUrl: string
-  debugChatId: number
+  debugChatId: string
 }
 
 export type Deps<N extends keyof Dependencies> = Pick<Dependencies, N>
