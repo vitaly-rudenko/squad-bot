@@ -268,6 +268,10 @@ async function start() {
   bot.command('toggle_poll_answer_notifications', togglePollAnswerNotifications)
   bot.on('poll_answer', pollAnswer)
 
+  bot.action('delete_reply_markup', async context => {
+    await context.editMessageReplyMarkup({ inline_keyboard: [] }).catch(() => {})
+  })
+
   bot.action('delete_message', async context => {
     const { locale } = context.state
 

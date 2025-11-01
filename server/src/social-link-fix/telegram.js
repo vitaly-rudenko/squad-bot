@@ -114,7 +114,10 @@ export function createSocialLinkFixFlow() {
         allow_sending_without_reply: true,
       },
       disable_notification: true,
-      ...Markup.inlineKeyboard([Markup.button.callback('Delete', 'delete_message')]),
+      ...Markup.inlineKeyboard([
+        Markup.button.callback('🆗', 'delete_reply_markup'),
+        Markup.button.callback('❌', 'delete_message'),
+      ]),
     })
   }
 
