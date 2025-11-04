@@ -257,9 +257,13 @@ async function start() {
   bot.command('receipts', receipts)
   bot.action(/^photo:(.+)$/, getPhoto)
 
-  const { toggleSocialLinkFix, socialLinkFixMessage, telegramClientEvent } = createSocialLinkFixFlow()
+  const { toggleSocialLinkFix, socialLinkFixMessage, telegramClientEvent, tryAdvancedIntegration } =
+    createSocialLinkFixFlow()
   bot.command('toggle_social_link_fix', toggleSocialLinkFix)
-  if (telegramClient) telegramClient.addEventHandler(telegramClientEvent)
+  if (telegramClient) {
+    bot.action('try_advanced_integration', tryAdvancedIntegration)
+    telegramClient.addEventHandler(telegramClientEvent)
+  }
 
   const { exportReceiptsCsv } = createExportFlow()
   bot.command('export', requirePrivateChat(), exportReceiptsCsv)
@@ -267,6 +271,10 @@ async function start() {
   const { togglePollAnswerNotifications, pollAnswer } = createPollAnswerNotificationsFlow()
   bot.command('toggle_poll_answer_notifications', togglePollAnswerNotifications)
   bot.on('poll_answer', pollAnswer)
+
+  bot.action('delete_reply_markup', async context => {
+    await context.editMessageReplyMarkup({ inline_keyboard: [] }).catch(() => {})
+  })
 
   bot.action('delete_message', async context => {
     const { locale } = context.state

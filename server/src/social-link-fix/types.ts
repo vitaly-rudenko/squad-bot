@@ -1,8 +1,6 @@
 export type SocialLink = {
   url: string
-  sourceChatId: string
-  sourceMessageId: string
-  sourceUserId: string
-  targetChatId: string
-  targetMessageId: string
+  linkMessage: { chatId: string; messageId: string }
+  simpleFixMessage?: { chatId: string; messageId: string }
+  advancedIntegrationInitialMessage?: { chatId: string; messageId: string }
 }

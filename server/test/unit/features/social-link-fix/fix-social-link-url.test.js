@@ -4,10 +4,10 @@ import { fixSocialLinkUrl } from '../../../../src/social-link-fix/fix-social-lin
 describe('fixSocialLinkUrl()', () => {
   it('fixes necessary Instagram links', () => {
     expect(fixSocialLinkUrl('https://instagram.com/reel/A-bcdef123/'))
-      .to.eq('https://ddinstagram.com/reel/A-bcdef123/')
+      .to.eq('https://kkinstagram.com/reel/A-bcdef123/')
 
     expect(fixSocialLinkUrl('https://www.instagram.com/p/A-bcdef123/?igsh=MTYwNDZFAKE2YXh1bA=='))
-      .to.eq('https://ddinstagram.com/p/A-bcdef123/')
+      .to.eq('https://kkinstagram.com/p/A-bcdef123/')
   })
 
   it('does not fix other Instagram links', () => {
