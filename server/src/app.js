@@ -257,9 +257,13 @@ async function start() {
   bot.command('receipts', receipts)
   bot.action(/^photo:(.+)$/, getPhoto)
 
-  const { toggleSocialLinkFix, socialLinkFixMessage, telegramClientEvent } = createSocialLinkFixFlow()
+  const { toggleSocialLinkFix, socialLinkFixMessage, telegramClientEvent, tryAdvancedIntegration } =
+    createSocialLinkFixFlow()
   bot.command('toggle_social_link_fix', toggleSocialLinkFix)
-  if (telegramClient) telegramClient.addEventHandler(telegramClientEvent)
+  if (telegramClient) {
+    bot.action('try_advanced_integration', tryAdvancedIntegration)
+    telegramClient.addEventHandler(telegramClientEvent)
+  }
 
   const { exportReceiptsCsv } = createExportFlow()
   bot.command('export', requirePrivateChat(), exportReceiptsCsv)
