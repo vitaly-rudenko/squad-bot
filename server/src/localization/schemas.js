@@ -123,6 +123,11 @@ export const localeFileSchema = object({
   socialLinkFix: object({
     enabled: _,
     disabled: _,
+    actions: object({
+      accept: _,
+      reject: _,
+      retry: _,
+    }),
   }),
   pollAnswerNotifications: object({
     voted: _,

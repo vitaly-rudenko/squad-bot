@@ -45,7 +45,7 @@ export function createSocialLinkFixFlow() {
     }
 
     if (!('text' in context.message)) return next()
-    const { chatId } = context.state
+    const { chatId, locale } = context.state
     if (!chatId) return next()
 
     // Check if social link fix is enabled if message belongs to a group chat
@@ -80,6 +80,8 @@ export function createSocialLinkFixFlow() {
       env.TELEGRAM_WHITELISTED_CHAT_IDS_FOR_INSTAGRAM_INTEGRATION?.includes(chatId) &&
       (url.startsWith('https://instagram.com/reel/') ||
         url.startsWith('https://www.instagram.com/reel/') ||
+        url.startsWith('https://instagram.com/p/') ||
+        url.startsWith('https://www.instagram.com/p/') ||
         url.startsWith('https://youtube.com/shorts/') ||
         url.startsWith('https://m.youtube.com/shorts/'))
 
@@ -93,9 +95,11 @@ export function createSocialLinkFixFlow() {
       },
       disable_notification: true,
       ...Markup.inlineKeyboard([
-        Markup.button.callback('🆗', 'delete_reply_markup'),
-        ...(isAdvancedIntegrationAllowed ? [Markup.button.callback('🔄', 'try_advanced_integration')] : []),
-        Markup.button.callback('❌', 'delete_message'),
+        Markup.button.callback(localize(locale, 'socialLinkFix.actions.accept'), 'delete_reply_markup'),
+        ...(isAdvancedIntegrationAllowed
+          ? [Markup.button.callback(localize(locale, 'socialLinkFix.actions.retry'), 'try_advanced_integration')]
+          : []),
+        Markup.button.callback(localize(locale, 'socialLinkFix.actions.reject'), 'delete_message'),
       ]),
     })
 
