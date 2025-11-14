@@ -3,6 +3,9 @@ import { fixSocialLinkUrl } from '../../../../src/social-link-fix/fix-social-lin
 
 describe('fixSocialLinkUrl()', () => {
   it('fixes necessary Instagram links', () => {
+    expect(fixSocialLinkUrl('instagram.com/reel/A-bcdef123/'))
+      .to.eq('https://kkinstagram.com/reel/A-bcdef123/')
+
     expect(fixSocialLinkUrl('https://instagram.com/reel/A-bcdef123/'))
       .to.eq('https://kkinstagram.com/reel/A-bcdef123/')
 
@@ -16,6 +19,9 @@ describe('fixSocialLinkUrl()', () => {
   })
 
   it('fixes necessary Twitter links', () => {
+    expect(fixSocialLinkUrl('x.com/fake_account/status/12345678901234567890'))
+      .to.eq('https://fxtwitter.com/fake_account/status/12345678901234567890')
+
     expect(fixSocialLinkUrl('https://x.com/fake_account/status/12345678901234567890'))
       .to.eq('https://fxtwitter.com/fake_account/status/12345678901234567890')
 
@@ -29,6 +35,9 @@ describe('fixSocialLinkUrl()', () => {
   })
 
   it('fixes necessary Reddit links', () => {
+    expect(fixSocialLinkUrl('reddit.com/r/fake_subreddit/s/abcdef1234'))
+      .to.eq('https://vxreddit.com/r/fake_subreddit/s/abcdef1234')
+
     expect(fixSocialLinkUrl('https://reddit.com/r/fake_subreddit/s/abcdef1234'))
       .to.eq('https://vxreddit.com/r/fake_subreddit/s/abcdef1234')
 
@@ -53,6 +62,9 @@ describe('fixSocialLinkUrl()', () => {
   })
 
   it('fixes necessary TikTok links', () => {
+    expect(fixSocialLinkUrl('vm.tiktok.com/abcdef1234'))
+      .to.eq('https://vm.vxtiktok.com/abcdef1234')
+
     expect(fixSocialLinkUrl('https://vm.tiktok.com/abcdef1234'))
       .to.eq('https://vm.vxtiktok.com/abcdef1234')
 
@@ -64,5 +76,9 @@ describe('fixSocialLinkUrl()', () => {
     expect(fixSocialLinkUrl('https://tiktok.com/abcdef1234')).to.be.undefined
     expect(fixSocialLinkUrl('https://vm.tiktok.com/abcdef1234/comments')).to.be.undefined
     expect(fixSocialLinkUrl('https://www.vm.tiktok.com/?hello=world')).to.be.undefined
+  })
+
+  it('handles errors gracefully', () => {
+    expect(fixSocialLinkUrl('invalid_url')).to.be.undefined
   })
 })
