@@ -90,17 +90,17 @@ async function start() {
 
       const _telegramClient = new TelegramClient(session, telegramAppId, telegramAppHash, { connectionRetries: 5 })
 
-      logger.info({}, 'Starting Telegram Client for advanced capabilities')
-      await _telegramClient.start({
-        phoneNumber: () => Promise.reject(new Error('Not logged into Telegram session')),
-        password: () => Promise.reject(new Error('Not logged into Telegram session')),
-        phoneCode: () => Promise.reject(new Error('Not logged into Telegram session')),
-        onError: err => logger.warn({ err }, 'Unhandled Telegram session error'),
-      })
-
-      // Required for Telegram Client to "see" the chats before any event happens from those chats
-      logger.info({}, 'Caching Telegram Client dialogs')
-      await _telegramClient.getDialogs({ limit: undefined })
+      // logger.info({}, 'Starting Telegram Client for advanced capabilities')
+      // await _telegramClient.start({
+      //   phoneNumber: () => Promise.reject(new Error('Not logged into Telegram session')),
+      //   password: () => Promise.reject(new Error('Not logged into Telegram session')),
+      //   phoneCode: () => Promise.reject(new Error('Not logged into Telegram session')),
+      //   onError: err => logger.warn({ err }, 'Unhandled Telegram session error'),
+      // })
+      //
+      // // Required for Telegram Client to "see" the chats before any event happens from those chats
+      // logger.info({}, 'Caching Telegram Client dialogs')
+      // await _telegramClient.getDialogs({ limit: undefined })
 
       telegramClient = _telegramClient
     } catch (err) {

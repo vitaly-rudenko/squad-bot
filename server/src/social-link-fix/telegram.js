@@ -96,9 +96,9 @@ export function createSocialLinkFixFlow() {
       disable_notification: true,
       ...Markup.inlineKeyboard([
         Markup.button.callback(localize(locale, 'socialLinkFix.actions.accept'), 'delete_reply_markup'),
-        ...(isAdvancedIntegrationAllowed
-          ? [Markup.button.callback(localize(locale, 'socialLinkFix.actions.retry'), 'try_advanced_integration')]
-          : []),
+        // ...(isAdvancedIntegrationAllowed
+        //   ? [Markup.button.callback(localize(locale, 'socialLinkFix.actions.retry'), 'try_advanced_integration')]
+        //   : []),
         Markup.button.callback(localize(locale, 'socialLinkFix.actions.reject'), 'delete_message'),
       ]),
     })
