@@ -158,7 +158,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
         })
       }
 
-      createToast(t('A ₴{{amount}} receipt has been saved', { amount: formatAmount(calculated.total) }), {
+      createToast(t('A {{amount}} receipt has been saved', { amount: formatAmount(calculated.total, 'UAH') }), {
         type: 'success',
         description: formState.description,
         toastId,
@@ -562,8 +562,8 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   <Divide className='w-4 h-4' />
                   <span>
                     <Trans t={t} i18nKey='splitRemainingEvenly'>
-                      Split remaining ₴<span className={cn(calculated.amountMismatch && 'text-destructive')}>
-                        <>{{ amount: formatAmount(amountToSplitEvenly) }}</>
+                      Split remaining <span className={cn(calculated.amountMismatch && 'text-destructive')}>
+                        <>{{ amount: formatAmount(amountToSplitEvenly, 'UAH') }}</>
                       </span> evenly
                     </Trans>
                   </span>
@@ -701,7 +701,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
             <Button type='submit' disabled={!isValid}>
               {calculated.total
                 ? <Trans t={t} i18nKey='saveReceipt'>
-                  Save ₴{{ amount: formatAmount(calculated.total) }} receipt
+                  Save {{ amount: formatAmount(calculated.total, 'UAH') }} receipt
                 </Trans>
                 : <>{t('Save receipt')}</>}
             </Button>

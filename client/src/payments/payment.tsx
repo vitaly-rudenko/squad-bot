@@ -50,7 +50,7 @@ export const Payment: FC<{
                   ? <ArrowLeftToLine className='w-4 h-4' />
                   : <ArrowRightFromLine className='w-4 h-4' />}
               </span>
-              <span className='min-w-16'>₴{formatAmount(payment.amount)}</span>
+              <span className='min-w-16'>{formatAmount(payment.amount, 'UAH')}</span>
             </span>
             <span className='overflow-hidden'><UserName user={participant} /></span>
           </div>

@@ -14,6 +14,18 @@ describe('formatAmount()', () => {
     expect(formatAmount(-12345)).toEqual('-123.45')
   })
 
+  it('formats amount with UAH currency', () => {
+    expect(formatAmount(0, 'UAH')).toEqual('₴0')
+    expect(formatAmount(50, 'UAH')).toEqual('₴0.50')
+    expect(formatAmount(12, 'UAH')).toEqual('₴0.12')
+    expect(formatAmount(123, 'UAH')).toEqual('₴1.23')
+    expect(formatAmount(1230, 'UAH')).toEqual('₴12.30')
+    expect(formatAmount(19999, 'UAH')).toEqual('₴199.99')
+
+    expect(formatAmount(12345, 'UAH')).toEqual('₴123.45')
+    expect(formatAmount(-12345, 'UAH')).toEqual('₴-123.45')
+  })
+
   it('throws on numbers with decimals', () => {
     expect(() => formatAmount(0.1)).toThrow()
     expect(() => formatAmount(50.00001)).toThrow()

@@ -68,7 +68,7 @@ export const DebtsWidget: FC<{ refreshKey?: unknown }> = (props) => {
               : <ArrowRightFromLine className='w-4 h-4' />}
           </span>
           <span>
-            ₴{formatAmount(debt.amount)} {debt.type === 'ingoing' ? t('from') : t('to')} {users.find(u => u.id === debt.userId)?.name}
+            {formatAmount(debt.amount, 'UAH')} {debt.type === 'ingoing' ? t('from') : t('to')} {users.find(u => u.id === debt.userId)?.name}
           </span>
         </div>
       </Badge>

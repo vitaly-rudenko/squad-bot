@@ -77,7 +77,7 @@ export const PaymentEditor: FC<{
       amount,
     })
 
-    createToast(t('A ₴{{amount}} payment has been saved', { amount: formatAmount(amount) }), { type: 'success', toastId })
+    createToast(t('A {{amount}} payment has been saved', { amount: formatAmount(amount, 'UAH') }), { type: 'success', toastId })
 
     await router.navigate({ to: '/payments' })
   })
