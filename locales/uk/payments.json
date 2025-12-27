@@ -7,9 +7,13 @@
   "Select sender": "Обрати відправника",
   "Select receiver": "Обрати отримувача",
   "Enter amount": "Сума переказу",
-  "Save ": "Зберегти переказ на ",
-  " payment": "",
   "Save payment": "Зберегти переказ",
-  "'s cards": "",
-  "User hasn't added any cards yet.": "Користувач ще не додав(ла) свою картку."
+  "savePaymentWithAmount": "Зберегти переказ на ₴{{amount}}",
+  "{{name}}'s cards": "Картки {{name}}",
+  "User hasn't added any cards yet.": "Користувач ще не додав(ла) свою картку.",
+  "A ₴{{amount}} payment has been saved": "Переказ на ₴{{amount}} збережено",
+  "Payment has been deleted": "Переказ було видалено",
+  "Delete payment?": "Видалити переказ?",
+  "Yes, delete it": "Так, видалити",
+  "Whoops, nothing to see here!": "Упс, тут нічого немає!"
 }

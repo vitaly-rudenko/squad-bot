@@ -7,5 +7,9 @@
   "Receipts": "Receipts",
   "Record a receipt": "Record a receipt",
   "Replace": "Replace",
-  "Close": "Close"
+  "Close": "Close",
+  "Receipt has been deleted": "Receipt has been deleted",
+  "Delete receipt?": "Delete receipt?",
+  "Yes, delete it": "Yes, delete it",
+  "Whoops, nothing to see here!": "Whoops, nothing to see here!"
 }
