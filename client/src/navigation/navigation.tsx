@@ -10,22 +10,24 @@ import { Moon, MoonStar, Sun, SunDim } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useI18n } from '@/i18n/hooks'
 
-function getTimeOfTheDay(names: { morning: string; afternoon: string; evening: string; night: string }) {
+type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night'
+
+function getTimeOfTheDay(): { period: TimeOfDay; icon: typeof SunDim } {
   const hours = new Date().getHours()
 
   if (hours >= 6 && hours < 11) {
-    return { name: names.morning, icon: SunDim }
+    return { period: 'morning', icon: SunDim }
   }
 
   if (hours >= 11 && hours < 17) {
-    return { name: names.afternoon, icon: Sun }
+    return { period: 'afternoon', icon: Sun }
   }
 
   if (hours >= 17 && hours < 22) {
-    return { name: names.evening, icon: Moon }
+    return { period: 'evening', icon: Moon }
   }
 
-  return { name: names.night, icon: MoonStar }
+  return { period: 'night', icon: MoonStar }
 }
 
 export const Navigation: FC = () => {
@@ -36,12 +38,7 @@ export const Navigation: FC = () => {
   const { webApp } = useWebApp()
   const [logOutAlertOpen, setLogOutAlertOpen] = useState(false)
 
-  const timeOfTheDay = useMemo(() => getTimeOfTheDay({
-    morning: t('morning'),
-    afternoon: t('afternoon'),
-    evening: t('evening'),
-    night: t('night'),
-  }), [t])
+  const timeOfTheDay = useMemo(() => getTimeOfTheDay(), [])
 
   const routes = useMemo(() => [
     { name: t('Receipts'), route: '/receipts' },
@@ -52,8 +49,8 @@ export const Navigation: FC = () => {
 
   return <>
     <Alert
-      title='Log out from your account?'
-      confirm='Yes, log out'
+      title={t('Log out from your account?')}
+      confirm={t('Yes, log out')}
       open={logOutAlertOpen}
       onConfirm={() => auth.logOut?.()}
       onCancel={() => setLogOutAlertOpen(false)}
@@ -67,7 +64,7 @@ export const Navigation: FC = () => {
               className={cn('p-0 h-auto flex flex-row gap-1.5 items-baseline hover:no-underline', webApp && 'pointer-events-none')}
               onClick={() => setLogOutAlertOpen(true)}>
               <timeOfTheDay.icon className='w-4 h-4 self-center' />
-              <span>{t('Good ')}{timeOfTheDay.name}, {auth.currentUser.name}</span>
+              <span>{t(`greeting.${timeOfTheDay.period}`, { name: auth.currentUser.name })}</span>
             </Button>
           </NavigationMenuItem>
         )}

@@ -3,11 +3,12 @@
   "Payments": "Payments",
   "Cards": "Cards",
   "Groups": "Groups",
-  "Good ": "Good ",
-  "morning": "morning",
-  "afternoon": "afternoon",
-  "evening": "evening",
-  "night": "night",
+  "greeting.morning": "Good morning, {{name}}",
+  "greeting.afternoon": "Good afternoon, {{name}}",
+  "greeting.evening": "Good evening, {{name}}",
+  "greeting.night": "Good night, {{name}}",
   "First": "First",
-  "Last": "Last"
+  "Last": "Last",
+  "Log out from your account?": "Log out from your account?",
+  "Yes, log out": "Yes, log out"
 }

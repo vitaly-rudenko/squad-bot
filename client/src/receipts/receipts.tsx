@@ -36,11 +36,11 @@ export const Receipts: FC = () => {
 
   useEffect(() => {
     if (deleteMutation.isSuccess) {
-      createToast('Receipt has been deleted', { type: 'success' })
+      createToast(t('Receipt has been deleted'), { type: 'success' })
       setDeleteId(undefined)
       refetch()
     }
-  }, [deleteMutation.isSuccess, refetch])
+  }, [deleteMutation.isSuccess, refetch, t])
 
   return <>
     <ReceiptPhotoViewer
@@ -50,8 +50,8 @@ export const Receipts: FC = () => {
     />
 
     <Alert
-      title='Delete receipt?'
-      confirm='Yes, delete it'
+      title={t('Delete receipt?')}
+      confirm={t('Yes, delete it')}
       disabled={deleteMutation.isPending}
       open={deleteId !== undefined}
       onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
@@ -81,7 +81,7 @@ export const Receipts: FC = () => {
         isRefetching && 'grayscale opacity-70 pointer-events-none'
       )}>
         {users && isSuccess ? <>
-          {receipts.total === 0 && <p>Whoops, nothing to see here!</p>}
+          {receipts.total === 0 && <p>{t('Whoops, nothing to see here!')}</p>}
           {receipts.items.map(receipt => (
             <Receipt key={receipt.id} users={users} receipt={receipt}
               onEdit={() => router.navigate({ to: '/receipts/$receiptId', params: { receiptId: receipt.id } })}

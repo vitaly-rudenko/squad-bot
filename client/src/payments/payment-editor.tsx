@@ -77,7 +77,7 @@ export const PaymentEditor: FC<{
       amount,
     })
 
-    createToast(`A ₴${formatAmount(amount)} payment has been saved`, { type: 'success', toastId })
+    createToast(t('A ₴{{amount}} payment has been saved', { amount: formatAmount(amount) }), { type: 'success', toastId })
 
     await router.navigate({ to: '/payments' })
   })
@@ -192,15 +192,15 @@ export const PaymentEditor: FC<{
           {/* Save button */}
           <Button type='submit' disabled={!valid || !createMutation.isIdle}>
             {isDefined(amount) && amount > 0
-              ? <>{t('Save ')}₴{formatAmount(amount)}{t(' payment')}</>
-              : <>{t('Save payment')}</>}
+              ? t('savePaymentWithAmount', { amount: formatAmount(amount) })
+              : t('Save payment')}
           </Button>
         </CardFooter>
       </Card>
 
       {!!showCards && (
         <div className='flex flex-col gap-2 pt-3 transition animation-down-top'>
-          <div className='text-xl'>{$toUser.name}{t('\'s cards')}</div>
+          <div className='text-xl'>{t('{{name}}\'s cards', { name: $toUser.name })}</div>
           {cards ? <>
             {cards.total === 0 && (
               <div>{t('User hasn\'t added any cards yet.')}</div>

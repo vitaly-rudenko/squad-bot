@@ -7,5 +7,9 @@
   "Receipts": "Чеки",
   "Record a receipt": "Додати чек",
   "Replace": "Замінити",
-  "Close": "Закрити"
+  "Close": "Закрити",
+  "Receipt has been deleted": "Чек було видалено",
+  "Delete receipt?": "Видалити чек?",
+  "Yes, delete it": "Так, видалити",
+  "Whoops, nothing to see here!": "Упс, тут нічого немає!"
 }

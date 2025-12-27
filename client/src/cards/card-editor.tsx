@@ -152,7 +152,7 @@ export const CardEditor: FC = () => {
 
           <CardFooter className='flex flex-col items-stretch bg-secondary gap-3 pt-3'>
             {/* Save button */}
-            <Button type='submit' disabled={!valid || bankSelectOpenDebounced}>{t('Add ')}{$bank === 'privatbank' ? t('Privatbank') : t('Monobank')}{t(' card')}</Button>
+            <Button type='submit' disabled={!valid || bankSelectOpenDebounced}>{t('Add {{bank}} card', { bank: $bank === 'privatbank' ? t('Privatbank') : t('Monobank') })}</Button>
           </CardFooter>
         </Card>
       </form>
