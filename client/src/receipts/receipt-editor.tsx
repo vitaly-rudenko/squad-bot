@@ -114,7 +114,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
   const validAmount = calculated.amount?.error ? undefined : calculated.amount
   const validSharedExpenses = calculated.sharedExpenses?.error ? undefined : calculated.sharedExpenses
   const validTipAmount = calculated.tipAmount?.error ? undefined : calculated.tipAmount
-  const amountToSplitEvenly = calculated.amountMismatch ?? calculated.backfillAmount ?? 0
+  const amountToSplitEvenly = Math.max(0, calculated.amountMismatch ?? calculated.backfillAmount ?? 0)
   const criticalAmountMismatch = (calculated.amountMismatch !== undefined && (calculated.amountMismatch < 0 || $sharedExpenses !== undefined))
     ? calculated.amountMismatch
     : undefined
