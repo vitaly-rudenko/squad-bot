@@ -23,7 +23,7 @@ describe('formatAmount()', () => {
     expect(formatAmount(19999, 'UAH')).toEqual('₴199.99')
 
     expect(formatAmount(12345, 'UAH')).toEqual('₴123.45')
-    expect(formatAmount(-12345, 'UAH')).toEqual('₴-123.45')
+    expect(formatAmount(-12345, 'UAH')).toEqual('-₴123.45')
   })
 
   it('throws on numbers with decimals', () => {
