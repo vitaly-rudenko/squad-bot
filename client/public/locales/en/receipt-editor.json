@@ -37,5 +37,9 @@
   "Rotating the photo...": "Rotating the photo...",
   "Photo has been rotated": "Photo has been rotated",
   "Could not rotate the photo": "Could not rotate the photo",
-  "Receipt has been deleted": "Receipt has been deleted"
+  "Receipt has been deleted": "Receipt has been deleted",
+  "calculations.users": "users",
+  "calculations.remaining": "remaining",
+  "calculations.shared": "shared",
+  "calculations.perUser": "per user"
 }

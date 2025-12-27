@@ -37,5 +37,9 @@
   "Rotating the photo...": "Повертаємо фото...",
   "Photo has been rotated": "Фото було повернуто",
   "Could not rotate the photo": "Не вдалося повернути фото",
-  "Receipt has been deleted": "Чек було видалено"
+  "Receipt has been deleted": "Чек було видалено",
+  "calculations.users": "користувачів",
+  "calculations.remaining": "залишок",
+  "calculations.shared": "спільні",
+  "calculations.perUser": "на людину"
 }
