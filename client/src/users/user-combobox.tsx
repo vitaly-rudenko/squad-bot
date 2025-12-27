@@ -12,6 +12,7 @@ import { keepPreviousData } from '@tanstack/react-query'
 import { useRecentUsers } from './hooks'
 import { useRequiredAuth } from '@/auth/hooks'
 import { MIN_QUERY_LENGTH } from './constants'
+import { useTranslation } from 'react-i18next'
 
 export const UserCombobox: FC<{
   variant?: | 'combobox' | 'link'
@@ -24,6 +25,7 @@ export const UserCombobox: FC<{
   onSelect: (user: User | undefined) => unknown
   footerNote?: string
 }> = ({ variant = 'combobox', placeholder, selectedUser, deselectable, users, exclude, disabled, onSelect, footerNote }) => {
+  const { t } = useTranslation('user-combobox')
   const { currentUser } = useRequiredAuth()
   const recentUsers = useRecentUsers()
 
@@ -94,9 +96,9 @@ export const UserCombobox: FC<{
         <CommandInput
           value={query}
           onValueChange={(value) => value.startsWith('@') ? setQuery(value.slice(1)) : setQuery(value)}
-          placeholder='Search users...'
+          placeholder={t('Search users...')}
         />
-        <CommandEmpty>{isSearching ? 'Searching...' : 'User not found.'}</CommandEmpty>
+        <CommandEmpty>{isSearching ? t('Searching...') : t('User not found.')}</CommandEmpty>
         <CommandGroup className='max-h-[30vh] overflow-y-auto'>
           {searchResults.map(user => (
             <CommandItem
@@ -120,8 +122,8 @@ export const UserCombobox: FC<{
             </CommandItem>
           ))}
 
-          {!!isRemoteSearchEnabled && !isQueryValid && <CommandItem>Type at least 3 characters to search</CommandItem>}
-          {searchResults.length > 0 && !!isSearching && <CommandItem>Searching...</CommandItem>}
+          {!!isRemoteSearchEnabled && !isQueryValid && <CommandItem>{t('Type at least 3 characters to search')}</CommandItem>}
+          {searchResults.length > 0 && !!isSearching && <CommandItem>{t('Searching...')}</CommandItem>}
 
           {!!footerNote && <CommandItem className={cn('text-primary/90 italic')}>{footerNote}</CommandItem>}
         </CommandGroup>
