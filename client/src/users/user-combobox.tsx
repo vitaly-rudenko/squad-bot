@@ -12,18 +12,20 @@ import { keepPreviousData } from '@tanstack/react-query'
 import { useRecentUsers } from './hooks'
 import { useRequiredAuth } from '@/auth/hooks'
 import { MIN_QUERY_LENGTH } from './constants'
+import { useTranslation } from 'react-i18next'
+import { requireNonNullable } from '@/utils/require-non-nullable'
 
 export const UserCombobox: FC<{
   variant?: | 'combobox' | 'link'
   placeholder: ReactNode
-  users?: User[]
+  prioritize?: User[]
   exclude?: User[]
   selectedUser?: User
   deselectable?: true
   disabled?: boolean
   onSelect: (user: User | undefined) => unknown
-  footerNote?: string
-}> = ({ variant = 'combobox', placeholder, selectedUser, deselectable, users, exclude, disabled, onSelect, footerNote }) => {
+}> = ({ variant = 'combobox', placeholder, selectedUser, deselectable, prioritize, exclude, disabled, onSelect }) => {
+  const { t } = useTranslation('user-combobox')
   const { currentUser } = useRequiredAuth()
   const recentUsers = useRecentUsers()
 
@@ -31,9 +33,8 @@ export const UserCombobox: FC<{
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebounce(query, 500)
 
-  const isRemoteSearchEnabled = !users
   const isQueryValid = query.length >= MIN_QUERY_LENGTH
-  const isUsingRemoteSearch = isRemoteSearchEnabled && debouncedQuery.length >= MIN_QUERY_LENGTH
+  const isUsingRemoteSearch = debouncedQuery.length >= MIN_QUERY_LENGTH
 
   const usersQuery = useUsersQuery({ query: debouncedQuery }, {
     enabled: isUsingRemoteSearch,
@@ -43,26 +44,24 @@ export const UserCombobox: FC<{
 
   const source = useMemo(
     () => {
-      let source = ((isUsingRemoteSearch && usersQuery.data) || users || recentUsers || [currentUser])
+      const orderedUsers = [
+        ...selectedUser ? [selectedUser] : [],
+        ...prioritize ?? [],
+        ...recentUsers ?? [],
+        ...isUsingRemoteSearch ? usersQuery.data ?? [] : [],
+        currentUser,
+      ].filter(user => !exclude?.includes(user))
 
-      if (exclude) {
-        source = source.filter(u => exclude.every(e => e.id !== u.id))
-      }
+      const uniqueUserIds = new Set(orderedUsers.map(u => u.id))
+      const deduplicatedUsers = Array.from(uniqueUserIds).map(id => requireNonNullable(orderedUsers.find(u => u.id === id)))
 
-      // move/append selected user to the top
-      if (selectedUser) {
-        if (source.findIndex(u => u.id === selectedUser.id) !== 0) {
-          source = [selectedUser, ...source.filter(u => u.id !== selectedUser.id)]
-        }
-      }
-
-      return source
+      return deduplicatedUsers
     },
-    [currentUser, exclude, isUsingRemoteSearch, recentUsers, selectedUser, users, usersQuery.data]
+    [currentUser, prioritize, exclude, isUsingRemoteSearch, recentUsers, selectedUser, usersQuery.data]
   )
 
   const searchResults = useMemo(() => source.filter(user => isUserMatching(user, query)), [query, source])
-  const isSearching = isRemoteSearchEnabled && isQueryValid && (usersQuery.isFetching || query !== debouncedQuery)
+  const isSearching = isQueryValid && (usersQuery.isFetching || query !== debouncedQuery)
 
   useEffect(() => {
     if (open) {
@@ -94,9 +93,9 @@ export const UserCombobox: FC<{
         <CommandInput
           value={query}
           onValueChange={(value) => value.startsWith('@') ? setQuery(value.slice(1)) : setQuery(value)}
-          placeholder='Search users...'
+          placeholder={t('Search users...')}
         />
-        <CommandEmpty>{isSearching ? 'Searching...' : 'User not found.'}</CommandEmpty>
+        <CommandEmpty>{isSearching ? t('Searching...') : t('User not found.')}</CommandEmpty>
         <CommandGroup className='max-h-[30vh] overflow-y-auto'>
           {searchResults.map(user => (
             <CommandItem
@@ -120,10 +119,8 @@ export const UserCombobox: FC<{
             </CommandItem>
           ))}
 
-          {!!isRemoteSearchEnabled && !isQueryValid && <CommandItem>Type at least 3 characters to search</CommandItem>}
-          {searchResults.length > 0 && !!isSearching && <CommandItem>Searching...</CommandItem>}
-
-          {!!footerNote && <CommandItem className={cn('text-primary/90 italic')}>{footerNote}</CommandItem>}
+          {!isQueryValid && <CommandItem>{t('Type at least 3 characters to search')}</CommandItem>}
+          {searchResults.length > 0 && !!isSearching && <CommandItem>{t('Searching...')}</CommandItem>}
         </CommandGroup>
       </Command>
     </PopoverContent>

@@ -7,9 +7,13 @@
   "Select sender": "Select sender",
   "Select receiver": "Select receiver",
   "Enter amount": "Enter amount",
-  "Save ": "Save ",
-  " payment": " payment",
   "Save payment": "Save payment",
-  "'s cards": "'s cards",
-  "User hasn't added any cards yet.": "User hasn't added any cards yet."
+  "savePaymentWithAmount": "Save {{amount}} payment",
+  "{{name}}'s cards": "{{name}}'s cards",
+  "User hasn't added any cards yet.": "User hasn't added any cards yet.",
+  "A {{amount}} payment has been saved": "A {{amount}} payment has been saved",
+  "Payment has been deleted": "Payment has been deleted",
+  "Delete payment?": "Delete payment?",
+  "Yes, delete it": "Yes, delete it",
+  "Whoops, nothing to see here!": "Whoops, nothing to see here!"
 }

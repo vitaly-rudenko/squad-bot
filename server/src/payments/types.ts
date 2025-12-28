@@ -3,6 +3,7 @@ export type Payment = {
   fromUserId: string
   toUserId: string
   amount: number
+  description?: string
   createdAt: Date
 }
 

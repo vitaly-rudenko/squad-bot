@@ -5,10 +5,11 @@ payments:
   notifications:
     saved:
       message:
-        - '💸 {editor} has {action} a *{amount}* payment'
+        - '💸 {editor} has {action} a *{amount}* payment {description}'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
         - '{debts}'
+      description: '– {description}'
       action:
         create: recorded
         update: edited
@@ -17,9 +18,10 @@ payments:
       checkDebts: '↔️ Check your debts: /debts'
     deleted:
       message:
-        - '❌ 💸 {editor} has deleted a *{amount}* payment'
+        - '❌ 💸 {editor} has deleted a *{amount}* payment {description}'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
+      description: '– {description}'
 receipts:
   command:
     message:
@@ -52,7 +54,7 @@ receipts:
 users:
   command:
     start:
-      message: 🎉 Welcome\! Your name and username have been saved\.
+      message: 🎉 Welcome\! Your name, username and language have been saved\.
 cards:
   command:
     message:
@@ -120,7 +122,7 @@ socialLinkFix:
   enabled: '✅ Previews for Twitter, Instagram and YouTube links will now be fixed'
   disabled: '❌ Previews for Twitter, Instagram and YouTube links will no longer be fixed'
   actions:
-    accept: '✅ Accept'
+    accept: '✅ Keep'
     reject: '❌ Delete'
     retry: '🔄 Retry'
 pollAnswerNotifications:

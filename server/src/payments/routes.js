@@ -1,5 +1,5 @@
 import Router from 'express-promise-router'
-import { object } from 'superstruct'
+import { object, optional, size, string, trimmed } from 'superstruct'
 import { userIdSchema, amountSchema, paginationSchema } from '../common/schemas.js'
 import { sendPaymentDeletedNotification, sendPaymentSavedNotification } from './notifications.js'
 import { NotAuthorizedError, NotFoundError } from '../common/errors.js'
@@ -10,6 +10,7 @@ export const createPaymentSchema = object({
   fromUserId: userIdSchema,
   toUserId: userIdSchema,
   amount: amountSchema,
+  description: optional(size(trimmed(string()), 1, 64)),
 })
 
 export function createPaymentsRouter() {
@@ -18,12 +19,13 @@ export function createPaymentsRouter() {
   const router = Router()
 
   router.post('/payments', async (req, res) => {
-    const { fromUserId, toUserId, amount } = createPaymentSchema.create(req.body)
+    const { fromUserId, toUserId, amount, description } = createPaymentSchema.create(req.body)
 
     const payment = await paymentsStorage.create({
       fromUserId,
       toUserId,
       amount,
+      description,
       createdAt: new Date(),
     })
 

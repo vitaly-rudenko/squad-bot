@@ -33,6 +33,7 @@ import { ApiError } from '@/utils/api'
 import { Calculations } from './calculations'
 import { AmountSuggestions } from './amount-suggestions'
 import { DescriptionSuggestions } from './description-suggestions'
+import { Trans, useTranslation } from 'react-i18next'
 
 type FormState = {
   amount: string
@@ -60,18 +61,20 @@ const defaultValues: FormState = {
   debts: [],
 }
 
-const RECENT_USERS_LIMIT = 5
+const RECENT_USERS_LIMIT = 3
 const ENABLED_USERS_LIMIT = 10
 const MAX_AMOUNT = 100_000_00
 
 export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
+  const { t } = useTranslation('receipt-editor')
   const router = useRouter()
 
   const { currentUser } = useRequiredAuth()
   const recentUsers = useRecentUsers()
 
   const { data: receipt } = useReceiptQuery({
-    receiptId: receiptId ?? '' },
+    receiptId: receiptId ?? ''
+  },
     { enabled: receiptId !== undefined },
   )
   const { data: users } = useUsersQuery(
@@ -111,7 +114,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
   const validAmount = calculated.amount?.error ? undefined : calculated.amount
   const validSharedExpenses = calculated.sharedExpenses?.error ? undefined : calculated.sharedExpenses
   const validTipAmount = calculated.tipAmount?.error ? undefined : calculated.tipAmount
-  const amountToSplitEvenly = calculated.amountMismatch ?? calculated.backfillAmount ?? 0
+  const amountToSplitEvenly = Math.max(0, calculated.amountMismatch ?? calculated.backfillAmount ?? 0)
   const criticalAmountMismatch = (calculated.amountMismatch !== undefined && (calculated.amountMismatch < 0 || $sharedExpenses !== undefined))
     ? calculated.amountMismatch
     : undefined
@@ -125,7 +128,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
   const submit = form.handleSubmit(async (formState) => {
     if (calculated.error || formState.payer === '') return
 
-    let toastId = createToast('Saving the receipt...', { type: 'loading' })
+    let toastId = createToast(t('Saving the receipt...'), { type: 'loading' })
 
     try {
       await saveMutation.mutateAsync({
@@ -134,14 +137,14 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
         amount: calculated.amount.value,
         photo: formState.photo,
         description: formState.description,
-        debts:  calculated.debts.map(debt => ({
+        debts: calculated.debts.map(debt => ({
           debtorId: debt.debtorId,
           amount: debt.total,
         })),
       })
 
       if (validTipAmount) {
-        toastId = createToast(`Saving the tip...`, { type: 'loading', toastId })
+        toastId = createToast(t('Saving the tip...'), { type: 'loading', toastId })
 
         await saveMutation.mutateAsync({
           payerId: formState.tipPayer !== '' ? formState.tipPayer.id : formState.payer.id,
@@ -155,7 +158,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
         })
       }
 
-      createToast(`A ₴${formatAmount(calculated.total)} receipt has been saved`, {
+      createToast(t('A {{amount}} receipt has been saved', { amount: formatAmount(calculated.total, 'UAH') }), {
         type: 'success',
         description: formState.description,
         toastId,
@@ -177,7 +180,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
     }
 
     if (photos.length > 3) {
-      createToast('You can select up to 3 photos at once', { type: 'error' })
+      createToast(t('You can select up to 3 photos at once'), { type: 'error' })
       form.setValue('photo', false)
       return
     }
@@ -187,29 +190,29 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
     try {
       const photo = await processImages(photos, (stage) => {
         if (stage === 'combining') {
-          toastId = createToast('Combining the photos...', { type: 'loading', toastId })
+          toastId = createToast(t('Combining the photos...'), { type: 'loading', toastId })
         } else if (stage === 'compressing') {
-          toastId = createToast('Compressing the photo...', { type: 'loading', toastId })
+          toastId = createToast(t('Compressing the photo...'), { type: 'loading', toastId })
         } else if ('index' in stage) {
-          const title = stage.stage === 'converting' ? 'Converting HEIC...' : 'Compressing the photo...'
+          const title = stage.stage === 'converting' ? t('Converting HEIC...') : t('Compressing the photo...')
           const progress = photos.length > 1 ? ` (${stage.index}/${photos.length})` : ''
 
           toastId = createToast(`${title}${progress}`, { type: 'loading', toastId })
         }
       })
 
-      toastId = createToast('Photo has been processed', { type: 'success', toastId })
+      toastId = createToast(t('Photo has been processed'), { type: 'success', toastId })
 
       form.setValue('photo', photo)
     } catch (error) {
       console.warn(error)
-      toastId = createToast('Could not process the photo', {
+      toastId = createToast(t('Could not process the photo'), {
         type: 'error',
         description: error instanceof Error ? error.message : undefined,
         toastId,
       })
     }
-  }, [form])
+  }, [t, form])
 
   const rotatePhoto = useCallback(async (rotation: number) => {
     if (typeof $photo === 'boolean' || rotation === 0) {
@@ -221,26 +224,26 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
     try {
       const photo = await rotateImage($photo, rotation, (stage) => {
         if (stage === 'reading') {
-          toastId = createToast('Reading the photo...', { type: 'loading', toastId })
+          toastId = createToast(t('Reading the photo...'), { type: 'loading', toastId })
         } else if (stage === 'rotating') {
-          toastId = createToast('Rotating the photo...', { type: 'loading', toastId })
+          toastId = createToast(t('Rotating the photo...'), { type: 'loading', toastId })
         } else if (stage === 'compressing') {
-          toastId = createToast('Compressing the photo...', { type: 'loading', toastId })
+          toastId = createToast(t('Compressing the photo...'), { type: 'loading', toastId })
         }
       })
 
-      toastId = createToast('Photo has been rotated', { type: 'success', toastId })
+      toastId = createToast(t('Photo has been rotated'), { type: 'success', toastId })
 
       form.setValue('photo', photo)
     } catch (error) {
       console.warn(error)
-      toastId = createToast('Could not rotate the photo', {
+      toastId = createToast(t('Could not rotate the photo'), {
         type: 'error',
         description: error instanceof Error ? error.message : undefined,
         toastId,
       })
     }
-  }, [$photo, form]);
+  }, [t, $photo, form]);
 
   const selectPhoto = useCallback(() => {
     photoInputRef.current?.click()
@@ -324,10 +327,10 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
 
   useEffect(() => {
     if (deleteMutation.isSuccess) {
-      createToast('Receipt has been deleted', { type: 'success' })
+      createToast(t('Receipt has been deleted'), { type: 'success' })
       router.navigate({ to: '/receipts' })
     }
-  }, [deleteMutation.isSuccess, router])
+  }, [t, deleteMutation.isSuccess, router])
 
   if (!initialized) {
     return <Skeleton className='h-[32rem] animation-down-top' />
@@ -346,16 +349,16 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
     />
 
     <Alert
-      title='Delete photo?'
-      confirm='Yes, delete it'
+      title={t('Delete photo?')}
+      confirm={t('Yes, delete it')}
       open={photoDeleteAlertOpen}
       onConfirm={() => deletePhoto()}
       onCancel={() => setPhotoDeleteAlertOpen(false)}
     />
 
     <Alert
-      title='Delete receipt?'
-      confirm='Yes, delete it'
+      title={t('Delete receipt?')}
+      confirm={t('Yes, delete it')}
       disabled={deleteMutation.isPending}
       open={deleteAlertOpen}
       onConfirm={() => receiptId && deleteMutation.mutate(receiptId)}
@@ -389,8 +392,8 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                     {!photoPreviewLoaded && (photoSrc ? <Spinner invert /> : <Image />)}
                     {!!photoSrc && (
                       <img
-                      className={cn('animation-appear w-full h-full rounded-sm object-cover', !photoPreviewLoaded && 'hidden')}
-                      onLoad={() => setPhotoPreviewLoaded(true)} src={photoSrc} />
+                        className={cn('animation-appear w-full h-full rounded-sm object-cover', !photoPreviewLoaded && 'hidden')}
+                        onLoad={() => setPhotoPreviewLoaded(true)} src={photoSrc} />
                     )}
                   </> : <ImageOff />}
                 </Button>
@@ -399,10 +402,10 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
           </div>
 
           <CardHeader>
-            <CardTitle>{receiptId ? 'Edit the receipt' : 'Record a receipt'}</CardTitle>
+            <CardTitle>{receiptId ? t('Edit the receipt') : t('Record a receipt')}</CardTitle>
 
             {scanQuery.error instanceof ApiError && scanQuery.error.status === 429 && (
-              <FormDescription className='w-[70%]'>Suggestions are not available at the moment.</FormDescription>
+              <FormDescription className='w-[70%]'>{t('Suggestions are not available at the moment.')}</FormDescription>
             )}
           </CardHeader>
 
@@ -413,9 +416,9 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
               name='description'
               render={({ field }) => <>
                 <FormItem className='flex flex-col'>
-                  <FormLabel>Description</FormLabel>
-                  <Input type='text' placeholder='(no description)' value={field.value} maxLength={64}
-                    onChange={(event) => form.setValue('description', event.target.value)}/>
+                  <FormLabel>{t('Description')}</FormLabel>
+                  <Input type='text' placeholder={t('(no description)')} value={field.value} maxLength={64}
+                    onChange={(event) => form.setValue('description', event.target.value)} />
                 </FormItem>
 
                 <DescriptionSuggestions
@@ -433,13 +436,12 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   name='payer'
                   render={({ field }) => (
                     <FormItem className='flex flex-col flex-auto w-32 min-w-0'>
-                      <FormLabel>Payer</FormLabel>
+                      <FormLabel>{t('Payer')}</FormLabel>
                       <UserCombobox
-                        users={enabledUsers}
+                        prioritize={enabledUsers}
                         selectedUser={field.value || undefined}
-                        placeholder='Select payer'
+                        placeholder={t('Select payer')}
                         onSelect={user => form.setValue('payer', user ?? '')}
-                        footerNote='Add user to receipt to select as payer.'
                       />
                     </FormItem>
                   )}
@@ -450,7 +452,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   name='amount'
                   render={({ field }) => (
                     <FormItem className='flex flex-col flex-auto w-20'>
-                      <FormLabel>Amount</FormLabel>
+                      <FormLabel>{t('Amount')}</FormLabel>
                       <Input type='text' value={field.value}
                         className={cn(field.value !== '' && calculated.amount?.error && 'border-destructive')}
                         onChange={(event) => form.setValue('amount', sanitizeMagicAmount(event.target.value))} />
@@ -472,7 +474,9 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
               {!!validAmount && <Calculations input={{ amount: validAmount }} />}
             </div>
           </CardContent>
-          <CardContent className='flex flex-col pt-3 bg-secondary py-3 gap-2'>
+
+
+          <CardContent className='flex flex-col pt-3 bg-secondary py-3 gap-2 animation-down-top'>
             {/* Debts */}
             <FormField
               control={form.control}
@@ -510,14 +514,14 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                               isMagicalAmount($debt.amount) ? 'has-[:focus]:w-64' : '',
                             )}>
                               <Input type='text' focusOnEnd
-                                  className={cn(isError && 'border-destructive')}
-                                  placeholder={isValid ? formatAmount(debt.total) : ''} value={$debt.amount}
-                                  onChange={(event) => {
-                                    form.setValue('debts', field.value.with(i, {
-                                      ...$debt,
-                                      amount: sanitizeMagicAmount(event.target.value)
-                                    }))
-                                  }} />
+                                className={cn(isError && 'border-destructive')}
+                                placeholder={isValid ? formatAmount(debt.total) : ''} value={$debt.amount}
+                                onChange={(event) => {
+                                  form.setValue('debts', field.value.with(i, {
+                                    ...$debt,
+                                    amount: sanitizeMagicAmount(event.target.value)
+                                  }))
+                                }} />
                               {!!isValid && !!debt.automatic && <PoweredByMagic />}
                             </div>
                           </FormControl>
@@ -546,23 +550,30 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
             <UserCombobox
               onSelect={user => user && form.setValue('debts', [...$debts, { user: user, amount: '', enabled: true }])}
               exclude={$debts.map(d => d.user)}
-              placeholder={<div className='flex flex-row items-center gap-2'><UserIcon className='w-4 h-4'/><span>Add user</span></div>}
+              placeholder={<div className='flex flex-row items-center gap-2'><UserIcon className='w-4 h-4' /><span>{t('Add user')}</span></div>}
               variant='link'
               disabled={enabledUsers.length >= ENABLED_USERS_LIMIT}
             />
           </CardContent>
-          <CardContent className='flex flex-col py-3 gap-2'>
+
+          <CardContent className='flex flex-col py-3 gap-2 animation-down-top'>
             {/* Shared expenses */}
             {$sharedExpenses === undefined && <>
               {!!amountToSplitEvenly && (
                 <Button variant='link' className='flex flex-row items-center justify-start gap-2 p-0' onClick={() => form.setValue('sharedExpenses', '')}>
-                  <Divide className='w-4 h-4'/>
-                    <span>Split remaining <span className={cn(calculated.amountMismatch && 'text-destructive')}>₴{formatAmount(amountToSplitEvenly)}</span> evenly</span>
+                  <Divide className='w-4 h-4' />
+                  <span>
+                    <Trans t={t} i18nKey='splitRemainingEvenly'>
+                      Split remaining <span className={cn(calculated.amountMismatch && 'text-destructive')}>
+                        <>{{ amount: formatAmount(amountToSplitEvenly, 'UAH') }}</>
+                      </span> evenly
+                    </Trans>
+                  </span>
                 </Button>
               )}
 
               <Button variant='link' className='flex flex-row items-center justify-start gap-2 p-0' onClick={() => form.setValue('sharedExpenses', '')}>
-                <Users className='w-4 h-4'/><span>Add shared expenses</span>
+                <Users className='w-4 h-4' /><span>{t('Add shared expenses')}</span>
               </Button>
             </>}
 
@@ -577,7 +588,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                       />
                     </FormControl>
                     <FormLabel className='flex flex-row items-center gap-1 flex-auto overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer pl-2 py-3'>
-                      <span className='truncate'>Shared expenses</span>
+                      <span>{t('Shared expenses')}</span>
                     </FormLabel>
                   </div>
 
@@ -587,11 +598,11 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                       isMagicalAmount($sharedExpenses) ? 'has-[:focus]:w-64' : '',
                     )}>
                       <Input type='text' value={field.value}
-                          placeholder={validSharedExpenses ? formatAmount(validSharedExpenses.total) : ''}
-                          className={cn(calculated.sharedExpenses?.error && 'border-destructive')}
-                          onChange={(event) => {
-                            form.setValue('sharedExpenses', sanitizeMagicAmount(event.target.value))
-                          }} />
+                        placeholder={validSharedExpenses ? formatAmount(validSharedExpenses.total) : ''}
+                        className={cn(calculated.sharedExpenses?.error && 'border-destructive')}
+                        onChange={(event) => {
+                          form.setValue('sharedExpenses', sanitizeMagicAmount(event.target.value))
+                        }} />
                       {!!validSharedExpenses?.automatic && <PoweredByMagic />}
                     </div>
                   </FormControl>}
@@ -609,31 +620,33 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
 
                 {!!validSharedExpenses && <Calculations input={{ sharedExpenses: validSharedExpenses }} />}
               </div>
-            </>}/>}
+            </>} />}
 
+          </CardContent>
+
+
+          <CardFooter className='flex flex-col items-stretch bg-secondary gap-3 pt-3 rounded-b-md'>
             {/* Tip amount */}
             {!receiptId && <>
-              {($sharedExpenses !== undefined || $tipAmount !== undefined) && <Separator />}
-
               {$tipAmount === undefined && (
-                <Button variant='link' className='flex flex-row items-center justify-start p-0 gap-2' onClick={() => form.setValue('tipAmount', '')}>
-                  <Coins className='w-4 h-4'/><span>Add tip</span>
+                <Button variant='link' className='flex flex-row items-center justify-start p-0 gap-2 animation-down-top' onClick={() => form.setValue('tipAmount', '')}>
+                  <Coins className='w-4 h-4' /><span>{t('Add tip')}</span>
                 </Button>
               )}
 
-              {$tipAmount !== undefined && <div className='flex flex-col gap-1 pt-3'>
+              {$tipAmount !== undefined && <div className='flex flex-col gap-1 pt-3 animation-down-top'>
                 <div className='flex flex-row gap-3'>
                   <FormField
                     control={form.control}
                     name='tipPayer'
                     render={({ field }) => (
                       <FormItem className='flex flex-col flex-auto w-32 min-w-0'>
-                        <FormLabel>Tip payer</FormLabel>
+                        <FormLabel>{t('Tip payer')}</FormLabel>
                         <UserCombobox
                           deselectable
-                          users={enabledUsers}
+                          prioritize={enabledUsers}
                           selectedUser={field.value || undefined}
-                          placeholder={$payer ? <UserName user={$payer} /> : 'Select tip payer'}
+                          placeholder={$payer ? <UserName user={$payer} /> : t('Select tip payer')}
                           onSelect={user => form.setValue('tipPayer', user ?? '')}
                         />
                       </FormItem>
@@ -646,7 +659,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                     render={({ field }) => (
                       <FormItem className='flex flex-col flex-auto w-20'>
                         <div className='flex flex-row justify-between items-center'>
-                          <FormLabel>Tip amount</FormLabel>
+                          <FormLabel>{t('Tip amount')}</FormLabel>
                           <Button variant='link' className='p-0 min-h-0 h-auto grow justify-end' onClick={() => {
                             form.setValue('tipAmount', undefined)
                             form.setValue('tipPayer', '')
@@ -665,14 +678,13 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                 {!!validTipAmount && <Calculations input={{ tipAmount: validTipAmount }} />}
               </div>}
             </>}
-          </CardContent>
-          <CardFooter className='flex flex-col items-stretch bg-secondary gap-3 pt-3 rounded-b-md'>
+
             {/* Amount mismatch */}
             {!!criticalAmountMismatch && (
               <div className='flex flex-row items-center justify-between gap-3 text-destructive'>
                 <div className='flex flex-row items-center gap-2 flex-auto'>
                   <AlertCircle className='w-4 h-4' />
-                  <span>{criticalAmountMismatch > 0 ? 'Remaining' : 'Amount mismatch'}</span>
+                  <span>{criticalAmountMismatch > 0 ? t('Remaining') : t('Amount mismatch')}</span>
                 </div>
 
                 <div className='flex-none'>
@@ -691,13 +703,16 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
             {/* Save button */}
             <Button type='submit' disabled={!isValid}>
               {calculated.total
-                ? <>Save ₴{formatAmount(calculated.total)} receipt</>
-                : <>Save receipt</>}
+                ? <Trans t={t} i18nKey='saveReceipt'>
+                  Save {{ amount: formatAmount(calculated.total, 'UAH') }} receipt
+                </Trans>
+                : <>{t('Save receipt')}</>}
             </Button>
 
+            {/* Delete button */}
             {!!receiptId && (
               <Button variant='destructive' onClick={() => setDeleteAlertOpen(true)}>
-                Delete the receipt
+                {t('Delete the receipt')}
               </Button>
             )}
           </CardFooter>

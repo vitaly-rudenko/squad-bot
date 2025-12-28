@@ -10,10 +10,10 @@ export class PaymentsPostgresStorage {
    */
   async create(input) {
     const response = await this._client.query(`
-      INSERT INTO payments (from_user_id, to_user_id, amount, created_at)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO payments (from_user_id, to_user_id, amount, description, created_at)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING id;
-    `, [input.fromUserId, input.toUserId, input.amount, input.createdAt])
+    `, [input.fromUserId, input.toUserId, input.amount, input.description, input.createdAt])
 
     return {
       id: response.rows[0].id,
@@ -104,7 +104,7 @@ export class PaymentsPostgresStorage {
     const whereClause = conditions.length > 0 ? `WHERE (${conditions.join(') AND (')})` : ''
 
     const response = await this._client.query(`
-      SELECT p.id, p.from_user_id, p.to_user_id, p.amount, p.created_at
+      SELECT p.id, p.from_user_id, p.to_user_id, p.amount, p.description, p.created_at
       FROM payments p ${whereClause}
       ORDER BY created_at DESC
       LIMIT ${limit} OFFSET ${offset};
@@ -132,6 +132,7 @@ function deserializePayment(row) {
     fromUserId: row['from_user_id'],
     toUserId: row['to_user_id'],
     amount: row['amount'],
+    description: row['description'] ?? undefined,
     createdAt: new Date(row['created_at']),
   }
 }

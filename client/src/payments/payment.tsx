@@ -2,7 +2,7 @@ import { useRequiredAuth } from '@/auth/hooks'
 import { Payment as PaymentType } from '@/payments/types'
 import type { User } from '@/users/types'
 import { Button } from '@/components/button'
-import { Card, CardFooter, CardHeader } from '@/components/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/card'
 import { Separator } from '@/components/separator'
 import { Skeleton } from '@/components/skeleton'
 import { UserName } from '@/users/user-name'
@@ -50,7 +50,7 @@ export const Payment: FC<{
                   ? <ArrowLeftToLine className='w-4 h-4' />
                   : <ArrowRightFromLine className='w-4 h-4' />}
               </span>
-              <span className='min-w-16'>₴{formatAmount(payment.amount)}</span>
+              <span className='min-w-16'>{formatAmount(payment.amount, 'UAH')}</span>
             </span>
             <span className='overflow-hidden'><UserName user={participant} /></span>
           </div>
@@ -60,6 +60,22 @@ export const Payment: FC<{
         </div>
       </CardHeader>
     </div>
+
+    {/* Description */}
+    {!!payment.description && (
+      <div className={cn(
+        'transition-[height] overflow-hidden',
+        activated ? 'h-10' : 'h-0'
+      )}>
+        <CardContent className={cn(
+          'py-0 flex flex-row items-center h-full',
+          'bg-gradient-to-r to-30%',
+          receive ? 'from-emerald-50 dark:from-emerald-950' : 'from-rose-50 dark:from-rose-950'
+        )}>
+          <span className='truncate'>{payment.description}</span>
+        </CardContent>
+      </div>
+    )}
 
     {/* Action buttons */}
     <div className={cn(

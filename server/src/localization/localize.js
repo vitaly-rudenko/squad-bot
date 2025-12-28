@@ -4,30 +4,35 @@ import yaml from 'js-yaml'
 import { fileURLToPath } from 'url'
 import { localeFileSchema } from './schemas.js'
 
-const en = flattenLocaleFile(
-  // @ts-expect-error TODO
-  localeFileSchema.create(
-    yaml.load(
-      fs.readFileSync(
-        path.join(path.dirname(fileURLToPath(import.meta.url)), 'locales', 'en.yml'),
-        'utf8',
-      )
-    )
-  )
-)
+const defaultLocale = 'en'
+/** @type {Record<string, ReturnType<(typeof flattenLocaleFile)>>} */
+const locales = {
+  en: flattenLocaleFile(
+    // @ts-expect-error -- TODO: fix
+    localeFileSchema.create(
+      yaml.load(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'locales', 'en.yml'), 'utf8')),
+    ),
+  ),
+  uk: flattenLocaleFile(
+    // @ts-expect-error -- TODO: fix
+    localeFileSchema.create(
+      yaml.load(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'locales', 'uk.yml'), 'utf8')),
+    ),
+  ),
+}
 
 /**
- * @param {string} _locale
+ * @param {string} locale
  * @param {import('./types.js').MessageKey} key
  * @param {Record<string, number | string | undefined>} [replacements]
  * @returns {string}
  */
-export function localize(_locale, key, replacements) {
+export function localize(locale, key, replacements) {
   if (!key) {
     throw new Error(`Invalid localization key: '${String(key)}'`)
   }
 
-  const message = en[key]
+  const message = (locales[locale] || locales[defaultLocale])[key]
   if (message === undefined) {
     throw new Error(`Missing message for localization key '${String(key)}'`)
   }
@@ -62,7 +67,7 @@ function flattenLocaleFile(localeFile) {
  * @returns {string}
  */
 export function replaceVariables(message, replacements) {
-  message = message.replaceAll(/\{[a-z0-9_]+\}/ig, (variable) => {
+  message = message.replaceAll(/\{[a-z0-9_]+\}/gi, variable => {
     const replacement = replacements?.[variable.slice(1, -1)]
     if (replacement === undefined) {
       throw new Error(`Missing replacement for variable ${String(variable)}`)

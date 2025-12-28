@@ -3,11 +3,12 @@
   "Payments": "Перекази",
   "Cards": "Картки",
   "Groups": "Чати",
-  "Good ": "",
-  "morning": "Теплого ранку",
-  "afternoon": "Сонячного дня",
-  "evening": "Затишного вечора",
-  "night": "Спокійної ночі",
+  "greeting.morning": "Теплого ранку, {{name}}",
+  "greeting.afternoon": "Сонячного дня, {{name}}",
+  "greeting.evening": "Затишного вечора, {{name}}",
+  "greeting.night": "Спокійної ночі, {{name}}",
   "First": "На початок",
-  "Last": "В кінець"
+  "Last": "В кінець",
+  "Log out from your account?": "Вийти з облікового запису?",
+  "Yes, log out": "Так, вийти"
 }

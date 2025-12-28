@@ -17,7 +17,6 @@
   "Add a card": "Add a card",
   "Select user": "Select user",
   "You haven't added any cards yet.": "You haven't added any cards yet.",
-  "hasn't added any cards yet.": "hasn't added any cards yet.",
-  "Add ": "Add ",
-  " card": " card"
+  "{{name}} hasn't added any cards yet.": "{{name}} hasn't added any cards yet.",
+  "Add {{bank}} card": "Add {{bank}} card"
 }

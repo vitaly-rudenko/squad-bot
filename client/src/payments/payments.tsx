@@ -31,16 +31,16 @@ export const Payments: FC = () => {
 
   useEffect(() => {
     if (deleteMutation.isSuccess) {
-      createToast('Payment has been deleted', { type: 'success' })
+      createToast(t('Payment has been deleted'), { type: 'success' })
       setDeleteId(undefined)
       refetch()
     }
-  }, [deleteMutation.isSuccess, refetch])
+  }, [deleteMutation.isSuccess, refetch, t])
 
   return <>
     <Alert
-      title='Delete payment?'
-      confirm='Yes, delete it'
+      title={t('Delete payment?')}
+      confirm={t('Yes, delete it')}
       disabled={deleteMutation.isPending}
       open={deleteId !== undefined}
       onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
@@ -69,7 +69,7 @@ export const Payments: FC = () => {
         isRefetching && 'grayscale opacity-70 pointer-events-none'
       )}>
         {users !== undefined && isSuccess ? <>
-          {payments.total === 0 && <p>Whoops, nothing to see here!</p>}
+          {payments.total === 0 && <p>{t('Whoops, nothing to see here!')}</p>}
           {payments.items.map(payment => (
             <Payment key={payment.id} users={users} payment={payment} onEdit={() => {}} onDelete={() => setDeleteId(payment.id)} />
           ))}

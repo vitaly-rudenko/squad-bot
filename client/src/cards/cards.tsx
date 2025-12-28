@@ -83,7 +83,7 @@ export const Cards: FC = () => {
                     <Button>{t('Add a card')}</Button>
                   </Link>
                 </div>
-              : <div>{user.name} {t('hasn\'t added any cards yet.')}</div>
+              : <div>{t('{{name}} hasn\'t added any cards yet.', { name: user.name })}</div>
           )}
           {cards.items.map((card) => (
             <Card key={card.id}

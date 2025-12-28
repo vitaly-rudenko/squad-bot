@@ -57,7 +57,7 @@ export const Receipt: FC<{
             <span>{t('Paid by')}</span>
             <span className='overflow-hidden font-medium'><UserName user={payer} /></span>
           </div>
-          <div className='whitespace-nowrap font-medium'>₴{formatAmount(receipt.amount)}</div>
+          <div className='whitespace-nowrap font-medium'>{formatAmount(receipt.amount, 'UAH')}</div>
         </div>
       </CardHeader>
 
