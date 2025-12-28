@@ -4,6 +4,7 @@ const defaultLocale = 'en'
 /** @type {Record<string, import('./types').Locale>} */
 const languageCodeLocaleMap = {
   en: 'en',
+  uk: 'uk',
 }
 
 export const withLocale = () => {

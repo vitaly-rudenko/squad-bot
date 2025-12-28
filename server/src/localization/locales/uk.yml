@@ -1,0 +1,136 @@
+payments:
+  command:
+    message:
+      - '💸 {viewUrl}'
+  notifications:
+    saved:
+      message:
+        - '💸 {editor} {action} платіж на *{amount}*'
+        - '👤 Відправник: *{sender}*'
+        - '👤 Отримувач: *{receiver}*'
+        - '{debts}'
+      action:
+        create: записав(ла)
+        update: відредагував(ла)
+      ingoingDebt: '⬅️ {name} тепер винен вам *{amount}*'
+      outgoingDebt: '➡️ Ви тепер винні *{amount}* користувачеві {name} – [сплатити]({payUrl})'
+      checkDebts: '↔️ Перевірити борги: /debts'
+    deleted:
+      message:
+        - '❌ 💸 {editor} видалив(ла) платіж на *{amount}*'
+        - '👤 Відправник: *{sender}*'
+        - '👤 Отримувач: *{receiver}*'
+receipts:
+  command:
+    message:
+      - '📝 {viewUrl}'
+  notifications:
+    part: '💵 Ваша частина: *{amount}*'
+    saved:
+      message:
+        - '📝 {editor} {action} [чек на *{amount}*]({receiptUrl}) {description}'
+        - '👤 Оплатив *{payer}*'
+        - '{part}'
+        - '{debts}'
+      description: '– {description}'
+      action:
+        create: записав(ла)
+        update: відредагував(ла)
+      ingoingDebt: '⬅️ {name} тепер винен(на) вам *{amount}*'
+      outgoingDebt: '➡️ Ви тепер винні *{amount}* користувачеві {name} – [сплатити]({payUrl})'
+      checkDebts: '↔️ Перевірити борги: /debts'
+    deleted:
+      message:
+        - '❌ 📝 {editor} видалив(ла) чек на *{amount}* {description}'
+        - '👤 Оплатив *{payer}*'
+        - '{part}'
+      description: '– {description}'
+  actions:
+    getPhoto: '📷 Подивитись фото чека'
+    sendingPhoto: 'Надсилаємо фото...'
+    failedToSendPhoto: '😓 Фото більше недоступне\.'
+users:
+  command:
+    start:
+      message: 🎉 Ласкаво просимо\! Ваше ім'я та нікнейм були збережені\.
+cards:
+  command:
+    message:
+      - '💳 {viewUrl}'
+debts:
+  command:
+    noDebts: '✅ У вас немає боргів\!'
+    ingoingDebt: '\- {name}: *{amount}*'
+    ingoingDebtsOne: '⬅️ {name} винен(на) вам *{amount}*'
+    ingoingDebtsMany:
+      - '⬅️ Винні вам:'
+      - '{debts}'
+    outgoingDebt: '\- {name}: *{amount}* – [сплатити]({payUrl})'
+    outgoingDebtsOne: '➡️ Ви винні *{amount}* користувачеві {name} – [сплатити]({payUrl})'
+    outgoingDebtsMany:
+      - '➡️ Ви винні:'
+      - '{debts}'
+rollCalls:
+  command:
+    message:
+      - '📣 {viewUrl}'
+  noOneToMention: '❌ Немає кого пінганути або бот не має достатньо даних про цей чат'
+  pollTitle: 'Оберіть відповідь'
+  pollTitleMultiselect: 'Оберіть відповіді'
+  groupPollTitle: 'Оберіть відповідь ({group}/{groups})'
+  groupPollTitleMultiselect: 'Оберіть відповіді ({group}/{groups})'
+  notApplicablePollOption: '(Нічого)'
+  notification:
+    - '*{sender}*: {message}'
+    - ''
+    - '{mentions}'
+  mention:
+    withUsername: '@{username}'
+    withoutUsername: '[{name}]({profileUrl})'
+links:
+  command:
+    message:
+      - '{links}'
+      - ''
+      - '✏️ [Керувати посиланнями]({viewUrl})'
+    linksListItem: '[{label}]({url})'
+    linksListDelimiter: ['', '']
+    noLinks:
+      - '❌ У цьому груповому чаті ще немає посилань\.'
+      - ''
+      - '✏️ [Додати посилання]({viewUrl})'
+export:
+  receipts:
+    command:
+      message: '✅ Ваш експорт готовий'
+      noReceipts: '❌ У вас немає чеків'
+    columns:
+      date: 'Дата (UTC)'
+      description: 'Опис'
+      amount: 'Сума'
+      payer: 'Платник'
+    filenamePrefix: 'чеки'
+admins:
+  titles:
+    command:
+      message:
+        - '🏷 {editUrl}'
+socialLinkFix:
+  enabled: '✅ Попередній перегляд для посилань Twitter, Instagram та YouTube тепер буде виправлено'
+  disabled: '❌ Попередній перегляд для посилань Twitter, Instagram та YouTube більше не буде виправлено'
+  actions:
+    accept: '✅ Залишити'
+    reject: '❌ Видалити'
+    retry: '🔄 Повторити'
+pollAnswerNotifications:
+  voted: '*{voter}* проголосував(ла) у опитуванні: {pollOptions}'
+  retracted: '*{voter}* відкликав(ла) свій голос\.'
+  pollOptionsListItem: '*{pollOption}*'
+  pollOptionsListDelimiter: ', '
+  unknownPollOption: 'невідомо'
+  enabled: '✅ Сповіщення про відповіді в опитуваннях тепер увімкнено'
+  disabled: '❌ Сповіщення про відповіді в опитуваннях тепер вимкнено'
+groupChatOnly: '❌ Цю команду можна виконати лише в груповому чаті'
+privateChatOnly: '❌ Цю команду можна виконати лише в приватному чаті'
+unknownUser: 'Невідомий користувач'
+messageWasDeleted: 'Повідомлення було видалено'

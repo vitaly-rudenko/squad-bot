@@ -120,7 +120,7 @@ socialLinkFix:
   enabled: '✅ Previews for Twitter, Instagram and YouTube links will now be fixed'
   disabled: '❌ Previews for Twitter, Instagram and YouTube links will no longer be fixed'
   actions:
-    accept: '✅ Accept'
+    accept: '✅ Keep'
     reject: '❌ Delete'
     retry: '🔄 Retry'
 pollAnswerNotifications:
