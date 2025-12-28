@@ -6,7 +6,6 @@
   "(no description)": "(без опису)",
   "Payer": "Платник",
   "Select payer": "Оберіть платника",
-  "Add user to receipt to select as payer.": "Додайте користувача до чеку, щоб обрати його платником.",
   "Amount": "Сума",
   "Add user": "Додати користувача",
   "splitRemainingEvenly": "Розділити залишок <1>{{amount}}</1> порівну",

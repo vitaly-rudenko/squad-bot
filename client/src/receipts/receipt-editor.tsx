@@ -35,6 +35,8 @@ import { AmountSuggestions } from './amount-suggestions'
 import { DescriptionSuggestions } from './description-suggestions'
 import { Trans, useTranslation } from 'react-i18next'
 
+type Stage = 'amount_description_payer' | 'participants'
+
 type FormState = {
   amount: string
   payer: User | ''
@@ -438,11 +440,10 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                     <FormItem className='flex flex-col flex-auto w-32 min-w-0'>
                       <FormLabel>{t('Payer')}</FormLabel>
                       <UserCombobox
-                        users={enabledUsers}
+                        prioritize={enabledUsers}
                         selectedUser={field.value || undefined}
                         placeholder={t('Select payer')}
                         onSelect={user => form.setValue('payer', user ?? '')}
-                        footerNote={t('Add user to receipt to select as payer.')}
                       />
                     </FormItem>
                   )}
