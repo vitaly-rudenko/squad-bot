@@ -142,3 +142,13 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.striped-background {
+  background: repeating-linear-gradient(
+    45deg,
+    hsl(var(--muted)) ,
+    hsl(var(--muted)) 10px,
+    hsl(var(--background)) 10px,
+    hsl(var(--background)) 20px
+  );
+}

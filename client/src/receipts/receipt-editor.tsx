@@ -655,7 +655,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                         />
                       </FormControl>
                       <FormLabel className='flex flex-row items-center gap-1 flex-auto overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer pl-2 py-3'>
-                        <span className='truncate'>{t('Shared expenses')}</span>
+                        <span>{t('Shared expenses')}</span>
                       </FormLabel>
                     </div>
 

@@ -135,19 +135,6 @@ export const PaymentEditor: FC<{
           <CardTitle>{t('Record a payment')}</CardTitle>
         </CardHeader>
         <CardContent className='flex flex-col gap-3 pb-3'>
-          {/* Description */}
-          <FormField
-            control={form.control}
-            name='description'
-            render={({ field }) => <>
-              <FormItem className='flex flex-col'>
-                <FormLabel>{t('Description')}</FormLabel>
-                <Input type='text' placeholder={t('(no description)')} value={field.value} maxLength={64}
-                  onChange={(event) => form.setValue('description', event.target.value)} />
-              </FormItem>
-            </>}
-          />
-
           {/* Sender */}
           <FormField
             control={form.control}
@@ -206,6 +193,19 @@ export const PaymentEditor: FC<{
                   }} />
               </FormItem>
             )}
+          />
+
+          {/* Description */}
+          <FormField
+            control={form.control}
+            name='description'
+            render={({ field }) => <>
+              <FormItem className='flex flex-col'>
+                <FormLabel>{t('Description')}</FormLabel>
+                <Input type='text' placeholder={t('(no description)')} value={field.value} maxLength={64}
+                  onChange={(event) => form.setValue('description', event.target.value)} />
+              </FormItem>
+            </>}
           />
         </CardContent>
 
