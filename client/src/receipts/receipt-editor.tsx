@@ -65,7 +65,7 @@ const defaultValues: FormState = {
   debts: [],
 }
 
-const RECENT_USERS_LIMIT = 5
+const RECENT_USERS_LIMIT = 3
 const ENABLED_USERS_LIMIT = 10
 const MAX_AMOUNT = 100_000_00
 
