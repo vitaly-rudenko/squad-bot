@@ -7,7 +7,7 @@
   "Payer": "Платник",
   "Select payer": "Оберіть платника",
   "Amount": "Сума",
-  "Add user": "Додати користувача",
+  "Add user": "Додати учасника",
   "splitRemainingEvenly": "Розділити залишок <1>{{amount}}</1> порівну",
   "Add shared expenses": "Додати спільні витрати",
   "Shared expenses": "Спільні витрати",
@@ -37,8 +37,11 @@
   "Photo has been rotated": "Фото було повернуто",
   "Could not rotate the photo": "Не вдалося повернути фото",
   "Receipt has been deleted": "Чек було видалено",
-  "calculations.users": "користувачів",
+  "calculations.users": "учасників",
   "calculations.remaining": "залишок",
   "calculations.shared": "спільні",
-  "calculations.perUser": "на людину"
+  "calculations.perUser": "на людину",
+  "Paid by": "Оплачено",
+  "Edit": "Редагувати",
+  "Next": "Далі"
 }

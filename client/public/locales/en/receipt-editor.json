@@ -40,5 +40,8 @@
   "calculations.users": "users",
   "calculations.remaining": "remaining",
   "calculations.shared": "shared",
-  "calculations.perUser": "per user"
+  "calculations.perUser": "per user",
+  "Paid by": "Paid by",
+  "Edit": "Edit",
+  "Next": "Next"
 }
