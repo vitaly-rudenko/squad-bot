@@ -40,8 +40,6 @@ export async function sendPaymentSavedNotification(
     paymentsStorage,
   })
 
-  console.log('payment', { description: payment.description })
-
   for (const user of deduplicateUsers([editor, sender, receiver])) {
     const preparedDebts = prepareDebtsForUser({
       user,
