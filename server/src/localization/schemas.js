@@ -10,6 +10,7 @@ export const localeFileSchema = object({
     notifications: object({
       saved: object({
         message: _,
+        description: _,
         action: object({
           create: _,
           update: _,
@@ -20,6 +21,7 @@ export const localeFileSchema = object({
       }),
       deleted: object({
         message: _,
+        description: _,
       }),
     }),
   }),

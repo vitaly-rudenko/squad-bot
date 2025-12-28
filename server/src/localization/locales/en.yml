@@ -5,10 +5,11 @@ payments:
   notifications:
     saved:
       message:
-        - '💸 {editor} has {action} a *{amount}* payment'
+        - '💸 {editor} has {action} a *{amount}* payment {description}'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
         - '{debts}'
+      description: '– {description}'
       action:
         create: recorded
         update: edited
@@ -17,9 +18,10 @@ payments:
       checkDebts: '↔️ Check your debts: /debts'
     deleted:
       message:
-        - '❌ 💸 {editor} has deleted a *{amount}* payment'
+        - '❌ 💸 {editor} has deleted a *{amount}* payment {description}'
         - '👤 Sender: *{sender}*'
         - '👤 Receiver: *{receiver}*'
+      description: '– {description}'
 receipts:
   command:
     message:
