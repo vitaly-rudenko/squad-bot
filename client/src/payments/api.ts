@@ -28,6 +28,7 @@ type CreatePaymentInput = {
   fromUserId: string
   toUserId: string
   amount: number
+  description?: string
 }
 
 export const useCreatePaymentMutation = () => {
@@ -65,6 +66,7 @@ function deserialize(raw: any): Payment {
   return {
     id: raw.id,
     amount: raw.amount,
+    description: raw.description,
     fromUserId: raw.fromUserId,
     toUserId: raw.toUserId,
     createdAt: new Date(raw.createdAt),

@@ -23,15 +23,15 @@ describe('[groups]', () => {
     const groups1 = await getGroups(user1.id)
     expect(groups1.total).to.eq(2)
     expect(groups1.items).to.deep.equalInAnyOrder([
-      { id: group1Id, title: 'Group 1', socialLinkFixEnabledAt: null },
-      { id: group2Id, title: 'Group 2', socialLinkFixEnabledAt: null },
+      { id: group1Id, title: 'Group 1', socialLinkFixEnabledAt: null, pollAnswerNotificationsEnabledAt: null },
+      { id: group2Id, title: 'Group 2', socialLinkFixEnabledAt: null, pollAnswerNotificationsEnabledAt: null },
     ])
 
     const groups2 = await getGroups(user2.id)
     expect(groups2.total).to.eq(2)
     expect(groups2.items).to.deep.equalInAnyOrder([
-      { id: group2Id, title: 'Group 2', socialLinkFixEnabledAt: null  },
-      { id: group3Id, title: 'Group 3', socialLinkFixEnabledAt: null  },
+      { id: group2Id, title: 'Group 2', socialLinkFixEnabledAt: null, pollAnswerNotificationsEnabledAt: null },
+      { id: group3Id, title: 'Group 3', socialLinkFixEnabledAt: null, pollAnswerNotificationsEnabledAt: null },
     ])
   })
 })

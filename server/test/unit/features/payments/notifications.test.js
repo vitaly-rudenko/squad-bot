@@ -52,6 +52,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
               action: payments.notifications.saved.action.create(${editor.locale})
               debts: payments.notifications.saved.checkDebts(${editor.locale})
             `, options],
@@ -61,6 +62,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
               action: payments.notifications.saved.action.create(${sender.locale})
               debts: payments.notifications.saved.checkDebts(${sender.locale})
           `, options],
@@ -70,6 +72,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
               action: payments.notifications.saved.action.create(${receiver.locale})
               debts: payments.notifications.saved.checkDebts(${receiver.locale})
           `, options]
@@ -114,6 +117,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
               action: payments.notifications.saved.action.update(${editor.locale})
               debts: payments.notifications.saved.checkDebts(${editor.locale})
           `, options],
@@ -123,6 +127,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
               action: payments.notifications.saved.action.update(${sender.locale})
               debts: payments.notifications.saved.checkDebts(${sender.locale})
           `, options],
@@ -132,6 +137,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
               action: payments.notifications.saved.action.update(${receiver.locale})
               debts: payments.notifications.saved.checkDebts(${receiver.locale})
           `, options]
@@ -174,6 +180,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
           `, options],
           [Number(sender.id), stripIndent`
             payments.notifications.deleted.message(${sender.locale}):
@@ -181,6 +188,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
           `, options],
           [Number(receiver.id), stripIndent`
             payments.notifications.deleted.message(${receiver.locale}):
@@ -188,6 +196,7 @@ describe('payments/notifications', () => {
               sender: ${escapeMd(`${sender.name} (@${sender.username})`)}
               receiver: ${escapeMd(`${receiver.name} (@${receiver.username})`)}
               amount: ₴12
+              description: ''
           `, options],
         ])
     })

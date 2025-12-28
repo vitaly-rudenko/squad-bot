@@ -5,10 +5,11 @@ payments:
   notifications:
     saved:
       message:
-        - '💸 {editor} {action} платіж на *{amount}*'
+        - '💸 {editor} {action} платіж на *{amount}* {description}'
         - '👤 Відправник: *{sender}*'
         - '👤 Отримувач: *{receiver}*'
         - '{debts}'
+      description: '– {description}'
       action:
         create: записав\(ла\)
         update: відредагував\(ла\)
@@ -17,9 +18,10 @@ payments:
       checkDebts: '↔️ Перевірити борги: /debts'
     deleted:
       message:
-        - '❌ 💸 {editor} видалив\(ла\) платіж на *{amount}*'
+        - '❌ 💸 {editor} видалив\(ла\) платіж на *{amount}* {description}'
         - '👤 Відправник: *{sender}*'
         - '👤 Отримувач: *{receiver}*'
+      description: '– {description}'
 receipts:
   command:
     message:
