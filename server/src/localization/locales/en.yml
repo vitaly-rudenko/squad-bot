@@ -52,7 +52,7 @@ receipts:
 users:
   command:
     start:
-      message: 🎉 Welcome\! Your name and username have been saved\.
+      message: 🎉 Welcome\! Your name, username and language have been saved\.
 cards:
   command:
     message:

@@ -10,14 +10,14 @@ payments:
         - '👤 Отримувач: *{receiver}*'
         - '{debts}'
       action:
-        create: записав(ла)
-        update: відредагував(ла)
+        create: записав\(ла\)
+        update: відредагував\(ла\)
       ingoingDebt: '⬅️ {name} тепер винен вам *{amount}*'
       outgoingDebt: '➡️ Ви тепер винні *{amount}* користувачеві {name} – [сплатити]({payUrl})'
       checkDebts: '↔️ Перевірити борги: /debts'
     deleted:
       message:
-        - '❌ 💸 {editor} видалив(ла) платіж на *{amount}*'
+        - '❌ 💸 {editor} видалив\(ла\) платіж на *{amount}*'
         - '👤 Відправник: *{sender}*'
         - '👤 Отримувач: *{receiver}*'
 receipts:
@@ -34,14 +34,14 @@ receipts:
         - '{debts}'
       description: '– {description}'
       action:
-        create: записав(ла)
-        update: відредагував(ла)
-      ingoingDebt: '⬅️ {name} тепер винен(на) вам *{amount}*'
+        create: записав\(ла\)
+        update: відредагував\(ла\)
+      ingoingDebt: '⬅️ {name} тепер винен\(на\) вам *{amount}*'
       outgoingDebt: '➡️ Ви тепер винні *{amount}* користувачеві {name} – [сплатити]({payUrl})'
       checkDebts: '↔️ Перевірити борги: /debts'
     deleted:
       message:
-        - '❌ 📝 {editor} видалив(ла) чек на *{amount}* {description}'
+        - '❌ 📝 {editor} видалив\(ла\) чек на *{amount}* {description}'
         - '👤 Оплатив *{payer}*'
         - '{part}'
       description: '– {description}'
@@ -52,7 +52,7 @@ receipts:
 users:
   command:
     start:
-      message: 🎉 Ласкаво просимо\! Ваше ім'я та нікнейм були збережені\.
+      message: 🎉 Ласкаво просимо\! Ваше ім'я, нікнейм та мова були збережені\.
 cards:
   command:
     message:
@@ -61,7 +61,7 @@ debts:
   command:
     noDebts: '✅ У вас немає боргів\!'
     ingoingDebt: '\- {name}: *{amount}*'
-    ingoingDebtsOne: '⬅️ {name} винен(на) вам *{amount}*'
+    ingoingDebtsOne: '⬅️ {name} винен\(на\) вам *{amount}*'
     ingoingDebtsMany:
       - '⬅️ Винні вам:'
       - '{debts}'
@@ -123,8 +123,8 @@ socialLinkFix:
     reject: '❌ Видалити'
     retry: '🔄 Повторити'
 pollAnswerNotifications:
-  voted: '*{voter}* проголосував(ла) у опитуванні: {pollOptions}'
-  retracted: '*{voter}* відкликав(ла) свій голос\.'
+  voted: '*{voter}* проголосував\(ла\) у опитуванні: {pollOptions}'
+  retracted: '*{voter}* відкликав\(ла\) свій голос\.'
   pollOptionsListItem: '*{pollOption}*'
   pollOptionsListDelimiter: ', '
   unknownPollOption: 'невідомо'
