@@ -1,7 +1,7 @@
 import { useRequiredAuth } from '@/auth/hooks'
 import { Button } from '@/components/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/card'
-import { Form, FormField, FormItem } from '@/components/form'
+import { Form, FormField, FormItem, FormLabel } from '@/components/form'
 import { Input } from '@/components/input'
 import { PoweredByMagic } from '@/components/powered-by-magic'
 import { Separator } from '@/components/separator'
@@ -29,12 +29,14 @@ type FormState = {
   fromUser: User | ''
   toUser: User | ''
   amount: string
+  description: string
 }
 
 const defaultValues: FormState = {
   fromUser: '',
   toUser: '',
-  amount: ''
+  amount: '',
+  description: ''
 }
 
 export const PaymentEditor: FC<{
@@ -75,9 +77,14 @@ export const PaymentEditor: FC<{
       fromUserId: form.fromUser.id,
       toUserId: form.toUser.id,
       amount,
+      description: form.description || undefined,
     })
 
-    createToast(t('A {{amount}} payment has been saved', { amount: formatAmount(amount, 'UAH') }), { type: 'success', toastId })
+    createToast(t('A {{amount}} payment has been saved', { amount: formatAmount(amount, 'UAH') }), {
+      type: 'success',
+      description: form.description || undefined,
+      toastId,
+    })
 
     await router.navigate({ to: '/payments' })
   })
@@ -97,6 +104,7 @@ export const PaymentEditor: FC<{
         toUser: props.toUser ?? currentUser,
       },
       ...props.amount && { amount: formatAmount(props.amount) },
+      description: '',
     })
 
     return true
@@ -127,6 +135,19 @@ export const PaymentEditor: FC<{
           <CardTitle>{t('Record a payment')}</CardTitle>
         </CardHeader>
         <CardContent className='flex flex-col gap-3 pb-3'>
+          {/* Description */}
+          <FormField
+            control={form.control}
+            name='description'
+            render={({ field }) => <>
+              <FormItem className='flex flex-col'>
+                <FormLabel>{t('Description')}</FormLabel>
+                <Input type='text' placeholder={t('(no description)')} value={field.value} maxLength={64}
+                  onChange={(event) => form.setValue('description', event.target.value)} />
+              </FormItem>
+            </>}
+          />
+
           {/* Sender */}
           <FormField
             control={form.control}
@@ -187,7 +208,9 @@ export const PaymentEditor: FC<{
             )}
           />
         </CardContent>
+
         <Separator />
+
         <CardFooter className='flex flex-col items-stretch bg-secondary gap-3 pt-3'>
           {/* Save button */}
           <Button type='submit' disabled={!valid || !createMutation.isIdle}>
