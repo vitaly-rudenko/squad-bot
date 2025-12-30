@@ -15,5 +15,7 @@
   "Payment has been deleted": "Переказ було видалено",
   "Delete payment?": "Видалити переказ?",
   "Yes, delete it": "Так, видалити",
-  "Whoops, nothing to see here!": "Упс, тут нічого немає!"
+  "Whoops, nothing to see here!": "Упс, тут нічого немає!",
+  "Description": "Опис",
+  "(no description)": "(без опису)"
 }
