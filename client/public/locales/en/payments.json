@@ -15,5 +15,7 @@
   "Payment has been deleted": "Payment has been deleted",
   "Delete payment?": "Delete payment?",
   "Yes, delete it": "Yes, delete it",
-  "Whoops, nothing to see here!": "Whoops, nothing to see here!"
+  "Whoops, nothing to see here!": "Whoops, nothing to see here!",
+  "Description": "Description",
+  "(no description)": "(no description)"
 }
