@@ -100,8 +100,8 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
   const [stage, setStage] = useState<Stage>('amount')
 
   const form = useForm<FormState>({ defaultValues })
-  const [$amount, $tipAmount, $payer, $debts, $sharedExpenses, $photo] = form
-    .watch(['amount', 'tipAmount', 'payer', 'debts', 'sharedExpenses', 'photo'])
+  const [$amount, $description, $tipAmount, $payer, $debts, $sharedExpenses, $photo] = form
+    .watch(['amount', 'description', 'tipAmount', 'payer', 'debts', 'sharedExpenses', 'photo'])
 
   const { data: amountSuggestions, ...scanQuery } = useScanQuery(
     // @ts-expect-error Photo can be a boolean or undefined
@@ -294,7 +294,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
         ...defaultValues,
         amount: formatAmount(receipt.amount),
         payer: users.find(u => u.id === receipt.payerId) ?? '',
-        description: receipt.description ?? '',
+        description: receipt.description || '',
         photo: !!receipt.photoFilename,
         debts: receipt.debts
           .map(debt => ({
@@ -389,40 +389,35 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
         <Card className={cn(
           'relative shadow-md animation-down-top transition',
           !(saveMutation.isIdle || saveMutation.isError) && 'grayscale opacity-70 pointer-events-none',
-          criticalAmountMismatch && 'border-destructive'
+          criticalAmountMismatch && 'border-destructive',
         )}>
           {/* Photo */}
-          <div className={cn(
-            'absolute -top-2 -right-1',
-            (receiptId || stage === 'amount') && 'w-[5.5rem] h-[5.5rem]',
-          )}>
+          <div className='absolute -top-4 -right-1 w-[5.5rem] h-[5.5rem] z-10'>
             <input ref={photoInputRef} type='file' className='hidden' accept='image/png, image/jpeg, image/heic'
               multiple
               onChange={(event) => handlePhotoSelect([...event.target.files ?? []])} />
-            {!!(receiptId || stage === 'amount') && <>
-              <FormField
-                control={form.control}
-                name='photo'
-                render={({ field }) => <>
-                  <Button
-                    size='icon' variant={field.value ? 'default' : 'outline'}
-                    className={cn(
-                      'p-1 w-full h-full shadow-lg rotate-6 overflow-hidden fix-antialias',
-                      field.value && 'hover:bg-primary',
+            <FormField
+              control={form.control}
+              name='photo'
+              render={({ field }) => <>
+                <Button
+                  size='icon' variant={field.value ? 'default' : 'outline'}
+                  className={cn(
+                    'p-1 w-full h-full shadow-lg rotate-6 overflow-hidden fix-antialias',
+                    field.value && 'hover:bg-primary',
+                  )}
+                  onClick={handlePhotoInteraction}>
+                  {field.value ? <>
+                    {!photoPreviewLoaded && (photoSrc ? <Spinner invert /> : <Image />)}
+                    {!!photoSrc && (
+                      <img
+                        className={cn('animation-appear w-full h-full rounded-sm object-cover', !photoPreviewLoaded && 'hidden')}
+                        onLoad={() => setPhotoPreviewLoaded(true)} src={photoSrc} />
                     )}
-                    onClick={handlePhotoInteraction}>
-                    {field.value ? <>
-                      {!photoPreviewLoaded && (photoSrc ? <Spinner invert /> : <Image />)}
-                      {!!photoSrc && (
-                        <img
-                          className={cn('animation-appear w-full h-full rounded-sm object-cover', !photoPreviewLoaded && 'hidden')}
-                          onLoad={() => setPhotoPreviewLoaded(true)} src={photoSrc} />
-                      )}
-                    </> : <ImageOff />}
-                  </Button>
-                </>}
-              />
-            </>}
+                  </> : <ImageOff />}
+                </Button>
+              </>}
+            />
           </div>
 
           {!!(receiptId || stage === 'amount') && <>
@@ -442,16 +437,18 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                 control={form.control}
                 name='description'
                 render={({ field }) => <>
-                  <FormItem className='flex flex-col'>
-                    <FormLabel>{t('Description')}</FormLabel>
-                    <Input type='text' placeholder={t('(no description)')} value={field.value} maxLength={64}
-                      onChange={(event) => form.setValue('description', event.target.value)} />
-                  </FormItem>
+                  <div className='flex flex-col gap-1'>
+                    <FormItem className='flex flex-col'>
+                      <FormLabel>{t('Description')}</FormLabel>
+                      <Input type='text' placeholder={t('(no description)')} value={field.value} maxLength={64}
+                        onChange={(event) => form.setValue('description', event.target.value)} />
+                    </FormItem>
 
-                  <DescriptionSuggestions
-                    description={field.value}
-                    setDescription={(description) => form.setValue('description', description)}
-                  />
+                    <DescriptionSuggestions
+                      description={field.value}
+                      setDescription={(description) => form.setValue('description', description)}
+                    />
+                  </div>
                 </>}
               />
 
@@ -488,6 +485,8 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   />
                 </div>
 
+                {!!validAmount && <Calculations input={{ amount: validAmount }} />}
+
                 {/* Amount suggestions */}
                 {amountSuggestions !== undefined && amountSuggestions.length > 0 && (
                   <AmountSuggestions
@@ -497,18 +496,16 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                     onChange={(amount) => form.setValue('amount', amount)}
                   />
                 )}
-
-                {!!validAmount && <Calculations input={{ amount: validAmount }} />}
               </div>
             </CardContent>
           </>}
 
           {!receiptId && stage !== 'amount' && !!validAmount && $payer !== '' && <>
-            <MiniReceiptHeader amount={validAmount.value}
+            <MiniReceiptHeader
+              amount={validAmount.value}
               payer={$payer}
-              photoSrc={photoSrc}
-              onEdit={() => setStage('amount')}
-              onPhotoInteraction={handlePhotoInteraction} />
+              description={$description}
+              onEdit={() => setStage('amount')} />
           </>}
 
           {!receiptId && stage === 'tip' && !calculated.error && <>
@@ -572,6 +569,8 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                           )}
                         </FormItem>
 
+                        {!!isValid && <Calculations input={{ debt }} />}
+
                         {/* Amount suggestions */}
                         {!!$debt.enabled && amountSuggestions !== undefined && amountSuggestions.length > 0 && (
                           <AmountSuggestions
@@ -581,8 +580,6 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                             onChange={(amount) => form.setValue('debts', field.value.with(i, { ...$debt, amount }))}
                           />
                         )}
-
-                        {!!isValid && <Calculations input={{ debt }} />}
                       </div>
 
                       <Separator />
@@ -654,6 +651,8 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                     </FormControl>}
                   </FormItem>
 
+                  {!!validSharedExpenses && <Calculations input={{ sharedExpenses: validSharedExpenses }} />}
+
                   {/* Amount suggestions */}
                   {amountSuggestions !== undefined && amountSuggestions.length > 0 && (
                     <AmountSuggestions
@@ -663,8 +662,6 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                       onChange={(amount) => form.setValue('sharedExpenses', amount)}
                     />
                   )}
-
-                  {!!validSharedExpenses && <Calculations input={{ sharedExpenses: validSharedExpenses }} />}
                 </div>
               </>} />}
             </CardContent>
@@ -725,6 +722,16 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   </div>
 
                   {!!validTipAmount && <Calculations input={{ tipAmount: validTipAmount }} />}
+
+                  {/* Amount suggestions */}
+                  {amountSuggestions !== undefined && amountSuggestions.length > 0 && (
+                    <AmountSuggestions
+                      variant='outline'
+                      suggestions={amountSuggestions}
+                      amount={$tipAmount}
+                      onChange={(amount) => form.setValue('tipAmount', amount)}
+                    />
+                  )}
                 </div>}
               </>}
             </>}

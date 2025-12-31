@@ -46,7 +46,7 @@ export const Receipt: FC<{
           <div className='overflow-hidden flex flex-row gap-1.5 items-baseline'>
             {!!isTip && <Coins className='self-center shrink-0 w-4 h-4' />}
             {receipt.photoFilename !== undefined && <Image className='self-center shrink-0 w-4 h-4' />}
-            <span className={cn(description ? 'font-medium' : 'text-primary/70', 'truncate')}>{description ?? t('(no description)')}</span>
+            <span className={cn(description ? 'font-medium' : 'text-primary/70', 'truncate')}>{description || t('(no description)')}</span>
           </div>
           <div className={cn('whitespace-nowrap text-primary/70', activated && 'animation-right-left')}>
             {formatDateTime(receipt.createdAt, { expand: activated, language })}

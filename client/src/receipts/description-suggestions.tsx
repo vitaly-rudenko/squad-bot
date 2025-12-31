@@ -38,10 +38,10 @@ export const DescriptionSuggestions: FC<{
       .slice(0, MAX_DESCRIPTION_SUGGESTIONS)
   }, [receipts])
 
-  return <Ribbon>
+  return <Ribbon className='pt-0.5'>
     {descriptionSuggestions.map((suggestion, i) => (
       <Badge key={i}
-        className='cursor-pointer grow justify-center animation-down-top h-7 px-4'
+        className='cursor-pointer grow justify-center animation-down-top h-6 px-4'
         variant={description === suggestion ? 'default' : 'secondary'}
         onClick={() => setDescription(description === suggestion ? '' : suggestion)}>
         <span className='truncate max-w-32'>{suggestion}</span>
