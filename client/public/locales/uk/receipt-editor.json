@@ -40,5 +40,7 @@
   "calculations.users": "учасників",
   "calculations.remaining": "залишок",
   "calculations.shared": "спільні",
-  "calculations.perUser": "на людину"
+  "calculations.perUser": "на людину",
+  "Paid by": "Оплачено",
+  "Next": "Далі"
 }

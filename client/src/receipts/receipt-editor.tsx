@@ -34,6 +34,8 @@ import { Calculations } from './calculations'
 import { AmountSuggestions } from './amount-suggestions'
 import { DescriptionSuggestions } from './description-suggestions'
 import { Trans, useTranslation } from 'react-i18next'
+import { MiniReceiptHeader } from './mini-receipt-header'
+import { MiniReceiptBody } from './mini-receipt-body'
 
 type FormState = {
   amount: string
@@ -49,6 +51,8 @@ type FormState = {
     enabled: boolean
   }[]
 }
+
+type Stage = 'amount' | 'participants' | 'tip'
 
 const defaultValues: FormState = {
   amount: '',
@@ -93,6 +97,8 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
   const [photoPreviewLoaded, setPhotoPreviewLoaded] = useState(false)
   const [photoDeleteAlertOpen, setPhotoDeleteAlertOpen] = useState(false)
 
+  const [stage, setStage] = useState<Stage>('amount')
+
   const form = useForm<FormState>({ defaultValues })
   const [$amount, $tipAmount, $payer, $debts, $sharedExpenses, $photo] = form
     .watch(['amount', 'tipAmount', 'payer', 'debts', 'sharedExpenses', 'photo'])
@@ -118,6 +124,18 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
   const criticalAmountMismatch = (calculated.amountMismatch !== undefined && (calculated.amountMismatch < 0 || $sharedExpenses !== undefined))
     ? calculated.amountMismatch
     : undefined
+
+  const isAmountStageValid = useMemo(() => (
+    $payer !== '' &&
+    calculated.amount?.error === false &&
+    calculated.amount.value <= MAX_AMOUNT
+  ), [calculated, $payer])
+
+  const isParticipantsStageValid = useMemo(() => (
+    !calculated.error &&
+    calculated.debts.length >= 2 &&
+    calculated.total > 0
+  ), [calculated])
 
   const isValid = useMemo(() => (
     $payer !== '' && (validTipAmount === undefined || validTipAmount.total < MAX_AMOUNT) &&
@@ -365,6 +383,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
       onCancel={() => setDeleteAlertOpen(false)}
     />
 
+
     <Form {...form}>
       <form onSubmit={submit}>
         <Card className={cn(
@@ -377,306 +396,331 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
             <input ref={photoInputRef} type='file' className='hidden' accept='image/png, image/jpeg, image/heic'
               multiple
               onChange={(event) => handlePhotoSelect([...event.target.files ?? []])} />
-            <FormField
-              control={form.control}
-              name='photo'
-              render={({ field }) => <>
-                <Button
-                  size='icon' variant={field.value ? 'default' : 'outline'}
-                  className={cn(
-                    'p-1 w-full h-full shadow-lg rotate-6 overflow-hidden fix-antialias',
-                    field.value && 'hover:bg-primary',
-                  )}
-                  onClick={handlePhotoInteraction}>
-                  {field.value ? <>
-                    {!photoPreviewLoaded && (photoSrc ? <Spinner invert /> : <Image />)}
-                    {!!photoSrc && (
-                      <img
-                        className={cn('animation-appear w-full h-full rounded-sm object-cover', !photoPreviewLoaded && 'hidden')}
-                        onLoad={() => setPhotoPreviewLoaded(true)} src={photoSrc} />
+            {!!(receiptId || stage === 'amount') && <>
+              <FormField
+                control={form.control}
+                name='photo'
+                render={({ field }) => <>
+                  <Button
+                    size='icon' variant={field.value ? 'default' : 'outline'}
+                    className={cn(
+                      'p-1 w-full h-full shadow-lg rotate-6 overflow-hidden fix-antialias',
+                      field.value && 'hover:bg-primary',
                     )}
-                  </> : <ImageOff />}
-                </Button>
-              </>}
-            />
+                    onClick={handlePhotoInteraction}>
+                    {field.value ? <>
+                      {!photoPreviewLoaded && (photoSrc ? <Spinner invert /> : <Image />)}
+                      {!!photoSrc && (
+                        <img
+                          className={cn('animation-appear w-full h-full rounded-sm object-cover', !photoPreviewLoaded && 'hidden')}
+                          onLoad={() => setPhotoPreviewLoaded(true)} src={photoSrc} />
+                      )}
+                    </> : <ImageOff />}
+                  </Button>
+                </>}
+              />
+            </>}
           </div>
 
-          <CardHeader>
-            <CardTitle>{receiptId ? t('Edit the receipt') : t('Record a receipt')}</CardTitle>
+          {!!(receiptId || stage === 'amount') && <>
+            <CardHeader>
+              <CardTitle>{receiptId ? t('Edit the receipt') : t('Record a receipt')}</CardTitle>
 
-            {scanQuery.error instanceof ApiError && scanQuery.error.status === 429 && (
-              <FormDescription className='w-[70%]'>{t('Suggestions are not available at the moment.')}</FormDescription>
-            )}
-          </CardHeader>
-
-          <CardContent className='flex flex-col gap-3 pb-3'>
-            {/* Description */}
-            <FormField
-              control={form.control}
-              name='description'
-              render={({ field }) => <>
-                <FormItem className='flex flex-col'>
-                  <FormLabel>{t('Description')}</FormLabel>
-                  <Input type='text' placeholder={t('(no description)')} value={field.value} maxLength={64}
-                    onChange={(event) => form.setValue('description', event.target.value)} />
-                </FormItem>
-
-                <DescriptionSuggestions
-                  description={field.value}
-                  setDescription={(description) => form.setValue('description', description)}
-                />
-              </>}
-            />
-
-            {/* Amount */}
-            <div className='flex flex-col gap-1'>
-              <div className='flex flex-row gap-3'>
-                <FormField
-                  control={form.control}
-                  name='payer'
-                  render={({ field }) => (
-                    <FormItem className='flex flex-col flex-auto w-32 min-w-0'>
-                      <FormLabel>{t('Payer')}</FormLabel>
-                      <UserCombobox
-                        prioritize={enabledUsers}
-                        selectedUser={field.value || undefined}
-                        placeholder={t('Select payer')}
-                        onSelect={user => form.setValue('payer', user ?? '')}
-                      />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name='amount'
-                  render={({ field }) => (
-                    <FormItem className='flex flex-col flex-auto w-20'>
-                      <FormLabel>{t('Amount')}</FormLabel>
-                      <Input type='text' value={field.value}
-                        className={cn(field.value !== '' && calculated.amount?.error && 'border-destructive')}
-                        onChange={(event) => form.setValue('amount', sanitizeMagicAmount(event.target.value))} />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Amount suggestions */}
-              {amountSuggestions !== undefined && amountSuggestions.length > 0 && (
-                <AmountSuggestions
-                  variant='secondary'
-                  suggestions={amountSuggestions}
-                  amount={$amount}
-                  onChange={(amount) => form.setValue('amount', amount)}
-                />
+              {scanQuery.error instanceof ApiError && scanQuery.error.status === 429 && (
+                <FormDescription className='w-[70%]'>{t('Suggestions are not available at the moment.')}</FormDescription>
               )}
+            </CardHeader>
+          </>}
 
-              {!!validAmount && <Calculations input={{ amount: validAmount }} />}
-            </div>
-          </CardContent>
+          {!!(receiptId || stage === 'amount') && <>
+            <CardContent className='flex flex-col gap-3 pb-3'>
+              {/* Description */}
+              <FormField
+                control={form.control}
+                name='description'
+                render={({ field }) => <>
+                  <FormItem className='flex flex-col'>
+                    <FormLabel>{t('Description')}</FormLabel>
+                    <Input type='text' placeholder={t('(no description)')} value={field.value} maxLength={64}
+                      onChange={(event) => form.setValue('description', event.target.value)} />
+                  </FormItem>
 
+                  <DescriptionSuggestions
+                    description={field.value}
+                    setDescription={(description) => form.setValue('description', description)}
+                  />
+                </>}
+              />
 
-          <CardContent className='flex flex-col pt-3 bg-secondary py-3 gap-2 animation-down-top'>
-            {/* Debts */}
-            <FormField
-              control={form.control}
-              name='debts'
-              render={({ field }) => <>
-                {field.value.map(($debt, i) => {
-                  const debt = calculated.debts.find(d => d.debtorId === $debt.user.id)
-                  const isValid = debt && !debt.error
-                  const isError = debt && debt.error && $debt.amount !== ''
-
-                  return <Fragment key={$debt.user.id}>
-                    <div className='flex flex-col gap-1'>
-                      <FormItem className='flex flex-row gap-3 space-y-0 items-stretch'>
-                        <div className='flex flex-row flex-auto items-center w-32 min-w-0 h-10'>
-                          <FormControl>
-                            <Checkbox checked={$debt.enabled}
-                              disabled={!$debt.enabled && enabledUsers.length >= ENABLED_USERS_LIMIT}
-                              onCheckedChange={(checked) => {
-                                form.setValue('debts', field.value.with(i, {
-                                  ...$debt,
-                                  ...checked !== true && { amount: '' },
-                                  enabled: checked === true,
-                                }))
-                              }} />
-                          </FormControl>
-                          <FormLabel className='p-2 cursor-pointer overflow-hidden'>
-                            <UserName user={$debt.user} />
-                          </FormLabel>
-                        </div>
-
-                        {!!$debt.enabled && (
-                          <FormControl>
-                            <div className={cn(
-                              'flex flex-col justify-center flex-auto relative w-20 transition-[width] animation-right-left',
-                              isMagicalAmount($debt.amount) ? 'has-[:focus]:w-64' : '',
-                            )}>
-                              <Input type='text' focusOnEnd
-                                className={cn(isError && 'border-destructive')}
-                                placeholder={isValid ? formatAmount(debt.total) : ''} value={$debt.amount}
-                                onChange={(event) => {
-                                  form.setValue('debts', field.value.with(i, {
-                                    ...$debt,
-                                    amount: sanitizeMagicAmount(event.target.value)
-                                  }))
-                                }} />
-                              {!!isValid && !!debt.automatic && <PoweredByMagic />}
-                            </div>
-                          </FormControl>
-                        )}
-                      </FormItem>
-
-                      {/* Amount suggestions */}
-                      {!!$debt.enabled && amountSuggestions !== undefined && amountSuggestions.length > 0 && (
-                        <AmountSuggestions
-                          variant='outline'
-                          suggestions={amountSuggestions}
-                          amount={$debt.amount}
-                          onChange={(amount) => form.setValue('debts', field.value.with(i, { ...$debt, amount }))}
-                        />
-                      )}
-
-                      {!!isValid && <Calculations input={{ debt }} />}
-                    </div>
-
-                    <Separator />
-                  </Fragment>
-                })}
-              </>}
-            />
-
-            <UserCombobox
-              onSelect={user => user && form.setValue('debts', [...$debts, { user: user, amount: '', enabled: true }])}
-              exclude={$debts.map(d => d.user)}
-              placeholder={<div className='flex flex-row items-center gap-2'><UserIcon className='w-4 h-4' /><span>{t('Add user')}</span></div>}
-              variant='link'
-              disabled={enabledUsers.length >= ENABLED_USERS_LIMIT}
-            />
-          </CardContent>
-
-          <CardContent className='flex flex-col py-3 gap-2 animation-down-top'>
-            {/* Shared expenses */}
-            {$sharedExpenses === undefined && <>
-              {!!amountToSplitEvenly && (
-                <Button variant='link' className='flex flex-row items-center justify-start gap-2 p-0' onClick={() => form.setValue('sharedExpenses', '')}>
-                  <Divide className='w-4 h-4' />
-                  <span>
-                    <Trans t={t} i18nKey='splitRemainingEvenly'>
-                      Split remaining <span className={cn(calculated.amountMismatch && 'text-destructive')}>
-                        <>{{ amount: formatAmount(amountToSplitEvenly, 'UAH') }}</>
-                      </span> evenly
-                    </Trans>
-                  </span>
-                </Button>
-              )}
-
-              <Button variant='link' className='flex flex-row items-center justify-start gap-2 p-0' onClick={() => form.setValue('sharedExpenses', '')}>
-                <Users className='w-4 h-4' /><span>{t('Add shared expenses')}</span>
-              </Button>
-            </>}
-
-            {$sharedExpenses !== undefined && <FormField control={form.control} name='sharedExpenses' render={({ field }) => <>
+              {/* Amount */}
               <div className='flex flex-col gap-1'>
-                <FormItem className='flex flex-row gap-3 space-y-0 items-stretch h-10'>
-                  <div className='flex flex-row flex-auto items-center w-32 min-w-0'>
-                    <FormControl className='flex-none'>
-                      <Checkbox
-                        checked={field.value !== undefined}
-                        onCheckedChange={(checked) => form.setValue('sharedExpenses', checked === true ? '' : undefined)}
-                      />
-                    </FormControl>
-                    <FormLabel className='flex flex-row items-center gap-1 flex-auto overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer pl-2 py-3'>
-                      <span>{t('Shared expenses')}</span>
-                    </FormLabel>
-                  </div>
+                <div className='flex flex-row gap-3'>
+                  <FormField
+                    control={form.control}
+                    name='payer'
+                    render={({ field }) => (
+                      <FormItem className='flex flex-col flex-auto w-32 min-w-0'>
+                        <FormLabel>{t('Payer')}</FormLabel>
+                        <UserCombobox
+                          prioritize={enabledUsers}
+                          selectedUser={field.value || undefined}
+                          placeholder={t('Select payer')}
+                          onSelect={user => form.setValue('payer', user ?? '')}
+                        />
+                      </FormItem>
+                    )}
+                  />
 
-                  {field.value !== undefined && <FormControl>
-                    <div className={cn(
-                      'flex flex-col justify-center flex-auto w-20 transition-[width] relative animation-right-left',
-                      isMagicalAmount($sharedExpenses) ? 'has-[:focus]:w-64' : '',
-                    )}>
-                      <Input type='text' value={field.value}
-                        placeholder={validSharedExpenses ? formatAmount(validSharedExpenses.total) : ''}
-                        className={cn(calculated.sharedExpenses?.error && 'border-destructive')}
-                        onChange={(event) => {
-                          form.setValue('sharedExpenses', sanitizeMagicAmount(event.target.value))
-                        }} />
-                      {!!validSharedExpenses?.automatic && <PoweredByMagic />}
-                    </div>
-                  </FormControl>}
-                </FormItem>
+                  <FormField
+                    control={form.control}
+                    name='amount'
+                    render={({ field }) => (
+                      <FormItem className='flex flex-col flex-auto w-20'>
+                        <FormLabel>{t('Amount')}</FormLabel>
+                        <Input type='text' value={field.value}
+                          className={cn(field.value !== '' && calculated.amount?.error && 'border-destructive')}
+                          onChange={(event) => form.setValue('amount', sanitizeMagicAmount(event.target.value))} />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 {/* Amount suggestions */}
                 {amountSuggestions !== undefined && amountSuggestions.length > 0 && (
                   <AmountSuggestions
                     variant='secondary'
                     suggestions={amountSuggestions}
-                    amount={$sharedExpenses}
-                    onChange={(amount) => form.setValue('sharedExpenses', amount)}
+                    amount={$amount}
+                    onChange={(amount) => form.setValue('amount', amount)}
                   />
                 )}
 
-                {!!validSharedExpenses && <Calculations input={{ sharedExpenses: validSharedExpenses }} />}
+                {!!validAmount && <Calculations input={{ amount: validAmount }} />}
               </div>
-            </>} />}
+            </CardContent>
+          </>}
 
-          </CardContent>
+          {!receiptId && stage !== 'amount' && !!validAmount && $payer !== '' && <>
+            <MiniReceiptHeader amount={validAmount.value}
+              payer={$payer}
+              photoSrc={photoSrc}
+              onEdit={() => setStage('amount')}
+              onPhotoInteraction={handlePhotoInteraction} />
+          </>}
 
+          {!receiptId && stage === 'tip' && !calculated.error && <>
+            <MiniReceiptBody
+              users={enabledUsers}
+              onEdit={() => setStage('participants')}
+              debts={calculated.debts}
+            />
+          </>}
+
+          {!!(receiptId || stage === 'participants') && <>
+            <CardContent className='flex flex-col pt-3 bg-secondary py-3 gap-2 animation-down-top'>
+              {/* Debts */}
+              <FormField
+                control={form.control}
+                name='debts'
+                render={({ field }) => <>
+                  {field.value.map(($debt, i) => {
+                    const debt = calculated.debts.find(d => d.debtorId === $debt.user.id)
+                    const isValid = debt && !debt.error
+                    const isError = debt && debt.error && $debt.amount !== ''
+
+                    return <Fragment key={$debt.user.id}>
+                      <div className='flex flex-col gap-1'>
+                        <FormItem className='flex flex-row gap-3 space-y-0 items-stretch'>
+                          <div className='flex flex-row flex-auto items-center w-32 min-w-0 h-10'>
+                            <FormControl>
+                              <Checkbox checked={$debt.enabled}
+                                disabled={!$debt.enabled && enabledUsers.length >= ENABLED_USERS_LIMIT}
+                                onCheckedChange={(checked) => {
+                                  form.setValue('debts', field.value.with(i, {
+                                    ...$debt,
+                                    ...checked !== true && { amount: '' },
+                                    enabled: checked === true,
+                                  }))
+                                }} />
+                            </FormControl>
+                            <FormLabel className='p-2 cursor-pointer overflow-hidden'>
+                              <UserName user={$debt.user} />
+                            </FormLabel>
+                          </div>
+
+                          {!!$debt.enabled && (
+                            <FormControl>
+                              <div className={cn(
+                                'flex flex-col justify-center flex-auto relative w-20 transition-[width] animation-right-left',
+                                isMagicalAmount($debt.amount) ? 'has-[:focus]:w-64' : '',
+                              )}>
+                                <Input type='text' focusOnEnd
+                                  className={cn(isError && 'border-destructive')}
+                                  placeholder={isValid ? formatAmount(debt.total) : ''} value={$debt.amount}
+                                  onChange={(event) => {
+                                    form.setValue('debts', field.value.with(i, {
+                                      ...$debt,
+                                      amount: sanitizeMagicAmount(event.target.value)
+                                    }))
+                                  }} />
+                                {!!isValid && !!debt.automatic && <PoweredByMagic />}
+                              </div>
+                            </FormControl>
+                          )}
+                        </FormItem>
+
+                        {/* Amount suggestions */}
+                        {!!$debt.enabled && amountSuggestions !== undefined && amountSuggestions.length > 0 && (
+                          <AmountSuggestions
+                            variant='outline'
+                            suggestions={amountSuggestions}
+                            amount={$debt.amount}
+                            onChange={(amount) => form.setValue('debts', field.value.with(i, { ...$debt, amount }))}
+                          />
+                        )}
+
+                        {!!isValid && <Calculations input={{ debt }} />}
+                      </div>
+
+                      <Separator />
+                    </Fragment>
+                  })}
+                </>}
+              />
+
+              <UserCombobox
+                onSelect={user => user && form.setValue('debts', [...$debts, { user: user, amount: '', enabled: true }])}
+                exclude={$debts.map(d => d.user)}
+                placeholder={<div className='flex flex-row items-center gap-2'><UserIcon className='w-4 h-4' /><span>{t('Add user')}</span></div>}
+                variant='link'
+                disabled={enabledUsers.length >= ENABLED_USERS_LIMIT}
+              />
+            </CardContent>
+          </>}
+
+          {!!(receiptId || stage === 'participants') && <>
+            <CardContent className='flex flex-col py-3 gap-2 animation-down-top'>
+              {/* Shared expenses */}
+              {$sharedExpenses === undefined && <>
+                {!!amountToSplitEvenly && (
+                  <Button variant='link' className='flex flex-row items-center justify-start gap-2 p-0' onClick={() => form.setValue('sharedExpenses', '')}>
+                    <Divide className='w-4 h-4' />
+                    <span>
+                      <Trans t={t} i18nKey='splitRemainingEvenly'>
+                        Split remaining <span className={cn(calculated.amountMismatch && 'text-destructive')}>
+                          <>{{ amount: formatAmount(amountToSplitEvenly, 'UAH') }}</>
+                        </span> evenly
+                      </Trans>
+                    </span>
+                  </Button>
+                )}
+
+                <Button variant='link' className='flex flex-row items-center justify-start gap-2 p-0' onClick={() => form.setValue('sharedExpenses', '')}>
+                  <Users className='w-4 h-4' /><span>{t('Add shared expenses')}</span>
+                </Button>
+              </>}
+
+              {$sharedExpenses !== undefined && <FormField control={form.control} name='sharedExpenses' render={({ field }) => <>
+                <div className='flex flex-col gap-1'>
+                  <FormItem className='flex flex-row gap-3 space-y-0 items-stretch h-10'>
+                    <div className='flex flex-row flex-auto items-center w-32 min-w-0'>
+                      <FormControl className='flex-none'>
+                        <Checkbox
+                          checked={field.value !== undefined}
+                          onCheckedChange={(checked) => form.setValue('sharedExpenses', checked === true ? '' : undefined)}
+                        />
+                      </FormControl>
+                      <FormLabel className='flex flex-row items-center gap-1 flex-auto overflow-hidden text-ellipsis whitespace-nowrap cursor-pointer pl-2 py-3'>
+                        <span>{t('Shared expenses')}</span>
+                      </FormLabel>
+                    </div>
+
+                    {field.value !== undefined && <FormControl>
+                      <div className={cn(
+                        'flex flex-col justify-center flex-auto w-20 transition-[width] relative animation-right-left',
+                        isMagicalAmount($sharedExpenses) ? 'has-[:focus]:w-64' : '',
+                      )}>
+                        <Input type='text' value={field.value}
+                          placeholder={validSharedExpenses ? formatAmount(validSharedExpenses.total) : ''}
+                          className={cn(calculated.sharedExpenses?.error && 'border-destructive')}
+                          onChange={(event) => {
+                            form.setValue('sharedExpenses', sanitizeMagicAmount(event.target.value))
+                          }} />
+                        {!!validSharedExpenses?.automatic && <PoweredByMagic />}
+                      </div>
+                    </FormControl>}
+                  </FormItem>
+
+                  {/* Amount suggestions */}
+                  {amountSuggestions !== undefined && amountSuggestions.length > 0 && (
+                    <AmountSuggestions
+                      variant='secondary'
+                      suggestions={amountSuggestions}
+                      amount={$sharedExpenses}
+                      onChange={(amount) => form.setValue('sharedExpenses', amount)}
+                    />
+                  )}
+
+                  {!!validSharedExpenses && <Calculations input={{ sharedExpenses: validSharedExpenses }} />}
+                </div>
+              </>} />}
+            </CardContent>
+          </>}
 
           <CardFooter className='flex flex-col items-stretch bg-secondary gap-3 pt-3 rounded-b-md'>
-            {/* Tip amount */}
-            {!receiptId && <>
-              {$tipAmount === undefined && (
-                <Button variant='link' className='flex flex-row items-center justify-start p-0 gap-2 animation-down-top' onClick={() => form.setValue('tipAmount', '')}>
-                  <Coins className='w-4 h-4' /><span>{t('Add tip')}</span>
-                </Button>
-              )}
+            {!!(receiptId || stage === 'tip') && <>
+              {/* Tip amount */}
+              {!receiptId && <>
+                {$tipAmount === undefined && (
+                  <Button variant='link' className='flex flex-row items-center justify-start p-0 gap-2 animation-down-top' onClick={() => form.setValue('tipAmount', '')}>
+                    <Coins className='w-4 h-4' /><span>{t('Add tip')}</span>
+                  </Button>
+                )}
 
-              {$tipAmount !== undefined && <div className='flex flex-col gap-1 pt-3 animation-down-top'>
-                <div className='flex flex-row gap-3'>
-                  <FormField
-                    control={form.control}
-                    name='tipPayer'
-                    render={({ field }) => (
-                      <FormItem className='flex flex-col flex-auto w-32 min-w-0'>
-                        <FormLabel>{t('Tip payer')}</FormLabel>
-                        <UserCombobox
-                          deselectable
-                          prioritize={enabledUsers}
-                          selectedUser={field.value || undefined}
-                          placeholder={$payer ? <UserName user={$payer} /> : t('Select tip payer')}
-                          onSelect={user => form.setValue('tipPayer', user ?? '')}
-                        />
-                      </FormItem>
-                    )}
-                  />
+                {$tipAmount !== undefined && <div className='flex flex-col gap-1 animation-down-top'>
+                  <div className='flex flex-row gap-3'>
+                    <FormField
+                      control={form.control}
+                      name='tipPayer'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-col flex-auto w-32 min-w-0'>
+                          <FormLabel>{t('Tip payer')}</FormLabel>
+                          <UserCombobox
+                            deselectable
+                            prioritize={enabledUsers}
+                            selectedUser={field.value || undefined}
+                            placeholder={$payer ? <UserName user={$payer} /> : t('Select tip payer')}
+                            onSelect={user => form.setValue('tipPayer', user ?? '')}
+                          />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name='tipAmount'
-                    render={({ field }) => (
-                      <FormItem className='flex flex-col flex-auto w-20'>
-                        <div className='flex flex-row justify-between items-center'>
-                          <FormLabel>{t('Tip amount')}</FormLabel>
-                          <Button variant='link' className='p-0 min-h-0 h-auto grow justify-end' onClick={() => {
-                            form.setValue('tipAmount', undefined)
-                            form.setValue('tipPayer', '')
-                          }}>
-                            <EyeOff className='w-4 h-4' />
-                          </Button>
-                        </div>
-                        <Input type='text' value={field.value}
-                          className={cn(calculated.debts.length > 0 && calculated.tipAmount?.error && 'border-destructive')}
-                          onChange={(event) => form.setValue('tipAmount', sanitizeMagicAmount(event.target.value))} />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                    <FormField
+                      control={form.control}
+                      name='tipAmount'
+                      render={({ field }) => (
+                        <FormItem className='flex flex-col flex-auto w-20'>
+                          <div className='flex flex-row justify-between items-center'>
+                            <FormLabel>{t('Tip amount')}</FormLabel>
+                            <Button variant='link' className='p-0 min-h-0 h-auto grow justify-end' onClick={() => {
+                              form.setValue('tipAmount', undefined)
+                              form.setValue('tipPayer', '')
+                            }}>
+                              <EyeOff className='w-4 h-4' />
+                            </Button>
+                          </div>
+                          <Input type='text' value={field.value}
+                            className={cn(calculated.debts.length > 0 && calculated.tipAmount?.error && 'border-destructive')}
+                            onChange={(event) => form.setValue('tipAmount', sanitizeMagicAmount(event.target.value))} />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
-                {!!validTipAmount && <Calculations input={{ tipAmount: validTipAmount }} />}
-              </div>}
+                  {!!validTipAmount && <Calculations input={{ tipAmount: validTipAmount }} />}
+                </div>}
+              </>}
             </>}
 
             {/* Amount mismatch */}
@@ -700,14 +744,32 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
               </div>
             )}
 
+            {/* Next button */}
+            {(stage === 'amount') && <>
+              <Button type='button'
+                disabled={!isAmountStageValid}
+                onClick={() => setStage('participants')}>
+                {t('Next')}
+              </Button>
+            </>}
+            {(stage === 'participants') && <>
+              <Button type='button'
+                disabled={!isParticipantsStageValid}
+                onClick={() => setStage('tip')}>
+                {t('Next')}
+              </Button>
+            </>}
+
             {/* Save button */}
-            <Button type='submit' disabled={!isValid}>
-              {calculated.total
-                ? <Trans t={t} i18nKey='saveReceipt'>
-                  Save {{ amount: formatAmount(calculated.total, 'UAH') }} receipt
-                </Trans>
-                : <>{t('Save receipt')}</>}
-            </Button>
+            {!!(receiptId || stage === 'tip') && <>
+              <Button type='submit' disabled={!isValid}>
+                {calculated.total
+                  ? <Trans t={t} i18nKey='saveReceipt'>
+                    Save {{ amount: formatAmount(calculated.total, 'UAH') }} receipt
+                  </Trans>
+                  : <>{t('Save receipt')}</>}
+              </Button>
+            </>}
 
             {/* Delete button */}
             {!!receiptId && (
