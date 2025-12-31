@@ -683,7 +683,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
                   </Button>
                 )}
 
-                {$tipAmount !== undefined && <div className='flex flex-col gap-1 animation-down-top pt-2'>
+                {$tipAmount !== undefined && <div className='flex flex-col gap-1 animation-down-top pt-3'>
                   <div className='flex flex-row gap-3'>
                     <FormField
                       control={form.control}
