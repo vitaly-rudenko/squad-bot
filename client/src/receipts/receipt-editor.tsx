@@ -392,7 +392,10 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
           criticalAmountMismatch && 'border-destructive'
         )}>
           {/* Photo */}
-          <div className='absolute -top-2 -right-1 w-[5.5rem] h-[5.5rem]'>
+          <div className={cn(
+            'absolute -top-2 -right-1',
+            (receiptId || stage === 'amount') && 'w-[5.5rem] h-[5.5rem]',
+          )}>
             <input ref={photoInputRef} type='file' className='hidden' accept='image/png, image/jpeg, image/heic'
               multiple
               onChange={(event) => handlePhotoSelect([...event.target.files ?? []])} />
