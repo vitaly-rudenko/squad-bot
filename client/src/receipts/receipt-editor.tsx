@@ -520,7 +520,7 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
           </>}
 
           {!!(receiptId || stage === 'participants') && <>
-            <CardContent className='flex flex-col pt-3 bg-secondary py-3 gap-2 animation-down-top'>
+            <CardContent className='flex flex-col pt-3 py-3 gap-2 bg-secondary animation-down-top'>
               {/* Debts */}
               <FormField
                 control={form.control}
@@ -670,17 +670,20 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
             </CardContent>
           </>}
 
-          <CardFooter className='flex flex-col items-stretch bg-secondary gap-3 pt-3 rounded-b-md'>
+          <CardFooter className={cn(
+            'flex flex-col items-stretch gap-3 rounded-b-md',
+            (!receiptId && stage === 'tip') && 'bg-secondary',
+          )}>
             {!!(receiptId || stage === 'tip') && <>
               {/* Tip amount */}
               {!receiptId && <>
                 {$tipAmount === undefined && (
-                  <Button variant='link' className='flex flex-row items-center justify-start p-0 gap-2 animation-down-top' onClick={() => form.setValue('tipAmount', '')}>
+                  <Button variant='link' className='flex flex-row items-center justify-start p-0 gap-2 animation-down-top pt-2' onClick={() => form.setValue('tipAmount', '')}>
                     <Coins className='w-4 h-4' /><span>{t('Add tip')}</span>
                   </Button>
                 )}
 
-                {$tipAmount !== undefined && <div className='flex flex-col gap-1 animation-down-top'>
+                {$tipAmount !== undefined && <div className='flex flex-col gap-1 animation-down-top pt-2'>
                   <div className='flex flex-row gap-3'>
                     <FormField
                       control={form.control}
