@@ -748,14 +748,14 @@ export const ReceiptEditor: FC<{ receiptId?: string }> = ({ receiptId }) => {
             )}
 
             {/* Next button */}
-            {(stage === 'amount') && <>
+            {(!receiptId && stage === 'amount') && <>
               <Button type='button'
                 disabled={!isAmountStageValid}
                 onClick={() => setStage('participants')}>
                 {t('Next')}
               </Button>
             </>}
-            {(stage === 'participants') && <>
+            {(!receiptId && stage === 'participants') && <>
               <Button type='button'
                 disabled={!isParticipantsStageValid}
                 onClick={() => setStage('tip')}>
