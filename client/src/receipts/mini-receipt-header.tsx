@@ -27,7 +27,7 @@ export const MiniReceiptHeader: FC<{
         <span className='overflow-hidden font-medium'><UserName user={payer} /></span>
       </div>
     </div>
-    <div className="mr-1 min-w-12 h-full">
+    <div className="mr-1 w-12 h-full">
       <Button
         size='icon' variant={photoSrc ? 'default' : 'outline'}
         className={cn(
