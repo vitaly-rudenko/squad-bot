@@ -44,13 +44,14 @@ export const UserCombobox: FC<{
 
   const source = useMemo(
     () => {
+
       const orderedUsers = [
         ...selectedUser ? [selectedUser] : [],
         ...prioritize ?? [],
         ...recentUsers ?? [],
         ...isUsingRemoteSearch ? usersQuery.data ?? [] : [],
         currentUser,
-      ].filter(user => !exclude?.includes(user))
+      ].filter(u => !exclude?.some(e => u.id === e.id))
 
       const uniqueUserIds = new Set(orderedUsers.map(u => u.id))
       const deduplicatedUsers = Array.from(uniqueUserIds).map(id => requireNonNullable(orderedUsers.find(u => u.id === id)))
