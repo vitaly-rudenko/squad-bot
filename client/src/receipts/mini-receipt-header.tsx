@@ -19,7 +19,7 @@ export const MiniReceiptHeader: FC<{
   const [photoPreviewLoaded, setPhotoPreviewLoaded] = useState(false)
 
   return <div className="flex flex-row gap-3 py-1 h-14 items-center border rounded-md m-1">
-    <div className="pl-3 flex flex-row gap-2 items-center grow cursor-pointer h-full"
+    <div className="pl-3 flex flex-row gap-2 items-center grow cursor-pointer h-full overflow-hidden"
       onClick={onEdit}>
       <div><span className="font-medium">{formatAmount(amount, 'UAH')}</span></div>
       <div className='flex flex-row gap-1 items-baseline overflow-hidden whitespace-nowrap'>
@@ -27,7 +27,7 @@ export const MiniReceiptHeader: FC<{
         <span className='overflow-hidden font-medium'><UserName user={payer} /></span>
       </div>
     </div>
-    <div className="mr-1 grow h-full">
+    <div className="mr-1 grow min-w-12 h-full">
       <Button
         size='icon' variant={photoSrc ? 'default' : 'outline'}
         className={cn(
