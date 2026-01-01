@@ -17,7 +17,7 @@ export function createExportFlow() {
   const { receiptsStorage, debtsStorage, usersStorage, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
-  const exportReceiptsCsv = async (context) => {
+  const exportReceiptsCsv = async context => {
     const { userId, locale } = context.state
 
     const { items: receipts } = await receiptsStorage.find({
@@ -49,9 +49,7 @@ export function createExportFlow() {
       const user = users.find(u => u.id === userId)
       if (!user) throw new Error(`Could not render User by userId: ${userId}`)
 
-      return user.username
-        ? `${user.name} (@${user.username})`
-        : user.name
+      return user.username ? `${user.name} (@${user.username})` : user.name
     }
 
     /** @param {Date} date */
@@ -71,7 +69,7 @@ export function createExportFlow() {
         localize(locale, 'export.receipts.columns.description'),
         localize(locale, 'export.receipts.columns.amount'),
         localize(locale, 'export.receipts.columns.payer'),
-        ...users.map(user => renderUser(user.id))
+        ...users.map(user => renderUser(user.id)),
       ],
     ]
 
@@ -80,22 +78,25 @@ export function createExportFlow() {
 
       rows.push([
         formatDate(receipt.createdAt),
-        receipt.description ?? '',
+        receipt.description || '',
         formatAmount(receipt.amount),
         renderUser(receipt.payerId),
         ...users.map(user => {
           const debt = receiptDebts.find(d => d.debtorId === user.id)
           return debt ? formatAmount(debt.amount) : ''
-        })
+        }),
       ])
     }
 
     const csv = stringify(rows)
-    const filename = `${localize(locale, 'export.receipts.filenamePrefix')}_${new Date().toISOString().split('.')[0].replaceAll(/[^\d]+/g, '-')}.csv`
+    const filename = `${localize(locale, 'export.receipts.filenamePrefix')}_${new Date()
+      .toISOString()
+      .split('.')[0]
+      .replaceAll(/[^\d]+/g, '-')}.csv`
 
     await context.replyWithDocument(
       { source: Buffer.from(csv), filename },
-      { caption: localize(locale, 'export.receipts.command.message') }
+      { caption: localize(locale, 'export.receipts.command.message') },
     )
   }
 
@@ -103,3 +104,4 @@ export function createExportFlow() {
     exportReceiptsCsv,
   }
 }
+

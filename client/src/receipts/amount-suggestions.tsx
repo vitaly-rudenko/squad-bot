@@ -10,7 +10,7 @@ export const AmountSuggestions: FC<{
   suggestions: number[]
   onChange: (amount: string) => unknown
 }> = ({ variant, amount, suggestions, onChange }) => {
-  return <Ribbon className='py-1'>
+  return <Ribbon className='pt-0.5'>
     {suggestions.map((suggestion, i) => {
       const amounts = amount.split(/\s*\+\s*/g).filter(amount => amount !== '')
 
@@ -27,7 +27,7 @@ export const AmountSuggestions: FC<{
       return <div key={i} className='flex flex-row animation-down-top'>
         <Badge
           variant={isIncluded ? 'default' : variant}
-          className='relative h-7 cursor-pointer justify-center'
+          className='relative h-6 cursor-pointer justify-center'
           onClick={() => {
             onChange(
               isIncluded1
