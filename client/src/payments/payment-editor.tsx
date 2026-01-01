@@ -215,7 +215,7 @@ export const PaymentEditor: FC<{
           {/* Save button */}
           <Button type='submit' disabled={!valid || !createMutation.isIdle}>
             {isDefined(amount) && amount > 0
-              ? t('savePaymentWithAmount', { amount: formatAmount(amount) })
+              ? t('savePaymentWithAmount', { amount: formatAmount(amount, 'UAH') })
               : t('Save payment')}
           </Button>
         </CardFooter>
