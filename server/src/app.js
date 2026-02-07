@@ -8,8 +8,6 @@ import pg from 'pg'
 import helmet from 'helmet'
 import express from 'express'
 import { Redis } from 'ioredis'
-import { TelegramClient } from 'telegram'
-import { StringSession } from 'telegram/sessions/index.js'
 
 import { RollCallsPostgresStorage } from './roll-calls/storage.js'
 import { logger } from './common/logger.js'
@@ -78,36 +76,6 @@ async function start() {
   }
 
   const usersStorage = new UsersPostgresStorage(pgClient)
-
-  // Advanced Telegram capabilities
-  /** @type {import('telegram').TelegramClient | null} */
-  let telegramClient = null
-  if (env.TELEGRAM_APP_ID && env.TELEGRAM_APP_HASH && env.TELEGRAM_SESSION_STRING) {
-    try {
-      const telegramAppId = Number(process.env.TELEGRAM_APP_ID)
-      const telegramAppHash = process.env.TELEGRAM_APP_HASH || ''
-      const session = new StringSession(process.env.TELEGRAM_SESSION_STRING)
-
-      const _telegramClient = new TelegramClient(session, telegramAppId, telegramAppHash, { connectionRetries: 5 })
-
-      // logger.info({}, 'Starting Telegram Client for advanced capabilities')
-      // await _telegramClient.start({
-      //   phoneNumber: () => Promise.reject(new Error('Not logged into Telegram session')),
-      //   password: () => Promise.reject(new Error('Not logged into Telegram session')),
-      //   phoneCode: () => Promise.reject(new Error('Not logged into Telegram session')),
-      //   onError: err => logger.warn({ err }, 'Unhandled Telegram session error'),
-      // })
-      //
-      // // Required for Telegram Client to "see" the chats before any event happens from those chats
-      // logger.info({}, 'Caching Telegram Client dialogs')
-      // await _telegramClient.getDialogs({ limit: undefined })
-
-      telegramClient = _telegramClient
-    } catch (err) {
-      logger.error({ err }, 'Failed to start Telegram Client')
-    }
-  }
-  registry.values({ telegramClient })
 
   const telegramBotToken = env.TELEGRAM_BOT_TOKEN
   const tokenSecret = env.TOKEN_SECRET
@@ -257,13 +225,8 @@ async function start() {
   bot.command('receipts', receipts)
   bot.action(/^photo:(.+)$/, getPhoto)
 
-  const { toggleSocialLinkFix, socialLinkFixMessage, telegramClientEvent, tryAdvancedIntegration } =
-    createSocialLinkFixFlow()
+  const { toggleSocialLinkFix, socialLinkFixMessage } = createSocialLinkFixFlow()
   bot.command('toggle_social_link_fix', toggleSocialLinkFix)
-  if (telegramClient) {
-    bot.action('try_advanced_integration', tryAdvancedIntegration)
-    telegramClient.addEventHandler(telegramClientEvent)
-  }
 
   const { exportReceiptsCsv } = createExportFlow()
   bot.command('export', requirePrivateChat(), exportReceiptsCsv)

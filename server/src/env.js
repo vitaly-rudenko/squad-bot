@@ -34,16 +34,8 @@ const urlSchema = refine(nonempty(string()), 'url', value => {
 })
 
 const numberSchema = coerce(number(), nonempty(string()), value => Number(value))
-const optionalNumberSchema = coerce(optional(number()), optional(string()), value =>
-  value && Number.isFinite(Number(value)) ? Number(value) : undefined,
-)
 
 const stringSchema = nonempty(string())
-const optionalStringSchema = coerce(optional(string()), optional(string()), value => value || undefined)
-
-const optionalStringArraySchema = coerce(optional(array(string())), optional(string()), value =>
-  value ? value.split(',') : undefined,
-)
 
 const urlArraySchema = coerce(nonempty(array(urlSchema)), nonempty(string()), value =>
   value.split(',').map(item => item.trim()),
@@ -66,11 +58,6 @@ const envSchema = type({
   CORS_ORIGIN: urlArraySchema,
   OCR_SPACE_API_KEY: stringSchema,
   OCR_SPACE_ENDPOINT: urlSchema,
-  TELEGRAM_APP_ID: optionalStringSchema,
-  TELEGRAM_APP_HASH: optionalStringSchema,
-  TELEGRAM_SESSION_STRING: optionalStringSchema,
-  TELEGRAM_INSTAGRAM_INTEGRATION_BOT_ID: optionalNumberSchema,
-  TELEGRAM_WHITELISTED_CHAT_IDS_FOR_INSTAGRAM_INTEGRATION: optionalStringArraySchema,
 })
 
 export const env = envSchema.create(process.env)

@@ -128,7 +128,6 @@ export const localeFileSchema = object({
     actions: object({
       accept: _,
       reject: _,
-      retry: _,
     }),
   }),
   pollAnswerNotifications: object({

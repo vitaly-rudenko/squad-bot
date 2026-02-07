@@ -124,7 +124,6 @@ socialLinkFix:
   actions:
     accept: '✅ Keep'
     reject: '❌ Delete'
-    retry: '🔄 Retry'
 pollAnswerNotifications:
   voted: '*{voter}* has voted in the poll: {pollOptions}'
   retracted: '*{voter}* has retracted their vote\.'

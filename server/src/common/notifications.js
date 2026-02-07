@@ -6,7 +6,7 @@ import { isNotificationErrorIgnorable } from './telegram.js'
  * @param {string} userId
  * @param {string} message
  * @param {Parameters<import('telegraf').Telegram['sendMessage']>[2]} options
- * @param {import('../types').Deps<'telegram' >} deps
+ * @param {import('../types').Deps<'telegram'>} deps
  */
 export function sendNotification(userId, message, options, { telegram }) {
   telegram

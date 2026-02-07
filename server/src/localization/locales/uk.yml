@@ -123,7 +123,6 @@ socialLinkFix:
   actions:
     accept: '✅ Залишити'
     reject: '❌ Видалити'
-    retry: '🔄 Повторити'
 pollAnswerNotifications:
   voted: '*{voter}* проголосував\(ла\) у опитуванні: {pollOptions}'
   retracted: '*{voter}* відкликав\(ла\) свій голос\.'
