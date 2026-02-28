@@ -2,9 +2,10 @@ import './env.js'
 
 import { Telegraf } from 'telegraf'
 import cors from 'cors'
-import fs from 'fs'
+import fs, { mkdirSync, rmSync } from 'fs'
 import https from 'https'
 import pg from 'pg'
+import os from 'os'
 import helmet from 'helmet'
 import express from 'express'
 import { Redis } from 'ioredis'
@@ -19,6 +20,7 @@ import { createCodeGenerator } from './auth/utils.js'
 import { createAuthFlow } from './auth/telegram.js'
 import {
   createCommonFlow,
+  escapeMd,
   requireGroupChat,
   requirePrivateChat,
   withChatId,
@@ -53,6 +55,9 @@ import { createExportFlow } from './export/telegram.js'
 import { LinksPostgresStorage } from './links/storage.js'
 import { createLinksFlow } from './links/telegram.js'
 import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/telegram.js'
+import { message } from 'telegraf/filters'
+import { downloadFile } from './common/download-file.ts'
+import { exec, execSync, spawn } from 'child_process'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -146,6 +151,140 @@ async function start() {
   process.on('unhandledRejection', err => {
     logger.error({ err }, 'Unhandled rejection')
     process.exit(1)
+  })
+
+  bot.on(message('voice'), async context => {
+    rmSync('./local/voice', { force: true, recursive: true })
+    mkdirSync('./local/voice', { recursive: true })
+
+    const message = await context.sendMessage('<blockquote><i>Transcribing...</i></blockquote>', {
+      parse_mode: 'HTML',
+      reply_parameters: {
+        chat_id: context.message.chat.id,
+        message_id: context.message.message_id,
+        allow_sending_without_reply: true,
+      },
+    })
+
+    const url = await bot.telegram.getFileLink(context.message.voice.file_id)
+    await downloadFile({ url, path: './local/voice/voice.ogg' })
+
+    execSync(`ffmpeg -i ./local/voice/voice.ogg ./local/voice/voice.wav`)
+
+    const started = Date.now()
+    const model = 'ggml-large-v3-turbo-q5_0.bin'
+    const vadModel = 'ggml-silero-v6.2.0.bin'
+    // const model = 'ggml-medium-q5_0.bin'
+    // const model = 'ggml-small.bin'
+    const language = 'uk'
+    // const language = 'ru'
+    // const result = execSync(`whisper-cli -f ./local/voice/voice.wav -m ~/${model} -l ${language} -np -nt --no-gpu --best-of 1 --beam-size 1 --suppress-nst --no-fallback`)
+    // whisper-cli -f inputs/${input} -m models/ggml-large-v3-turbo-q5_0.bin --
+    //         no-gpu -nt -np -l uk -bo 1 -bs 1 -sns --no-fallback --vad -vm models/ggm
+    //         l-silero-v6.2.0.bin
+    // const result = execSync(
+    //   `whisper-cli \
+    //      -f ./local/voice/voice.wav \
+    //      -m ~/${model} \
+    //      -l ${language} \
+    //      -np -nt --no-gpu -bo 1 -bs 1 -sns --no-fallback \
+    //      --vad -vm ~/${vadModel}`,
+    // )
+
+    const child = spawn('whisper-cli', [
+      '-f',
+      './local/voice/voice.wav',
+      '-m',
+      `${os.homedir()}/${model}`,
+      '-l',
+      language,
+      '-np',
+      '-nt',
+      '-bo',
+      '1',
+      '-bs',
+      '1',
+      '-sns',
+      '--no-gpu',
+      '--no-fallback',
+      '--vad',
+      '-vm',
+      `${os.homedir()}/${vadModel}`,
+    ])
+
+    let cumulative = ''
+
+    child.stdout.on('data', async chunk => {
+      cumulative += '\n' + chunk.toString().trim()
+      console.log(chunk.toString())
+
+      await bot.telegram.editMessageText(
+        message.chat.id,
+        message.message_id,
+        undefined,
+        '<blockquote expandable>' +
+          cumulative
+            .toString()
+            .split('\n')
+            .map(l => l.trim())
+            .filter(Boolean)
+            .map((l, i, arr) => (l.endsWith('.') ? l + '\n\n' : l + (i === arr.length - 1 ? '...' : ''))) // TODO: escape html
+            .join(' ')
+            .trim() +
+          '\n\n<i>Transcribing...</i>' +
+          '</blockquote>',
+        // '\n<i>Transcribed in ' +
+        // Math.floor(duration / 1000) +
+        // ` seconds. Language: ${language}.</i>`,
+        { parse_mode: 'HTML' },
+      )
+    })
+
+    child.on('close', async () => {
+      const duration = Date.now() - started
+
+      await bot.telegram.editMessageText(
+        message.chat.id,
+        message.message_id,
+        undefined,
+        '<blockquote expandable>' +
+          cumulative
+            .toString()
+            .split('\n')
+            .map(l => (l.endsWith('.') ? l + '\n\n' : l)) // TODO: escape html
+            .filter(Boolean)
+            .join(' ')
+            .trim() +
+          '\n\n<i>Transcribed in ' +
+          Math.floor(duration / 1000) +
+          ` seconds. Language: ${language}.</i>` +
+          '</blockquote>',
+        { parse_mode: 'HTML' },
+      )
+    })
+
+    // await context.reply(
+    //   '<blockquote>' +
+    //     result
+    //       .toString('utf-8')
+    //       .split('\n')
+    //       .map(l => l.trim())
+    //       .filter(Boolean)
+    //       .map(l => l) // TODO: escape html
+    //       .join('\n') +
+    //     '</blockquote>' +
+    //     '\n<i>Transcribed in ' +
+    //     Math.floor(duration / 1000) +
+    //     ` seconds. Language: ${language}.</i>`,
+    //   {
+    //     parse_mode: 'HTML',
+    //     reply_parameters: {
+    //       chat_id: context.message.chat.id,
+    //       message_id: context.message.message_id,
+    //       allow_sending_without_reply: true,
+    //     },
+    //   },
+    // )
   })
 
   bot.use((context, next) => {
