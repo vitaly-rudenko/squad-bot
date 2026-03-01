@@ -160,28 +160,27 @@ async function start() {
 
   const { groupCache } = registry.export()
 
-  // TODO: Only allow in whitelisted channels
   bot.on(message('voice'), async context => {
     // Ignore voice messages less than 30 seconds
     if (context.message.voice.duration <= 30) return
 
     const chatId = String(context.message.chat.id)
+    const userId = String(context.message.from.id)
 
-    // TODO: Support in private chats? Needs a whitelist, though
-    if (!isGroupChat(context)) {
+    if (isGroupChat(context)) {
+      let group = await groupCache.get(chatId)
+      if (!group) {
+        group = await groupStorage.findById(chatId)
+        if (group) {
+          await groupCache.set(chatId, group)
+        }
+      }
+
+      if (!group) return
+      if (!group.voiceTranscriptionEnabledAt) return
+    } else if (userId !== env.ADMIN_USER_ID) {
       return
     }
-
-    let group = await groupCache.get(chatId)
-    if (!group) {
-      group = await groupStorage.findById(chatId)
-      if (group) {
-        await groupCache.set(chatId, group)
-      }
-    }
-
-    if (!group) return
-    if (!group.voiceTranscriptionEnabledAt) return
 
     const operationId = crypto.randomUUID()
 
@@ -216,7 +215,7 @@ async function start() {
     )
 
     try {
-      await upsertMessage('<blockquote><i>Preparing...</i></blockquote>')
+      await upsertMessage('<blockquote><i>Transcribing...</i></blockquote>')
 
       await fs.mkdir(`./local/operations/${operationId}`, { recursive: true })
 
