@@ -157,6 +157,7 @@ async function start() {
     process.exit(1)
   })
 
+  // TODO: Only allow in whitelisted channels
   bot.on(message('voice'), async context => {
     // Ignore voice messages less than 30 seconds
     if (context.message.voice.duration <= 30) {
