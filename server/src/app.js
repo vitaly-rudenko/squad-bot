@@ -223,12 +223,15 @@ async function start() {
       await downloadFile({ url, outputPath: oggPath })
       await oggToWav({ inputPath: oggPath, outputPath: wavPath })
 
-      const { language } = await detectLanguage({ inputPath: wavPath })
-      const { parts, durationMs } = await transcribe({
+      const { language } = await detectLanguage({
+        inputPath: wavPath,
+        modelPath: os.homedir() + '/ggml-large-v3-turbo-q5_0.bin',
+      })
+      const { parts } = await transcribe({
         modelPath: os.homedir() + '/ggml-large-v3-turbo-q5_0.bin',
         vadModelPath: os.homedir() + '/ggml-silero-v6.2.0.bin',
         inputPath: wavPath,
-        language,
+        language: language ?? 'uk',
 
         onPart: async (_, parts) => {
           await upsertMessage(

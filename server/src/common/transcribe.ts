@@ -31,7 +31,7 @@ export async function transcribe(input: {
       ].flat(),
     )
 
-    child.stdout.on('data', async chunk => {
+    child.stdout.on('data', async (chunk: Buffer) => {
       if (done) throw new Error('Whisper process is closed, but stdout was received')
 
       const lines = chunk.toString('utf-8').split('\n')
@@ -60,7 +60,7 @@ export async function transcribe(input: {
       }
     })
 
-    child.stderr.on('data', chunk => {
+    child.stderr.on('data', (chunk: Buffer) => {
       console.log('stderr', chunk.toString('utf-8'))
     })
 
