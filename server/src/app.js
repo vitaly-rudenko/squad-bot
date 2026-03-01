@@ -162,6 +162,9 @@ async function start() {
 
   // TODO: Only allow in whitelisted channels
   bot.on(message('voice'), async context => {
+    // Ignore voice messages less than 30 seconds
+    if (context.message.voice.duration <= 30) return
+
     const chatId = String(context.message.chat.id)
 
     // TODO: Support in private chats? Needs a whitelist, though
@@ -179,11 +182,6 @@ async function start() {
 
     if (!group) return
     if (!group.voiceTranscriptionEnabledAt) return
-
-    // Ignore voice messages less than 30 seconds
-    if (context.message.voice.duration <= 30) {
-      return
-    }
 
     const operationId = crypto.randomUUID()
 
