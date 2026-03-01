@@ -20,7 +20,7 @@ import { createCodeGenerator } from './auth/utils.js'
 import { createAuthFlow } from './auth/telegram.js'
 import {
   createCommonFlow,
-  escapeMd,
+  isGroupChat,
   requireGroupChat,
   requirePrivateChat,
   withChatId,
@@ -158,8 +158,28 @@ async function start() {
     process.exit(1)
   })
 
+  const { groupCache } = registry.export()
+
   // TODO: Only allow in whitelisted channels
   bot.on(message('voice'), async context => {
+    const chatId = String(context.message.chat.id)
+
+    // TODO: Support in private chats? Needs a whitelist, though
+    if (!isGroupChat(context)) {
+      return
+    }
+
+    let group = await groupCache.get(chatId)
+    if (!group) {
+      group = await groupStorage.findById(chatId)
+      if (group) {
+        await groupCache.set(chatId, group)
+      }
+    }
+
+    if (!group) return
+    if (!group.voiceTranscriptionEnabledAt) return
+
     // Ignore voice messages less than 30 seconds
     if (context.message.voice.duration <= 30) {
       return
