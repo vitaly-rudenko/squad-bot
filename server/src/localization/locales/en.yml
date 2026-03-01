@@ -132,6 +132,9 @@ pollAnswerNotifications:
   unknownPollOption: 'unknown'
   enabled: '✅ Notifications for poll answers are now enabled'
   disabled: '❌ Notifications for poll answers are now disabled'
+voiceTranscription:
+  enabled: '✅ Voice transcription is now enabled'
+  disabled: '❌ Voice transcription is now disabled'
 groupChatOnly: '❌ This command can only be executed in a group chat'
 privateChatOnly: '❌ This command can only be executed in a private chat'
 unknownUser: 'Unknown user'

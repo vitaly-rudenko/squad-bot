@@ -4,22 +4,23 @@ export class GroupsPostgresStorage {
     this._client = client
   }
 
-  /** @param {Omit<import('./types').Group, 'socialLinkFixEnabledAt' | 'pollAnswerNotificationsEnabledAt'> & { socialLinkFixEnabledAt?: Date | null, pollAnswerNotificationsEnabledAt?: Date | null }} group */
+  /** @param {Omit<import('./types').Group, 'socialLinkFixEnabledAt' | 'pollAnswerNotificationsEnabledAt' | 'voiceTranscriptionEnabledAt'> & { socialLinkFixEnabledAt?: Date | null, pollAnswerNotificationsEnabledAt?: Date | null, voiceTranscriptionEnabledAt?: Date | null }} group */
   async store(group) {
-    const { id, title, socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt } = group
+    const { id, title, socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt, voiceTranscriptionEnabledAt } = group
 
     await this._client.query(
       `
-      INSERT INTO groups (id, title, updated_at, social_link_fix_enabled_at, poll_answer_notifications_enabled_at)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO groups (id, title, updated_at, social_link_fix_enabled_at, poll_answer_notifications_enabled_at, voice_transcription_enabled_at)
+      VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (id) DO UPDATE
       SET title = $2
         , updated_at = $3
         , social_link_fix_enabled_at = ${socialLinkFixEnabledAt === undefined ? 'groups.social_link_fix_enabled_at' : '$4'}
         , poll_answer_notifications_enabled_at = ${pollAnswerNotificationsEnabledAt === undefined ? 'groups.poll_answer_notifications_enabled_at' : '$5'}
+        , voice_transcription_enabled_at = ${voiceTranscriptionEnabledAt === undefined ? 'groups.voice_transcription_enabled_at' : '$6'}
       ;
     `,
-      [id, title, new Date(), socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt],
+      [id, title, new Date(), socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt, voiceTranscriptionEnabledAt],
     )
   }
 
@@ -68,7 +69,7 @@ export class GroupsPostgresStorage {
 
     const response = await this._client.query(
       `
-      SELECT g.id, g.title, g.updated_at, g.social_link_fix_enabled_at, g.poll_answer_notifications_enabled_at
+      SELECT g.id, g.title, g.updated_at, g.social_link_fix_enabled_at, g.poll_answer_notifications_enabled_at, g.voice_transcription_enabled_at
       FROM groups g ${whereClause}
       LIMIT ${limit} OFFSET ${offset};
     `,
@@ -103,6 +104,9 @@ function deserializeGroup(row) {
     socialLinkFixEnabledAt: row['social_link_fix_enabled_at'] ? new Date(row['social_link_fix_enabled_at']) : null,
     pollAnswerNotificationsEnabledAt: row['poll_answer_notifications_enabled_at']
       ? new Date(row['poll_answer_notifications_enabled_at'])
+      : null,
+    voiceTranscriptionEnabledAt: row['voice_transcription_enabled_at']
+      ? new Date(row['voice_transcription_enabled_at'])
       : null,
   }
 }

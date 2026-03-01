@@ -55,6 +55,7 @@ import { createExportFlow } from './export/telegram.js'
 import { LinksPostgresStorage } from './links/storage.js'
 import { createLinksFlow } from './links/telegram.js'
 import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/telegram.js'
+import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
 import { message } from 'telegraf/filters'
 import { downloadFile } from './common/download-file.ts'
 import { oggToWav } from './common/ogg-to-wav.ts'
@@ -143,6 +144,7 @@ async function start() {
     { command: 'links', description: 'Links' },
     { command: 'toggle_social_link_fix', description: 'Toggle previews for social links' },
     { command: 'toggle_poll_answer_notifications', description: 'Toggle notifications for poll answers' },
+    { command: 'toggle_voice_transcription', description: 'Toggle voice transcription' },
     { command: 'export', description: 'Export your receipts in a CSV format' },
     { command: 'start', description: 'Update user info' },
   ])
@@ -316,6 +318,9 @@ async function start() {
   const { togglePollAnswerNotifications, pollAnswer } = createPollAnswerNotificationsFlow()
   bot.command('toggle_poll_answer_notifications', togglePollAnswerNotifications)
   bot.on('poll_answer', pollAnswer)
+
+  const { toggleVoiceTranscription } = createVoiceTranscriptionFlow()
+  bot.command('toggle_voice_transcription', toggleVoiceTranscription)
 
   bot.action('delete_reply_markup', async context => {
     await context.editMessageReplyMarkup({ inline_keyboard: [] }).catch(() => {})
