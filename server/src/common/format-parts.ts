@@ -1,8 +1,8 @@
 import { type Part } from './transcribe.ts'
 
 // TODO: escape html
-export function formatParts(parts: Part[], partial = false) {
-  let cumulative = '<b>0:00</b>'
+export function formatParts(parts: Part[], partial = false, useTimestamps = false) {
+  let cumulative = useTimestamps ? '<b>0:00</b>' : ''
   let startsAt = 0
 
   for (let part of parts) {
@@ -13,7 +13,7 @@ export function formatParts(parts: Part[], partial = false) {
         const minutes = Math.floor(startsAt / 60_000)
         const seconds = String(Math.floor((startsAt - minutes * 60_000) / 1000)).padStart(2, '0')
 
-        cumulative += `\n\n<b>${minutes}:${seconds}</b> ${part.text}`
+        cumulative += useTimestamps ? `\n\n<b>${minutes}:${seconds}</b> ${part.text}` : `\n\n${part.text}`
       } else {
         if (part.text.endsWith('.')) {
           startsAt = part.startsAt
@@ -21,7 +21,9 @@ export function formatParts(parts: Part[], partial = false) {
           const minutes = Math.floor(startsAt / 60_000)
           const seconds = String(Math.floor((startsAt - minutes * 60_000) / 1000)).padStart(2, '0')
 
-          cumulative += ` ${part.text}\n\n<b>${minutes}:${seconds}</b> ${part.text}`
+          cumulative += useTimestamps
+            ? ` ${part.text}\n\n<b>${minutes}:${seconds}</b> ${part.text}`
+            : ` ${part.text}\n\n${part.text}`
         } else if (part.text.includes('. ')) {
           startsAt = part.startsAt
 
@@ -32,7 +34,9 @@ export function formatParts(parts: Part[], partial = false) {
           const prefix = subParts[0].trim()
           const suffix = subParts.slice(1).join('. ').trim()
 
-          cumulative += ` ${prefix}.\n\n<b>${minutes}:${seconds}</b> ${suffix}`
+          cumulative += useTimestamps
+            ? ` ${prefix}.\n\n<b>${minutes}:${seconds}</b> ${suffix}`
+            : ` ${prefix}.\n\n${suffix}`
         } else {
           cumulative += ' ' + part.text
         }

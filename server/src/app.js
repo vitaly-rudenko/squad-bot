@@ -160,14 +160,15 @@ async function start() {
 
   const { groupCache } = registry.export()
 
+  // TODO: move to the flow file
   bot.on(message('voice'), async context => {
-    // Ignore voice messages less than 30 seconds
-    if (context.message.voice.duration <= 30) return
-
     const chatId = String(context.message.chat.id)
     const userId = String(context.message.from.id)
 
     if (isGroupChat(context)) {
+      // Ignore group chat voice messages less than 30 seconds
+      if (context.message.voice.duration <= 30) return
+
       let group = await groupCache.get(chatId)
       if (!group) {
         group = await groupStorage.findById(chatId)
@@ -186,6 +187,8 @@ async function start() {
 
     const oggPath = `./local/operations/${operationId}/input.ogg`
     const wavPath = `./local/operations/${operationId}/input.wav`
+
+    const useTimestamps = context.message.voice.duration >= 60
 
     /** @type {import('telegraf/types').Message | undefined} */
     let message
@@ -235,14 +238,12 @@ async function start() {
 
         onPart: async (_, parts) => {
           await upsertMessage(
-            `<blockquote>${formatParts(parts, true)}\n\n<i>Language: ${language}. Transcribing...</i></blockquote>`,
+            `<blockquote>${formatParts(parts, true, useTimestamps)}\n\n<i>Transcribing...</i></blockquote>`,
           )
         },
       })
 
-      await upsertMessage(
-        `<blockquote expandable>${formatParts(parts)}\n\n<i>Language: ${language}. Transcribed in ${(durationMs / 1000).toFixed(1)} seconds.</i></blockquote>`,
-      )
+      await upsertMessage(`<blockquote expandable>${formatParts(parts, false, useTimestamps)}</blockquote>`)
     } catch (err) {
       console.warn('Could not transcribe voice message:', err)
       await upsertMessage('Sorry, something went wrong. Please try another file!')
