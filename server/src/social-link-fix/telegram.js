@@ -4,7 +4,7 @@ import { registry } from '../registry.js'
 import { fixSocialLinkUrl } from './fix-social-link-url.js'
 
 export function createSocialLinkFixFlow() {
-  const { groupCache, groupStorage, socialLinksCache, localize } = registry.export()
+  const { groupCache, groupStorage, localize } = registry.export()
 
   /** @param {import('telegraf').Context} context */
   const toggleSocialLinkFix = async context => {
@@ -31,16 +31,6 @@ export function createSocialLinkFixFlow() {
    */
   const socialLinkFixMessage = async (context, next) => {
     if (!context.message) return next()
-
-    // IDs between Bot API and Telegram API are different, so we're using timestamps
-    if ('forward_date' in context.message) {
-      const existingSocialLink = await socialLinksCache.get(`squad-bot:${context.message.forward_date}`)
-      if (existingSocialLink) {
-        await context.forwardMessage(existingSocialLink.linkMessage.chatId, { disable_notification: true })
-        await context.deleteMessage().catch(() => {})
-        return
-      }
-    }
 
     if (!('text' in context.message)) return next()
     const { chatId, locale } = context.state
@@ -74,7 +64,7 @@ export function createSocialLinkFixFlow() {
     const fixedSocialLinkUrl = fixSocialLinkUrl(url)
     if (!fixedSocialLinkUrl) return
 
-    const message = await context.reply(fixedSocialLinkUrl, {
+    await context.reply(fixedSocialLinkUrl, {
       reply_parameters: {
         message_id: context.message.message_id,
         allow_sending_without_reply: true,
@@ -85,16 +75,6 @@ export function createSocialLinkFixFlow() {
         Markup.button.callback(localize(locale, 'socialLinkFix.actions.reject'), 'delete_message'),
       ]),
     })
-
-    /** @type {import('./types.js').SocialLink} */
-    const socialLink = {
-      url,
-      linkMessage: { chatId, messageId: String(context.message.message_id) },
-      simpleFixMessage: { chatId, messageId: String(message.message_id) },
-    }
-
-    const simpleFixKey = `${chatId}:${message.message_id}`
-    await socialLinksCache.set(simpleFixKey, socialLink)
   }
 
   return {

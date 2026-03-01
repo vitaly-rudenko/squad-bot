@@ -23,7 +23,6 @@ export interface Dependencies {
   usersCache: import('./common/cache.js').RedisCache<User>
   pollsCache: import('./common/cache.js').RedisCache<Poll>
   usersStorage: import('./users/storage.js').UsersPostgresStorage
-  socialLinksCache: import('./common/cache.js').RedisCache<SocialLink>
   version: string
   webAppName: string
   webAppUrl: string
