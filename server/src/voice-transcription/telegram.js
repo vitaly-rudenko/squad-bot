@@ -1,3 +1,4 @@
+import { env } from '../env.js'
 import { registry } from '../registry.js'
 
 export function createVoiceTranscriptionFlow() {
@@ -5,7 +6,9 @@ export function createVoiceTranscriptionFlow() {
 
   /** @param {import('telegraf').Context} context */
   const toggleVoiceTranscription = async context => {
-    const { chatId, locale } = context.state
+    const { userId, chatId, locale } = context.state
+
+    if (env.ADMIN_USER_ID !== userId) return
 
     const group = await groupStorage.findById(chatId)
     if (!group) return

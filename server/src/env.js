@@ -52,6 +52,7 @@ const envSchema = type({
   DISABLE_MEMBERSHIP_REFRESH_TASK: optionalBooleanSchema,
   DEBUG_CHAT_ID: stringSchema,
   TELEGRAM_BOT_TOKEN: stringSchema,
+  ADMIN_USER_ID: stringSchema,
   TOKEN_SECRET: stringSchema,
   WEB_APP_URL: urlSchema,
   WEB_APP_NAME: stringSchema,
