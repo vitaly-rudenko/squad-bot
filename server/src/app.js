@@ -2,7 +2,7 @@ import './env.js'
 
 import { Telegraf } from 'telegraf'
 import cors from 'cors'
-import fs, { mkdirSync, rmSync } from 'fs'
+import fs from 'fs/promises'
 import https from 'https'
 import pg from 'pg'
 import os from 'os'
@@ -57,7 +57,11 @@ import { createLinksFlow } from './links/telegram.js'
 import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/telegram.js'
 import { message } from 'telegraf/filters'
 import { downloadFile } from './common/download-file.ts'
-import { exec, execSync, spawn } from 'child_process'
+import { oggToWav } from './common/ogg-to-wav.ts'
+import { detectLanguage } from './common/detect-language.ts'
+import { transcribe } from './common/transcribe.ts'
+import { throttledAsync } from './common/throttled-async.ts'
+import { formatParts } from './common/format-parts.ts'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -154,137 +158,75 @@ async function start() {
   })
 
   bot.on(message('voice'), async context => {
-    rmSync('./local/voice', { force: true, recursive: true })
-    mkdirSync('./local/voice', { recursive: true })
+    // Ignore voice messages less than 30 seconds
+    if (context.message.voice.duration <= 30) {
+      return
+    }
 
-    const message = await context.sendMessage('<blockquote><i>Transcribing...</i></blockquote>', {
-      parse_mode: 'HTML',
-      reply_parameters: {
-        chat_id: context.message.chat.id,
-        message_id: context.message.message_id,
-        allow_sending_without_reply: true,
+    const operationId = crypto.randomUUID()
+
+    const oggPath = `./local/operations/${operationId}/input.ogg`
+    const wavPath = `./local/operations/${operationId}/input.wav`
+
+    /** @type {import('telegraf/types').Message | undefined} */
+    let message
+    const upsertMessage = throttledAsync(
+      /** @param {string} text */
+      async text => {
+        try {
+          if (message) {
+            await bot.telegram.editMessageText(message.chat.id, message.message_id, undefined, text, {
+              parse_mode: 'HTML',
+            })
+          } else {
+            message = await context.sendMessage(text, {
+              parse_mode: 'HTML',
+              reply_parameters: {
+                chat_id: context.message.chat.id,
+                message_id: context.message.message_id,
+                allow_sending_without_reply: true,
+              },
+            })
+          }
+        } catch (error) {
+          console.warn('Could not send message', error)
+        }
       },
-    })
+      2500,
+    )
 
-    const url = await bot.telegram.getFileLink(context.message.voice.file_id)
-    await downloadFile({ url, path: './local/voice/voice.ogg' })
+    try {
+      await upsertMessage('<blockquote><i>Preparing...</i></blockquote>')
 
-    execSync(`ffmpeg -i ./local/voice/voice.ogg ./local/voice/voice.wav`)
+      await fs.mkdir(`./local/operations/${operationId}`, { recursive: true })
 
-    const started = Date.now()
-    const model = 'ggml-large-v3-turbo-q5_0.bin'
-    const vadModel = 'ggml-silero-v6.2.0.bin'
-    // const model = 'ggml-medium-q5_0.bin'
-    // const model = 'ggml-small.bin'
-    const language = 'uk'
-    // const language = 'ru'
-    // const result = execSync(`whisper-cli -f ./local/voice/voice.wav -m ~/${model} -l ${language} -np -nt --no-gpu --best-of 1 --beam-size 1 --suppress-nst --no-fallback`)
-    // whisper-cli -f inputs/${input} -m models/ggml-large-v3-turbo-q5_0.bin --
-    //         no-gpu -nt -np -l uk -bo 1 -bs 1 -sns --no-fallback --vad -vm models/ggm
-    //         l-silero-v6.2.0.bin
-    // const result = execSync(
-    //   `whisper-cli \
-    //      -f ./local/voice/voice.wav \
-    //      -m ~/${model} \
-    //      -l ${language} \
-    //      -np -nt --no-gpu -bo 1 -bs 1 -sns --no-fallback \
-    //      --vad -vm ~/${vadModel}`,
-    // )
+      const url = await bot.telegram.getFileLink(context.message.voice.file_id)
+      await downloadFile({ url, outputPath: oggPath })
+      await oggToWav({ inputPath: oggPath, outputPath: wavPath })
 
-    const child = spawn('whisper-cli', [
-      '-f',
-      './local/voice/voice.wav',
-      '-m',
-      `${os.homedir()}/${model}`,
-      '-l',
-      language,
-      '-np',
-      '-nt',
-      '-bo',
-      '1',
-      '-bs',
-      '1',
-      '-sns',
-      '--no-gpu',
-      '--no-fallback',
-      '--vad',
-      '-vm',
-      `${os.homedir()}/${vadModel}`,
-    ])
+      const { language } = await detectLanguage({ inputPath: wavPath })
+      const { parts, durationMs } = await transcribe({
+        modelPath: os.homedir() + '/ggml-large-v3-turbo-q5_0.bin',
+        vadModelPath: os.homedir() + '/ggml-silero-v6.2.0.bin',
+        inputPath: wavPath,
+        language,
 
-    let cumulative = ''
+        onPart: async (_, parts) => {
+          await upsertMessage(
+            `<blockquote>${formatParts(parts, true)}\n\n<i>Language: ${language}. Transcribing...</i></blockquote>`,
+          )
+        },
+      })
 
-    child.stdout.on('data', async chunk => {
-      cumulative += '\n' + chunk.toString().trim()
-      console.log(chunk.toString())
-
-      await bot.telegram.editMessageText(
-        message.chat.id,
-        message.message_id,
-        undefined,
-        '<blockquote expandable>' +
-          cumulative
-            .toString()
-            .split('\n')
-            .map(l => l.trim())
-            .filter(Boolean)
-            .map((l, i, arr) => (l.endsWith('.') ? l + '\n\n' : l + (i === arr.length - 1 ? '...' : ''))) // TODO: escape html
-            .join(' ')
-            .trim() +
-          '\n\n<i>Transcribing...</i>' +
-          '</blockquote>',
-        // '\n<i>Transcribed in ' +
-        // Math.floor(duration / 1000) +
-        // ` seconds. Language: ${language}.</i>`,
-        { parse_mode: 'HTML' },
+      await upsertMessage(
+        `<blockquote expandable>${formatParts(parts)}\n\n<i>Language: ${language}. Transcribed in ${(durationMs / 1000).toFixed(1)} seconds.</i></blockquote>`,
       )
-    })
-
-    child.on('close', async () => {
-      const duration = Date.now() - started
-
-      await bot.telegram.editMessageText(
-        message.chat.id,
-        message.message_id,
-        undefined,
-        '<blockquote expandable>' +
-          cumulative
-            .toString()
-            .split('\n')
-            .map(l => (l.endsWith('.') ? l + '\n\n' : l)) // TODO: escape html
-            .filter(Boolean)
-            .join(' ')
-            .trim() +
-          '\n\n<i>Transcribed in ' +
-          Math.floor(duration / 1000) +
-          ` seconds. Language: ${language}.</i>` +
-          '</blockquote>',
-        { parse_mode: 'HTML' },
-      )
-    })
-
-    // await context.reply(
-    //   '<blockquote>' +
-    //     result
-    //       .toString('utf-8')
-    //       .split('\n')
-    //       .map(l => l.trim())
-    //       .filter(Boolean)
-    //       .map(l => l) // TODO: escape html
-    //       .join('\n') +
-    //     '</blockquote>' +
-    //     '\n<i>Transcribed in ' +
-    //     Math.floor(duration / 1000) +
-    //     ` seconds. Language: ${language}.</i>`,
-    //   {
-    //     parse_mode: 'HTML',
-    //     reply_parameters: {
-    //       chat_id: context.message.chat.id,
-    //       message_id: context.message.message_id,
-    //       allow_sending_without_reply: true,
-    //     },
-    //   },
-    // )
+    } catch (err) {
+      console.warn('Could not transcribe voice message:', err)
+      await upsertMessage('Sorry, something went wrong. Please try another file!')
+    } finally {
+      await fs.rm(`./local/operations/${operationId}`, { recursive: true, force: true }).catch(() => {})
+    }
   })
 
   bot.use((context, next) => {
@@ -498,8 +440,8 @@ async function start() {
   if (env.ENABLE_TEST_HTTPS) {
     logger.warn({}, 'Starting server in test HTTPS mode')
     // https://stackoverflow.com/a/69743888
-    const key = fs.readFileSync('./.cert/key.pem', 'utf-8')
-    const cert = fs.readFileSync('./.cert/cert.pem', 'utf-8')
+    const key = await fs.readFile('./.cert/key.pem', 'utf-8')
+    const cert = await fs.readFile('./.cert/cert.pem', 'utf-8')
     await new Promise(resolve => {
       https.createServer({ key, cert }, app).listen(env.PORT, () => resolve(undefined))
     })
