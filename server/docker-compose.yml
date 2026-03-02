@@ -16,7 +16,7 @@ services:
       TOKEN_SECRET: "$TOKEN_SECRET"
       CORS_ORIGIN: "$CORS_ORIGIN"
       # telegram
-      ADMIN_USER_ID="$ADMIN_USER_ID"
+      ADMIN_USER_ID: "$ADMIN_USER_ID"
       TELEGRAM_BOT_TOKEN: "$TELEGRAM_BOT_TOKEN"
       WEB_APP_URL: "$WEB_APP_URL"
       WEB_APP_NAME: "$WEB_APP_NAME"
@@ -28,6 +28,8 @@ services:
       OCR_SPACE_ENDPOINT: "$OCR_SPACE_ENDPOINT"
     volumes:
       - "./files:/app/files"
+      - "./local/models:/app/local/models"
+      - "./local/operations:/app/local/operations"
     networks:
       - "global_network"
 

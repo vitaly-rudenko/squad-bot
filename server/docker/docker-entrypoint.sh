@@ -7,16 +7,16 @@ DATABASE_HOST=$(echo $DATABASE_URL | cut -d'/' -f3 | cut -d'@' -f2 | cut -d':' -
 DATABASE_PORT=$(echo $DATABASE_URL | cut -d'/' -f3 | cut -d'@' -f2 | cut -d':' -f2)
 
 echo "Waiting for ${DATABASE_HOST}:${DATABASE_PORT}"
-./docker/wait-for "${DATABASE_HOST}:${DATABASE_PORT}" -t 120
+wait-for "${DATABASE_HOST}:${DATABASE_PORT}" -t 120
 
 REDIS_HOST=$(echo $REDIS_URL | cut -d'/' -f3 | cut -d':' -f1)
 REDIS_PORT=$(echo $REDIS_URL | cut -d'/' -f3 | cut -d':' -f2)
 
 echo "Waiting for ${REDIS_HOST}:${REDIS_PORT}"
-./docker/wait-for "${REDIS_HOST}:${REDIS_PORT}" -t 120
+wait-for "${REDIS_HOST}:${REDIS_PORT}" -t 120
 
 echo "Migrating the database"
 npm run umzug db:migrate
 
 echo "Starting the app"
-node src/app.js
+exec "$@"

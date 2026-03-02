@@ -185,8 +185,8 @@ async function start() {
 
     const operationId = crypto.randomUUID()
 
-    const oggPath = `./local/operations/${operationId}/input.ogg`
-    const wavPath = `./local/operations/${operationId}/input.wav`
+    const oggPath = `/app/local/operations/${operationId}/input.ogg`
+    const wavPath = `/app/local/operations/${operationId}/input.wav`
 
     const useTimestamps = context.message.voice.duration >= 60
 
@@ -220,7 +220,7 @@ async function start() {
     try {
       await upsertMessage('<blockquote><i>Transcribing...</i></blockquote>')
 
-      await fs.mkdir(`./local/operations/${operationId}`, { recursive: true })
+      await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
 
       const url = await bot.telegram.getFileLink(context.message.voice.file_id)
       await downloadFile({ url, outputPath: oggPath })
@@ -228,11 +228,11 @@ async function start() {
 
       const { language } = await detectLanguage({
         inputPath: wavPath,
-        modelPath: os.homedir() + '/ggml-large-v3-turbo-q5_0.bin',
+        modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
       })
       const { parts } = await transcribe({
-        modelPath: os.homedir() + '/ggml-large-v3-turbo-q5_0.bin',
-        vadModelPath: os.homedir() + '/ggml-silero-v6.2.0.bin',
+        modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
+        vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
         inputPath: wavPath,
         language: language ?? 'uk',
 
@@ -248,7 +248,7 @@ async function start() {
       console.warn('Could not transcribe voice message:', err)
       await upsertMessage('Sorry, something went wrong. Please try another file!')
     } finally {
-      await fs.rm(`./local/operations/${operationId}`, { recursive: true, force: true }).catch(() => {})
+      await fs.rm(`/app/local/operations/${operationId}`, { recursive: true, force: true }).catch(() => {})
     }
   })
 

@@ -1,25 +1,38 @@
-FROM node:20-alpine
-
-ENV LANG=en_US.UTF-8 \
-    LANGUAGE=en_US.UTF-8
+# Stage: Install NPM packages
+FROM --platform=linux/amd64 node:24-bookworm-slim AS npm_dependencies
 
 WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
 
-RUN apk add --no-cache npm
+# Stage: Runtime
+FROM --platform=linux/amd64 node:24-bookworm-slim
 
-COPY package*.json .
-RUN npm ci
-
-COPY . .
-
-RUN touch .env
+RUN apt-get update -y
+RUN apt-get install -y build-essential git ffmpeg
+RUN apt-get install -y cmake
 
 RUN set -ex; \
-  chmod +x ./docker/wait-for; \
-  chmod +x ./docker/entrypoint
+  cd /tmp; \
+  git clone https://github.com/ggml-org/whisper.cpp.git; \
+  cd whisper.cpp; \
+  cmake -B build -DBUILD_SHARED_LIBS=OFF; \
+  cmake --build build -j --config Release; \
+  mv ./build/bin/* /usr/local/bin/; \
+  rm -rf /tmp/whisper.cpp
 
-EXPOSE 3000
+RUN apt-get install -y netcat-openbsd
 
-VOLUME /app/files
+WORKDIR /app
+COPY --from=npm_dependencies /app/node_modules ./node_modules
+COPY package*.json ./
+COPY src src
 
-ENTRYPOINT ["./docker/entrypoint"]
+COPY docker/docker-entrypoint.sh /usr/local/bin/
+COPY docker/wait-for /usr/local/bin
+
+USER node
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["node", "src/app.js"]
+

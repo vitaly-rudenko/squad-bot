@@ -5,8 +5,8 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "start": "npm run umzug db:migrate && node --env-file=.env ./src/app.js",
-    "dev": "npm run umzug db:migrate && nodemon --env-file=.env --ignore test/ ./src/app.js",
+    "start": "npm run umzug db:migrate && node --env-file-if-exists=.env ./src/app.js",
+    "dev": "npm run umzug db:migrate && nodemon --env-file-if-exists=.env --ignore test/ ./src/app.js",
     "dev:https": "ENABLE_TEST_HTTPS=true npm run dev",
     "test": "npm run test:new && npm run test:unit && npm run test:integration && npm run lint",
     "test:unit": "npm run mocha -- --recursive test/unit",
@@ -14,11 +14,11 @@
     "test:integration": "npm run mocha -- --recursive test/integration",
     "test:integration:dev": "nodemon --delay 1 --exec 'npm run test:integration'",
     "test:new": "npm run jest",
-    "jest": "node --env-file=.env --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "umzug": "node --env-file=.env ./src/umzug/cli.js",
-    "mocha": "node --env-file=.env node_modules/mocha/bin/mocha",
+    "jest": "node --env-file-if-exists=.env --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "umzug": "node --env-file-if-exists=.env ./src/umzug/cli.js",
+    "mocha": "node --env-file-if-exists=.env node_modules/mocha/bin/mocha",
     "lint": "tsc -p tsconfig.json",
-    "login": "node --env-file=.env --experimental-strip-types login.ts"
+    "login": "node --env-file-if-exists=.env --experimental-strip-types login.ts"
   },
   "repository": {
     "type": "git",
