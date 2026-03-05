@@ -26,7 +26,7 @@ export async function transcribe(input: {
         '--no-fallback',
         ['-bo', '1'],
         ['-bs', '1'],
-        ['-t', '8'],
+        ['-t', '6'],
         '-fa',
         '-np',
         '-sns',
