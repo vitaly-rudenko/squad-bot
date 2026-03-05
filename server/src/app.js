@@ -230,7 +230,7 @@ async function start() {
         await oggToWav({ inputPath: oggPath, outputPath: wavPath })
 
         logger.info({ wavPath }, 'Transcribing')
-        const { parts } = await transcribe({
+        const { parts, durationMs } = await transcribe({
           modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
           vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
           inputPath: wavPath,
@@ -242,7 +242,7 @@ async function start() {
         })
 
         logger.info({ parts: parts.length }, 'Transcription completed')
-        await upsertMessage(`<blockquote expandable>${formatParts(parts, false, useTimestamps)}</blockquote>`)
+        await upsertMessage(`<blockquote expandable>${formatParts(parts, false, useTimestamps)} (${(durationMs / 1000).toFixed(1)}s)</blockquote>`)
       } catch (err) {
         console.warn('Could not transcribe voice message:', err)
         await upsertMessage('Sorry, something went wrong. Please try another file!')
