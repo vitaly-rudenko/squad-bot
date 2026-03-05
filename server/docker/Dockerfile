@@ -33,6 +33,7 @@ WORKDIR /app
 COPY --from=npm_dependencies /app/node_modules ./node_modules
 COPY package*.json ./
 COPY src src
+COPY migrations migrations
 
 COPY docker/docker-entrypoint.sh /usr/local/bin/
 COPY docker/wait-for /usr/local/bin
