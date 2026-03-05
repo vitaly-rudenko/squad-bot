@@ -222,14 +222,21 @@ async function start() {
 
       await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
 
+
+      logger.info({ file_id: context.message.voice.file_id }, 'Downloading')
       const url = await bot.telegram.getFileLink(context.message.voice.file_id)
       await downloadFile({ url, outputPath: oggPath })
+
+      logger.info({ oggPath }, 'Converting ogg to wav')
       await oggToWav({ inputPath: oggPath, outputPath: wavPath })
 
+      logger.info({ wavPath }, 'Detecting language')
       const { language } = await detectLanguage({
         inputPath: wavPath,
         modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
       })
+
+      logger.info({ language }, 'Transcribing')
       const { parts } = await transcribe({
         modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
         vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
@@ -243,6 +250,7 @@ async function start() {
         },
       })
 
+      logger.info({ parts: parts.length }, 'Transcription completed')
       await upsertMessage(`<blockquote expandable>${formatParts(parts, false, useTimestamps)}</blockquote>`)
     } catch (err) {
       console.warn('Could not transcribe voice message:', err)
