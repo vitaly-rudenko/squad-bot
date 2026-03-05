@@ -10,7 +10,6 @@ export async function transcribe(input: {
   inputPath: string
   modelPath: string
   vadModelPath: string
-  language: string
   onPart: (part: Part, parts: Part[]) => void
 }): Promise<{ parts: Part[]; durationMs: number }> {
   return new Promise((resolve, _reject) => {
@@ -23,11 +22,12 @@ export async function transcribe(input: {
       [
         ['-f', input.inputPath],
         ['-m', input.modelPath],
-        ['-l', input.language],
+        ['-l', 'auto'],
         '--no-fallback',
         ['-bo', '1'],
         ['-bs', '1'],
         ['-t', '8'],
+        '-fa',
         '-np',
         '-sns',
         '--vad',

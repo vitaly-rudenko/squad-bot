@@ -59,7 +59,6 @@ import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
 import { message } from 'telegraf/filters'
 import { downloadFile } from './common/download-file.ts'
 import { oggToWav } from './common/ogg-to-wav.ts'
-import { detectLanguage } from './common/detect-language.ts'
 import { transcribe } from './common/transcribe.ts'
 import { throttledAsync } from './common/throttled-async.ts'
 import { formatParts } from './common/format-parts.ts'
@@ -230,19 +229,11 @@ async function start() {
         logger.info({ oggPath }, 'Converting ogg to wav')
         await oggToWav({ inputPath: oggPath, outputPath: wavPath })
 
-        logger.info({ wavPath }, 'Detecting language')
-        const { language } = await detectLanguage({
-          inputPath: wavPath,
-          modelPath: '/app/local/models/ggml-small.bin',
-        })
-
-        logger.info({ language }, 'Transcribing')
+        logger.info({ wavPath }, 'Transcribing')
         const { parts } = await transcribe({
           modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
           vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
           inputPath: wavPath,
-          language: language ?? 'uk',
-
           onPart: async (_, parts) => {
             await upsertMessage(
               `<blockquote>${formatParts(parts, true, useTimestamps)}\n\n<i>Transcribing...</i></blockquote>`,
