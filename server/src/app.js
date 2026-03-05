@@ -235,6 +235,7 @@ async function start() {
           modelPath: '/app/local/models/ggml-medium-q5_0.bin',
           vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
           inputPath: wavPath,
+          parallelize: context.message.voice.duration >= 120,
           onPart: async (_, parts) => {
             await upsertMessage(
               `<blockquote>${formatParts(parts, true, useTimestamps)}\n\n<i>Transcribing...</i></blockquote>`,
@@ -243,7 +244,9 @@ async function start() {
         })
 
         logger.info({ parts: parts.length }, 'Transcription completed')
-        await upsertMessage(`<blockquote expandable>${formatParts(parts, false, useTimestamps)} <b>(${Math.ceil(durationMs / 1000)}s)</b></blockquote>`)
+        await upsertMessage(
+          `<blockquote expandable>${formatParts(parts, false, useTimestamps)} <b>(${Math.ceil(durationMs / 1000)}s)</b></blockquote>`,
+        )
       } catch (err) {
         console.warn('Could not transcribe voice message:', err)
         await upsertMessage('Sorry, something went wrong. Please try another file!')

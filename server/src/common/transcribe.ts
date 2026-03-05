@@ -10,6 +10,7 @@ export async function transcribe(input: {
   inputPath: string
   modelPath: string
   vadModelPath: string
+  parallelize: boolean
   onPart: (part: Part, parts: Part[]) => void
 }): Promise<{ parts: Part[]; durationMs: number }> {
   return new Promise((resolve, _reject) => {
@@ -26,9 +27,9 @@ export async function transcribe(input: {
         '--no-fallback',
         ['-bo', '1'],
         ['-bs', '1'],
-        ['-t', '12'],
-        ['-p', '1'],
-        ['-mc', '16'],
+        ['-t', input.parallelize ? '6' : '12'],
+        ['-p', input.parallelize ? '2' : '1'],
+        ['-mc', '32'],
         '-fa',
         '-np',
         '-sns',
