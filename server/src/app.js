@@ -231,7 +231,8 @@ async function start() {
 
         logger.info({ wavPath }, 'Transcribing')
         const { parts, durationMs } = await transcribe({
-          modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
+          // modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
+          modelPath: '/app/local/models/ggml-medium-q5_0.bin',
           vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
           inputPath: wavPath,
           onPart: async (_, parts) => {
