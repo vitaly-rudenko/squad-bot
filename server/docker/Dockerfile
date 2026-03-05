@@ -5,29 +5,16 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# Stage: whisper.cpp
-FROM --platform=linux/amd64 node:24-bookworm-slim AS whisper_cpp
-
-RUN apt-get update -y \
- && apt-get install -y build-essential git cmake
-
-WORKDIR /app
-RUN git clone https://github.com/ggerganov/whisper.cpp.git -b v1.8.3 --depth 1 \
- && cd whisper.cpp \
- && make
-
 # Stage: runtime
 FROM --platform=linux/amd64 node:24-bookworm-slim
 
 RUN apt-get update -y \
- && apt-get install -y ffmpeg netcat-openbsd
+ && apt-get install -y ffmpeg netcat-openbsd python3 python3-pip python3-venv
 
-COPY --from=whisper_cpp /app/whisper.cpp/build/bin/whisper-cli /usr/local/bin
-COPY --from=whisper_cpp /app/whisper.cpp/build/src/libwhisper.so.1 /usr/local/lib/
-COPY --from=whisper_cpp /app/whisper.cpp/build/ggml/src/libggml.so.0 /usr/local/lib/
-COPY --from=whisper_cpp /app/whisper.cpp/build/ggml/src/libggml-base.so.0 /usr/local/lib/
-COPY --from=whisper_cpp /app/whisper.cpp/build/ggml/src/libggml-cpu.so.0 /usr/local/lib/
-RUN ldconfig
+RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install --no-cache-dir faster-whisper
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY docker/transcribe.py /app/transcribe.py
 
 WORKDIR /app
 COPY --from=npm_dependencies /app/node_modules ./node_modules
@@ -42,4 +29,3 @@ USER node
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "src/app.js"]
-

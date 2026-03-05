@@ -231,11 +231,8 @@ async function start() {
 
         logger.info({ wavPath }, 'Transcribing')
         const { parts, durationMs } = await transcribe({
-          // modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
-          modelPath: '/app/local/models/ggml-medium-q5_0.bin',
-          vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
+          modelPath: '/app/local/models/whisper-large-uk-2-ct2',
           inputPath: wavPath,
-          parallelize: context.message.voice.duration >= 120,
           onPart: async (_, parts) => {
             await upsertMessage(
               `<blockquote>${formatParts(parts, true, useTimestamps)}\n\n<i>Transcribing...</i></blockquote>`,
