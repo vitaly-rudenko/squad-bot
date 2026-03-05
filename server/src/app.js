@@ -233,7 +233,7 @@ async function start() {
         logger.info({ wavPath }, 'Detecting language')
         const { language } = await detectLanguage({
           inputPath: wavPath,
-          modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
+          modelPath: '/app/local/models/ggml-small.bin',
         })
 
         logger.info({ language }, 'Transcribing')
