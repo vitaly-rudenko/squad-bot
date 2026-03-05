@@ -13,6 +13,10 @@ export async function detectLanguage(input: {
         //
         ['-f', input.inputPath],
         ['-m', input.modelPath],
+        '--no-fallback',
+        ['-bo', '1'],
+        ['-bs', '1'],
+        ['-t', '8'],
         '-dl',
       ].flat(),
     )
