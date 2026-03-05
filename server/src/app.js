@@ -161,103 +161,104 @@ async function start() {
   const { groupCache } = registry.export()
 
   // TODO: move to the flow file
-  bot.on(message('voice'), async context => {
-    const chatId = String(context.message.chat.id)
-    const userId = String(context.message.from.id)
+  bot.on(message('voice'), context => {
+    ;(async () => {
+      const chatId = String(context.message.chat.id)
+      const userId = String(context.message.from.id)
 
-    if (isGroupChat(context)) {
-      // Ignore group chat voice messages less than 30 seconds
-      if (context.message.voice.duration <= 30) return
+      if (isGroupChat(context)) {
+        // Ignore group chat voice messages less than 30 seconds
+        if (context.message.voice.duration <= 30) return
 
-      let group = await groupCache.get(chatId)
-      if (!group) {
-        group = await groupStorage.findById(chatId)
-        if (group) {
-          await groupCache.set(chatId, group)
+        let group = await groupCache.get(chatId)
+        if (!group) {
+          group = await groupStorage.findById(chatId)
+          if (group) {
+            await groupCache.set(chatId, group)
+          }
         }
+
+        if (!group) return
+        if (!group.voiceTranscriptionEnabledAt) return
+      } else if (userId !== env.ADMIN_USER_ID) {
+        return
       }
 
-      if (!group) return
-      if (!group.voiceTranscriptionEnabledAt) return
-    } else if (userId !== env.ADMIN_USER_ID) {
-      return
-    }
+      const operationId = crypto.randomUUID()
 
-    const operationId = crypto.randomUUID()
+      const oggPath = `/app/local/operations/${operationId}/input.ogg`
+      const wavPath = `/app/local/operations/${operationId}/input.wav`
 
-    const oggPath = `/app/local/operations/${operationId}/input.ogg`
-    const wavPath = `/app/local/operations/${operationId}/input.wav`
+      const useTimestamps = context.message.voice.duration >= 90
 
-    const useTimestamps = context.message.voice.duration >= 60
-
-    /** @type {import('telegraf/types').Message | undefined} */
-    let message
-    const upsertMessage = throttledAsync(
-      /** @param {string} text */
-      async text => {
-        try {
-          if (message) {
-            await bot.telegram.editMessageText(message.chat.id, message.message_id, undefined, text, {
-              parse_mode: 'HTML',
-            })
-          } else {
-            message = await context.sendMessage(text, {
-              parse_mode: 'HTML',
-              reply_parameters: {
-                chat_id: context.message.chat.id,
-                message_id: context.message.message_id,
-                allow_sending_without_reply: true,
-              },
-            })
+      /** @type {import('telegraf/types').Message | undefined} */
+      let message
+      const upsertMessage = throttledAsync(
+        /** @param {string} text */
+        async text => {
+          try {
+            if (message) {
+              await bot.telegram.editMessageText(message.chat.id, message.message_id, undefined, text, {
+                parse_mode: 'HTML',
+              })
+            } else {
+              message = await context.sendMessage(text, {
+                parse_mode: 'HTML',
+                reply_parameters: {
+                  chat_id: context.message.chat.id,
+                  message_id: context.message.message_id,
+                  allow_sending_without_reply: true,
+                },
+              })
+            }
+          } catch (error) {
+            console.warn('Could not send message', error)
           }
-        } catch (error) {
-          console.warn('Could not send message', error)
-        }
-      },
-      2500,
-    )
-
-    try {
-      await upsertMessage('<blockquote><i>Transcribing...</i></blockquote>')
-
-      await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
-
-
-      logger.info({ file_id: context.message.voice.file_id }, 'Downloading')
-      const url = await bot.telegram.getFileLink(context.message.voice.file_id)
-      await downloadFile({ url, outputPath: oggPath })
-
-      logger.info({ oggPath }, 'Converting ogg to wav')
-      await oggToWav({ inputPath: oggPath, outputPath: wavPath })
-
-      logger.info({ wavPath }, 'Detecting language')
-      const { language } = await detectLanguage({
-        inputPath: wavPath,
-        modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
-      })
-
-      logger.info({ language }, 'Transcribing')
-      const { parts } = await transcribe({
-        modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
-        vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
-        inputPath: wavPath,
-        language: language ?? 'uk',
-
-        onPart: async (_, parts) => {
-          await upsertMessage(
-            `<blockquote>${formatParts(parts, true, useTimestamps)}\n\n<i>Transcribing...</i></blockquote>`,
-          )
         },
-      })
+        2500,
+      )
 
-      logger.info({ parts: parts.length }, 'Transcription completed')
-      await upsertMessage(`<blockquote expandable>${formatParts(parts, false, useTimestamps)}</blockquote>`)
-    } catch (err) {
-      console.warn('Could not transcribe voice message:', err)
-      await upsertMessage('Sorry, something went wrong. Please try another file!')
-    } finally {
-      await fs.rm(`/app/local/operations/${operationId}`, { recursive: true, force: true }).catch(() => {})
-    }
+      try {
+        await upsertMessage('<blockquote><i>Transcribing...</i></blockquote>')
+
+        await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
+
+        logger.info({ file_id: context.message.voice.file_id }, 'Downloading')
+        const url = await bot.telegram.getFileLink(context.message.voice.file_id)
+        await downloadFile({ url, outputPath: oggPath })
+
+        logger.info({ oggPath }, 'Converting ogg to wav')
+        await oggToWav({ inputPath: oggPath, outputPath: wavPath })
+
+        logger.info({ wavPath }, 'Detecting language')
+        const { language } = await detectLanguage({
+          inputPath: wavPath,
+          modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
+        })
+
+        logger.info({ language }, 'Transcribing')
+        const { parts } = await transcribe({
+          modelPath: '/app/local/models/ggml-large-v3-turbo-q5_0.bin',
+          vadModelPath: '/app/local/models/ggml-silero-v6.2.0.bin',
+          inputPath: wavPath,
+          language: language ?? 'uk',
+
+          onPart: async (_, parts) => {
+            await upsertMessage(
+              `<blockquote>${formatParts(parts, true, useTimestamps)}\n\n<i>Transcribing...</i></blockquote>`,
+            )
+          },
+        })
+
+        logger.info({ parts: parts.length }, 'Transcription completed')
+        await upsertMessage(`<blockquote expandable>${formatParts(parts, false, useTimestamps)}</blockquote>`)
+      } catch (err) {
+        console.warn('Could not transcribe voice message:', err)
+        await upsertMessage('Sorry, something went wrong. Please try another file!')
+      } finally {
+        await fs.rm(`/app/local/operations/${operationId}`, { recursive: true, force: true }).catch(() => {})
+      }
+    })()
   })
 
   bot.use((context, next) => {
