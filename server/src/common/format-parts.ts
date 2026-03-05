@@ -50,5 +50,5 @@ export function formatParts(parts: Part[], partial = false, useTimestamps = fals
     cumulative = cumulative + (cumulative.endsWith('.') ? '..' : '...')
   }
 
-  return cumulative
+  return cumulative.trim()
 }
