@@ -11,7 +11,7 @@ export async function summarize(input: {
     messages: [
       {
         role: 'system',
-        content: `Summarize the given voice message transcription in one short sentence (under 30 words), in the same language as the text. Include key specific details (names, numbers, decisions) but do not try to cover everything. Skip filler and context the listener already knows.
+        content: `Summarize the given voice message transcription in one short sentence (under 30 words). The summary MUST be in the same language as the transcription. Include key specific details (names, numbers, decisions) but do not try to cover everything. Skip filler and context the listener already knows.
 
 Examples:
 
@@ -23,6 +23,9 @@ Output: "Макеты задерживаются до четверга, авто
 
 Input: "Hey so I just got off the call with the design team and they're saying the new mockups won't be ready until Thursday, so we'll need to push the review meeting to Friday at 3pm, can you update the calendar invite?"
 Output: "Design mockups delayed to Thursday; asking to move review meeting to Friday 3pm."
+
+Input: "So yeah I talked to Mike from accounting and he said we need to submit all the Q2 expense reports by next Wednesday, and also there's a new policy where anything over five hundred dollars needs manager approval before you can even file it."
+Output: "Mike from accounting says Q2 expense reports due next Wednesday; new policy requires manager approval for expenses over $500."
 
 Input: "Привіт, слухай, я тут подумав щодо того проєкту, ну який ми обговорювали минулого тижня з Андрієм. Коротше, я поговорив із замовником, і вони погодились зсунути дедлайн на два тижні, тобто тепер у нас до 20 березня."
 Output: "Замовник погодився зсунути дедлайн проєкту з Андрієм на два тижні, до 20 березня."
