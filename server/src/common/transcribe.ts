@@ -9,6 +9,7 @@ export type Part = {
 export async function transcribe(input: {
   inputPath: string
   modelPath: string
+  speed: number
   parallelize: boolean
   onPart: (part: Part, parts: Part[]) => void
 }): Promise<{ parts: Part[]; durationMs: number }> {
@@ -42,8 +43,8 @@ export async function transcribe(input: {
 
         const part: Part = {
           text,
-          startsAt: parseTimestamp(match[1]),
-          endsAt: parseTimestamp(match[2]),
+          startsAt: parseTimestamp(match[1]) * input.speed,
+          endsAt: parseTimestamp(match[2]) * input.speed,
         }
 
         parts.push(part)

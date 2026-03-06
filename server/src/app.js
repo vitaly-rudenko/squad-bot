@@ -229,12 +229,13 @@ async function start() {
         await downloadFile({ url, outputPath: oggPath })
 
         logger.info({ oggPath }, 'Converting ogg to wav')
-        await oggToWav({ inputPath: oggPath, outputPath: wavPath })
+        await oggToWav({ inputPath: oggPath, outputPath: wavPath, speed })
 
         logger.info({ wavPath }, 'Transcribing')
         const { parts, durationMs } = await transcribe({
           modelPath: '/app/local/models/whisper-large-uk-2-ct2',
           inputPath: wavPath,
+          speed,
           parallelize: context.message.voice.duration >= 60,
           onPart: async (_, parts) => {
             await upsertMessage(
