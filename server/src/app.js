@@ -210,10 +210,17 @@ async function start() {
 
         logger.info({ durationMs }, 'Transcription completed')
 
+        const expectedChars = context.message.voice.duration * 10
+        if (text.length < expectedChars * 0.2) {
+          logger.info({ textLength: text.length, expectedChars }, 'Transcription too short, ignoring')
+          await bot.telegram.deleteMessage(statusMessage.chat.id, statusMessage.message_id).catch(() => {})
+          return
+        }
+
         let html
         if (context.message.voice.duration >= 90) {
           const summary = await summarize({ text, apiKey: env.OPENAI_API_KEY })
-          html = `<i>${summary}</i>\n\n<blockquote expandable>${splitIntoParagraphs(text)}</blockquote>`
+          html = `<blockquote expandable>${splitIntoParagraphs(text)}</blockquote>\n\n<i>${summary}</i>`
         } else {
           html = `<blockquote>${splitIntoParagraphs(text)}</blockquote>`
         }
