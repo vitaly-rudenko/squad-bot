@@ -9,12 +9,7 @@ RUN npm ci --omit=dev
 FROM --platform=linux/amd64 node:24-bookworm-slim
 
 RUN apt-get update -y \
- && apt-get install -y ffmpeg netcat-openbsd python3 python3-pip python3-venv
-
-RUN python3 -m venv /opt/venv && /opt/venv/bin/pip install --no-cache-dir faster-whisper
-ENV PATH="/opt/venv/bin:$PATH"
-
-COPY docker/transcribe.py /app/transcribe.py
+ && apt-get install -y netcat-openbsd
 
 WORKDIR /app
 COPY --from=npm_dependencies /app/node_modules ./node_modules

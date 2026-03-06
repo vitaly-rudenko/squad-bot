@@ -26,6 +26,8 @@ services:
       # OCR
       OCR_SPACE_API_KEY: "$OCR_SPACE_API_KEY"
       OCR_SPACE_ENDPOINT: "$OCR_SPACE_ENDPOINT"
+      # OpenAI
+      OPENAI_API_KEY: "$OPENAI_API_KEY"
     volumes:
       - "./files:/app/files"
       - "./local/models:/app/local/models"

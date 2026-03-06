@@ -58,10 +58,9 @@ import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/t
 import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
 import { message } from 'telegraf/filters'
 import { downloadFile } from './common/download-file.ts'
-import { oggToWav } from './common/ogg-to-wav.ts'
-import { transcribe } from './common/transcribe.ts'
-import { throttledAsync } from './common/throttled-async.ts'
-import { formatParts } from './common/format-parts.ts'
+import { transcribe3 } from './common/transcribe.ts'
+import { splitIntoParagraphs } from './common/split-into-paragraphs.ts'
+import { summarize } from './common/summarize.ts'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -185,72 +184,45 @@ async function start() {
       }
 
       const operationId = crypto.randomUUID()
-
       const oggPath = `/app/local/operations/${operationId}/input.ogg`
-      const wavPath = `/app/local/operations/${operationId}/input.wav`
-
-      const useTimestamps = context.message.voice.duration >= 90
-      const speed = 1.5
-
-      /** @type {import('telegraf/types').Message | undefined} */
-      let message
-      const upsertMessage = throttledAsync(
-        /** @param {string} text */
-        async text => {
-          try {
-            if (message) {
-              await bot.telegram.editMessageText(message.chat.id, message.message_id, undefined, text, {
-                parse_mode: 'HTML',
-              })
-            } else {
-              message = await context.sendMessage(text, {
-                parse_mode: 'HTML',
-                reply_parameters: {
-                  chat_id: context.message.chat.id,
-                  message_id: context.message.message_id,
-                  allow_sending_without_reply: true,
-                },
-              })
-            }
-          } catch (error) {
-            console.warn('Could not send message', error)
-          }
-        },
-        2500,
-      )
 
       try {
-        await upsertMessage('<blockquote><i>Transcribing...</i></blockquote>')
-
-        await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
-
-        logger.info({ file_id: context.message.voice.file_id }, 'Downloading')
-        const url = await bot.telegram.getFileLink(context.message.voice.file_id)
-        await downloadFile({ url, outputPath: oggPath })
-
-        logger.info({ oggPath }, 'Converting ogg to wav')
-        await oggToWav({ inputPath: oggPath, outputPath: wavPath, speed })
-
-        logger.info({ wavPath }, 'Transcribing')
-        const { parts, durationMs } = await transcribe({
-          modelPath: '/app/local/models/whisper-large-uk-2-ct2',
-          inputPath: wavPath,
-          speed,
-          parallelize: context.message.voice.duration >= 60,
-          onPart: async (_, parts) => {
-            await upsertMessage(
-              `<blockquote>${formatParts(parts, true, useTimestamps)}\n\n<i>Transcribing...</i></blockquote>`,
-            )
+        const statusMessage = await context.sendMessage('<blockquote><i>Transcribing...</i></blockquote>', {
+          parse_mode: 'HTML',
+          reply_parameters: {
+            chat_id: context.message.chat.id,
+            message_id: context.message.message_id,
+            allow_sending_without_reply: true,
           },
         })
 
-        logger.info({ parts: parts.length }, 'Transcription completed')
-        await upsertMessage(
-          `<blockquote${useTimestamps ? ' expandable' : ''}>${formatParts(parts, false, useTimestamps)}\n\n<i>Transcribed in ${Math.ceil(durationMs / 1000)} seconds.</i></blockquote>`,
-        )
+        await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
+
+        logger.info({ fileId: context.message.voice.file_id }, 'Downloading')
+        const url = await bot.telegram.getFileLink(context.message.voice.file_id)
+        await downloadFile({ url, outputPath: oggPath })
+
+        logger.info({ oggPath }, 'Transcribing')
+        const { text, durationMs } = await transcribe3({
+          inputPath: oggPath,
+          apiKey: env.OPENAI_API_KEY,
+        })
+
+        logger.info({ durationMs }, 'Transcription completed')
+
+        let html
+        if (context.message.voice.duration >= 90) {
+          const summary = await summarize({ text, apiKey: env.OPENAI_API_KEY })
+          html = `<i>${summary}</i>\n\n<blockquote expandable>${splitIntoParagraphs(text)}</blockquote>`
+        } else {
+          html = `<blockquote>${splitIntoParagraphs(text)}</blockquote>`
+        }
+
+        await bot.telegram.editMessageText(statusMessage.chat.id, statusMessage.message_id, undefined, html, {
+          parse_mode: 'HTML',
+        })
       } catch (err) {
         console.warn('Could not transcribe voice message:', err)
-        await upsertMessage('Sorry, something went wrong. Please try another file!')
       } finally {
         await fs.rm(`/app/local/operations/${operationId}`, { recursive: true, force: true }).catch(() => {})
       }

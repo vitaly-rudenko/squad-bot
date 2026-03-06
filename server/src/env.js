@@ -59,6 +59,7 @@ const envSchema = type({
   CORS_ORIGIN: urlArraySchema,
   OCR_SPACE_API_KEY: stringSchema,
   OCR_SPACE_ENDPOINT: urlSchema,
+  OPENAI_API_KEY: stringSchema,
 })
 
 export const env = envSchema.create(process.env)
