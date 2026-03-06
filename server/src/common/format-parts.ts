@@ -2,7 +2,7 @@ import { type Part } from './transcribe.ts'
 
 // TODO: escape html
 export function formatParts(parts: Part[], partial = false, useTimestamps = false) {
-  let cumulative = useTimestamps ? '<b>0:00</b>' : ''
+  let cumulative = ''
   let startsAt = 0
 
   for (let part of parts) {
