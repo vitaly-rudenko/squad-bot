@@ -9,6 +9,7 @@ export type Part = {
 export async function transcribe(input: {
   inputPath: string
   modelPath: string
+  parallelize: boolean
   onPart: (part: Part, parts: Part[]) => void
 }): Promise<{ parts: Part[]; durationMs: number }> {
   return new Promise((resolve, _reject) => {
@@ -18,7 +19,7 @@ export async function transcribe(input: {
 
     const child = spawn(
       'python3',
-      ['/app/transcribe.py', input.modelPath, input.inputPath],
+      ['/app/transcribe.py', input.modelPath, input.inputPath, String(input.parallelize ? 2 : 1)],
     )
 
     child.stdout.on('data', async (chunk: Buffer) => {

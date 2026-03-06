@@ -166,8 +166,9 @@ async function start() {
       const userId = String(context.message.from.id)
 
       if (isGroupChat(context)) {
-        // Ignore group chat voice messages less than 30 seconds
-        if (context.message.voice.duration <= 30) return
+        // Ignore short and forwarded messages
+        if (context.message.voice.duration < 10) return
+        if (context.message.forward_origin) return
 
         let group = await groupCache.get(chatId)
         if (!group) {
@@ -189,6 +190,7 @@ async function start() {
       const wavPath = `/app/local/operations/${operationId}/input.wav`
 
       const useTimestamps = context.message.voice.duration >= 90
+      const speed = 1.5
 
       /** @type {import('telegraf/types').Message | undefined} */
       let message
@@ -233,6 +235,7 @@ async function start() {
         const { parts, durationMs } = await transcribe({
           modelPath: '/app/local/models/whisper-large-uk-2-ct2',
           inputPath: wavPath,
+          parallelize: context.message.voice.duration >= 60,
           onPart: async (_, parts) => {
             await upsertMessage(
               `<blockquote>${formatParts(parts, true, useTimestamps)}\n\n<i>Transcribing...</i></blockquote>`,
