@@ -245,7 +245,7 @@ async function start() {
 
         logger.info({ parts: parts.length }, 'Transcription completed')
         await upsertMessage(
-          `<blockquote expandable>${formatParts(parts, false, useTimestamps)}\n\n<i>Transcribed in ${Math.ceil(durationMs / 1000)} seconds.</i></blockquote>`,
+          `<blockquote${useTimestamps ? ' expandable' : ''}>${formatParts(parts, false, useTimestamps)}\n\n<i>Transcribed in ${Math.ceil(durationMs / 1000)} seconds.</i></blockquote>`,
         )
       } catch (err) {
         console.warn('Could not transcribe voice message:', err)
