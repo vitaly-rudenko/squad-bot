@@ -58,7 +58,7 @@ import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/t
 import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
 import { message } from 'telegraf/filters'
 import { downloadFile } from './common/download-file.ts'
-import { transcribe3 } from './common/transcribe.ts'
+import { transcribe } from './common/transcribe.ts'
 import { splitIntoParagraphs } from './common/split-into-paragraphs.ts'
 import { summarize } from './common/summarize.ts'
 
@@ -203,7 +203,7 @@ async function start() {
         await downloadFile({ url, outputPath: oggPath })
 
         logger.info({ oggPath }, 'Transcribing')
-        const { text, durationMs } = await transcribe3({
+        const { text, durationMs } = await transcribe({
           inputPath: oggPath,
           apiKey: env.OPENAI_API_KEY,
         })

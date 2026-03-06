@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import OpenAI from 'openai'
 
-export async function transcribe3(input: {
+export async function transcribe(input: {
   inputPath: string
   apiKey: string
 }): Promise<{ text: string; durationMs: number }> {
