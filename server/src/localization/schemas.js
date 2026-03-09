@@ -142,6 +142,7 @@ export const localeFileSchema = object({
   voiceTranscription: object({
     enabled: _,
     disabled: _,
+    transcribing: _,
   }),
   groupChatOnly: _,
   privateChatOnly: _,

@@ -20,7 +20,6 @@ import { createCodeGenerator } from './auth/utils.js'
 import { createAuthFlow } from './auth/telegram.js'
 import {
   createCommonFlow,
-  isGroupChat,
   requireGroupChat,
   requirePrivateChat,
   withChatId,
@@ -57,10 +56,6 @@ import { createLinksFlow } from './links/telegram.js'
 import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/telegram.js'
 import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
 import { message } from 'telegraf/filters'
-import { downloadFile } from './common/download-file.ts'
-import { transcribe } from './common/transcribe.ts'
-import { splitIntoParagraphs } from './common/split-into-paragraphs.ts'
-import { summarize } from './common/summarize.ts'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -156,86 +151,6 @@ async function start() {
     process.exit(1)
   })
 
-  const { groupCache } = registry.export()
-
-  // TODO: move to the flow file
-  bot.on(message('voice'), context => {
-    ;(async () => {
-      const chatId = String(context.message.chat.id)
-      const userId = String(context.message.from.id)
-
-      if (isGroupChat(context)) {
-        // Ignore short and forwarded messages
-        if (context.message.voice.duration < 10) return
-        if (context.message.forward_origin) return
-
-        let group = await groupCache.get(chatId)
-        if (!group) {
-          group = await groupStorage.findById(chatId)
-          if (group) {
-            await groupCache.set(chatId, group)
-          }
-        }
-
-        if (!group) return
-        if (!group.voiceTranscriptionEnabledAt) return
-      } else if (userId !== env.ADMIN_USER_ID) {
-        return
-      }
-
-      const operationId = crypto.randomUUID()
-      const oggPath = `/app/local/operations/${operationId}/input.ogg`
-
-      try {
-        const statusMessage = await context.sendMessage('<blockquote><i>Transcribing...</i></blockquote>', {
-          parse_mode: 'HTML',
-          reply_parameters: {
-            chat_id: context.message.chat.id,
-            message_id: context.message.message_id,
-            allow_sending_without_reply: true,
-          },
-        })
-
-        await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
-
-        logger.info({ fileId: context.message.voice.file_id }, 'Downloading')
-        const url = await bot.telegram.getFileLink(context.message.voice.file_id)
-        await downloadFile({ url, outputPath: oggPath })
-
-        logger.info({ oggPath }, 'Transcribing')
-        const { text, durationMs } = await transcribe({
-          inputPath: oggPath,
-          apiKey: env.OPENAI_API_KEY,
-        })
-
-        logger.info({ durationMs }, 'Transcription completed')
-
-        const expectedChars = context.message.voice.duration * 10
-        if (text.length < expectedChars * 0.2) {
-          logger.info({ textLength: text.length, expectedChars }, 'Transcription too short, ignoring')
-          await bot.telegram.deleteMessage(statusMessage.chat.id, statusMessage.message_id).catch(() => {})
-          return
-        }
-
-        let html
-        if (context.message.voice.duration >= 90) {
-          const summary = await summarize({ text, apiKey: env.OPENAI_API_KEY })
-          html = `<blockquote expandable>${splitIntoParagraphs(text)}</blockquote>\n\n<i>${summary}</i>`
-        } else {
-          html = `<blockquote>${splitIntoParagraphs(text)}</blockquote>`
-        }
-
-        await bot.telegram.editMessageText(statusMessage.chat.id, statusMessage.message_id, undefined, html, {
-          parse_mode: 'HTML',
-        })
-      } catch (err) {
-        console.warn('Could not transcribe voice message:', err)
-      } finally {
-        await fs.rm(`/app/local/operations/${operationId}`, { recursive: true, force: true }).catch(() => {})
-      }
-    })()
-  })
-
   bot.use((context, next) => {
     if (!env.USE_TEST_MODE && (context.from?.is_bot || context.pollAnswer?.user?.is_bot)) return
     return next()
@@ -323,7 +238,7 @@ async function start() {
   bot.command('toggle_poll_answer_notifications', togglePollAnswerNotifications)
   bot.on('poll_answer', pollAnswer)
 
-  const { toggleVoiceTranscription } = createVoiceTranscriptionFlow()
+  const { toggleVoiceTranscription, voiceMessage } = createVoiceTranscriptionFlow()
   bot.command('toggle_voice_transcription', toggleVoiceTranscription)
 
   bot.action('delete_reply_markup', async context => {
@@ -336,6 +251,8 @@ async function start() {
     await context.deleteMessage()
     await context.answerCbQuery(localize(locale, 'messageWasDeleted'))
   })
+
+  bot.on(message('voice'), voiceMessage)
 
   bot.on(
     'message',

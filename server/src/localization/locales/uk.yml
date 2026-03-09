@@ -134,6 +134,7 @@ pollAnswerNotifications:
 voiceTranscription:
   enabled: '✅ Транскрипцію голосових повідомлень увімкнено'
   disabled: '❌ Транскрипцію голосових повідомлень вимкнено'
+  transcribing: 'Слухаю...'
 groupChatOnly: '❌ Цю команду можна виконати лише в груповому чаті'
 privateChatOnly: '❌ Цю команду можна виконати лише в приватному чаті'
 unknownUser: 'Невідомий користувач'
