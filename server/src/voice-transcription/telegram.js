@@ -67,8 +67,13 @@ export function createVoiceTranscriptionFlow() {
       const oggPath = `/app/local/operations/${operationId}/input.ogg`
 
       try {
+        const replyMarkup = Markup.inlineKeyboard([
+          Markup.button.callback(localize(locale, 'voiceTranscription.actions.accept'), 'delete_reply_markup'),
+          Markup.button.callback(localize(locale, 'voiceTranscription.actions.reject'), 'delete_message'),
+        ])
+
         const statusMessage = await context.sendMessage(
-          `<blockquote><i>${localize(locale, 'voiceTranscription.transcribing')}</i></blockquote>`,
+          `<i>${localize(locale, 'voiceTranscription.transcribing')}</i>`,
           {
             parse_mode: 'HTML',
             reply_parameters: {
@@ -76,9 +81,7 @@ export function createVoiceTranscriptionFlow() {
               message_id: context.message.message_id,
               allow_sending_without_reply: true,
             },
-            ...Markup.inlineKeyboard([
-              Markup.button.callback(localize(locale, 'voiceTranscription.actions.reject'), 'delete_message'),
-            ]),
+            ...replyMarkup,
           },
         )
 
@@ -115,10 +118,7 @@ export function createVoiceTranscriptionFlow() {
 
         await telegram.editMessageText(statusMessage.chat.id, statusMessage.message_id, undefined, html, {
           parse_mode: 'HTML',
-          ...Markup.inlineKeyboard([
-            Markup.button.callback(localize(locale, 'voiceTranscription.actions.accept'), 'delete_reply_markup'),
-            Markup.button.callback(localize(locale, 'voiceTranscription.actions.reject'), 'delete_message'),
-          ]),
+          ...replyMarkup,
         })
 
         scheduleReplyMarkupRemoval(statusMessage, 30_000)
