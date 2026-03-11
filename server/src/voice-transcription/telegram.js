@@ -67,14 +67,20 @@ export function createVoiceTranscriptionFlow() {
       const oggPath = `/app/local/operations/${operationId}/input.ogg`
 
       try {
-        const statusMessage = await context.sendMessage(`<blockquote><i>${localize(locale, 'voiceTranscription.transcribing')}</i></blockquote>`, {
-          parse_mode: 'HTML',
-          reply_parameters: {
-            chat_id: context.message.chat.id,
-            message_id: context.message.message_id,
-            allow_sending_without_reply: true,
+        const statusMessage = await context.sendMessage(
+          `<blockquote><i>${localize(locale, 'voiceTranscription.transcribing')}</i></blockquote>`,
+          {
+            parse_mode: 'HTML',
+            reply_parameters: {
+              chat_id: context.message.chat.id,
+              message_id: context.message.message_id,
+              allow_sending_without_reply: true,
+            },
+            ...Markup.inlineKeyboard([
+              Markup.button.callback(localize(locale, 'voiceTranscription.actions.reject'), 'delete_message'),
+            ]),
           },
-        })
+        )
 
         await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
 
@@ -115,7 +121,7 @@ export function createVoiceTranscriptionFlow() {
           ]),
         })
 
-        scheduleReplyMarkupRemoval(statusMessage)
+        scheduleReplyMarkupRemoval(statusMessage, 30_000)
       } catch (err) {
         logger.warn('Could not transcribe voice message:', err)
       } finally {
