@@ -52,12 +52,14 @@ const envSchema = type({
   DISABLE_MEMBERSHIP_REFRESH_TASK: optionalBooleanSchema,
   DEBUG_CHAT_ID: stringSchema,
   TELEGRAM_BOT_TOKEN: stringSchema,
+  ADMIN_USER_ID: stringSchema,
   TOKEN_SECRET: stringSchema,
   WEB_APP_URL: urlSchema,
   WEB_APP_NAME: stringSchema,
   CORS_ORIGIN: urlArraySchema,
   OCR_SPACE_API_KEY: stringSchema,
   OCR_SPACE_ENDPOINT: urlSchema,
+  OPENAI_API_KEY: stringSchema,
 })
 
 export const env = envSchema.create(process.env)

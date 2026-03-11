@@ -5,8 +5,8 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "start": "npm run umzug db:migrate && node --env-file=.env ./src/app.js",
-    "dev": "npm run umzug db:migrate && nodemon --env-file=.env --ignore test/ ./src/app.js",
+    "start": "npm run umzug db:migrate && node --env-file-if-exists=.env ./src/app.js",
+    "dev": "npm run umzug db:migrate && nodemon --env-file-if-exists=.env --ignore test/ ./src/app.js",
     "dev:https": "ENABLE_TEST_HTTPS=true npm run dev",
     "test": "npm run test:new && npm run test:unit && npm run test:integration && npm run lint",
     "test:unit": "npm run mocha -- --recursive test/unit",
@@ -14,11 +14,11 @@
     "test:integration": "npm run mocha -- --recursive test/integration",
     "test:integration:dev": "nodemon --delay 1 --exec 'npm run test:integration'",
     "test:new": "npm run jest",
-    "jest": "node --env-file=.env --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "umzug": "node --env-file=.env ./src/umzug/cli.js",
-    "mocha": "node --env-file=.env node_modules/mocha/bin/mocha",
+    "jest": "node --env-file-if-exists=.env --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "umzug": "node --env-file-if-exists=.env ./src/umzug/cli.js",
+    "mocha": "node --env-file-if-exists=.env node_modules/mocha/bin/mocha",
     "lint": "tsc -p tsconfig.json",
-    "login": "node --env-file=.env --experimental-strip-types login.ts"
+    "login": "node --env-file-if-exists=.env --experimental-strip-types login.ts"
   },
   "repository": {
     "type": "git",
@@ -42,7 +42,7 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/mocha": "^10.0.6",
-    "@types/node": "^20.11.16",
+    "@types/node": "^24.0.0",
     "@types/pg": "^8.11.0",
     "@types/sinon": "^17.0.3",
     "axios": "^1.6.7",
@@ -58,7 +58,7 @@
     "node-fetch": "^3.2.0",
     "nodemon": "^3.0.3",
     "sinon": "^13.0.1",
-    "typescript": "^5.5.4",
+    "typescript": "^5.9.3",
     "unique-names-generator": "^4.7.1"
   },
   "dependencies": {
@@ -79,6 +79,7 @@
     "multer": "^1.4.4",
     "nanoid": "^5.0.5",
     "nanoid-dictionary": "^5.0.0-beta.1",
+    "openai": "^6.27.0",
     "pg": "^8.11.3",
     "pino": "^7.9.1",
     "pino-abstract-transport": "^1.1.0",

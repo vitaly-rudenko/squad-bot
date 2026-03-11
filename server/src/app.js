@@ -2,7 +2,7 @@ import './env.js'
 
 import { Telegraf } from 'telegraf'
 import cors from 'cors'
-import fs from 'fs'
+import fs from 'fs/promises'
 import https from 'https'
 import pg from 'pg'
 import helmet from 'helmet'
@@ -53,6 +53,8 @@ import { createExportFlow } from './export/telegram.js'
 import { LinksPostgresStorage } from './links/storage.js'
 import { createLinksFlow } from './links/telegram.js'
 import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/telegram.js'
+import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
+import { message } from 'telegraf/filters'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -117,7 +119,6 @@ async function start() {
     groupCache: createRedisCache('groups', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
     usersCache: createRedisCache('users', env.USE_TEST_MODE ? 60_000 : 60 * 60_000),
     pollsCache: createRedisCache('polls', env.USE_TEST_MODE ? 60_000 : 24 * 60 * 60_000),
-    socialLinksCache: createRedisCache('polls', env.USE_TEST_MODE ? 5 * 60_000 : 24 * 60 * 60_000),
     generateCode: createCodeGenerator({
       tokenSecret,
       expiresInMs: env.USE_TEST_MODE ? 60_000 : 5 * 60_000,
@@ -134,6 +135,7 @@ async function start() {
     { command: 'links', description: 'Links' },
     { command: 'toggle_social_link_fix', description: 'Toggle previews for social links' },
     { command: 'toggle_poll_answer_notifications', description: 'Toggle notifications for poll answers' },
+    { command: 'toggle_voice_transcription', description: 'Toggle voice transcription' },
     { command: 'export', description: 'Export your receipts in a CSV format' },
     { command: 'start', description: 'Update user info' },
   ])
@@ -235,6 +237,9 @@ async function start() {
   bot.command('toggle_poll_answer_notifications', togglePollAnswerNotifications)
   bot.on('poll_answer', pollAnswer)
 
+  const { toggleVoiceTranscription, voiceMessage } = createVoiceTranscriptionFlow()
+  bot.command('toggle_voice_transcription', toggleVoiceTranscription)
+
   bot.action('delete_reply_markup', async context => {
     await context.editMessageReplyMarkup({ inline_keyboard: [] }).catch(() => {})
   })
@@ -245,6 +250,8 @@ async function start() {
     await context.deleteMessage()
     await context.answerCbQuery(localize(locale, 'messageWasDeleted'))
   })
+
+  bot.on(message('voice'), voiceMessage)
 
   bot.on(
     'message',
@@ -359,8 +366,8 @@ async function start() {
   if (env.ENABLE_TEST_HTTPS) {
     logger.warn({}, 'Starting server in test HTTPS mode')
     // https://stackoverflow.com/a/69743888
-    const key = fs.readFileSync('./.cert/key.pem', 'utf-8')
-    const cert = fs.readFileSync('./.cert/cert.pem', 'utf-8')
+    const key = await fs.readFile('./.cert/key.pem', 'utf-8')
+    const cert = await fs.readFile('./.cert/cert.pem', 'utf-8')
     await new Promise(resolve => {
       https.createServer({ key, cert }, app).listen(env.PORT, () => resolve(undefined))
     })
