@@ -1,7 +1,6 @@
 import { Group } from './groups/types.js'
 import { User } from './users/types.js'
 import { Poll } from './polls/types.js'
-import { SocialLink } from './social-link-fix/types.js'
 
 export interface Dependencies {
   botInfo: Awaited<ReturnType<import('telegraf').Telegram['getMe']>>

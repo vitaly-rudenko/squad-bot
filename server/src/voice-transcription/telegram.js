@@ -1,4 +1,5 @@
 import fs from 'fs/promises'
+import { Markup } from 'telegraf'
 import { env } from '../env.js'
 import { registry } from '../registry.js'
 import { isGroupChat } from '../common/telegram.js'
@@ -7,6 +8,7 @@ import { downloadFile } from '../common/download-file.ts'
 import { transcribe } from '../common/transcribe.ts'
 import { splitIntoParagraphs } from '../common/split-into-paragraphs.ts'
 import { summarize } from '../common/summarize.ts'
+import { scheduleReplyMarkupRemoval } from '../common/schedule-reply-markup-removal.ts'
 
 export function createVoiceTranscriptionFlow() {
   const { groupCache, groupStorage, localize, telegram } = registry.export()
@@ -107,7 +109,13 @@ export function createVoiceTranscriptionFlow() {
 
         await telegram.editMessageText(statusMessage.chat.id, statusMessage.message_id, undefined, html, {
           parse_mode: 'HTML',
+          ...Markup.inlineKeyboard([
+            Markup.button.callback(localize(locale, 'voiceTranscription.actions.accept'), 'delete_reply_markup'),
+            Markup.button.callback(localize(locale, 'voiceTranscription.actions.reject'), 'delete_message'),
+          ]),
         })
+
+        scheduleReplyMarkupRemoval(statusMessage)
       } catch (err) {
         logger.warn('Could not transcribe voice message:', err)
       } finally {

@@ -136,6 +136,9 @@ voiceTranscription:
   enabled: '✅ Voice transcription is now enabled'
   disabled: '❌ Voice transcription is now disabled'
   transcribing: 'Transcribing...'
+  actions:
+    accept: '✅ Keep'
+    reject: '❌ Delete'
 groupChatOnly: '❌ This command can only be executed in a group chat'
 privateChatOnly: '❌ This command can only be executed in a private chat'
 unknownUser: 'Unknown user'

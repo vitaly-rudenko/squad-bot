@@ -2,6 +2,7 @@ import { Markup } from 'telegraf'
 import { isGroupChat, isPrivateChat } from '../common/telegram.js'
 import { registry } from '../registry.js'
 import { fixSocialLinkUrl } from './fix-social-link-url.js'
+import { scheduleReplyMarkupRemoval } from '../common/schedule-reply-markup-removal.ts'
 
 export function createSocialLinkFixFlow() {
   const { groupCache, groupStorage, localize } = registry.export()
@@ -64,7 +65,7 @@ export function createSocialLinkFixFlow() {
     const fixedSocialLinkUrl = fixSocialLinkUrl(url)
     if (!fixedSocialLinkUrl) return
 
-    await context.reply(fixedSocialLinkUrl, {
+    const reply = await context.reply(fixedSocialLinkUrl, {
       reply_parameters: {
         message_id: context.message.message_id,
         allow_sending_without_reply: true,
@@ -75,6 +76,8 @@ export function createSocialLinkFixFlow() {
         Markup.button.callback(localize(locale, 'socialLinkFix.actions.reject'), 'delete_message'),
       ]),
     })
+
+    scheduleReplyMarkupRemoval(reply)
   }
 
   return {
