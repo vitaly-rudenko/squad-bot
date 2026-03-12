@@ -81,7 +81,6 @@ export function createVoiceTranscriptionFlow() {
               message_id: context.message.message_id,
               allow_sending_without_reply: true,
             },
-            ...replyMarkup,
           },
         )
 
