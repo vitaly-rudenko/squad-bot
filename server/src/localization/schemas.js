@@ -3,6 +3,12 @@ import { string, array, object, coerce } from 'superstruct'
 const _ = coerce(string(), array(string()), value => value.join('\n'))
 
 export const localeFileSchema = object({
+  common: object({
+    actions: object({
+      deleteMessage: _,
+      confirmMessageDeletion: _,
+    }),
+  }),
   payments: object({
     command: object({
       message: _,
@@ -125,10 +131,6 @@ export const localeFileSchema = object({
   socialLinkFix: object({
     enabled: _,
     disabled: _,
-    actions: object({
-      accept: _,
-      reject: _,
-    }),
   }),
   pollAnswerNotifications: object({
     voted: _,
@@ -143,13 +145,8 @@ export const localeFileSchema = object({
     enabled: _,
     disabled: _,
     transcribing: _,
-    actions: object({
-      accept: _,
-      reject: _,
-    }),
   }),
   groupChatOnly: _,
   privateChatOnly: _,
   unknownUser: _,
-  messageWasDeleted: _,
 })

@@ -1,3 +1,7 @@
+common:
+  actions:
+    deleteMessage: '❌ Видалити'
+    confirmMessageDeletion: '❌ Підтвердити?'
 payments:
   command:
     message:
@@ -120,9 +124,6 @@ admins:
 socialLinkFix:
   enabled: '✅ Попередній перегляд для посилань Twitter, Instagram та YouTube тепер буде виправлено'
   disabled: '❌ Попередній перегляд для посилань Twitter, Instagram та YouTube більше не буде виправлено'
-  actions:
-    accept: '✅ Залишити'
-    reject: '❌ Видалити'
 pollAnswerNotifications:
   voted: '*{voter}* проголосував\(ла\) у опитуванні: {pollOptions}'
   retracted: '*{voter}* відкликав\(ла\) свій голос\.'
@@ -135,10 +136,6 @@ voiceTranscription:
   enabled: '✅ Транскрипцію голосових повідомлень увімкнено'
   disabled: '❌ Транскрипцію голосових повідомлень вимкнено'
   transcribing: 'Слухаю...'
-  actions:
-    accept: '✅ Залишити'
-    reject: '❌ Видалити'
 groupChatOnly: '❌ Цю команду можна виконати лише в груповому чаті'
 privateChatOnly: '❌ Цю команду можна виконати лише в приватному чаті'
 unknownUser: 'Невідомий користувач'
-messageWasDeleted: 'Повідомлення було видалено'

@@ -68,8 +68,7 @@ export function createVoiceTranscriptionFlow() {
 
       try {
         const replyMarkup = Markup.inlineKeyboard([
-          Markup.button.callback(localize(locale, 'voiceTranscription.actions.accept'), 'delete_reply_markup'),
-          Markup.button.callback(localize(locale, 'voiceTranscription.actions.reject'), 'delete_message'),
+          Markup.button.callback(localize(locale, 'common.actions.deleteMessage'), 'delete_message'),
         ])
 
         const statusMessage = await context.sendMessage(
@@ -81,6 +80,7 @@ export function createVoiceTranscriptionFlow() {
               message_id: context.message.message_id,
               allow_sending_without_reply: true,
             },
+            ...replyMarkup,
           },
         )
 
@@ -120,7 +120,7 @@ export function createVoiceTranscriptionFlow() {
           ...replyMarkup,
         })
 
-        scheduleReplyMarkupRemoval(statusMessage, 30_000)
+        scheduleReplyMarkupRemoval(statusMessage, 15_000)
       } catch (err) {
         logger.warn('Could not transcribe voice message:', err)
       } finally {

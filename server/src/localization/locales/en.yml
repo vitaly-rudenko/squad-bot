@@ -1,3 +1,7 @@
+common:
+  actions:
+    deleteMessage: '❌ Delete'
+    confirmMessageDeletion: '❌ Confirm?'
 payments:
   command:
     message:
@@ -121,9 +125,6 @@ admins:
 socialLinkFix:
   enabled: '✅ Previews for Twitter, Instagram and YouTube links will now be fixed'
   disabled: '❌ Previews for Twitter, Instagram and YouTube links will no longer be fixed'
-  actions:
-    accept: '✅ Keep'
-    reject: '❌ Delete'
 pollAnswerNotifications:
   voted: '*{voter}* has voted in the poll: {pollOptions}'
   retracted: '*{voter}* has retracted their vote\.'
@@ -136,10 +137,6 @@ voiceTranscription:
   enabled: '✅ Voice transcription is now enabled'
   disabled: '❌ Voice transcription is now disabled'
   transcribing: 'Transcribing...'
-  actions:
-    accept: '✅ Keep'
-    reject: '❌ Delete'
 groupChatOnly: '❌ This command can only be executed in a group chat'
 privateChatOnly: '❌ This command can only be executed in a private chat'
 unknownUser: 'Unknown user'
-messageWasDeleted: 'Message was deleted'

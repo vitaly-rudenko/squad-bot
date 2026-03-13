@@ -72,12 +72,11 @@ export function createSocialLinkFixFlow() {
       },
       disable_notification: true,
       ...Markup.inlineKeyboard([
-        Markup.button.callback(localize(locale, 'socialLinkFix.actions.accept'), 'delete_reply_markup'),
-        Markup.button.callback(localize(locale, 'socialLinkFix.actions.reject'), 'delete_message'),
+        Markup.button.callback(localize(locale, 'common.actions.deleteMessage'), 'delete_message'),
       ]),
     })
 
-    scheduleReplyMarkupRemoval(reply)
+    scheduleReplyMarkupRemoval(reply, 30_000)
   }
 
   return {

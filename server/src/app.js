@@ -1,6 +1,6 @@
 import './env.js'
 
-import { Telegraf } from 'telegraf'
+import { Markup, Telegraf } from 'telegraf'
 import cors from 'cors'
 import fs from 'fs/promises'
 import https from 'https'
@@ -55,6 +55,7 @@ import { createLinksFlow } from './links/telegram.js'
 import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/telegram.js'
 import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
 import { message } from 'telegraf/filters'
+import { scheduleReplyMarkupRemoval } from './common/schedule-reply-markup-removal.ts'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -240,15 +241,55 @@ async function start() {
   const { toggleVoiceTranscription, voiceMessage } = createVoiceTranscriptionFlow()
   bot.command('toggle_voice_transcription', toggleVoiceTranscription)
 
-  bot.action('delete_reply_markup', async context => {
-    await context.editMessageReplyMarkup({ inline_keyboard: [] }).catch(() => {})
+  bot.action('delete_message', async context => {
+    await context.answerCbQuery()
+
+    const { userId, locale } = context.state
+
+    const message = context.callbackQuery.message
+    if (!message) return
+
+    await bot.telegram
+      .editMessageReplyMarkup(
+        message.chat.id,
+        message.message_id,
+        undefined,
+        Markup.inlineKeyboard([
+          Markup.button.callback(
+            localize(locale, 'common.actions.confirmMessageDeletion'),
+            `confirm_message_deletion:${userId}`,
+          ),
+        ]).reply_markup,
+      )
+      .catch(() => {})
+
+    setTimeout(async () => {
+      await bot.telegram
+        .editMessageReplyMarkup(
+          message.chat.id,
+          message.message_id,
+          undefined,
+          Markup.inlineKeyboard([
+            Markup.button.callback(localize(locale, 'common.actions.deleteMessage'), 'delete_message'),
+          ]).reply_markup,
+        )
+        .catch(() => {})
+
+      // This timeout might "override" previous markup removal, so we have to
+      // re-schedule it to remove the markup again
+      scheduleReplyMarkupRemoval(message, 10_000)
+    }, 3_000)
   })
 
-  bot.action('delete_message', async context => {
-    const { locale } = context.state
+  bot.action(/^confirm_message_deletion:(\d+)$/, async context => {
+    await context.answerCbQuery()
 
-    await context.deleteMessage()
-    await context.answerCbQuery(localize(locale, 'messageWasDeleted'))
+    const { userId } = context.state
+    const allowedUserId = context.match[1]
+
+    if (userId === allowedUserId) {
+      await context.deleteMessage().catch(() => {})
+    }
   })
 
   bot.on(message('voice'), voiceMessage)
