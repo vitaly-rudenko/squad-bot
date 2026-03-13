@@ -56,6 +56,7 @@ import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/t
 import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
 import { message } from 'telegraf/filters'
 import { scheduleReplyMarkupRemoval } from './common/schedule-reply-markup-removal.ts'
+import { setMessageTimeout } from './common/message-timers.ts'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -263,7 +264,7 @@ async function start() {
       )
       .catch(() => {})
 
-    setTimeout(async () => {
+    setMessageTimeout(message, 3_000, async () => {
       await bot.telegram
         .editMessageReplyMarkup(
           message.chat.id,
@@ -275,10 +276,10 @@ async function start() {
         )
         .catch(() => {})
 
-      // This timeout might "override" previous markup removal, so we have to
-      // re-schedule it to remove the markup again
+      // This timeout "overrides" previous markup removal, so we have to
+      // re-schedule the the markup removal again
       scheduleReplyMarkupRemoval(message, 10_000)
-    }, 3_000)
+    })
   })
 
   bot.action(/^confirm_message_deletion:(\d+)$/, async context => {

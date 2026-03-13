@@ -120,7 +120,7 @@ export function createVoiceTranscriptionFlow() {
           ...replyMarkup,
         })
 
-        scheduleReplyMarkupRemoval(statusMessage, 15_000)
+        scheduleReplyMarkupRemoval(statusMessage, 10_000)
       } catch (err) {
         logger.warn('Could not transcribe voice message:', err)
       } finally {

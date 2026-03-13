@@ -76,7 +76,7 @@ export function createSocialLinkFixFlow() {
       ]),
     })
 
-    scheduleReplyMarkupRemoval(reply, 30_000)
+    scheduleReplyMarkupRemoval(reply, 10_000)
   }
 
   return {
