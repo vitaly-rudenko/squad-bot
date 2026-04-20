@@ -46,7 +46,7 @@ export function createVoiceTranscriptionFlow() {
 
       if (isGroupChat(context)) {
         // Ignore short and forwarded messages
-        if (context.message.voice.duration < 10) return
+        if (context.message.voice.duration < 5) return
         if (context.message.forward_origin) return
 
         let group = await groupCache.get(chatId)
@@ -108,7 +108,7 @@ export function createVoiceTranscriptionFlow() {
         const expandable = context.message.voice.duration > 60 ? ' expandable' : ''
 
         let html
-        if (context.message.voice.duration >= 90) {
+        if (context.message.voice.duration >= 60) {
           const summary = await summarize({ text, apiKey: env.OPENAI_API_KEY })
           html = `<blockquote${expandable}>${splitIntoParagraphs(text)}</blockquote>\n\n<i>${summary}</i>`
         } else {
