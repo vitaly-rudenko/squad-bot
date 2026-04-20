@@ -264,7 +264,7 @@ async function start() {
       )
       .catch(() => {})
 
-    setMessageTimeout(message, 3_000, async () => {
+    setMessageTimeout(message, 5_000, async () => {
       await bot.telegram
         .editMessageReplyMarkup(
           message.chat.id,
@@ -278,7 +278,7 @@ async function start() {
 
       // This timeout "overrides" previous markup removal, so we have to
       // re-schedule the the markup removal again
-      scheduleReplyMarkupRemoval(message, 10_000)
+      scheduleReplyMarkupRemoval(message, 30_000)
     })
   })
 
