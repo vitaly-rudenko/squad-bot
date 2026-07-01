@@ -7,7 +7,6 @@ import { logger } from '../common/logger.js'
 import { downloadFile } from '../common/download-file.ts'
 import { transcribe } from '../common/transcribe.ts'
 import { splitIntoParagraphs } from '../common/split-into-paragraphs.ts'
-import { summarize } from '../common/summarize.ts'
 import { scheduleReplyMarkupRemoval } from '../common/schedule-reply-markup-removal.ts'
 
 export function createVoiceTranscriptionFlow() {
@@ -105,15 +104,8 @@ export function createVoiceTranscriptionFlow() {
           return
         }
 
-        const expandable = context.message.voice.duration > 60 ? ' expandable' : ''
-
-        let html
-        if (context.message.voice.duration >= 60) {
-          const summary = await summarize({ text, apiKey: env.OPENAI_API_KEY })
-          html = `<blockquote${expandable}>${splitIntoParagraphs(text)}</blockquote>\n\n<i>${summary}</i>`
-        } else {
-          html = `<blockquote${expandable}>${splitIntoParagraphs(text)}</blockquote>`
-        }
+        const expandable = context.message.voice.duration >= 90 ? ' expandable' : ''
+        const html = `<blockquote${expandable}>${splitIntoParagraphs(text)}</blockquote>`
 
         await telegram.editMessageText(statusMessage.chat.id, statusMessage.message_id, undefined, html, {
           parse_mode: 'HTML',
