@@ -15,5 +15,5 @@ export async function transcribe(input: {
     response_format: 'text',
   })
 
-  return { text: String(response), durationMs: Date.now() - startedAt }
+  return { text: String(response).trim(), durationMs: Date.now() - startedAt }
 }
