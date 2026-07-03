@@ -68,9 +68,14 @@ async function createReceipt({ payer, debtors = [payer] }, editor = payer) {
  */
 async function getPhoto(photoFilename) {
   const response = await api.get(`/photos/${photoFilename}`, { responseType: 'arraybuffer' })
+  const mimetype = response.headers['content-type']
+  if (typeof mimetype !== 'string') {
+    throw new Error('Photo response content type is missing')
+  }
+
   return {
     buffer: response.data,
-    mimetype: response.headers['content-type'],
+    mimetype,
   }
 }
 
