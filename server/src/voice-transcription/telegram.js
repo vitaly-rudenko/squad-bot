@@ -9,6 +9,22 @@ import { transcribe } from '../common/transcribe.ts'
 import { splitIntoParagraphs } from '../common/split-into-paragraphs.ts'
 import { scheduleReplyMarkupRemoval } from '../common/schedule-reply-markup-removal.ts'
 
+/**
+ * @param {import('@telegraf/types').Message} message
+ * @returns {{ fileId: string, durationMs: number, extension: 'ogg' | 'mp4' } | undefined}
+ */
+function getTranscribableMedia(message) {
+  if ('voice' in message) {
+    return { fileId: message.voice.file_id, durationMs: message.voice.duration * 1000, extension: 'ogg' }
+  }
+
+  if ('video_note' in message) {
+    return { fileId: message.video_note.file_id, durationMs: message.video_note.duration * 1000, extension: 'mp4' }
+  }
+
+  return undefined
+}
+
 export function createVoiceTranscriptionFlow() {
   const { groupCache, groupStorage, localize, telegram } = registry.export()
 
@@ -37,16 +53,19 @@ export function createVoiceTranscriptionFlow() {
   }
 
   /** @param {import('telegraf').Context} context */
-  const voiceMessage = context => {
+  const transcribeMedia = context => {
     ;(async () => {
-      if (!context.message || !('voice' in context.message)) return
+      if (!context.message) return
+
+      const media = getTranscribableMedia(context.message)
+      if (!media) return
 
       const { userId, chatId, locale } = context.state
 
       if (isGroupChat(context)) {
         // Ignore short and forwarded messages
-        if (context.message.voice.duration < 5) return
-        if (context.message.forward_origin) return
+        if (media.durationMs < 5_000) return
+        if ('forward_origin' in context.message) return
 
         let group = await groupCache.get(chatId)
         if (!group) {
@@ -63,7 +82,7 @@ export function createVoiceTranscriptionFlow() {
       }
 
       const operationId = crypto.randomUUID()
-      const oggPath = `/app/local/operations/${operationId}/input.ogg`
+      const inputPath = `/app/local/operations/${operationId}/input.${media.extension}`
 
       try {
         const replyMarkup = Markup.inlineKeyboard([
@@ -71,7 +90,7 @@ export function createVoiceTranscriptionFlow() {
         ])
 
         const statusMessage = await context.sendMessage(
-          `<i>${localize(locale, 'voiceTranscription.transcribing')}</i>`,
+          `<blockquote><i>${localize(locale, 'voiceTranscription.transcribing')}</i></blockquote>`,
           {
             parse_mode: 'HTML',
             reply_parameters: {
@@ -85,26 +104,26 @@ export function createVoiceTranscriptionFlow() {
 
         await fs.mkdir(`/app/local/operations/${operationId}`, { recursive: true })
 
-        logger.info({ fileId: context.message.voice.file_id }, 'Downloading')
-        const url = await telegram.getFileLink(context.message.voice.file_id)
-        await downloadFile({ url, outputPath: oggPath })
+        logger.info({ fileId: media.fileId }, 'Downloading')
+        const url = await telegram.getFileLink(media.fileId)
+        await downloadFile({ url, outputPath: inputPath })
 
-        logger.info({ oggPath }, 'Transcribing')
+        logger.info({ inputPath }, 'Transcribing')
         const { text, durationMs } = await transcribe({
-          inputPath: oggPath,
+          inputPath,
           apiKey: env.OPENAI_API_KEY,
         })
 
         logger.info({ durationMs }, 'Transcription completed')
 
-        const expectedChars = context.message.voice.duration * 10
+        const expectedChars = media.durationMs / 100
         if (text.length < expectedChars * 0.2) {
           logger.info({ textLength: text.length, expectedChars }, 'Transcription too short, ignoring')
           await telegram.deleteMessage(statusMessage.chat.id, statusMessage.message_id).catch(() => {})
           return
         }
 
-        const expandable = context.message.voice.duration >= 90 ? ' expandable' : ''
+        const expandable = media.durationMs >= 90_000 ? ' expandable' : ''
         const html = `<blockquote${expandable}>${splitIntoParagraphs(text)}</blockquote>`
 
         await telegram.editMessageText(statusMessage.chat.id, statusMessage.message_id, undefined, html, {
@@ -123,6 +142,6 @@ export function createVoiceTranscriptionFlow() {
 
   return {
     toggleVoiceTranscription,
-    voiceMessage,
+    transcribeMedia,
   }
 }

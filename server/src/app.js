@@ -239,7 +239,7 @@ async function start() {
   bot.command('toggle_poll_answer_notifications', togglePollAnswerNotifications)
   bot.on('poll_answer', pollAnswer)
 
-  const { toggleVoiceTranscription, voiceMessage } = createVoiceTranscriptionFlow()
+  const { toggleVoiceTranscription, transcribeMedia } = createVoiceTranscriptionFlow()
   bot.command('toggle_voice_transcription', toggleVoiceTranscription)
 
   bot.action('delete_message', async context => {
@@ -293,7 +293,8 @@ async function start() {
     }
   })
 
-  bot.on(message('voice'), voiceMessage)
+  bot.on(message('voice'), transcribeMedia)
+  bot.on(message('video_note'), transcribeMedia)
 
   bot.on(
     'message',
