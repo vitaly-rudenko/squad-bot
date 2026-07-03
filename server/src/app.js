@@ -53,7 +53,7 @@ import { createExportFlow } from './export/telegram.js'
 import { LinksPostgresStorage } from './links/storage.js'
 import { createLinksFlow } from './links/telegram.js'
 import { createPollAnswerNotificationsFlow } from './poll-answer-notifications/telegram.js'
-import { createVoiceTranscriptionFlow } from './voice-transcription/telegram.js'
+import { createMediaTranscriptionFlow } from './media-transcription/telegram.js'
 import { message } from 'telegraf/filters'
 import { scheduleReplyMarkupRemoval } from './common/schedule-reply-markup-removal.ts'
 import { setMessageTimeout } from './common/message-timers.ts'
@@ -137,7 +137,7 @@ async function start() {
     { command: 'links', description: 'Links' },
     { command: 'toggle_social_link_fix', description: 'Toggle previews for social links' },
     { command: 'toggle_poll_answer_notifications', description: 'Toggle notifications for poll answers' },
-    { command: 'toggle_voice_transcription', description: 'Toggle voice transcription' },
+    { command: 'toggle_media_transcription', description: 'Toggle media transcription' },
     { command: 'export', description: 'Export your receipts in a CSV format' },
     { command: 'start', description: 'Update user info' },
   ])
@@ -239,8 +239,8 @@ async function start() {
   bot.command('toggle_poll_answer_notifications', togglePollAnswerNotifications)
   bot.on('poll_answer', pollAnswer)
 
-  const { toggleVoiceTranscription, transcribeMedia } = createVoiceTranscriptionFlow()
-  bot.command('toggle_voice_transcription', toggleVoiceTranscription)
+  const { toggleMediaTranscription, transcribeMedia } = createMediaTranscriptionFlow()
+  bot.command('toggle_media_transcription', toggleMediaTranscription)
 
   bot.action('delete_message', async context => {
     await context.answerCbQuery()

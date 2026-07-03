@@ -141,7 +141,7 @@ export const localeFileSchema = object({
     enabled: _,
     disabled: _,
   }),
-  voiceTranscription: object({
+  mediaTranscription: object({
     enabled: _,
     disabled: _,
     transcribing: _,

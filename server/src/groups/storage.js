@@ -4,9 +4,9 @@ export class GroupsPostgresStorage {
     this._client = client
   }
 
-  /** @param {Omit<import('./types').Group, 'socialLinkFixEnabledAt' | 'pollAnswerNotificationsEnabledAt' | 'voiceTranscriptionEnabledAt'> & { socialLinkFixEnabledAt?: Date | null, pollAnswerNotificationsEnabledAt?: Date | null, voiceTranscriptionEnabledAt?: Date | null }} group */
+  /** @param {Omit<import('./types').Group, 'socialLinkFixEnabledAt' | 'pollAnswerNotificationsEnabledAt' | 'mediaTranscriptionEnabledAt'> & { socialLinkFixEnabledAt?: Date | null, pollAnswerNotificationsEnabledAt?: Date | null, mediaTranscriptionEnabledAt?: Date | null }} group */
   async store(group) {
-    const { id, title, socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt, voiceTranscriptionEnabledAt } = group
+    const { id, title, socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt, mediaTranscriptionEnabledAt } = group
 
     await this._client.query(
       `
@@ -17,10 +17,10 @@ export class GroupsPostgresStorage {
         , updated_at = $3
         , social_link_fix_enabled_at = ${socialLinkFixEnabledAt === undefined ? 'groups.social_link_fix_enabled_at' : '$4'}
         , poll_answer_notifications_enabled_at = ${pollAnswerNotificationsEnabledAt === undefined ? 'groups.poll_answer_notifications_enabled_at' : '$5'}
-        , voice_transcription_enabled_at = ${voiceTranscriptionEnabledAt === undefined ? 'groups.voice_transcription_enabled_at' : '$6'}
+        , voice_transcription_enabled_at = ${mediaTranscriptionEnabledAt === undefined ? 'groups.voice_transcription_enabled_at' : '$6'}
       ;
     `,
-      [id, title, new Date(), socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt, voiceTranscriptionEnabledAt],
+      [id, title, new Date(), socialLinkFixEnabledAt, pollAnswerNotificationsEnabledAt, mediaTranscriptionEnabledAt],
     )
   }
 
@@ -105,7 +105,7 @@ function deserializeGroup(row) {
     pollAnswerNotificationsEnabledAt: row['poll_answer_notifications_enabled_at']
       ? new Date(row['poll_answer_notifications_enabled_at'])
       : null,
-    voiceTranscriptionEnabledAt: row['voice_transcription_enabled_at']
+    mediaTranscriptionEnabledAt: row['voice_transcription_enabled_at']
       ? new Date(row['voice_transcription_enabled_at'])
       : null,
   }

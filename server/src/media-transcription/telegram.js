@@ -25,11 +25,11 @@ function getTranscribableMedia(message) {
   return undefined
 }
 
-export function createVoiceTranscriptionFlow() {
+export function createMediaTranscriptionFlow() {
   const { groupCache, groupStorage, localize, telegram } = registry.export()
 
   /** @param {import('telegraf').Context} context */
-  const toggleVoiceTranscription = async context => {
+  const toggleMediaTranscription = async context => {
     const { userId, chatId, locale } = context.state
 
     if (env.ADMIN_USER_ID !== userId) return
@@ -40,14 +40,14 @@ export function createVoiceTranscriptionFlow() {
     await groupStorage.store({
       id: group.id,
       title: group.title,
-      voiceTranscriptionEnabledAt: group.voiceTranscriptionEnabledAt ? null : new Date(),
+      mediaTranscriptionEnabledAt: group.mediaTranscriptionEnabledAt ? null : new Date(),
     })
     await groupCache.delete(chatId)
 
     await context.reply(
       localize(
         locale,
-        group.voiceTranscriptionEnabledAt ? 'voiceTranscription.disabled' : 'voiceTranscription.enabled',
+        group.mediaTranscriptionEnabledAt ? 'mediaTranscription.disabled' : 'mediaTranscription.enabled',
       ),
     )
   }
@@ -76,7 +76,7 @@ export function createVoiceTranscriptionFlow() {
         }
 
         if (!group) return
-        if (!group.voiceTranscriptionEnabledAt) return
+        if (!group.mediaTranscriptionEnabledAt) return
       } else if (userId !== env.ADMIN_USER_ID) {
         return
       }
@@ -90,7 +90,7 @@ export function createVoiceTranscriptionFlow() {
         ])
 
         const statusMessage = await context.sendMessage(
-          `<blockquote><i>${localize(locale, 'voiceTranscription.transcribing')}</i></blockquote>`,
+          `<blockquote><i>${localize(locale, 'mediaTranscription.transcribing')}</i></blockquote>`,
           {
             parse_mode: 'HTML',
             reply_parameters: {
@@ -133,7 +133,7 @@ export function createVoiceTranscriptionFlow() {
 
         scheduleReplyMarkupRemoval(statusMessage, 30_000)
       } catch (err) {
-        logger.warn('Could not transcribe voice message:', err)
+        logger.warn('Could not transcribe media message:', err)
       } finally {
         await fs.rm(`/app/local/operations/${operationId}`, { recursive: true, force: true }).catch(() => {})
       }
@@ -141,7 +141,7 @@ export function createVoiceTranscriptionFlow() {
   }
 
   return {
-    toggleVoiceTranscription,
+    toggleMediaTranscription,
     transcribeMedia,
   }
 }
