@@ -11,15 +11,29 @@ import { scheduleReplyMarkupRemoval } from '../common/schedule-reply-markup-remo
 
 /**
  * @param {import('@telegraf/types').Message} message
- * @returns {{ fileId: string, durationMs: number, extension: 'ogg' | 'mp4' } | undefined}
+ * @returns {{ fileId: string, durationMs: number, extension: 'ogg' | 'mp4', minDurationMs: number, expectedCharsThreshold: number, minTextLength: number } | undefined}
  */
-function getTranscribableMedia(message) {
+function getTranscriptionMedia(message) {
   if ('voice' in message) {
-    return { fileId: message.voice.file_id, durationMs: message.voice.duration * 1000, extension: 'ogg' }
+    return {
+      fileId: message.voice.file_id,
+      durationMs: message.voice.duration * 1000,
+      extension: 'ogg',
+      minDurationMs: 5_000,
+      expectedCharsThreshold: 0.2,
+      minTextLength: 10,
+    }
   }
 
   if ('video_note' in message) {
-    return { fileId: message.video_note.file_id, durationMs: message.video_note.duration * 1000, extension: 'mp4' }
+    return {
+      fileId: message.video_note.file_id,
+      durationMs: message.video_note.duration * 1000,
+      extension: 'mp4',
+      minDurationMs: 10_000,
+      expectedCharsThreshold: 0.4,
+      minTextLength: 20,
+    }
   }
 
   return undefined
@@ -57,14 +71,14 @@ export function createMediaTranscriptionFlow() {
     ;(async () => {
       if (!context.message) return
 
-      const media = getTranscribableMedia(context.message)
+      const media = getTranscriptionMedia(context.message)
       if (!media) return
 
       const { userId, chatId, locale } = context.state
 
       if (isGroupChat(context)) {
         // Ignore short and forwarded messages
-        if (media.durationMs < 5_000) return
+        if (media.durationMs < media.minDurationMs) return
         if ('forward_origin' in context.message) return
 
         let group = await groupCache.get(chatId)
@@ -117,8 +131,9 @@ export function createMediaTranscriptionFlow() {
         logger.info({ durationMs }, 'Transcription completed')
 
         const expectedChars = media.durationMs / 100
-        if (text.length < expectedChars * 0.2) {
-          logger.info({ textLength: text.length, expectedChars }, 'Transcription too short, ignoring')
+        const minExpectedTextLength = Math.max(media.minTextLength, expectedChars * media.expectedCharsThreshold)
+        if (text.length < minExpectedTextLength) {
+          logger.info({ textLength: text.length, minExpectedTextLength }, 'Transcription too short, ignoring')
           await telegram.deleteMessage(statusMessage.chat.id, statusMessage.message_id).catch(() => {})
           return
         }
