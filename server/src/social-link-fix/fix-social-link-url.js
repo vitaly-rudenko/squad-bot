@@ -13,7 +13,7 @@ export function fixSocialLinkUrl(url) {
       ['instagram.com', 'www.instagram.com'].some(h => parsedUrl.hostname === h) &&
       ['/p/', '/reel/', '/stories/'].some(p => parsedUrl.pathname.startsWith(p))
     ) {
-      parsedUrl.hostname = 'kkclip.com'
+      parsedUrl.hostname = 'oginstagram.com'
       parsedUrl.search = ''
       return parsedUrl.toString()
     }
