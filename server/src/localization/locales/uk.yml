@@ -136,6 +136,39 @@ mediaTranscription:
   enabled: '✅ Транскрипцію медіа увімкнено'
   disabled: '❌ Транскрипцію медіа вимкнено'
   transcribing: 'Слухаю...'
+countdowns:
+  message: '🎉 *{title}* почався!'
+  reminder:
+    message:
+      - '🕐 *{title}* почнеться через *{timeLeft}*'
+      - 'Дата: {date}'
+    days: ' дн.'
+    hours: ' год.'
+    minutes: ' хв.'
+    and: 'та'
+  command:
+    message:
+      - '🕐 *{title}* почнеться через *{timeLeft}*'
+      - 'Дата: {date}'
+    help:
+      - '/countdown <назва> [дата] [час] [часовий пояс]'
+      - '/countdown <назва> [час] [дата] [часовий пояс]'
+      - '/countdown <назва> [інтервал]'
+      - ''
+      - 'Формати:'
+      - '- Дата: YYYY-MM-DD, DD\.MM\.YYYY'
+      - '- Час: HH, HH:mm'
+      - '- Часовий пояс: CET, EET, CEST, UTC, etc\. (default: EET)'
+      - '- Інтервал: через D днів, H годин, M хвилин'
+      - ''
+      - 'Приклади:'
+      - '- `/countdown Новий рік! 2026-12-31 23:59 CET`'
+      - '- `/countdown Чийсь день народження 01.01.2027`'
+      - '- `/countdown Новий епізод о 21:00 UTC`'
+      - '- `/countdown Пограти в ігри через 3 години, 30 хвилин`'
+  actions:
+    delete: 'Видалити'
+    deleted: 'Подію було видалено'
 groupChatOnly: '❌ Цю команду можна виконати лише в груповому чаті'
 privateChatOnly: '❌ Цю команду можна виконати лише в приватному чаті'
 unknownUser: 'Невідомий користувач'

@@ -137,6 +137,40 @@ mediaTranscription:
   enabled: '✅ Media transcription is now enabled'
   disabled: '❌ Media transcription is now disabled'
   transcribing: 'Transcribing...'
+countdowns:
+  message: '🎉 *{title}* has started!'
+  reminder:
+    message:
+      - '🕐 *{title}* starts in *{timeLeft}*'
+      - 'Date: {date}'
+    days: 'd'
+    hours: 'h'
+    minutes: 'm'
+    and: 'and'
+  command:
+    message:
+      - '🕐 *{title}* starts in *{timeLeft}*'
+      - 'Date: {date}'
+    help:
+      - 'Usage:'
+      - '\- /countdown \<title\> \<date\> \[time\] \[timezone\]'
+      - '\- /countdown \<title\> \<time\> \[date\] \[timezone\]'
+      - '\- /countdown \<title\> \<interval\>'
+      - ''
+      - 'Formats:'
+      - '\- Date: YYYY\-MM\-DD, DD\.MM\.YYYY \(year can be omitted\)'
+      - '\- Time: HH:mm \(minutes can be omitted\)'
+      - '\- Timezone: CET, EET, UTC, etc\. \(default: EET\)'
+      - '\- Interval: in D days, H hours, M minutes'
+      - ''
+      - 'Examples:'
+      - '\- `/countdown New Year''s Eve! 2026\-12\-31 23:59 CET`'
+      - '\- `/countdown Someone''s birthday on 01\.01\.2027`'
+      - '\- `/countdown New episode at 21:00 UTC`'
+      - '\- `/countdown Play games in 3 hours, 30 minutes`'
+  actions:
+    delete: 'Delete'
+    deleted: 'Countdown was deleted'
 groupChatOnly: '❌ This command can only be executed in a group chat'
 privateChatOnly: '❌ This command can only be executed in a private chat'
 unknownUser: 'Unknown user'

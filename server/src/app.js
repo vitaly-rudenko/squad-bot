@@ -57,6 +57,8 @@ import { createMediaTranscriptionFlow } from './media-transcription/telegram.js'
 import { message } from 'telegraf/filters'
 import { scheduleReplyMarkupRemoval } from './common/schedule-reply-markup-removal.ts'
 import { setMessageTimeout } from './common/message-timers.ts'
+import { CountdownsPostgresStorage } from './countdowns/storage.js'
+import { createCountdownsFlow } from './countdowns/telegram.js'
 
 async function start() {
   if (env.USE_TEST_MODE) {
@@ -104,6 +106,7 @@ async function start() {
     paymentsStorage: new PaymentsPostgresStorage(pgClient),
     receiptsStorage: new ReceiptsPostgresStorage(pgClient),
     rollCallsStorage: new RollCallsPostgresStorage(pgClient),
+    countdownsStorage: new CountdownsPostgresStorage(pgClient),
     telegram: bot.telegram,
     usersStorage,
     version: getAppVersion(),
@@ -134,6 +137,7 @@ async function start() {
     { command: 'cards', description: 'Bank cards' },
     { command: 'titles', description: 'Admin titles' },
     { command: 'rollcalls', description: 'Roll calls' },
+    { command: 'countdown', description: 'Create a countdown' },
     { command: 'links', description: 'Links' },
     { command: 'toggle_social_link_fix', description: 'Toggle previews for social links' },
     { command: 'toggle_poll_answer_notifications', description: 'Toggle notifications for poll answers' },
@@ -241,6 +245,9 @@ async function start() {
 
   const { toggleMediaTranscription, transcribeMedia } = createMediaTranscriptionFlow()
   bot.command('toggle_media_transcription', toggleMediaTranscription)
+
+  const { countdown } = createCountdownsFlow()
+  bot.command('countdown', countdown)
 
   bot.action('delete_message', async context => {
     await context.answerCbQuery()

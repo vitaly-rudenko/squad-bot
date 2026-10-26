@@ -22,6 +22,7 @@ export interface Dependencies {
   usersCache: import('./common/cache.js').RedisCache<User>
   pollsCache: import('./common/cache.js').RedisCache<Poll>
   usersStorage: import('./users/storage.js').UsersPostgresStorage
+  countdownsStorage: import('./countdowns/storage.js').CountdownsPostgresStorage
   version: string
   webAppName: string
   webAppUrl: string

@@ -146,6 +146,24 @@ export const localeFileSchema = object({
     disabled: _,
     transcribing: _,
   }),
+  countdowns: object({
+    message: _,
+    reminder: object({
+      message: _,
+      days: _,
+      hours: _,
+      minutes: _,
+      and: _,
+    }),
+    command: object({
+      message: _,
+      help: _,
+    }),
+    actions: object({
+      delete: _,
+      deleted: _,
+    }),
+  }),
   groupChatOnly: _,
   privateChatOnly: _,
   unknownUser: _,
