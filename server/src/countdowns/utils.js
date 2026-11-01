@@ -1,154 +1,146 @@
-const dateRegexes = [
-  /(^\s*|\b|\s)((?<year>\d{4})\-)?(?<month>\d{2})-(?<day>\d{2})(\b|\s*$)/,
-  /(^\s*|\b|\s)(?<day>\d{2})\.(?<month>\d{2})\.((?<year>\d{4}))?(\b|\s*$)/,
-]
+// Intervals
 
-const timeRegexes = [
+const days = '(?<days>\\d{1,2}) ?(days?|d\\.?|день|дні|днів|дн\\.?|д\\.?)'
+const hours = '(?<hours>\\d{1,2}) ?(hours?|hrs?\\.?|h\\.?|година|години|годин|годину|год\\.?|г\\.?)'
+const hoursWithMinutes =
+  '(?<hours>\\d{1,2}):(?<minutes>\\d{2}) ?(hours?|hrs?\\.?|h\\.?|година|години|годин|годину|год\\.?|г\\.?)'
+const minutes = '(?<minutes>\\d{1,2}) ?(minutes?|mins?\\.?|m\\.?|хвилина|хвилини|хвилин|хвилину|хв\\.?|х\\.?)'
+const quick = '((?<hours>\\d{1,2}):)?(?<minutes>\\d{1,2})'
+const hoursDecimal = '(?<hours>\\d{1,2}\\.\\d{1}) ?(hours?|hrs?\\.?|h\\.?|година|години|годин|годину|год\\.?|г\\.?)'
+
+const intervals = [
   //
-  /(^\s*|\b|\s)(?<hours>\d{1,2})(:(?<minutes>\d{2}))?(\b|\s*$)/,
+  [days, hoursWithMinutes],
+  [days, hours, minutes],
+  [days, hours],
+  [days],
+  [hoursWithMinutes],
+  [hours, minutes],
+  [hours],
+  [minutes],
+  [quick],
+  [hoursDecimal],
 ]
 
-const timezoneRegexes = [
-  // NOTE: timezone is only supported at the end of the input
-  /(^\s*|\b|\s)(?<timezone>[a-zA-Z]{3})$/,
-]
+const intervalRegexes = intervals.map(parts => new RegExp(` (in|через) ${parts.join('( | (and|та|і) |, ?)')}$`, 'i'))
 
-const intervalRegexes = [
+// Absolute dates
+
+const dayMonthYear =
+  '(?<day>\\d{1,2})(\\.|\\-)(?<month>\\d{1,2})((\\.|\\-)(?<year>\\d{2,4}))?( (?<timezone>[a-z]{3,4}))?'
+const yearMonthDay = '(?<year>\\d{4})(\\.|\\-)(?<month>\\d{1,2})(\\.|\\-)(?<day>\\d{1,2})( (?<timezone>[a-z]{3,4}))?'
+
+const dates = [
   //
-  /(^\s*|\b|\s)((?<days>\d{1,2}) ?(d|days?|д|день|дні|днів|дн|д)\.?)(\b|\s*$)/i,
-  /(^\s*|\b|\s)((?<hours>\d{1,2}) ?(h|hrs?|hours?|г|год|година|години|годин|годину)\.?)(\b|\s*$)/i,
-  /(^\s*|\b|\s)((?<minutes>\d{1,2}) ?(m|mins?|minutes?|х|хв|хвилина|хвилини|хвилин|хвилину)\.?)(\b|\s*$)/i,
-  /(^\s*|\b|\s)(in|через) (?<minutes>\d{1,2})\s*$/i,
-  /(^\s*|\b|\s)(in|через) (?<hours>\d{1,2}):(?<minutes>\d{2})( ?(h|hrs?|hours?|г|год|годин|години|годину)\.?)?\s*$/i,
+  [dayMonthYear],
+  [yearMonthDay],
 ]
 
-const skipped = [
-  //
-  /\b(in|at|on)\s*$/gi,
-  /\b(через|в|о|на)\s*$/gi,
+const dateRegexes = dates.map(parts => new RegExp(` ((on|на) )?${parts.join('')}$`, 'i'))
+
+const time = '(?<hours>\\d{1,2})(:(?<minutes>\\d{2}))?( (?<timezone>[a-z]{3,4}))?'
+
+const times = [
+  // time
+  [time],
 ]
+
+const timeRegexes = times.map(parts => new RegExp(` ((at|о|в) )?${parts.join('')}$`, 'i'))
 
 /**
  * @param {string} input
  * @returns {{
  *   title: string
+ *   interval?: { days?: number; hours?: number; minutes?: number }
  *   date?: { year?: number; month?: number; day?: number }
  *   time?: { hours?: number; minutes?: number }
  *   timezone?: string // CET
- *   interval?: { days?: number; hours?: number; minutes?: number }
- * }}
+ * } | undefined}
  */
 export function parseCountdown(input) {
-  const dates = []
-  const times = []
-  const timezones = []
+  input = input.replaceAll(/\s+/g, ' ').trim() // normalize
+
+  /** @type {any[]} */
   const intervals = []
+  /** @type {any[]} */
+  const dates = []
+  /** @type {any[]} */
+  const times = []
 
-  for (const dateRegex of dateRegexes) {
-    const match = input.match(dateRegex)
-    if (match) {
-      dates.push({
-        index: match.index,
-        ...match.groups,
-      })
-    }
+  for (const regex of intervalRegexes) {
+    const match = input.match(regex)
+    if (match?.index === undefined) continue
+
+    intervals.push({ index: match.index, ...match.groups })
   }
 
-  for (const timeRegex of timeRegexes) {
-    const match = input.match(timeRegex)
-    if (match) {
-      times.push({
-        index: match.index,
-        ...match.groups,
-      })
-    }
+  for (const regex of dateRegexes) {
+    const match = input.match(regex)
+    if (match?.index === undefined) continue
+
+    dates.push({ index: match.index, ...match.groups })
   }
 
-  for (const timezoneRegex of timezoneRegexes) {
-    const match = input.match(timezoneRegex)
-    if (match) {
-      timezones.push({
-        index: match.index,
-        ...match.groups,
-      })
-    }
-  }
+  for (const regex of timeRegexes) {
+    const match = input.match(regex)
+    if (match?.index === undefined) continue
 
-  for (const intervalRegex of intervalRegexes) {
-    const match = input.match(intervalRegex)
-    if (match) {
-      intervals.push({
-        index: match.index,
-        ...match.groups,
-      })
-    }
+    times.push({ index: match.index, ...match.groups })
   }
 
   if (intervals.length > 0) {
-    let title = input.slice(0, Math.min(...intervals.map(i => i.index)))
-    for (const skip of skipped) {
-      title = title.replaceAll(skip, '')
-    }
-    title = title.trim()
+    const title = input.slice(0, Math.min(...intervals.map(i => i.index))).trim()
+    if (!title) return undefined
 
-    let joined = {}
-    for (const interval of intervals) {
-      joined = { ...joined, ...interval }
-    }
+    const groups = Object.assign({}, ...intervals)
 
-    const result = {
-      title,
-      interval: {
-        ...(joined.days && { days: Number(joined.days) }),
-        ...(joined.hours && { hours: Number(joined.hours) }),
-        ...(joined.minutes && { minutes: Number(joined.minutes) }),
-      },
+    const interval = {
+      ...(groups.days && { days: Number(groups.days) }),
+      ...(groups.hours && { hours: Number(groups.hours) }),
+      ...(groups.minutes && { minutes: Number(groups.minutes) }),
     }
 
-    console.log({ input, ...result })
-    return result
+    if (Object.keys(interval).length === 0) return undefined
+
+    // 1.5 hours => 1 hour 30 minutes
+    if (interval.hours && String(interval.hours).includes('.')) {
+      const minutes = interval.hours * 60
+      interval.hours = Math.floor(minutes / 60)
+      interval.minutes = minutes % 60
+    }
+
+    return { title, interval }
   } else {
-    let title = input.slice(0, Math.min(...[...dates, ...times, ...timezones].map(i => i.index)))
-    for (const skip of skipped) {
-      title = title.replaceAll(skip, '')
-    }
-    title = title.trim()
+    const title = input.slice(0, Math.min(...[...dates, ...times].map(i => i.index))).trim()
+    if (!title) return undefined
 
-    let joined = {}
-    for (const obj of [...dates, ...times, ...timezones]) {
-      joined = { ...joined, ...obj }
-    }
+    const groups = Object.assign({}, ...dates, ...times)
 
     const date = {
-      ...(joined.year && { year: joined.year }),
-      ...(joined.month && { month: joined.month }),
-      ...(joined.day && { day: joined.day }),
+      ...(groups.year && { year: Number(groups.year) }),
+      ...(groups.month && { month: Number(groups.month) }),
+      ...(groups.day && { day: Number(groups.day) }),
+    }
+
+    // 26 => 2026
+    if (date.year && date.year < 100) {
+      date.year += 2000
     }
 
     const time = {
-      ...(joined.hours && { hours: joined.hours }),
-      ...(joined.minutes && { minutes: joined.minutes }),
+      ...(groups.hours && { hours: Number(groups.hours) }),
+      ...(groups.minutes && { minutes: Number(groups.minutes) }),
     }
+
+    if (Object.keys(date).length === 0 && Object.keys(time).length === 0) return undefined
 
     const result = {
       title,
       ...(Object.keys(date).length > 0 && { date }),
       ...(Object.keys(time).length > 0 && { time }),
-      ...(joined.timezone && { timezone: joined.timezone }),
+      ...(groups.timezone && { timezone: groups.timezone }),
     }
 
-    console.log({ input, ...result })
     return result
   }
 }
-
-parseCountdown('новий рік через 3 дні')
-parseCountdown('new year on 31.12.2026')
-parseCountdown('new episode at 21:00 CET')
-parseCountdown('новий епізод о 9:30')
-parseCountdown('play games in 5 hours, 30 minutes')
-parseCountdown('games in 20 mins')
-parseCountdown('ігри 3г 20хв')
-parseCountdown('episode in 3:30')
-parseCountdown('episode in 30')
-parseCountdown('ігри через 30')
