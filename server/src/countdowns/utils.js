@@ -1,51 +1,64 @@
 // Intervals
 
-const days = '(?<days>\\d{1,2}) ?(days?|d\\.?|день|дні|днів|дн\\.?|д\\.?)'
-const hours = '(?<hours>\\d{1,2}) ?(hours?|hrs?\\.?|h\\.?|година|години|годин|годину|год\\.?|г\\.?)'
-const hoursWithMinutes =
+const intervalDays = '(?<days>\\d{1,2}) ?(days?|d\\.?|день|дні|днів|дн\\.?|д\\.?)'
+const intervalHours = '(?<hours>\\d{1,2}) ?(hours?|hrs?\\.?|h\\.?|година|години|годин|годину|год\\.?|г\\.?)'
+const intervalHoursWithMinutes =
   '(?<hours>\\d{1,2}):(?<minutes>\\d{2}) ?(hours?|hrs?\\.?|h\\.?|година|години|годин|годину|год\\.?|г\\.?)'
-const minutes = '(?<minutes>\\d{1,2}) ?(minutes?|mins?\\.?|m\\.?|хвилина|хвилини|хвилин|хвилину|хв\\.?|х\\.?)'
-const quick = '((?<hours>\\d{1,2}):)?(?<minutes>\\d{1,2})'
-const hoursDecimal = '(?<hours>\\d{1,2}\\.\\d{1}) ?(hours?|hrs?\\.?|h\\.?|година|години|годин|годину|год\\.?|г\\.?)'
+const intervalMinutes = '(?<minutes>\\d{1,2}) ?(minutes?|mins?\\.?|m\\.?|хвилина|хвилини|хвилин|хвилину|хв\\.?|х\\.?)'
+const intervalQuick = '((?<hours>\\d{1,2}):)?(?<minutes>\\d{1,2})'
+const intervalDecimal = '(?<hours>\\d{1,2}\\.\\d{1}) ?(hours?|hrs?\\.?|h\\.?|година|години|годин|годину|год\\.?|г\\.?)'
 
 const intervals = [
   //
-  [days, hoursWithMinutes],
-  [days, hours, minutes],
-  [days, hours],
-  [days],
-  [hoursWithMinutes],
-  [hours, minutes],
-  [hours],
-  [minutes],
-  [quick],
-  [hoursDecimal],
+  [intervalDays, intervalHoursWithMinutes],
+  [intervalDays, intervalHours, intervalMinutes],
+  [intervalDays, intervalHours],
+  [intervalDays],
+  [intervalHoursWithMinutes],
+  [intervalHours, intervalMinutes],
+  [intervalHours],
+  [intervalMinutes],
+  [intervalQuick],
+  [intervalDecimal],
 ]
 
 const intervalRegexes = intervals.map(parts => new RegExp(` (in|через) ${parts.join('( | (and|та|і) |, ?)')}$`, 'i'))
 
 // Absolute dates
 
-const dayMonthYear =
-  '(?<day>\\d{1,2})(\\.|\\-)(?<month>\\d{1,2})((\\.|\\-)(?<year>\\d{2,4}))?( (?<timezone>[a-z]{3,4}))?'
-const yearMonthDay = '(?<year>\\d{4})(\\.|\\-)(?<month>\\d{1,2})(\\.|\\-)(?<day>\\d{1,2})( (?<timezone>[a-z]{3,4}))?'
+const dateDayMonthYear =
+  '(?<day>\\d{1,2})(\\.|\\-)(?<month>\\d{1,2})((\\.|\\-)(?<year>\\d{2,4}))?( (?<date_timezone>[a-z]{3,4}))?'
+const dateYearMonthDay =
+  '(?<year>\\d{4})(\\.|\\-)(?<month>\\d{1,2})(\\.|\\-)(?<day>\\d{1,2})( (?<date_timezone>[a-z]{3,4}))?'
 
 const dates = [
   //
-  [dayMonthYear],
-  [yearMonthDay],
+  dateDayMonthYear,
+  dateYearMonthDay,
 ]
 
-const dateRegexes = dates.map(parts => new RegExp(` ((on|на) )?${parts.join('')}$`, 'i'))
+const dateRegexes = dates.map(part => new RegExp(` ((on|на) )?${part}$`, 'i'))
+const dateRegexes2 = dates.map(part => `((on|на) )?${part}`)
 
-const time = '(?<hours>\\d{1,2})(:(?<minutes>\\d{2}))?( (?<timezone>[a-z]{3,4}))?'
+const timeHoursWithMinutes = '((at|о|в|на) )?(?<hours>\\d{1,2}):(?<minutes>\\d{2})( (?<time_timezone>[a-z]{3,4}))?'
+const timeHours = '(at|о|в|на) (?<hours>\\d{1,2})( (?<time_timezone>[a-z]{3,4}))?'
 
 const times = [
   // time
-  [time],
+  timeHoursWithMinutes,
+  timeHours,
 ]
 
-const timeRegexes = times.map(parts => new RegExp(` ((at|о|в) )?${parts.join('')}$`, 'i'))
+const timeRegexes = times.map(part => new RegExp(` ${part}$`, 'i'))
+const timeRegexes2 = times
+
+const datetimes = [
+  //
+  ...dateRegexes2.flatMap(dateRegex => timeRegexes2.map(timeRegex => [dateRegex, timeRegex])),
+  ...timeRegexes2.flatMap(timeRegex => dateRegexes2.map(dateRegex => [timeRegex, dateRegex])),
+]
+
+const datetimeRegexes = datetimes.map(parts => new RegExp(` ${parts.join('( |, ?)')}$`, 'i'))
 
 /**
  * @param {string} input
@@ -63,6 +76,8 @@ export function parseCountdown(input) {
   /** @type {any[]} */
   const intervals = []
   /** @type {any[]} */
+  const datetimes = []
+  /** @type {any[]} */
   const dates = []
   /** @type {any[]} */
   const times = []
@@ -72,6 +87,13 @@ export function parseCountdown(input) {
     if (match?.index === undefined) continue
 
     intervals.push({ index: match.index, ...match.groups })
+  }
+
+  for (const regex of datetimeRegexes) {
+    const match = input.match(regex)
+    if (match?.index === undefined) continue
+
+    datetimes.push({ index: match.index, ...match.groups })
   }
 
   for (const regex of dateRegexes) {
@@ -111,10 +133,10 @@ export function parseCountdown(input) {
 
     return { title, interval }
   } else {
-    const title = input.slice(0, Math.min(...[...dates, ...times].map(i => i.index))).trim()
+    const title = input.slice(0, Math.min(...[...dates, ...times, ...datetimes].map(i => i.index))).trim()
     if (!title) return undefined
 
-    const groups = Object.assign({}, ...dates, ...times)
+    const groups = Object.assign({}, ...dates, ...times, ...datetimes)
 
     const date = {
       ...(groups.year && { year: Number(groups.year) }),
@@ -132,13 +154,15 @@ export function parseCountdown(input) {
       ...(groups.minutes && { minutes: Number(groups.minutes) }),
     }
 
+    const timezone = groups.time_timezone || groups.date_timezone
+
     if (Object.keys(date).length === 0 && Object.keys(time).length === 0) return undefined
 
     const result = {
       title,
       ...(Object.keys(date).length > 0 && { date }),
       ...(Object.keys(time).length > 0 && { time }),
-      ...(groups.timezone && { timezone: groups.timezone }),
+      ...(timezone && { timezone }),
     }
 
     return result
