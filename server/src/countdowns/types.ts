@@ -1,8 +1,8 @@
 export type Countdown = {
   id: number
-  groupId: string
+  chatId: string
   title: string
   endsAt: Date
-  hasEnded: boolean
+  endedAt: Date | null
   nextReminderAt: Date | null
 }

@@ -168,3 +168,79 @@ export function parseCountdown(input) {
     return result
   }
 }
+
+const DAYS_MS = 24 * 60 * 60_000
+const HOURS_MS = 60 * 60_000
+const MINUTES_MS = 60_000
+
+// TODO: real timezones support
+const timezones = {
+  UTC: 0,
+  GMT: 0,
+  CET: 1,
+  CEST: 2,
+  EET: 2,
+  EEST: 3,
+}
+
+// TODO: cover with tests
+
+/**
+ * @param {{
+ *   interval?: { days?: number; hours?: number; minutes?: number }
+ *   date?: { year?: number; month?: number; day?: number }
+ *   time?: { hours?: number; minutes?: number }
+ *   timezone?: string // CET
+ *   defaultTimezone: string
+ * }} options
+ */
+export function calculateEndsAt({ interval, date, time, timezone, defaultTimezone }, now = new Date()) {
+  if (interval) {
+    return new Date(
+      now.getTime() +
+        (interval.days ?? 0) * DAYS_MS +
+        (interval.hours ?? 0) * HOURS_MS +
+        (interval.minutes ?? 0) * MINUTES_MS,
+    )
+  }
+
+  const endsAtTimestamp = Date.UTC(
+    date?.year ?? now.getUTCFullYear(),
+    (date?.month ?? now.getUTCMonth() + 1) - 1,
+    date?.day ?? now.getUTCDate(),
+    time?.hours ?? 0,
+    time?.minutes ?? 0,
+    0,
+    0,
+  )
+
+  // Append timezone offset
+  let endsAt = new Date(endsAtTimestamp + timezones[timezone || defaultTimezone] * HOURS_MS)
+
+  // Add a year or a day if the date is in the past
+  if (endsAt < now) {
+    if (date) {
+      endsAt = new Date(
+        endsAt.getFullYear() + 1,
+        endsAt.getMonth(),
+        endsAt.getDate(),
+        endsAt.getHours(),
+        endsAt.getMinutes(),
+        endsAt.getSeconds(),
+        endsAt.getMilliseconds(),
+      )
+    } else {
+      endsAt = new Date(
+        endsAt.getFullYear(),
+        endsAt.getMonth(),
+        endsAt.getDate() + 1,
+        endsAt.getHours(),
+        endsAt.getMinutes(),
+        endsAt.getSeconds(),
+        endsAt.getMilliseconds(),
+      )
+    }
+  }
+
+  return endsAt
+}
