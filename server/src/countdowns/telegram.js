@@ -2,6 +2,8 @@ import { escapeMd } from '../common/telegram.js'
 import { registry } from '../registry.js'
 import { calculateEndsAt, parseCountdown } from './utils.js'
 
+// TODO: Trigger on ~ prefix (e.g. "~overwatch in 2 hours")
+
 export function createCountdownsFlow() {
   const { countdownsStorage, localize } = registry.export()
 
